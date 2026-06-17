@@ -39,12 +39,14 @@ const MainTabNavigator: React.FC = () => {
   const [activeScreen, setActiveScreen] = useState<string>('');
 
   useEffect(() => {
-    dispatch(requestMenuList());
-  }, [dispatch]);
+    if (menuItems.length === 0) {
+      dispatch(requestMenuList());
+    }
+  }, [dispatch, menuItems.length]);
 
   useEffect(() => {
     if (menuItems.length > 0 && !activeScreen) {
-      const first = menuItems.find(i => i.position === 'bottom');
+      const first = menuItems.find(i => i.position === 'bottom') ?? menuItems[0];
       if (first) setActiveScreen(first.screen_name);
     }
   }, [menuItems, activeScreen]);
@@ -72,28 +74,30 @@ const MainTabNavigator: React.FC = () => {
         />
       );
     }
-    const ActiveScreen = SCREEN_MAP[activeScreen];
-    return ActiveScreen ? <ActiveScreen /> : null;
+    const ActiveScreen = SCREEN_MAP[activeScreen] ?? HomeScreen;
+    return <ActiveScreen />;
   };
 
   return (
-    <SafeAreaView edges={['bottom']} style={{flex: 1, backgroundColor: '#F7F7F7'}}>
+    <SafeAreaView edges={['bottom']} style={{flex: 1, backgroundColor: '#FFFFFF'}}>
       <View style={{flex: 1}}>{renderContent()}</View>
 
+      {/* Tab bar — pill-shaped top, layered background, upward shadow */}
       <View
         style={{
-          flexDirection: 'row',
-          backgroundColor: '#F7F7F7',
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: -4},
-          shadowOpacity: 0.08,
-          shadowRadius: 12,
-          elevation: 12,
-          height: 62,
-          paddingTop: 6,
-          paddingBottom: 7,
-          paddingHorizontal: 8,
+          backgroundColor: '#F3F3F3',
+          borderTopLeftRadius: 28,
+          borderTopRightRadius: 28,
+          shadowColor: '#000000',
+          shadowOffset: {width: 0, height: -8},
+          shadowOpacity: 0.12,
+          shadowRadius: 40,
+          elevation: 16,
+          paddingTop: 10,
+          paddingBottom: 8,
+          paddingHorizontal: 16,
         }}>
+        <View style={{flexDirection: 'row'}}>
         {bottomItems.map(item => {
           const focused = activeScreen === item.screen_name;
           return (
@@ -106,21 +110,23 @@ const MainTabNavigator: React.FC = () => {
                 justifyContent: 'space-between',
                 paddingTop: 6,
                 paddingBottom: 7,
-                paddingHorizontal: 8,
+                paddingHorizontal: 4,
               }}>
               {ICON_MAP[item.menu_icon] ? (
                 <Image
                   source={ICON_MAP[item.menu_icon]}
                   style={{
-                    width: 18,
-                    height: 18,
+                    width: 22,
+                    height: 22,
                     tintColor: focused ? '#0066B2' : '#696969',
                   }}
                 />
               ) : (
-                <View style={{width: 18, height: 18}} />
+                <View style={{width: 22, height: 22}} />
               )}
               <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
                 style={{
                   fontFamily: focused ? LATO.bold : LATO.regular,
                   fontSize: 10,
@@ -146,8 +152,8 @@ const MainTabNavigator: React.FC = () => {
             }}>
             <View
               style={{
-                width: 18,
-                height: 18,
+                width: 22,
+                height: 22,
                 justifyContent: 'center',
                 gap: 3,
               }}>
@@ -155,7 +161,7 @@ const MainTabNavigator: React.FC = () => {
                 <View
                   key={i}
                   style={{
-                    height: 1.5,
+                    height: 2,
                     borderRadius: 1,
                     backgroundColor: isMoreActive ? '#0066B2' : '#696969',
                   }}
@@ -173,6 +179,7 @@ const MainTabNavigator: React.FC = () => {
             </Text>
           </TouchableOpacity>
         )}
+        </View>
       </View>
     </SafeAreaView>
   );

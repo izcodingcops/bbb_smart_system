@@ -34,9 +34,23 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string/>
+	<string>BBB Smart System needs your location to track your shift activity.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>BBB Smart System needs your location to track your shift activity in the background.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>BBB Smart System needs your location to track your shift activity in the background.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>BBB Smart System uses motion data to detect when you start moving so location tracking can rest the GPS while you are stationary and save battery.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>LatoItalic.ttf</string>
+		<string>LatoLight.ttf</string>
+		<string>LatoBold.ttf</string>
+		<string>LatoBlack.ttf</string>
+		<string>LatoRegular.ttf</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
@@ -54,15 +68,12 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>fetch</string>
+	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>UIAppFonts</key>
-	<array>
-		<string>LatoItalic.ttf</string>
-		<string>LatoLight.ttf</string>
-		<string>LatoBold.ttf</string>
-		<string>LatoBlack.ttf</string>
-		<string>LatoRegular.ttf</string>
-	</array>
 </dict>
 </plist>

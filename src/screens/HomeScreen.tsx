@@ -1,8 +1,9 @@
-import React from 'react';
-import {View, Text, TouchableOpacity, TextInput, Image} from 'react-native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {View, Text, TouchableOpacity, TextInput, Image, ActivityIndicator} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {GetSelectedProgram} from '../redux/program/selectors';
 import {fontFamilies} from '../constants/fonts';
+import {locationTracker} from '../utils/locationTracker';
 
 const {LATO} = fontFamilies;
 const BLUE = '#0066B2';
@@ -40,6 +41,27 @@ const StatCard = ({
 
 const HomeScreen: React.FC = () => {
   const selectedProgram = GetSelectedProgram();
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    const removeProgress = locationTracker.onUploadProgress(progress => {
+      setSyncStatus(`Uploading… ${Math.round(progress)}%`);
+    });
+    const removeComplete = locationTracker.onUploadComplete(status => {
+      setSyncStatus(status === 'completed' ? 'Sync complete' : 'Sync failed — will retry');
+      setIsSyncing(false);
+      setTimeout(() => setSyncStatus(null), 3000);
+    });
+    return () => { removeProgress(); removeComplete(); };
+  }, []);
+
+  const handleSyncNow = useCallback(() => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    setSyncStatus('Syncing…');
+    locationTracker.syncNow();
+  }, [isSyncing]);
 
   return (
     <View className="flex-1 bg-[#0066B2]">
@@ -140,29 +162,47 @@ const HomeScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Location FAB */}
-      <TouchableOpacity
-        className="absolute right-4 bottom-[100px] flex-row items-center px-3 py-3 bg-[rgba(0,102,178,0.08)] rounded-2xl"
-        style={{
-          gap: 10,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 4},
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-          elevation: 5,
-        }}
-        activeOpacity={0.8}>
-        <Image
-          source={require('../assets/icons/map.png')}
-          className="w-5 h-5"
-          style={{tintColor: BLUE}}
-        />
-        <Text
-          className="text-base text-[#0066B2]"
-          style={{fontFamily: LATO.bold, lineHeight: 20}}>
-          Location
-        </Text>
-      </TouchableOpacity>
+      {/* Sync status toast */}
+      {syncStatus && (
+        <View className="absolute bottom-[160px] left-4 right-4 bg-gray-800 rounded-xl px-4 py-3 items-center">
+          <Text className="text-white text-sm" style={{fontFamily: LATO.medium}}>
+            {syncStatus}
+          </Text>
+        </View>
+      )}
+
+      {/* Location FAB + Sync Now */}
+      <View className="absolute right-4 bottom-[100px] gap-2">
+        <TouchableOpacity
+          onPress={handleSyncNow}
+          disabled={isSyncing}
+          className="flex-row items-center px-3 py-3 bg-[rgba(0,102,178,0.08)] rounded-2xl"
+          style={{
+            gap: 8,
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 4},
+            shadowOpacity: 0.25,
+            shadowRadius: 4,
+            elevation: 5,
+            opacity: isSyncing ? 0.6 : 1,
+          }}
+          activeOpacity={0.8}>
+          {isSyncing ? (
+            <ActivityIndicator size="small" color={BLUE} />
+          ) : (
+            <Image
+              source={require('../assets/icons/map.png')}
+              className="w-5 h-5"
+              style={{tintColor: BLUE}}
+            />
+          )}
+          <Text
+            className="text-base text-[#0066B2]"
+            style={{fontFamily: LATO.bold, lineHeight: 20}}>
+            {isSyncing ? 'Syncing…' : 'Sync Now'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };

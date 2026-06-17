@@ -29,22 +29,43 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       launchOptions: launchOptions
     )
 
+    // Block the app behind the permission gate regardless of login state.
+    // verifyPermissions() shows the persistent Settings-only alert until
+    // location + motion are granted, then auto-dismisses.
+    BBBLocationManager.shared.verifyPermissions()
+    if BBBUserDefault.isUserLoggedIn {
+      BBBLocationManager.shared.startUpdateLocation()
+    }
+
     return true
+  }
+
+  func applicationDidBecomeActive(_ application: UIApplication) {
+    // Re-check on every foreground in case the user just returned from
+    // Settings — if they granted permission the alert dismisses, if not it
+    // re-shows.
+    BBBLocationManager.shared.verifyPermissions()
+    if BBBUserDefault.isUserLoggedIn {
+      BBBLocationManager.shared.startUpdateLocation()
+    }
   }
 }
 
 class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
+
+  override func extraModules(for bridge: RCTBridge) -> [any RCTBridgeModule] {
+    return [BBBUserDataModule()]
+  }
+
   override func sourceURL(for bridge: RCTBridge) -> URL? {
     self.bundleURL()
   }
 
   override func bundleURL() -> URL? {
-#if DEBUG
-    let provider = RCTBundleURLProvider.sharedSettings()
-    provider.jsLocation = "localhost:8082"
-    return provider.jsBundleURL(forBundleRoot: "index")
-#else
+    #if DEBUG
+    return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
+    #else
     Bundle.main.url(forResource: "main", withExtension: "jsbundle")
-#endif
+    #endif
   }
 }

@@ -18,3 +18,17 @@ export interface ProgramListResponse {
   status: number;
   data: Program[];
 }
+
+export interface TaskItem {
+  id: string | number;
+  name: string;
+}
+
+export interface SelectProgramResponse {
+  status: number;
+  data: {
+    id: string | number;
+    user_id: string | number;
+    [key: string]: any;
+  };
+}

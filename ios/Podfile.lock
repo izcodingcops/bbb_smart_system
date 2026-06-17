@@ -1384,6 +1384,8 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
+  - react-native-geolocation-service (5.3.1):
+    - React
   - react-native-safe-area-context (5.7.0):
     - hermes-engine
     - RCTRequired
@@ -1838,6 +1840,8 @@ PODS:
     - React-utils (= 0.85.1)
     - ReactNativeDependencies
   - ReactNativeDependencies (0.85.1)
+  - RNDeviceInfo (15.0.2):
+    - React-Core
   - RNScreens (4.24.0):
     - hermes-engine
     - RCTRequired
@@ -1928,6 +1932,7 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
+  - react-native-geolocation-service (from `../node_modules/react-native-geolocation-service`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-networking (from `../node_modules/react-native/ReactCommon/react/networking`)
@@ -1963,6 +1968,7 @@ DEPENDENCIES:
   - ReactCodegen (from `build/generated/ios/ReactCodegen`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
+  - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
@@ -2046,6 +2052,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   React-microtasksnativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
+  react-native-geolocation-service:
+    :path: "../node_modules/react-native-geolocation-service"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   React-NativeModulesApple:
@@ -2116,6 +2124,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   ReactNativeDependencies:
     :podspec: "../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
+  RNDeviceInfo:
+    :path: "../node_modules/react-native-device-info"
   RNScreens:
     :path: "../node_modules/react-native-screens"
   Yoga:
@@ -2124,7 +2134,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   AsyncStorage: 857a13f3c66a30d6b02efa09babba3d457e8e8ca
   FBLazyVector: ed7eadee1965b0b918ca9d0f2c2328f7eb3fd095
-  hermes-engine: 99b7d0da8bc1c5453584495c73c5c1346d90f352
+  hermes-engine: 990208c5eb421ebcb5af2df44b2635131b5f2689
   RCTDeprecation: d69f6f20a20f669a0aa3115ab1109f28e98ae03e
   RCTRequired: 305a8212b9d90fa335b6a6a960e5212bbb434484
   RCTSwiftUI: 00bb3e8491b1368a47563ef0c8824601d9875ed3
@@ -2133,7 +2143,7 @@ SPEC CHECKSUMS:
   React: 6dbd7825a18782848e8c62f1feb16b344cb17ac6
   React-callinvoker: 90c70d14c7ca646fdae3e25e8d9fbb0fbb20459c
   React-Core: 9dce76263f670de254e896f317676e7e95369ac2
-  React-Core-prebuilt: 3f622288a285ffa987ff1a6896ae79e1625d8fad
+  React-Core-prebuilt: 7cba25783e1ac274f67c29fbd5945ee88a60ad6d
   React-CoreModules: b9fadb43261b88cb0d3a2d59808603567e995095
   React-cxxreact: 6b36616248fea28ce6dfbffcf09322321eb96186
   React-debug: 8f85c5da52e386c83482e45744f6e61b39b9493d
@@ -2161,6 +2171,7 @@ SPEC CHECKSUMS:
   React-logger: 4e7583fb51ef2aa76b298c88e1b9a5cff83e03f7
   React-Mapbuffer: 820bc13d35de93c05aacefb3ab43f061b247c64e
   React-microtasksnativemodule: d8115c4d1035b8671c036a47d82fe75d1ca44e44
+  react-native-geolocation-service: 32b2c2a3b91e70ce2a8d0c684801aaeb0a07e0ec
   react-native-safe-area-context: 6b4966397ada0f7dd481e4486a2ef936834861a1
   React-NativeModulesApple: 647d3ab78e02b3a40fedffd856744215219ff0a6
   React-networking: 8d40769c4823a7e26ae98ca5cd691edc87828743
@@ -2195,10 +2206,11 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: 52da2413bc956c40a4de19ad32a92b87248f7ce8
   ReactCodegen: aac672d7021359dc55fbd6d63f56192651664f09
   ReactCommon: 66763e5bd1b778828ff6cb82d771b7162a5215c2
-  ReactNativeDependencies: e64d85f38e043e638684bb5a299562f6e6802ff2
+  ReactNativeDependencies: a426db925d59248ad1b1bfd49714f7ffeb92da69
+  RNDeviceInfo: 4c852998208b60dc192ae3529e5867817719ad1e
   RNScreens: 01b065ded2dfe7987bcce770ff3a196be417ff41
   Yoga: b1085f68c014785350a2afdc95eaef0d49f23ccb
 
 PODFILE CHECKSUM: e56c67e4c0aaa67ea65dfc9bf647a41e7ce434a4
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2

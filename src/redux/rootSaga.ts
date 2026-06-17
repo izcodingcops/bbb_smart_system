@@ -1,4 +1,5 @@
 import {all, spawn, call} from 'redux-saga/effects';
+import {logger} from '../utils/logger';
 import authSaga from './auth/saga';
 import programSaga from './program/saga';
 import navigationSaga from './navigation/saga';
@@ -14,7 +15,7 @@ export default function* rootSaga() {
             yield call(saga);
             break;
           } catch (e) {
-            console.warn('[RootSaga] Saga crashed, restarting:', e);
+            logger.warn('RootSaga', 'Saga crashed, restarting:', e);
           }
         }
       }),

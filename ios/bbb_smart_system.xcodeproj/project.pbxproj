@@ -7,35 +7,61 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1058B9562FE2A31A007E7A8D /* GPSLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9552FE2A31A007E7A8D /* GPSLogger.swift */; };
+		1058B9582FE2A53C007E7A8D /* GPSPowerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9572FE2A53C007E7A8D /* GPSPowerManager.swift */; };
+		1058B95A2FE2A6E9007E7A8D /* GPSBatchSmoother.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9592FE2A6E9007E7A8D /* GPSBatchSmoother.swift */; };
+		1058B95C2FE2AB0C007E7A8D /* LocationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B95B2FE2AB0C007E7A8D /* LocationStore.swift */; };
+		1058B95E2FE2AB8D007E7A8D /* LocationUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B95D2FE2AB8D007E7A8D /* LocationUploader.swift */; };
+		1058B9602FE2ABF1007E7A8D /* LocationFilterPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B95F2FE2ABF1007E7A8D /* LocationFilterPipeline.swift */; };
+		1058B9622FE2AC86007E7A8D /* PreciseLocationAlertPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9612FE2AC86007E7A8D /* PreciseLocationAlertPresenter.swift */; };
+		1058B9642FE2AEA1007E7A8D /* PermissionGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9632FE2AEA1007E7A8D /* PermissionGate.swift */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		56A35D1A0F834D6EB3CC011D /* CubeLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D6D20E0E1EC4F45B07B9C93 /* CubeLocation.swift */; };
 		68E9D63A51E82699821398A5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		6DAA43B9C247F1795AB3472F /* libPods-bbb_smart_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 230B942AFE9B9881B09F5354 /* libPods-bbb_smart_system.a */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		7672059903CA4D279076B7E1 /* LatoLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 61CD47E677394FF4ADA508E2 /* LatoLight.ttf */; };
+		7B362ED6740441EC8E0A9C55 /* BBBUserDataModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D9E8DAF09E64387876B214E /* BBBUserDataModule.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		A96CC4E34C7E4DF2B786D159 /* LatoBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DFBF986AE00547709E438793 /* LatoBold.ttf */; };
+		ACE642B0D7E249DB8C49027D /* BBBUserDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = B740D00067F549348E3355EC /* BBBUserDefault.swift */; };
 		C2D0879A8F954A2B916ADAFB /* LatoRegular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A9E3C07455604CF09900CC11 /* LatoRegular.ttf */; };
 		CDB88DAED74E4DF1B10A31DD /* LatoBlack.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C93A5463CB0B46E1A16BD2EB /* LatoBlack.ttf */; };
 		CE3093A7D4984E24871C9000 /* LatoItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3E973BBF62874530BC5B24AC /* LatoItalic.ttf */; };
+		EDCEAE7B8559483580E9D850 /* BBBDataModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 667022CCC28C4F0D8DD33D3B /* BBBDataModel.xcdatamodeld */; };
+		FE53C99ED1734139AD5E9B36 /* BBBLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE5AA8CA38245929F596A17 /* BBBLocationManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1058B9552FE2A31A007E7A8D /* GPSLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPSLogger.swift; sourceTree = "<group>"; };
+		1058B9572FE2A53C007E7A8D /* GPSPowerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPSPowerManager.swift; sourceTree = "<group>"; };
+		1058B9592FE2A6E9007E7A8D /* GPSBatchSmoother.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPSBatchSmoother.swift; sourceTree = "<group>"; };
+		1058B95B2FE2AB0C007E7A8D /* LocationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationStore.swift; sourceTree = "<group>"; };
+		1058B95D2FE2AB8D007E7A8D /* LocationUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationUploader.swift; sourceTree = "<group>"; };
+		1058B95F2FE2ABF1007E7A8D /* LocationFilterPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationFilterPipeline.swift; sourceTree = "<group>"; };
+		1058B9612FE2AC86007E7A8D /* PreciseLocationAlertPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreciseLocationAlertPresenter.swift; sourceTree = "<group>"; };
+		1058B9632FE2AEA1007E7A8D /* PermissionGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionGate.swift; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* bbb_smart_system.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = bbb_smart_system.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = bbb_smart_system/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = bbb_smart_system/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = bbb_smart_system/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		1CB549B0CF61C6D0309D8B84 /* Pods-bbb_smart_system.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-bbb_smart_system.release.xcconfig"; path = "Target Support Files/Pods-bbb_smart_system/Pods-bbb_smart_system.release.xcconfig"; sourceTree = "<group>"; };
+		1D6D20E0E1EC4F45B07B9C93 /* CubeLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CubeLocation.swift; path = bbb_smart_system/CubeLocation.swift; sourceTree = "<group>"; };
+		1D9E8DAF09E64387876B214E /* BBBUserDataModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BBBUserDataModule.swift; path = bbb_smart_system/BBBUserDataModule.swift; sourceTree = "<group>"; };
 		230B942AFE9B9881B09F5354 /* libPods-bbb_smart_system.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-bbb_smart_system.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B4392A12AC88292D35C810B /* Pods-RNAuthApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RNAuthApp.debug.xcconfig"; path = "Target Support Files/Pods-RNAuthApp/Pods-RNAuthApp.debug.xcconfig"; sourceTree = "<group>"; };
-		3E973BBF62874530BC5B24AC /* LatoItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = LatoItalic.ttf; path = ../src/assets/fonts/LatoItalic.ttf; sourceTree = "<group>"; };
+		3E973BBF62874530BC5B24AC /* LatoItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = LatoItalic.ttf; path = ../src/assets/fonts/LatoItalic.ttf; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-RNAuthApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RNAuthApp.release.xcconfig"; path = "Target Support Files/Pods-RNAuthApp/Pods-RNAuthApp.release.xcconfig"; sourceTree = "<group>"; };
-		61CD47E677394FF4ADA508E2 /* LatoLight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = LatoLight.ttf; path = ../src/assets/fonts/LatoLight.ttf; sourceTree = "<group>"; };
+		61CD47E677394FF4ADA508E2 /* LatoLight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = LatoLight.ttf; path = ../src/assets/fonts/LatoLight.ttf; sourceTree = "<group>"; };
+		667022CCC28C4F0D8DD33D3B /* BBBDataModel.xcdatamodeld */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; name = BBBDataModel.xcdatamodeld; path = bbb_smart_system/BBBDataModel.xcdatamodeld; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = bbb_smart_system/AppDelegate.swift; sourceTree = "<group>"; };
+		7AE5AA8CA38245929F596A17 /* BBBLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BBBLocationManager.swift; path = bbb_smart_system/BBBLocationManager.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = bbb_smart_system/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		A9E3C07455604CF09900CC11 /* LatoRegular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = LatoRegular.ttf; path = ../src/assets/fonts/LatoRegular.ttf; sourceTree = "<group>"; };
+		A9E3C07455604CF09900CC11 /* LatoRegular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = LatoRegular.ttf; path = ../src/assets/fonts/LatoRegular.ttf; sourceTree = "<group>"; };
 		AFFD73D52BA76DE62A5B9E07 /* Pods-bbb_smart_system.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-bbb_smart_system.debug.xcconfig"; path = "Target Support Files/Pods-bbb_smart_system/Pods-bbb_smart_system.debug.xcconfig"; sourceTree = "<group>"; };
-		C93A5463CB0B46E1A16BD2EB /* LatoBlack.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = LatoBlack.ttf; path = ../src/assets/fonts/LatoBlack.ttf; sourceTree = "<group>"; };
-		DFBF986AE00547709E438793 /* LatoBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = LatoBold.ttf; path = ../src/assets/fonts/LatoBold.ttf; sourceTree = "<group>"; };
+		B740D00067F549348E3355EC /* BBBUserDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BBBUserDefault.swift; path = bbb_smart_system/BBBUserDefault.swift; sourceTree = "<group>"; };
+		C93A5463CB0B46E1A16BD2EB /* LatoBlack.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = LatoBlack.ttf; path = ../src/assets/fonts/LatoBlack.ttf; sourceTree = "<group>"; };
+		DFBF986AE00547709E438793 /* LatoBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = LatoBold.ttf; path = ../src/assets/fonts/LatoBold.ttf; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -54,11 +80,24 @@
 		13B07FAE1A68108700A75B9A /* bbb_smart_system */ = {
 			isa = PBXGroup;
 			children = (
+				B740D00067F549348E3355EC /* BBBUserDefault.swift */,
+				1D6D20E0E1EC4F45B07B9C93 /* CubeLocation.swift */,
+				7AE5AA8CA38245929F596A17 /* BBBLocationManager.swift */,
+				1D9E8DAF09E64387876B214E /* BBBUserDataModule.swift */,
+				667022CCC28C4F0D8DD33D3B /* BBBDataModel.xcdatamodeld */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				1058B9552FE2A31A007E7A8D /* GPSLogger.swift */,
+				1058B9572FE2A53C007E7A8D /* GPSPowerManager.swift */,
+				1058B9592FE2A6E9007E7A8D /* GPSBatchSmoother.swift */,
+				1058B95B2FE2AB0C007E7A8D /* LocationStore.swift */,
+				1058B95D2FE2AB8D007E7A8D /* LocationUploader.swift */,
+				1058B95F2FE2ABF1007E7A8D /* LocationFilterPipeline.swift */,
+				1058B9612FE2AC86007E7A8D /* PreciseLocationAlertPresenter.swift */,
+				1058B9632FE2AEA1007E7A8D /* PermissionGate.swift */,
 			);
 			name = bbb_smart_system;
 			sourceTree = "<group>";
@@ -123,7 +162,6 @@
 				A9E3C07455604CF09900CC11 /* LatoRegular.ttf */,
 			);
 			name = Resources;
-			path = "";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -279,7 +317,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1058B95C2FE2AB0C007E7A8D /* LocationStore.swift in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+				ACE642B0D7E249DB8C49027D /* BBBUserDefault.swift in Sources */,
+				1058B9642FE2AEA1007E7A8D /* PermissionGate.swift in Sources */,
+				1058B9582FE2A53C007E7A8D /* GPSPowerManager.swift in Sources */,
+				56A35D1A0F834D6EB3CC011D /* CubeLocation.swift in Sources */,
+				1058B9562FE2A31A007E7A8D /* GPSLogger.swift in Sources */,
+				1058B95A2FE2A6E9007E7A8D /* GPSBatchSmoother.swift in Sources */,
+				1058B9622FE2AC86007E7A8D /* PreciseLocationAlertPresenter.swift in Sources */,
+				FE53C99ED1734139AD5E9B36 /* BBBLocationManager.swift in Sources */,
+				1058B9602FE2ABF1007E7A8D /* LocationFilterPipeline.swift in Sources */,
+				7B362ED6740441EC8E0A9C55 /* BBBUserDataModule.swift in Sources */,
+				1058B95E2FE2AB8D007E7A8D /* LocationUploader.swift in Sources */,
+				EDCEAE7B8559483580E9D850 /* BBBDataModel.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -293,6 +344,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZP9Y9QWNTN;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = bbb_smart_system/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -306,7 +358,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.blockbyblock.smartsystem2cube;
 				PRODUCT_NAME = bbb_smart_system;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -323,6 +375,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZP9Y9QWNTN;
 				INFOPLIST_FILE = bbb_smart_system/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -335,7 +388,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.blockbyblock.smartsystem2cube;
 				PRODUCT_NAME = bbb_smart_system;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_VERSION = 5.0;

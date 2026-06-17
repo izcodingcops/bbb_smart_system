@@ -15,8 +15,8 @@ import LoadingOverlay from '../components/LoadingOverlay';
 const LoginScreen: React.FC = () => {
   const {login, isLoading, error, dismissError} = useAuth();
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('0000waqas');
+  const [password, setPassword] = useState('Test@!23');
   const [fieldErrors, setFieldErrors] = useState({username: '', password: ''});
 
   useEffect(() => {
