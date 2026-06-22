@@ -13,7 +13,7 @@ enum UserDefaultKey: String {
   case timeZone         = "time_zone"
 }
 
-struct BBBUserDefault {
+struct UserDefault {
   static func get(_ key: UserDefaultKey) -> String? {
     return UserDefaults.standard.string(forKey: key.rawValue)
   }

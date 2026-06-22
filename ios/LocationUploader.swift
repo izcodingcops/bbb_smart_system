@@ -18,12 +18,12 @@ final class LocationUploader {
   /// the `postingData` flag in UserDefaults so multiple callers can't
   /// stomp on each other.
   func checkAndUploadPending(completion: @escaping (Bool) -> Void) {
-    guard BBBUserDefault.get(.postingData) != "true" else { completion(false); return }
-    BBBUserDefault.set("true", for: .postingData)
+    guard UserDefault.get(.postingData) != "true" else { completion(false); return }
+    UserDefault.set("true", for: .postingData)
     
     let batch = store.nextBatch(limit: 400)
-    guard batch.count > 5, BBBUserDefault.isUserLoggedIn else {
-      BBBUserDefault.set("false", for: .postingData)
+    guard batch.count > 5, UserDefault.isUserLoggedIn else {
+      UserDefault.set("false", for: .postingData)
       completion(true); return
     }
     
@@ -32,14 +32,14 @@ final class LocationUploader {
       DispatchQueue.main.async {
         if success {
           if self.store.nextBatch(limit: 400).count <= 5 {
-            BBBUserDefault.set("false", for: .postingData)
+            UserDefault.set("false", for: .postingData)
             completion(true)
           } else {
-            BBBUserDefault.set("false", for: .postingData)
+            UserDefault.set("false", for: .postingData)
             self.checkAndUploadPending(completion: completion)
           }
         } else {
-          BBBUserDefault.set("false", for: .postingData)
+          UserDefault.set("false", for: .postingData)
           completion(false)
         }
       }
@@ -72,13 +72,13 @@ final class LocationUploader {
   // MARK: - Networking
   
   private func post(_ locations: [CubeLocation], completion: @escaping (Bool) -> Void) {
-    let session  = BBBUserDefault.get(.sessionId) ?? ""
-    let deviceId = BBBUserDefault.get(.deviceId) ?? ""
-    let devType  = BBBUserDefault.get(.deviceType) ?? ""
-    let devName  = BBBUserDefault.get(.deviceName) ?? ""
-    let shiftId  = BBBUserDefault.get(.shiftId) ?? ""
-    let userId   = BBBUserDefault.get(.userId) ?? ""
-    let postURL  = BBBUserDefault.get(.cubeUrl) ?? ""
+    let session  = UserDefault.get(.sessionId) ?? ""
+    let deviceId = UserDefault.get(.deviceId) ?? ""
+    let devType  = UserDefault.get(.deviceType) ?? ""
+    let devName  = UserDefault.get(.deviceName) ?? ""
+    let shiftId  = UserDefault.get(.shiftId) ?? ""
+    let userId   = UserDefault.get(.userId) ?? ""
+    let postURL  = UserDefault.get(.cubeUrl) ?? ""
     
     guard !userId.isEmpty, !postURL.isEmpty else { completion(false); return }
     
@@ -138,7 +138,7 @@ final class LocationUploader {
         let deletedTimestamps = (resp["data"] as? [String]) ?? timestamps
         print("[Uploader] uploaded \(locations.count); server ts=\(deletedTimestamps.count)")
         self.store.delete(timestamps: deletedTimestamps)
-        BBBUserDefault.set("false", for: .postingData)
+        UserDefault.set("false", for: .postingData)
         completion(true)
       }.resume()
     }

@@ -6,9 +6,9 @@ import UIKit
 private let kDistanceFilter: CLLocationDistance = 10.0
 private let kDesiredAccuracy: CLLocationAccuracy = kCLLocationAccuracyBest
 
-final class BBBLocationManager: NSObject {
+final class LocationManager: NSObject {
 
-  static let shared = BBBLocationManager()
+  static let shared = LocationManager()
 
   // MARK: - Properties
   
@@ -43,7 +43,7 @@ final class BBBLocationManager: NSObject {
   
   private override init() {
     super.init()
-    BBBUserDefault.set("false", for: .postingData)
+    UserDefault.set("false", for: .postingData)
     startNetworkMonitor()
   }
 
@@ -82,7 +82,7 @@ final class BBBLocationManager: NSObject {
   }
 
   func startUpdateLocation() {
-    guard BBBUserDefault.isUserLoggedIn else { return }
+    guard UserDefault.isUserLoggedIn else { return }
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
       if self.locationManager == nil {
@@ -222,7 +222,7 @@ final class BBBLocationManager: NSObject {
 
 // MARK: - CLLocationManagerDelegate
 
-extension BBBLocationManager: CLLocationManagerDelegate {
+extension LocationManager: CLLocationManagerDelegate {
 
   func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
     NSLog(
@@ -243,7 +243,7 @@ extension BBBLocationManager: CLLocationManagerDelegate {
                     note: "raw fix from chip")
     }
 
-    guard BBBUserDefault.isUserLoggedIn else { return }
+    guard UserDefault.isUserLoggedIn else { return }
 
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }

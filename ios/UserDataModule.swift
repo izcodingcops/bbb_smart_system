@@ -4,9 +4,9 @@ import UIKit
 
 /// React Native bridge module for iOS location tracking.
 /// Methods are exposed to JS via the `RCT_EXTERN_MODULE`/`RCT_EXTERN_METHOD`
-/// shim in BBBUserDataModule.m, which also auto-registers the module.
+/// shim in UserDataModule.m, which also auto-registers the module.
 @objc(UserDataModule)
-final class BBBUserDataModule: RCTEventEmitter {
+final class UserDataModule: RCTEventEmitter {
 
   private var hasListeners = false
 
@@ -28,7 +28,7 @@ final class BBBUserDataModule: RCTEventEmitter {
   /// Save session data to NSUserDefaults and start native background location tracking
   @objc func saveUserDetailsAndStartLocationUpdates(_ data: NSDictionary) {
     func save(_ key: UserDefaultKey, from dictKey: String) {
-      if let value = data[dictKey] as? String { BBBUserDefault.set(value, for: key) }
+      if let value = data[dictKey] as? String { UserDefault.set(value, for: key) }
     }
     save(.sessionId, from: "sessionId")
     save(.deviceId, from: "deviceId")
@@ -41,24 +41,24 @@ final class BBBUserDataModule: RCTEventEmitter {
     save(.timeZone, from: "time_zone")
 
     DispatchQueue.main.async {
-      BBBLocationManager.shared.startUpdateLocation()
+      LocationManager.shared.startUpdateLocation()
     }
   }
 
   /// Clear session data and stop location tracking
   @objc func clearUserDetails() {
-    BBBUserDefault.remove(.sessionId)
-    BBBUserDefault.remove(.deviceId)
-    BBBUserDefault.remove(.deviceType)
-    BBBUserDefault.remove(.deviceName)
-    BBBUserDefault.remove(.shiftId)
-    BBBUserDefault.remove(.horizontalAccuracy)
-    BBBUserDefault.remove(.userId)
-    BBBUserDefault.remove(.cubeUrl)
-    BBBUserDefault.remove(.timeZone)
+    UserDefault.remove(.sessionId)
+    UserDefault.remove(.deviceId)
+    UserDefault.remove(.deviceType)
+    UserDefault.remove(.deviceName)
+    UserDefault.remove(.shiftId)
+    UserDefault.remove(.horizontalAccuracy)
+    UserDefault.remove(.userId)
+    UserDefault.remove(.cubeUrl)
+    UserDefault.remove(.timeZone)
     DispatchQueue.main.async {
-      BBBLocationManager.shared.deleteAllObjects()
-      BBBLocationManager.shared.stopLocationUpdates()
+      LocationManager.shared.deleteAllObjects()
+      LocationManager.shared.stopLocationUpdates()
     }
   }
 
@@ -67,14 +67,14 @@ final class BBBUserDataModule: RCTEventEmitter {
                              rejecter reject: @escaping RCTPromiseRejectBlock) {
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
-      let mgr = BBBLocationManager.shared
+      let mgr = LocationManager.shared
       mgr.stopLocationUpdates()
       let total = mgr.locationCount()
       self.processEndSession(mgr: mgr, total: total, uploaded: 0, resolve: resolve, reject: reject)
     }
   }
 
-  private func processEndSession(mgr: BBBLocationManager, total: Int, uploaded: Int,
+  private func processEndSession(mgr: LocationManager, total: Int, uploaded: Int,
                                   resolve: @escaping RCTPromiseResolveBlock,
                                   reject: @escaping RCTPromiseRejectBlock) {
     var mutableUploaded = uploaded
@@ -106,14 +106,14 @@ final class BBBUserDataModule: RCTEventEmitter {
   @objc func syncLocationData() {
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
-      let mgr = BBBLocationManager.shared
+      let mgr = LocationManager.shared
       mgr.stopLocationUpdates()
       let total = mgr.locationCount()
       self.processSyncUpload(mgr: mgr, total: total, uploaded: 0)
     }
   }
 
-  private func processSyncUpload(mgr: BBBLocationManager, total: Int, uploaded: Int) {
+  private func processSyncUpload(mgr: LocationManager, total: Int, uploaded: Int) {
     var mutableUploaded = uploaded
     let batch = mgr.savedLocationsBatch()
 
@@ -142,7 +142,7 @@ final class BBBUserDataModule: RCTEventEmitter {
   /// Returns "true" if no pending offline records (safe to log out)
   @objc func checkForLogOut(_ callback: @escaping RCTResponseSenderBlock) {
     DispatchQueue.main.async {
-      let count = BBBLocationManager.shared.locationCount()
+      let count = LocationManager.shared.locationCount()
       callback([count > 0 ? "false" : "true"])
     }
   }
@@ -151,7 +151,7 @@ final class BBBUserDataModule: RCTEventEmitter {
   @objc func uploadOfflineLocationData(_ resolve: @escaping RCTPromiseResolveBlock,
                                         rejecter reject: @escaping RCTPromiseRejectBlock) {
     DispatchQueue.main.async {
-      let data = BBBLocationManager.shared.allSavedLocations()
+      let data = LocationManager.shared.allSavedLocations()
       resolve(data)
     }
   }

@@ -32,9 +32,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // Block the app behind the permission gate regardless of login state.
     // verifyPermissions() shows the persistent Settings-only alert until
     // location + motion are granted, then auto-dismisses.
-    BBBLocationManager.shared.verifyPermissions()
-    if BBBUserDefault.isUserLoggedIn {
-      BBBLocationManager.shared.startUpdateLocation()
+    LocationManager.shared.verifyPermissions()
+    if UserDefault.isUserLoggedIn {
+      LocationManager.shared.startUpdateLocation()
     }
 
     return true
@@ -44,9 +44,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // Re-check on every foreground in case the user just returned from
     // Settings — if they granted permission the alert dismisses, if not it
     // re-shows.
-    BBBLocationManager.shared.verifyPermissions()
-    if BBBUserDefault.isUserLoggedIn {
-      BBBLocationManager.shared.startUpdateLocation()
+    LocationManager.shared.verifyPermissions()
+    if UserDefault.isUserLoggedIn {
+      LocationManager.shared.startUpdateLocation()
     }
   }
 }
