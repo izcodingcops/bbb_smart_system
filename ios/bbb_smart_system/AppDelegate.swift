@@ -53,10 +53,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
 
-  override func extraModules(for bridge: RCTBridge) -> [any RCTBridgeModule] {
-    return [BBBUserDataModule()]
-  }
-
   override func sourceURL(for bridge: RCTBridge) -> URL? {
     self.bundleURL()
   }

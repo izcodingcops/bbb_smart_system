@@ -117,18 +117,26 @@ final class LocationUploader {
       guard let self else { return }
       guard let jsonData = try? JSONSerialization.data(withJSONObject: body),
             let urlObj = URL(string: postURL) else { completion(false); return }
-      
+
+      print("[Uploader] POST \(postURL)")
+      print("[Uploader] payload=\(String(data: jsonData, encoding: .utf8) ?? "")")
+
       var request = URLRequest(url: urlObj, timeoutInterval: 30)
       request.httpMethod = "POST"
       request.setValue("application/json", forHTTPHeaderField: "Accept")
       request.setValue("application/json", forHTTPHeaderField: "Content-Type")
       request.httpBody = jsonData
-      
-      URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+
+      URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+        if let error { print("[Uploader] network error: \(error.localizedDescription)") }
+        let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+        let raw = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
+        print("[Uploader] HTTP \(code) response=\(raw)")
         guard let self, error == nil, let data else { completion(false); return }
         guard let resp = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let status = resp["status"] as? Int, status == 200 else { completion(false); return }
         let deletedTimestamps = (resp["data"] as? [String]) ?? timestamps
+        print("[Uploader] uploaded \(locations.count); server ts=\(deletedTimestamps.count)")
         self.store.delete(timestamps: deletedTimestamps)
         BBBUserDefault.set("false", for: .postingData)
         completion(true)

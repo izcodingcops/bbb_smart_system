@@ -1,8 +1,21 @@
-import {NativeModules, NativeEventEmitter, Platform} from 'react-native';
+import {NativeModules, NativeEventEmitter} from 'react-native';
 import {logger} from './logger';
 
 const {UserDataModule} = NativeModules;
 const emitter = UserDataModule ? new NativeEventEmitter(UserDataModule) : null;
+
+export type PermissionStatus =
+  | 'ok'
+  | 'services_off'
+  | 'fine_denied'
+  | 'fine_blocked'
+  | 'background_denied'
+  | 'background_blocked'
+  | 'background_settings_only'
+  | 'activity_denied'
+  | 'activity_blocked';
+
+export type PermissionStage = 'fine' | 'background' | 'activity' | 'notifications';
 
 export interface SessionData {
   sessionId: string | number;
@@ -18,7 +31,7 @@ export interface SessionData {
 
 export const locationTracker = {
   startTracking: (data: SessionData) => {
-    if (Platform.OS !== 'ios' || !UserDataModule) return;
+    if (!UserDataModule) return;
     logger.info('LocationTracker', 'Starting native location tracking', data.sessionId);
     UserDataModule.saveUserDetailsAndStartLocationUpdates({
       sessionId: String(data.sessionId),
@@ -34,19 +47,19 @@ export const locationTracker = {
   },
 
   stopTracking: () => {
-    if (Platform.OS !== 'ios' || !UserDataModule) return;
+    if (!UserDataModule) return;
     logger.info('LocationTracker', 'Stopping native location tracking');
     UserDataModule.clearUserDetails();
   },
 
   syncNow: () => {
-    if (Platform.OS !== 'ios' || !UserDataModule) return;
+    if (!UserDataModule) return;
     logger.info('LocationTracker', 'Manual sync triggered');
     UserDataModule.syncLocationData();
   },
 
   endSession: (): Promise<boolean> => {
-    if (Platform.OS !== 'ios' || !UserDataModule) return Promise.resolve(true);
+    if (!UserDataModule) return Promise.resolve(true);
     return UserDataModule.endUserSession().then(
       () => true,
       () => false,
@@ -54,11 +67,62 @@ export const locationTracker = {
   },
 
   checkCanLogOut: (): Promise<boolean> => {
-    if (Platform.OS !== 'ios' || !UserDataModule) return Promise.resolve(true);
+    if (!UserDataModule) return Promise.resolve(true);
     return new Promise(resolve => {
       UserDataModule.checkForLogOut((result: string) => resolve(result === 'true'));
     });
   },
+
+  // ---- One-shot location --------------------------------------------------
+
+  getCurrentLocation: (): Promise<{
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+    altitude: number;
+    speed: number;
+    heading: number;
+    timestamp: number;
+  }> => {
+    if (!UserDataModule?.getCurrentLocation) {
+      return Promise.reject(new Error('getCurrentLocation not available'));
+    }
+    return UserDataModule.getCurrentLocation();
+  },
+
+  // ---- Permissions --------------------------------------------------------
+
+  getPermissionStatus: (): Promise<PermissionStatus> => {
+    if (!UserDataModule?.getPermissionStatus) return Promise.resolve('ok');
+    return UserDataModule.getPermissionStatus();
+  },
+
+  /**
+   * Promise-based runtime prompt for one stage. Resolves with `true` iff every
+   * permission in the stage was granted — and only after the user has actually
+   * responded to the system dialog.
+   */
+  requestStage: (stage: PermissionStage): Promise<boolean> => {
+    if (!UserDataModule?.requestStage) return Promise.resolve(true);
+    return UserDataModule.requestStage(stage);
+  },
+
+  openAppSettings: () => {
+    UserDataModule?.openAppSettings?.();
+  },
+
+  openLocationSettings: () => {
+    UserDataModule?.openLocationSettings?.();
+  },
+
+  /** Fires whenever MainActivity.onResume runs — used to recheck perms after Settings round-trips. */
+  onAppResumed: (callback: () => void) => {
+    if (!emitter) return () => {};
+    const sub = emitter.addListener('onAppResumed', callback);
+    return () => sub.remove();
+  },
+
+  // ---- Upload progress events --------------------------------------------
 
   onUploadProgress: (callback: (progress: number) => void) => {
     if (!emitter) return () => {};

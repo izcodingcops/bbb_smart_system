@@ -22,6 +22,7 @@
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		7672059903CA4D279076B7E1 /* LatoLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 61CD47E677394FF4ADA508E2 /* LatoLight.ttf */; };
 		7B362ED6740441EC8E0A9C55 /* BBBUserDataModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D9E8DAF09E64387876B214E /* BBBUserDataModule.swift */; };
+		7B362ED6740441EC8E0A9C56 /* BBBUserDataModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9E8DAF09E64387876B214F /* BBBUserDataModule.m */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		A96CC4E34C7E4DF2B786D159 /* LatoBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DFBF986AE00547709E438793 /* LatoBold.ttf */; };
 		ACE642B0D7E249DB8C49027D /* BBBUserDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = B740D00067F549348E3355EC /* BBBUserDefault.swift */; };
@@ -48,6 +49,7 @@
 		1CB549B0CF61C6D0309D8B84 /* Pods-bbb_smart_system.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-bbb_smart_system.release.xcconfig"; path = "Target Support Files/Pods-bbb_smart_system/Pods-bbb_smart_system.release.xcconfig"; sourceTree = "<group>"; };
 		1D6D20E0E1EC4F45B07B9C93 /* CubeLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CubeLocation.swift; path = bbb_smart_system/CubeLocation.swift; sourceTree = "<group>"; };
 		1D9E8DAF09E64387876B214E /* BBBUserDataModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BBBUserDataModule.swift; path = bbb_smart_system/BBBUserDataModule.swift; sourceTree = "<group>"; };
+		1D9E8DAF09E64387876B214F /* BBBUserDataModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BBBUserDataModule.m; path = bbb_smart_system/BBBUserDataModule.m; sourceTree = "<group>"; };
 		230B942AFE9B9881B09F5354 /* libPods-bbb_smart_system.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-bbb_smart_system.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B4392A12AC88292D35C810B /* Pods-RNAuthApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RNAuthApp.debug.xcconfig"; path = "Target Support Files/Pods-RNAuthApp/Pods-RNAuthApp.debug.xcconfig"; sourceTree = "<group>"; };
 		3E973BBF62874530BC5B24AC /* LatoItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = LatoItalic.ttf; path = ../src/assets/fonts/LatoItalic.ttf; sourceTree = "<group>"; };
@@ -84,6 +86,7 @@
 				1D6D20E0E1EC4F45B07B9C93 /* CubeLocation.swift */,
 				7AE5AA8CA38245929F596A17 /* BBBLocationManager.swift */,
 				1D9E8DAF09E64387876B214E /* BBBUserDataModule.swift */,
+				1D9E8DAF09E64387876B214F /* BBBUserDataModule.m */,
 				667022CCC28C4F0D8DD33D3B /* BBBDataModel.xcdatamodeld */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
@@ -329,6 +332,7 @@
 				FE53C99ED1734139AD5E9B36 /* BBBLocationManager.swift in Sources */,
 				1058B9602FE2ABF1007E7A8D /* LocationFilterPipeline.swift in Sources */,
 				7B362ED6740441EC8E0A9C55 /* BBBUserDataModule.swift in Sources */,
+				7B362ED6740441EC8E0A9C56 /* BBBUserDataModule.m in Sources */,
 				1058B95E2FE2AB8D007E7A8D /* LocationUploader.swift in Sources */,
 				EDCEAE7B8559483580E9D850 /* BBBDataModel.xcdatamodeld in Sources */,
 			);

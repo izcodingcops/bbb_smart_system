@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -8,25 +8,29 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import Geolocation from 'react-native-geolocation-service';
-import DeviceInfo, {getDeviceId} from 'react-native-device-info';
-import {useAppDispatch} from '../redux/store';
-import {GetPrograms, GetSelectedProgram, GetProgramLoading} from '../redux/program/selectors';
-import {GetUser} from '../redux/auth/selectors';
-import {requestProgramList, selectProgram} from '../redux/program/actions';
-import {logout} from '../redux/auth/actions';
-import {updateLocation} from '../redux/location/actions';
-import {Program, TaskItem} from '../types/program';
-import {programService} from '../api/services/programService';
-import {shiftService} from '../api/services/shiftService';
-import {locationService} from '../api/services/locationService';
-import {locationTracker} from '../utils/locationTracker';
-import {toServerDate} from '../utils/dateUtil';
-import {setActiveProgramId} from '../api/headerContext';
-import {MicroService} from '../api/microService';
-import {ApiEndpoints} from '../api/apiEndpoints';
-import {logger} from '../utils/logger';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import DeviceInfo, { getDeviceId } from 'react-native-device-info';
+import { useAppDispatch } from '../redux/store';
+import {
+  GetPrograms,
+  GetSelectedProgram,
+  GetProgramLoading,
+} from '../redux/program/selectors';
+import { GetUser } from '../redux/auth/selectors';
+import { requestProgramList, selectProgram } from '../redux/program/actions';
+import { logout } from '../redux/auth/actions';
+import { updateLocation } from '../redux/location/actions';
+import { Program, TaskItem } from '../types/program';
+import { programService } from '../api/services/programService';
+import { shiftService } from '../api/services/shiftService';
+import { locationService } from '../api/services/locationService';
+import { locationTracker } from '../utils/locationTracker';
+import { ensurePermissions } from '../utils/permissionFlow';
+import { toServerDate } from '../utils/dateUtil';
+import { setActiveProgramId } from '../api/headerContext';
+import { MicroService } from '../api/microService';
+import { ApiEndpoints } from '../api/apiEndpoints';
+import { logger } from '../utils/logger';
 import PositionModal from '../components/PositionModal';
 import ShiftTimeModal from '../components/ShiftTimeModal';
 
@@ -43,7 +47,9 @@ const SelectProgramScreen: React.FC = () => {
   const [showPositionModal, setShowPositionModal] = useState(false);
   const [taskList, setTaskList] = useState<TaskItem[]>([]);
   const [isTaskLoading, setIsTaskLoading] = useState(false);
-  const [activeProgramItem, setActiveProgramItem] = useState<Program | null>(null);
+  const [activeProgramItem, setActiveProgramItem] = useState<Program | null>(
+    null,
+  );
 
   // Shift modal state
   const [showShiftModal, setShowShiftModal] = useState(false);
@@ -53,9 +59,9 @@ const SelectProgramScreen: React.FC = () => {
 
   useEffect(() => {
     dispatch(requestProgramList());
-    if (Platform.OS === 'ios') {
-      Geolocation.requestAuthorization('always');
-    }
+    // iOS location authorization is requested natively by
+    // BBBLocationManager.verifyPermissions() (called at launch and on every
+    // foreground in AppDelegate), so no JS-side request is needed here.
   }, [dispatch]);
 
   const pingLocationAfterShift = async (
@@ -63,65 +69,53 @@ const SelectProgramScreen: React.FC = () => {
     shiftId: string | number,
     userId: string | number,
   ) => {
-    Geolocation.getCurrentPosition(
-      async position => {
-        const {latitude, longitude, accuracy, altitude, altitudeAccuracy, heading, timestamp} =
-          position.coords;
-        dispatch(
-          updateLocation({
-            latitude,
-            longitude,
-            altitude: altitude ?? null,
-            horizontalAccuracy: accuracy,
-            verticalAccuracy: altitudeAccuracy ?? null,
-            heading: heading ?? null,
-            timestamp: timestamp ?? position.timestamp,
-          }),
-        );
-        try {
-          const deviceName = await DeviceInfo.getDeviceName();
-          const deviceId = getDeviceId();
+    // Permissions are guaranteed granted by handleShiftConfirm before we get here.
+    try {
+      const pos = await locationTracker.getCurrentLocation();
+      const { latitude, longitude, accuracy, altitude, heading, timestamp } =
+        pos;
+      dispatch(
+        updateLocation({
+          latitude,
+          longitude,
+          altitude: altitude ?? null,
+          horizontalAccuracy: accuracy,
+          verticalAccuracy: null,
+          heading: heading ?? null,
+          timestamp,
+        }),
+      );
 
-          // One-shot HTTP ping
-          await locationService.addGeoData({
-            sessionId,
-            latitude,
-            longitude,
-            deviceId,
-            deviceType: Platform.OS,
-            deviceName,
-            shiftId,
-            horizontal_accuracy: accuracy ?? 1,
-            user_id: userId,
-          });
-          logger.info('SelectProgramScreen', 'Location ping sent successfully');
+      const deviceName = await DeviceInfo.getDeviceName();
+      const deviceId = getDeviceId();
 
-          // Start native iOS background GPS tracking
-          locationTracker.startTracking({
-            sessionId,
-            deviceId,
-            deviceType: Platform.OS,
-            deviceName,
-            shiftId,
-            horizontal_accuracy: accuracy ?? 1,
-            user_id: userId,
-            cube_url: `${MicroService.BASE_APP_API}${ApiEndpoints.addBulkGeoData}`,
-            timezone_str: activeProgramItem?.timezone_str ?? 'America/New_York',
-          });
-        } catch (err) {
-          logger.error('SelectProgramScreen', 'Location ping failed', err);
-        }
-      },
-      error => {
-        logger.error('SelectProgramScreen', 'getCurrentPosition failed', error);
-      },
-      {
-        enableHighAccuracy: false,
-        timeout: 15000,
-        maximumAge: 10000,
-        accuracy: {ios: 'nearestTenMeters'},
-      },
-    );
+      await locationService.addGeoData({
+        sessionId,
+        latitude,
+        longitude,
+        deviceId,
+        deviceType: Platform.OS,
+        deviceName,
+        shiftId,
+        horizontal_accuracy: accuracy ?? 1,
+        user_id: userId,
+      });
+      logger.info('SelectProgramScreen', 'Location ping sent successfully');
+
+      locationTracker.startTracking({
+        sessionId,
+        deviceId,
+        deviceType: Platform.OS,
+        deviceName,
+        shiftId,
+        horizontal_accuracy: accuracy ?? 1,
+        user_id: userId,
+        cube_url: `${MicroService.BASE_APP_API}${ApiEndpoints.addBulkGeoData}`,
+        timezone_str: activeProgramItem?.timezone_str ?? 'America/New_York',
+      });
+    } catch (err) {
+      logger.error('SelectProgramScreen', 'pingLocationAfterShift failed', err);
+    }
   };
 
   const filteredPrograms = useMemo(() => {
@@ -136,7 +130,11 @@ const SelectProgramScreen: React.FC = () => {
     setIsTaskLoading(true);
     setTaskList([]);
     try {
-      logger.debug('SelectProgramScreen', 'Fetching task list for program', program.id);
+      logger.debug(
+        'SelectProgramScreen',
+        'Fetching task list for program',
+        program.id,
+      );
       const response = await programService.getTaskList(program.id);
       // API shape: { status, message, data: { count, rows: [...] } }
       const tasks = response.data?.rows ?? [];
@@ -154,9 +152,19 @@ const SelectProgramScreen: React.FC = () => {
     setSelectedTask(task);
     setIsTaskLoading(true);
     try {
-      logger.debug('SelectProgramScreen', 'Calling selectProgram-v2', {programId: activeProgramItem.id, shiftId: task.id});
-      const response = await programService.selectProgram(activeProgramItem.id, task.id);
-      logger.info('SelectProgramScreen', 'selectProgram-v2 response', response.status);
+      logger.debug('SelectProgramScreen', 'Calling selectProgram-v2', {
+        programId: activeProgramItem.id,
+        shiftId: task.id,
+      });
+      const response = await programService.selectProgram(
+        activeProgramItem.id,
+        task.id,
+      );
+      logger.info(
+        'SelectProgramScreen',
+        'selectProgram-v2 response',
+        response.status,
+      );
 
       if (response.status !== 200) {
         setIsTaskLoading(false);
@@ -166,14 +174,20 @@ const SelectProgramScreen: React.FC = () => {
       setSelectProgramRes(response.data);
       setIsTaskLoading(false);
 
-      const enableShiftEntry = user?.enable_shift_entry && activeProgramItem.shift_enabled;
+      const enableShiftEntry =
+        user?.enable_shift_entry && activeProgramItem.shift_enabled;
       if (enableShiftEntry) {
+        // iOS can't present one Modal while another is still dismissing — wait
+        // for the position sheet's close animation to finish before opening the
+        // shift sheet, otherwise the app deadlocks behind a stuck dim backdrop.
         setShowPositionModal(false);
-        setShowShiftModal(true);
+        setTimeout(() => setShowShiftModal(true), 300);
       } else {
-        // No shift modal — ping location now using selectProgram response as session
+        // No shift modal — sessionId = selectProgram response id, and no
+        // shift was started so shiftId is '0' (matches production's
+        // startShiftResponseData fallback).
         if (user?.id) {
-          pingLocationAfterShift(response.data.id, task.id, user.id);
+          pingLocationAfterShift(response.data.id, '0', user.id);
         }
         setShowPositionModal(false);
         dispatch(selectProgram(activeProgramItem));
@@ -187,32 +201,25 @@ const SelectProgramScreen: React.FC = () => {
   // Populate state.location.currentLocation before any API call goes out —
   // the request interceptor reads lat/lon/altitude/etc. from there, and the
   // backend hangs (timeout) when those headers are empty strings.
-  const ensureLocationInStore = (): Promise<void> =>
-    new Promise(resolve => {
-      Geolocation.getCurrentPosition(
-        position => {
-          const {latitude, longitude, accuracy, altitude, altitudeAccuracy, heading, timestamp} =
-            position.coords;
-          dispatch(
-            updateLocation({
-              latitude,
-              longitude,
-              altitude: altitude ?? null,
-              horizontalAccuracy: accuracy,
-              verticalAccuracy: altitudeAccuracy ?? null,
-              heading: heading ?? null,
-              timestamp: timestamp ?? position.timestamp,
-            }),
-          );
-          resolve();
-        },
-        err => {
-          logger.error('SelectProgramScreen', 'ensureLocationInStore failed', err);
-          resolve(); // proceed without location; request will use empty strings
-        },
-        {enableHighAccuracy: false, timeout: 8000, maximumAge: 10000},
+  const ensureLocationInStore = async (): Promise<void> => {
+    try {
+      const pos = await locationTracker.getCurrentLocation();
+      dispatch(
+        updateLocation({
+          latitude: pos.latitude,
+          longitude: pos.longitude,
+          altitude: pos.altitude ?? null,
+          horizontalAccuracy: pos.accuracy,
+          verticalAccuracy: null,
+          heading: pos.heading ?? null,
+          timestamp: pos.timestamp,
+        }),
       );
-    });
+    } catch (err) {
+      logger.error('SelectProgramScreen', 'ensureLocationInStore failed', err);
+      // proceed without location; request will use empty strings
+    }
+  };
 
   const handleShiftConfirm = async (startTime: Date, endTime: Date) => {
     if (!activeProgramItem || !selectedTask) return;
@@ -222,6 +229,16 @@ const SelectProgramScreen: React.FC = () => {
     // know whether the request succeeded).
     setActiveProgramId(activeProgramItem.id);
     try {
+      // Prompt for location/activity perms before anything that needs GPS.
+      const granted = await ensurePermissions();
+      if (!granted) {
+        logger.warn(
+          'SelectProgramScreen',
+          'Permissions not granted — cannot start shift',
+        );
+        setIsShiftLoading(false);
+        return;
+      }
       await ensureLocationInStore();
       // Backend hangs when the timestamp offset doesn't match `timezone_str`.
       // Always use the PROGRAM's timezone for the offset, never the device's
@@ -242,8 +259,13 @@ const SelectProgramScreen: React.FC = () => {
       // Only on success: commit selectedProgram to redux so the navigator
       // transitions to the home stack.
       dispatch(selectProgram(activeProgramItem));
-      if (user?.id && response.data?.id) {
-        pingLocationAfterShift(response.data.id, selectedTask.id, user.id);
+      // Match the production app's ID mapping (bbb_mobile_application
+      // HomeNew/index.js): sessionId = select-program response id,
+      // shiftId = start-shift response id. Sending these swapped (or task.id
+      // as shiftId) makes the web map query the wrong IDs and points never
+      // render even though the backend stores them.
+      if (user?.id && selectProgramRes?.id && response.data?.id) {
+        pingLocationAfterShift(selectProgramRes.id, response.data.id, user.id);
       }
     } catch (error) {
       logger.error('SelectProgramScreen', 'Start shift failed', error);
@@ -254,7 +276,7 @@ const SelectProgramScreen: React.FC = () => {
     }
   };
 
-  const renderItem = ({item}: {item: Program}) => {
+  const renderItem = ({ item }: { item: Program }) => {
     const isSelected = selectedProgram?.id === item.id;
     return (
       <TouchableOpacity
@@ -262,13 +284,19 @@ const SelectProgramScreen: React.FC = () => {
           isSelected ? 'border-primary bg-blue-50' : 'border-gray-200 bg-white'
         }`}
         onPress={() => handleProgramSelect(item)}
-        activeOpacity={0.7}>
+        activeOpacity={0.7}
+      >
         <Text
-          className={`flex-1 text-[15px] ${isSelected ? 'text-primary font-semibold' : 'text-gray-900'}`}
-          numberOfLines={1}>
+          className={`flex-1 text-[15px] ${
+            isSelected ? 'text-primary font-semibold' : 'text-gray-900'
+          }`}
+          numberOfLines={1}
+        >
           {item.program_name}
         </Text>
-        {isSelected && <Text className="text-primary font-bold text-lg ml-3">✓</Text>}
+        {isSelected && (
+          <Text className="text-primary font-bold text-lg ml-3">✓</Text>
+        )}
       </TouchableOpacity>
     );
   };
@@ -277,10 +305,13 @@ const SelectProgramScreen: React.FC = () => {
     <SafeAreaView className="flex-1 bg-white">
       {/* Header */}
       <View className="px-5 pt-4 pb-2 flex-row items-center justify-between">
-        <Text className="text-2xl font-bold text-gray-900">Select A Program</Text>
+        <Text className="text-2xl font-bold text-gray-900">
+          Select A Program
+        </Text>
         <TouchableOpacity
           className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
-          onPress={() => dispatch(logout())}>
+          onPress={() => dispatch(logout())}
+        >
           <Text className="text-gray-500 text-base font-bold">✕</Text>
         </TouchableOpacity>
       </View>
@@ -312,7 +343,10 @@ const SelectProgramScreen: React.FC = () => {
             <Text className="text-xs font-semibold text-primary uppercase tracking-wider mb-0.5">
               Selected Program
             </Text>
-            <Text className="text-[15px] text-gray-900 font-medium" numberOfLines={1}>
+            <Text
+              className="text-[15px] text-gray-900 font-medium"
+              numberOfLines={1}
+            >
               {selectedProgram.program_name}
             </Text>
           </View>
@@ -333,7 +367,8 @@ const SelectProgramScreen: React.FC = () => {
           ListHeaderComponent={() => (
             <View className="px-4 py-3">
               <Text className="text-gray-500 text-sm font-medium">
-                {filteredPrograms.length} Available Program{filteredPrograms.length !== 1 ? 's' : ''}
+                {filteredPrograms.length} Available Program
+                {filteredPrograms.length !== 1 ? 's' : ''}
               </Text>
             </View>
           )}
@@ -342,7 +377,7 @@ const SelectProgramScreen: React.FC = () => {
               <Text className="text-gray-400 text-base">No programs found</Text>
             </View>
           )}
-          contentContainerStyle={{paddingBottom: 32}}
+          contentContainerStyle={{ paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         />
@@ -360,6 +395,7 @@ const SelectProgramScreen: React.FC = () => {
       <ShiftTimeModal
         visible={showShiftModal}
         isLoading={isShiftLoading}
+        timeZone={activeProgramItem?.timezone_str ?? 'America/New_York'}
         onConfirm={handleShiftConfirm}
         onClose={() => setShowShiftModal(false)}
       />

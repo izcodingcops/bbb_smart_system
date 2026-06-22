@@ -3,7 +3,8 @@ import React
 import UIKit
 
 /// React Native bridge module for iOS location tracking.
-/// Registered via `extraModules(for:)` in AppDelegate — no ObjC shim required.
+/// Methods are exposed to JS via the `RCT_EXTERN_MODULE`/`RCT_EXTERN_METHOD`
+/// shim in BBBUserDataModule.m, which also auto-registers the module.
 @objc(UserDataModule)
 final class BBBUserDataModule: RCTEventEmitter {
 

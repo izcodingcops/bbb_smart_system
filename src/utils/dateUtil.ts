@@ -72,12 +72,38 @@ function findOffsetForZone(date: Date, timeZone: string): string {
  * same behavior as old app's `convertTimeZoneFormat`.
  */
 export function toServerDate(date: Date = new Date(), timeZone?: string): string {
+  if (timeZone) {
+    // Render the wall-clock parts AS SEEN IN the program timezone, then stamp
+    // the program's offset — matching the old app's convertTimeZoneFormat.
+    // Using device-local getHours()/getDate() here glues device wall-clock
+    // numbers onto the program offset, producing an instant hours off from
+    // reality (and a shift the backend treats as inactive).
+    try {
+      const dtf = new Intl.DateTimeFormat('en-US', {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        hour12: false,
+        minute: '2-digit',
+        second: '2-digit',
+      });
+      const parts = dtf.formatToParts(date);
+      const get = (type: string) => parts.find(p => p.type === type)?.value ?? '00';
+      const hour = get('hour') === '24' ? '00' : get('hour');
+      const offset = findOffsetForZone(date, timeZone);
+      return `${get('year')}-${get('month')}-${get('day')}T${hour}:${get('minute')}:${get('second')}.000${offset}`;
+    } catch {
+      // fall through to device-local formatting below
+    }
+  }
   const y = date.getFullYear();
   const m = pad(date.getMonth() + 1);
   const d = pad(date.getDate());
   const hh = pad(date.getHours());
   const mm = pad(date.getMinutes());
   const ss = pad(date.getSeconds());
-  const offset = timeZone ? findOffsetForZone(date, timeZone) : findLocalOffset(date);
+  const offset = findLocalOffset(date);
   return `${y}-${m}-${d}T${hh}:${mm}:${ss}.000${offset}`;
 }
