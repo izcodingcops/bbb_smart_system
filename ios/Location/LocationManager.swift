@@ -11,7 +11,7 @@ final class LocationManager: NSObject {
   
   private var locationManager: CLLocationManager?
 
-  private var gpsPower: GPSPowerManager?
+  private var gpsPower: LocationModeManager?
   private var currentLocation: CLLocation?
 
   private var lastSeenLocation: CLLocation?
@@ -27,7 +27,7 @@ final class LocationManager: NSObject {
 
   // MARK: - Collaborators
 
-  private let store = LocationStore()
+  private let store = LocationPersistenceStore()
   private lazy var uploader = LocationUploader(store: store)
   private let permissionGate = PermissionGate()
 
@@ -50,9 +50,9 @@ final class LocationManager: NSObject {
         guard let self else { return }
         let wasOffline = !self.isOnline
         self.isOnline = satisfied
-        NSLog("[Network] → %@. Pending: %lu", self.isOnline ? "ONLINE" : "OFFLINE", self.locationCount())
+        Log.network.info("→ \(self.isOnline ? "ONLINE" : "OFFLINE"). Pending: \(self.locationCount())")
         if self.isOnline && wasOffline && self.locationCount() > 0 {
-          NSLog("[Sync] Back online — draining queued records")
+          Log.network.info("back online — draining queued records")
           self.uploadDataToServer()
         }
       }
@@ -81,7 +81,7 @@ final class LocationManager: NSObject {
         self.locationManager = CLLocationManager()
       }
       if let lm = self.locationManager, self.gpsPower == nil {
-        self.gpsPower = GPSPowerManager(locationManager: lm)
+        self.gpsPower = LocationModeManager(locationManager: lm)
       }
       self.locationManager?.delegate = self
       guard self.permissionGate.canStartTracking(locationManager: self.locationManager) else {
@@ -101,10 +101,7 @@ final class LocationManager: NSObject {
       self.locationManager?.startUpdatingLocation()
       self.locationManager?.startMonitoringSignificantLocationChanges()
       self.gpsPower?.start()
-      
-      NSLog("[GPS] Location updates started")
       GPSLogger.info("START", note: "location updates started")
-      
     }
   }
 
@@ -124,19 +121,16 @@ final class LocationManager: NSObject {
         UIApplication.shared.endBackgroundTask(self.bgTaskId)
         self.bgTaskId = .invalid
       }
-      
-      NSLog("[GPS] Location updates stopped")
       GPSLogger.info("STOP", note: "location updates stopped")
-      
     }
   }
 
   func uploadDataToServer() {
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
-      NSLog("[Sync] Upload starting — %lu records queued", self.locationCount())
+      Log.network.info("upload starting — \(self.locationCount()) records queued")
       self.checkAndUploadPending { success in
-        NSLog("[Sync] Upload %@ — %lu pending", success ? "SUCCESS" : "FAILURE", self.locationCount())
+        Log.network.info("upload \(success ? "SUCCESS" : "FAILURE") — \(self.locationCount()) pending")
       }
     }
   }
@@ -154,7 +148,7 @@ final class LocationManager: NSObject {
     lastSeenLocation ?? currentLocation ?? locationManager?.location
   }
 
-  func savedLocationsBatch() -> [CubeLocation] { store.nextBatch(limit: 400) }
+  func savedLocationsBatch() -> [StoredLocation] { store.nextBatch(limit: 400) }
 
   func allSavedLocations() -> [[String: String]] {
     store.allAsDicts(timestampToDate: { [weak self] ts in self?.uploader.timestampToDate(ts) })
@@ -165,15 +159,13 @@ final class LocationManager: NSObject {
   private func insertLocation(latitude: String, longitude: String, accuracy: String) {
     let onlineState = isOnline
     store.insert(latitude: latitude, longitude: longitude, accuracy: accuracy, online: onlineState)
-    NSLog("[CoreData] Saved %@ point — total pending: %lu",
-          onlineState ? "online" : "offline", locationCount())
     GPSLogger.log("SAVE",
                   lat: Double(latitude) ?? 0,
                   lon: Double(longitude) ?? 0,
                   accuracy: Double(accuracy) ?? 0,
                   speed: 0,
                   mode: "FULL",
-                  note: "persisted to Core Data")
+                  note: "\(onlineState ? "online" : "offline"), pending \(locationCount())")
   }
 
   // MARK: - Upload pass-throughs (public API surface)
@@ -182,7 +174,7 @@ final class LocationManager: NSObject {
     uploader.checkAndUploadPending(completion: completion)
   }
 
-  func uploadBatch(_ batch: [CubeLocation], completion: @escaping (Bool) -> Void) {
+  func uploadBatch(_ batch: [StoredLocation], completion: @escaping (Bool) -> Void) {
     uploader.upload(batch, completion: completion)
   }
 
@@ -221,14 +213,13 @@ final class LocationManager: NSObject {
     let lon = String(format: "%.7f", loc.coordinate.longitude)
     let acc = String(format: "%.2f", loc.horizontalAccuracy)
     store.insert(latitude: lat, longitude: lon, accuracy: acc, online: isOnline)
-    NSLog("[CoreData] Saved presence point — total pending: %lu", locationCount())
     GPSLogger.log("SAVE",
                   lat: loc.coordinate.latitude,
                   lon: loc.coordinate.longitude,
                   accuracy: loc.horizontalAccuracy,
                   speed: 0,
                   mode: "REST",
-                  note: "presence")
+                  note: "presence, pending \(locationCount())")
   }
 
   // MARK: - Background task
@@ -248,10 +239,7 @@ final class LocationManager: NSObject {
 extension LocationManager: CLLocationManagerDelegate {
 
   func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-    NSLog(
-      "[GPS] Chip fired — accuracy: %.0fm, speed: %.1f m/s",
-      locations.last?.horizontalAccuracy ?? 0, locations.last?.speed ?? 0
-      )
+    Log.gps.debug("chip fired — accuracy: \(Int(locations.last?.horizontalAccuracy ?? 0))m, speed: \(String(format: "%.1f", locations.last?.speed ?? 0)) m/s")
     if let last = locations.last {
       // NOTE: do NOT wake on every fix. Waking is driven only by real movement
       // (applyBackupWake: moved > wakeDistance) and the motion sensor — matching
@@ -315,13 +303,14 @@ extension LocationManager: CLLocationManagerDelegate {
       )
       if bucket != .none {
         self.currentLocation = best
-        GPSLogger.log("SAVED",
-                      lat: best.coordinate.latitude,
-                      lon: best.coordinate.longitude,
-                      accuracy: best.horizontalAccuracy,
-                      speed: best.speed,
-                      mode: mode,
-                      note: bucket.reason)
+        GPSLogger.log(
+          "SAVED",
+          lat: best.coordinate.latitude,
+          lon: best.coordinate.longitude,
+          accuracy: best.horizontalAccuracy,
+          speed: best.speed,
+          mode: mode,
+          note: bucket.reason)
         self.insertLocation(latitude: latStr, longitude: lonStr, accuracy: accStr)
       }
 
@@ -358,15 +347,15 @@ extension LocationManager: CLLocationManagerDelegate {
   }
 
   func locationManagerDidPauseLocationUpdates(_ manager: CLLocationManager) {
-    NSLog("[GPS] Updates PAUSED by iOS (power saving)")
+    Log.gps.info("updates PAUSED by iOS (power saving)")
   }
 
   func locationManagerDidResumeLocationUpdates(_ manager: CLLocationManager) {
-    NSLog("[GPS] Updates RESUMED by iOS (movement detected)")
+    Log.gps.info("updates RESUMED by iOS (movement detected)")
   }
 
   func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-    NSLog("[GPS] Error: %@", error.localizedDescription)
+    Log.gps.error("location error: \(error.localizedDescription)")
   }
 
   func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {

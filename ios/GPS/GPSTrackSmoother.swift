@@ -1,5 +1,5 @@
 //
-//  GPSBatchSmoother.swift
+//  GPSTrackSmoother.swift
 //  bbb_smart_system
 //
 //  Created by Irtaza Fiaz on 17/06/2026.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum GPSBatchSmoother {
+public enum GPSTrackSmoother {
   
   // Look this many seconds on each side of every point for context.
   private static let windowSec: Double = 8.0

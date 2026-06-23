@@ -5,8 +5,8 @@ import UIKit
 /// React Native bridge module for iOS location tracking.
 /// Methods are exposed to JS via the `RCT_EXTERN_MODULE`/`RCT_EXTERN_METHOD`
 
-@objc(UserDataModule)
-final class UserDataModule: RCTEventEmitter {
+@objc(LocationBridge)
+final class LocationBridge: RCTEventEmitter {
   
   private var hasListeners = false
   
@@ -21,7 +21,7 @@ final class UserDataModule: RCTEventEmitter {
   
   override static func requiresMainQueueSetup() -> Bool { true }
   
-  override static func moduleName() -> String! { "UserDataModule" }
+  override static func moduleName() -> String! { "LocationBridge" }
   
   // MARK: - Exported methods
   

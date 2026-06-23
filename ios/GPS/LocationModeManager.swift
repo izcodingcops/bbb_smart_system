@@ -1,5 +1,5 @@
 //
-//  GPSPowerManager.swift
+//  LocationModeManager.swift
 //  bbb_smart_system
 //
 //  Created by Irtaza Fiaz on 17/06/2026.
@@ -9,7 +9,7 @@ import Foundation
 import CoreLocation
 import CoreMotion
 
-public final class GPSPowerManager {
+public final class LocationModeManager {
   
   public private(set) var isResting: Bool = false
   public private(set) var isDriving: Bool = false
@@ -92,7 +92,7 @@ public final class GPSPowerManager {
   private func startMotionWake() {
     guard !motionStarted else { return }
     guard CMMotionActivityManager.isActivityAvailable() else {
-      NSLog("[GPSOPT] Motion sensor not available — will rely on 50m location fallback to wake")
+      Log.gps.warn("motion sensor not available — relying on 50m location fallback to wake")
       return
     }
     motionStarted = true

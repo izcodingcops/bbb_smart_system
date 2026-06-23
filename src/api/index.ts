@@ -54,9 +54,6 @@ client.interceptors.request.use(async config => {
   const state = store.getState();
 
   const token: string | undefined = state.auth?.session?.token;
-  // Prefer redux state (set after a successful program selection). If that's
-  // still null (e.g. start-shift call that must populate the header BEFORE
-  // navigation commits), fall back to the transient override.
   const programId =
     state.program?.selectedProgram?.id ?? getActiveProgramId() ?? '';
   const loc = state.location?.currentLocation;
@@ -88,14 +85,10 @@ client.interceptors.request.use(async config => {
     horizontal_accuracy: loc?.horizontalAccuracy ?? '',
   } as any;
 
-  // TEMP: __DEV__ gate commented out so the curl prints in Release builds run
-  // via Xcode. RE-ENABLE before shipping — the curl includes the Authorization
-  // token and location headers, which must not land in production logs.
-  // if (__DEV__) {
-  logger.debug('API', `→ ${(config.method ?? 'GET').toUpperCase()} ${config.url}`);
-  // eslint-disable-next-line no-console
-  console.log(`\n${toCurl(config)}\n`);
-  // }
+  if (__DEV__) {
+    logger.debug('API', `→ ${(config.method ?? 'GET').toUpperCase()} ${config.url}`);
+    logger.debug('API', `\n${toCurl(config)}\n`);
+  }
 
   return config;
 });

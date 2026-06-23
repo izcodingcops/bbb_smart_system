@@ -8,54 +8,58 @@
 
 /* Begin PBXBuildFile section */
 		1058B9562FE2A31A007E7A8D /* GPSLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9552FE2A31A007E7A8D /* GPSLogger.swift */; };
-		1058B9582FE2A53C007E7A8D /* GPSPowerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9572FE2A53C007E7A8D /* GPSPowerManager.swift */; };
-		1058B95A2FE2A6E9007E7A8D /* GPSBatchSmoother.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9592FE2A6E9007E7A8D /* GPSBatchSmoother.swift */; };
-		1058B95C2FE2AB0C007E7A8D /* LocationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B95B2FE2AB0C007E7A8D /* LocationStore.swift */; };
+		1058B9582FE2A53C007E7A8D /* LocationModeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9572FE2A53C007E7A8D /* LocationModeManager.swift */; };
+		1058B95A2FE2A6E9007E7A8D /* GPSTrackSmoother.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9592FE2A6E9007E7A8D /* GPSTrackSmoother.swift */; };
+		1058B95C2FE2AB0C007E7A8D /* LocationPersistenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B95B2FE2AB0C007E7A8D /* LocationPersistenceStore.swift */; };
 		1058B95E2FE2AB8D007E7A8D /* LocationUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B95D2FE2AB8D007E7A8D /* LocationUploader.swift */; };
 		1058B9602FE2ABF1007E7A8D /* LocationFilterPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B95F2FE2ABF1007E7A8D /* LocationFilterPipeline.swift */; };
 		1058B9622FE2AC86007E7A8D /* PreciseLocationAlertPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9612FE2AC86007E7A8D /* PreciseLocationAlertPresenter.swift */; };
 		1058B9642FE2AEA1007E7A8D /* PermissionGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9632FE2AEA1007E7A8D /* PermissionGate.swift */; };
+		1058B9712FE2B000007E7A8D /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9702FE2B000007E7A8D /* Log.swift */; };
+		1058B9732FE2B000007E7A8D /* URLRequest+cURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9722FE2B000007E7A8D /* URLRequest+cURL.swift */; };
+		10D8ED0A2FEABB2D0059D8E6 /* LocationDataModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 10D8ED082FEABB2D0059D8E6 /* LocationDataModel.xcdatamodeld */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		56A35D1A0F834D6EB3CC011D /* CubeLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D6D20E0E1EC4F45B07B9C93 /* CubeLocation.swift */; };
+		56A35D1A0F834D6EB3CC011D /* StoredLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D6D20E0E1EC4F45B07B9C93 /* StoredLocation.swift */; };
 		68E9D63A51E82699821398A5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		6DAA43B9C247F1795AB3472F /* libPods-bbb_smart_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 230B942AFE9B9881B09F5354 /* libPods-bbb_smart_system.a */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		7672059903CA4D279076B7E1 /* LatoLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 61CD47E677394FF4ADA508E2 /* LatoLight.ttf */; };
-		7B362ED6740441EC8E0A9C55 /* UserDataModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D9E8DAF09E64387876B214E /* UserDataModule.swift */; };
-		7B362ED6740441EC8E0A9C56 /* UserDataModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9E8DAF09E64387876B214F /* UserDataModule.m */; };
+		7B362ED6740441EC8E0A9C55 /* LocationBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D9E8DAF09E64387876B214E /* LocationBridge.swift */; };
+		7B362ED6740441EC8E0A9C56 /* LocationBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9E8DAF09E64387876B214F /* LocationBridge.m */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		A96CC4E34C7E4DF2B786D159 /* LatoBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DFBF986AE00547709E438793 /* LatoBold.ttf */; };
 		ACE642B0D7E249DB8C49027D /* DefaultsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B740D00067F549348E3355EC /* DefaultsStore.swift */; };
 		C2D0879A8F954A2B916ADAFB /* LatoRegular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A9E3C07455604CF09900CC11 /* LatoRegular.ttf */; };
 		CDB88DAED74E4DF1B10A31DD /* LatoBlack.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C93A5463CB0B46E1A16BD2EB /* LatoBlack.ttf */; };
 		CE3093A7D4984E24871C9000 /* LatoItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3E973BBF62874530BC5B24AC /* LatoItalic.ttf */; };
-		EDCEAE7B8559483580E9D850 /* BBBDataModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 667022CCC28C4F0D8DD33D3B /* BBBDataModel.xcdatamodeld */; };
 		FE53C99ED1734139AD5E9B36 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE5AA8CA38245929F596A17 /* LocationManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		1058B9552FE2A31A007E7A8D /* GPSLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPSLogger.swift; sourceTree = "<group>"; };
-		1058B9572FE2A53C007E7A8D /* GPSPowerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPSPowerManager.swift; sourceTree = "<group>"; };
-		1058B9592FE2A6E9007E7A8D /* GPSBatchSmoother.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPSBatchSmoother.swift; sourceTree = "<group>"; };
-		1058B95B2FE2AB0C007E7A8D /* LocationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationStore.swift; sourceTree = "<group>"; };
+		1058B9572FE2A53C007E7A8D /* LocationModeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationModeManager.swift; sourceTree = "<group>"; };
+		1058B9592FE2A6E9007E7A8D /* GPSTrackSmoother.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPSTrackSmoother.swift; sourceTree = "<group>"; };
+		1058B95B2FE2AB0C007E7A8D /* LocationPersistenceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationPersistenceStore.swift; sourceTree = "<group>"; };
 		1058B95D2FE2AB8D007E7A8D /* LocationUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationUploader.swift; sourceTree = "<group>"; };
 		1058B95F2FE2ABF1007E7A8D /* LocationFilterPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationFilterPipeline.swift; sourceTree = "<group>"; };
 		1058B9612FE2AC86007E7A8D /* PreciseLocationAlertPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreciseLocationAlertPresenter.swift; sourceTree = "<group>"; };
 		1058B9632FE2AEA1007E7A8D /* PermissionGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionGate.swift; sourceTree = "<group>"; };
+		1058B9702FE2B000007E7A8D /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
+		1058B9722FE2B000007E7A8D /* URLRequest+cURL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLRequest+cURL.swift"; sourceTree = "<group>"; };
+		10D8ED092FEABB2D0059D8E6 /* LocationDataModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = LocationDataModel.xcdatamodel; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* bbb_smart_system.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = bbb_smart_system.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = bbb_smart_system/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = bbb_smart_system/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = bbb_smart_system/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		1CB549B0CF61C6D0309D8B84 /* Pods-bbb_smart_system.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-bbb_smart_system.release.xcconfig"; path = "Target Support Files/Pods-bbb_smart_system/Pods-bbb_smart_system.release.xcconfig"; sourceTree = "<group>"; };
-		1D6D20E0E1EC4F45B07B9C93 /* CubeLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CubeLocation.swift; sourceTree = "<group>"; };
-		1D9E8DAF09E64387876B214E /* UserDataModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataModule.swift; sourceTree = "<group>"; };
-		1D9E8DAF09E64387876B214F /* UserDataModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UserDataModule.m; sourceTree = "<group>"; };
+		1D6D20E0E1EC4F45B07B9C93 /* StoredLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoredLocation.swift; sourceTree = "<group>"; };
+		1D9E8DAF09E64387876B214E /* LocationBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationBridge.swift; sourceTree = "<group>"; };
+		1D9E8DAF09E64387876B214F /* LocationBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LocationBridge.m; sourceTree = "<group>"; };
 		230B942AFE9B9881B09F5354 /* libPods-bbb_smart_system.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-bbb_smart_system.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B4392A12AC88292D35C810B /* Pods-RNAuthApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RNAuthApp.debug.xcconfig"; path = "Target Support Files/Pods-RNAuthApp/Pods-RNAuthApp.debug.xcconfig"; sourceTree = "<group>"; };
 		3E973BBF62874530BC5B24AC /* LatoItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = LatoItalic.ttf; path = ../src/assets/fonts/LatoItalic.ttf; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-RNAuthApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RNAuthApp.release.xcconfig"; path = "Target Support Files/Pods-RNAuthApp/Pods-RNAuthApp.release.xcconfig"; sourceTree = "<group>"; };
 		61CD47E677394FF4ADA508E2 /* LatoLight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = LatoLight.ttf; path = ../src/assets/fonts/LatoLight.ttf; sourceTree = "<group>"; };
-		667022CCC28C4F0D8DD33D3B /* BBBDataModel.xcdatamodeld */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; name = BBBDataModel.xcdatamodeld; path = bbb_smart_system/BBBDataModel.xcdatamodeld; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = bbb_smart_system/AppDelegate.swift; sourceTree = "<group>"; };
 		7AE5AA8CA38245929F596A17 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = bbb_smart_system/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -79,6 +83,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1058B9742FE2B000007E7A8D /* Logging */ = {
+			isa = PBXGroup;
+			children = (
+				1058B9702FE2B000007E7A8D /* Log.swift */,
+				1058B9722FE2B000007E7A8D /* URLRequest+cURL.swift */,
+			);
+			path = Logging;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* bbb_smart_system */ = {
 			isa = PBXGroup;
 			children = (
@@ -87,54 +100,14 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
-				667022CCC28C4F0D8DD33D3B /* BBBDataModel.xcdatamodeld */,
 				B740D00067F549348E3355EC /* DefaultsStore.swift */,
 				BB7D67934E50471FADD9E7AF /* Bridge */,
 				AA5A7AF5D9E24FDC8A40D515 /* Location */,
 				E357E23090BB43BAAC49A38B /* GPS */,
 				7456A0A6A97D4F3B8604D078 /* Permissions */,
+				1058B9742FE2B000007E7A8D /* Logging */,
 			);
 			name = bbb_smart_system;
-			sourceTree = "<group>";
-		};
-		BB7D67934E50471FADD9E7AF /* Bridge */ = {
-			isa = PBXGroup;
-			children = (
-				1D9E8DAF09E64387876B214E /* UserDataModule.swift */,
-				1D9E8DAF09E64387876B214F /* UserDataModule.m */,
-			);
-			path = Bridge;
-			sourceTree = "<group>";
-		};
-		AA5A7AF5D9E24FDC8A40D515 /* Location */ = {
-			isa = PBXGroup;
-			children = (
-				7AE5AA8CA38245929F596A17 /* LocationManager.swift */,
-				1058B95B2FE2AB0C007E7A8D /* LocationStore.swift */,
-				1058B95D2FE2AB8D007E7A8D /* LocationUploader.swift */,
-				1058B95F2FE2ABF1007E7A8D /* LocationFilterPipeline.swift */,
-				1D6D20E0E1EC4F45B07B9C93 /* CubeLocation.swift */,
-			);
-			path = Location;
-			sourceTree = "<group>";
-		};
-		E357E23090BB43BAAC49A38B /* GPS */ = {
-			isa = PBXGroup;
-			children = (
-				1058B9552FE2A31A007E7A8D /* GPSLogger.swift */,
-				1058B9572FE2A53C007E7A8D /* GPSPowerManager.swift */,
-				1058B9592FE2A6E9007E7A8D /* GPSBatchSmoother.swift */,
-			);
-			path = GPS;
-			sourceTree = "<group>";
-		};
-		7456A0A6A97D4F3B8604D078 /* Permissions */ = {
-			isa = PBXGroup;
-			children = (
-				1058B9632FE2AEA1007E7A8D /* PermissionGate.swift */,
-				1058B9612FE2AC86007E7A8D /* PreciseLocationAlertPresenter.swift */,
-			);
-			path = Permissions;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
@@ -144,6 +117,15 @@
 				230B942AFE9B9881B09F5354 /* libPods-bbb_smart_system.a */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		7456A0A6A97D4F3B8604D078 /* Permissions */ = {
+			isa = PBXGroup;
+			children = (
+				1058B9632FE2AEA1007E7A8D /* PermissionGate.swift */,
+				1058B9612FE2AC86007E7A8D /* PreciseLocationAlertPresenter.swift */,
+			);
+			path = Permissions;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -176,6 +158,28 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		AA5A7AF5D9E24FDC8A40D515 /* Location */ = {
+			isa = PBXGroup;
+			children = (
+				7AE5AA8CA38245929F596A17 /* LocationManager.swift */,
+				1058B95F2FE2ABF1007E7A8D /* LocationFilterPipeline.swift */,
+				1058B95D2FE2AB8D007E7A8D /* LocationUploader.swift */,
+				1058B95B2FE2AB0C007E7A8D /* LocationPersistenceStore.swift */,
+				1D6D20E0E1EC4F45B07B9C93 /* StoredLocation.swift */,
+				10D8ED082FEABB2D0059D8E6 /* LocationDataModel.xcdatamodeld */,
+			);
+			path = Location;
+			sourceTree = "<group>";
+		};
+		BB7D67934E50471FADD9E7AF /* Bridge */ = {
+			isa = PBXGroup;
+			children = (
+				1D9E8DAF09E64387876B214E /* LocationBridge.swift */,
+				1D9E8DAF09E64387876B214F /* LocationBridge.m */,
+			);
+			path = Bridge;
+			sourceTree = "<group>";
+		};
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
@@ -197,6 +201,16 @@
 				A9E3C07455604CF09900CC11 /* LatoRegular.ttf */,
 			);
 			name = Resources;
+			sourceTree = "<group>";
+		};
+		E357E23090BB43BAAC49A38B /* GPS */ = {
+			isa = PBXGroup;
+			children = (
+				1058B9552FE2A31A007E7A8D /* GPSLogger.swift */,
+				1058B9572FE2A53C007E7A8D /* LocationModeManager.swift */,
+				1058B9592FE2A6E9007E7A8D /* GPSTrackSmoother.swift */,
+			);
+			path = GPS;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -360,21 +374,23 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1058B95C2FE2AB0C007E7A8D /* LocationStore.swift in Sources */,
+				1058B95C2FE2AB0C007E7A8D /* LocationPersistenceStore.swift in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 				ACE642B0D7E249DB8C49027D /* DefaultsStore.swift in Sources */,
 				1058B9642FE2AEA1007E7A8D /* PermissionGate.swift in Sources */,
-				1058B9582FE2A53C007E7A8D /* GPSPowerManager.swift in Sources */,
-				56A35D1A0F834D6EB3CC011D /* CubeLocation.swift in Sources */,
+				1058B9582FE2A53C007E7A8D /* LocationModeManager.swift in Sources */,
+				56A35D1A0F834D6EB3CC011D /* StoredLocation.swift in Sources */,
 				1058B9562FE2A31A007E7A8D /* GPSLogger.swift in Sources */,
-				1058B95A2FE2A6E9007E7A8D /* GPSBatchSmoother.swift in Sources */,
+				1058B95A2FE2A6E9007E7A8D /* GPSTrackSmoother.swift in Sources */,
 				1058B9622FE2AC86007E7A8D /* PreciseLocationAlertPresenter.swift in Sources */,
+				10D8ED0A2FEABB2D0059D8E6 /* LocationDataModel.xcdatamodeld in Sources */,
 				FE53C99ED1734139AD5E9B36 /* LocationManager.swift in Sources */,
 				1058B9602FE2ABF1007E7A8D /* LocationFilterPipeline.swift in Sources */,
-				7B362ED6740441EC8E0A9C55 /* UserDataModule.swift in Sources */,
-				7B362ED6740441EC8E0A9C56 /* UserDataModule.m in Sources */,
+				7B362ED6740441EC8E0A9C55 /* LocationBridge.swift in Sources */,
+				7B362ED6740441EC8E0A9C56 /* LocationBridge.m in Sources */,
 				1058B95E2FE2AB8D007E7A8D /* LocationUploader.swift in Sources */,
-				EDCEAE7B8559483580E9D850 /* BBBDataModel.xcdatamodeld in Sources */,
+				1058B9712FE2B000007E7A8D /* Log.swift in Sources */,
+				1058B9732FE2B000007E7A8D /* URLRequest+cURL.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -619,6 +635,19 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		10D8ED082FEABB2D0059D8E6 /* LocationDataModel.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				10D8ED092FEABB2D0059D8E6 /* LocationDataModel.xcdatamodel */,
+			);
+			currentVersion = 10D8ED092FEABB2D0059D8E6 /* LocationDataModel.xcdatamodel */;
+			path = LocationDataModel.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
 }

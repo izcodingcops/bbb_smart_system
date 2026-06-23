@@ -20,7 +20,7 @@ public final class GPSLogger {
   }()
 
   /// Path to the current CSV log, or nil if nothing has been written yet.
-  /// Exposed so the app can share/export the log (see UserDataModule).
+  /// Exposed so the app can share/export the log (see LocationBridge).
   public static var currentLogURL: URL? {
     FileManager.default.fileExists(atPath: fileURL.path) ? fileURL : nil
   }
@@ -31,13 +31,16 @@ public final class GPSLogger {
     return f
   }()
   
-  public static func log(_ event: String,
-                         lat: Double, lon: Double,
-                         accuracy: Double, speed: Double,
-                         mode: String, note: String) {
-    NSLog("[GPSOPT] %@ acc=%.0fm speed=%.1f mode=%@ %@", event, accuracy, speed, mode, note)
+  public static func log(
+    _ event: String,
+    lat: Double, lon: Double,
+    accuracy: Double, speed: Double,
+    mode: String, note: String) {
+      
+    Log.gps.debug("\(event) acc=\(Int(accuracy))m speed=\(String(format: "%.1f", speed)) mode=\(mode) \(note)")
     let line = "\(timeFormat.string(from: Date())),\(event),\(lat),\(lon),\(accuracy),\(speed),\(mode),\(note)\n"
     queue.async { append(line) }
+      
   }
   
   public static func info(_ event: String, note: String) {
@@ -49,6 +52,7 @@ public final class GPSLogger {
     
     if let attrs = try? fm.attributesOfItem(atPath: fileURL.path),
        let size = attrs[.size] as? UInt64, size > maxBytes {
+      
       let old = fileURL.deletingPathExtension().appendingPathExtension("old.csv")
       try? fm.removeItem(at: old)
       try? fm.moveItem(at: fileURL, to: old)
@@ -60,6 +64,7 @@ public final class GPSLogger {
     
     guard let handle = try? FileHandle(forWritingTo: fileURL),
           let data = line.data(using: .utf8) else { return }
+    
     _ = try? handle.seekToEnd()
     handle.write(data)
     try? handle.close()

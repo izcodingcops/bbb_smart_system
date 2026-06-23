@@ -1,8 +1,8 @@
 import { NativeModules, NativeEventEmitter } from 'react-native';
 import { logger } from './logger';
 
-const { UserDataModule } = NativeModules;
-const emitter = UserDataModule ? new NativeEventEmitter(UserDataModule) : null;
+const { LocationBridge } = NativeModules;
+const emitter = LocationBridge ? new NativeEventEmitter(LocationBridge) : null;
 
 export type PermissionStatus =
   | 'ok'
@@ -35,13 +35,13 @@ export interface SessionData {
 
 export const locationTracker = {
   startTracking: (data: SessionData) => {
-    if (!UserDataModule) return;
+    if (!LocationBridge) return;
     logger.info(
       'LocationTracker',
       'Starting native location tracking',
       data.sessionId,
     );
-    UserDataModule.saveUserDetailsAndStartLocationUpdates({
+    LocationBridge.saveUserDetailsAndStartLocationUpdates({
       sessionId: String(data.sessionId),
       deviceId: data.deviceId,
       deviceType: data.deviceType,
@@ -55,29 +55,29 @@ export const locationTracker = {
   },
 
   stopTracking: () => {
-    if (!UserDataModule) return;
+    if (!LocationBridge) return;
     logger.info('LocationTracker', 'Stopping native location tracking');
-    UserDataModule.clearUserDetails();
+    LocationBridge.clearUserDetails();
   },
 
   syncNow: () => {
-    if (!UserDataModule) return;
+    if (!LocationBridge) return;
     logger.info('LocationTracker', 'Manual sync triggered');
-    UserDataModule.syncLocationData();
+    LocationBridge.syncLocationData();
   },
 
   endSession: (): Promise<boolean> => {
-    if (!UserDataModule) return Promise.resolve(true);
-    return UserDataModule.endUserSession().then(
+    if (!LocationBridge) return Promise.resolve(true);
+    return LocationBridge.endUserSession().then(
       () => true,
       () => false,
     );
   },
 
   checkCanLogOut: (): Promise<boolean> => {
-    if (!UserDataModule) return Promise.resolve(true);
+    if (!LocationBridge) return Promise.resolve(true);
     return new Promise(resolve => {
-      UserDataModule.checkForLogOut((result: string) =>
+      LocationBridge.checkForLogOut((result: string) =>
         resolve(result === 'true'),
       );
     });
@@ -88,8 +88,8 @@ export const locationTracker = {
   /** Opens the iOS share sheet for the GPS CSV log. Resolves false if the
    *  native method is unavailable or no log file exists yet. */
   shareGpsLog: (): Promise<boolean> => {
-    if (!UserDataModule?.shareLogFile) return Promise.resolve(false);
-    return UserDataModule.shareLogFile().then(
+    if (!LocationBridge?.shareLogFile) return Promise.resolve(false);
+    return LocationBridge.shareLogFile().then(
       () => true,
       (e: unknown) => {
         logger.warn('LocationTracker', 'shareGpsLog failed', e);
@@ -109,17 +109,17 @@ export const locationTracker = {
     heading: number;
     timestamp: number;
   }> => {
-    if (!UserDataModule?.getCurrentLocation) {
+    if (!LocationBridge?.getCurrentLocation) {
       return Promise.reject(new Error('getCurrentLocation not available'));
     }
-    return UserDataModule.getCurrentLocation();
+    return LocationBridge.getCurrentLocation();
   },
 
   // ---- Permissions --------------------------------------------------------
 
   getPermissionStatus: (): Promise<PermissionStatus> => {
-    if (!UserDataModule?.getPermissionStatus) return Promise.resolve('ok');
-    return UserDataModule.getPermissionStatus();
+    if (!LocationBridge?.getPermissionStatus) return Promise.resolve('ok');
+    return LocationBridge.getPermissionStatus();
   },
 
   /**
@@ -128,16 +128,16 @@ export const locationTracker = {
    * responded to the system dialog.
    */
   requestStage: (stage: PermissionStage): Promise<boolean> => {
-    if (!UserDataModule?.requestStage) return Promise.resolve(true);
-    return UserDataModule.requestStage(stage);
+    if (!LocationBridge?.requestStage) return Promise.resolve(true);
+    return LocationBridge.requestStage(stage);
   },
 
   openAppSettings: () => {
-    UserDataModule?.openAppSettings?.();
+    LocationBridge?.openAppSettings?.();
   },
 
   openLocationSettings: () => {
-    UserDataModule?.openLocationSettings?.();
+    LocationBridge?.openLocationSettings?.();
   },
 
   /** Fires whenever MainActivity.onResume runs — used to recheck perms after Settings round-trips. */

@@ -1,5 +1,5 @@
 //
-//  LocationStore.swift
+//  LocationPersistenceStore.swift
 //  bbb_smart_system
 //
 //  Created by Irtaza Fiaz on 17/06/2026.
@@ -8,12 +8,12 @@
 import Foundation
 import CoreData
 
-final class LocationStore {
+final class LocationPersistenceStore {
   
   // MARK: - Container
   
   private lazy var persistentContainer: NSPersistentContainer = {
-    let container = NSPersistentContainer(name: "BBBDataModel")
+    let container = NSPersistentContainer(name: "LocationDataModel")
     container.loadPersistentStores { _, error in
       if let error { fatalError("[CoreData] Failed to load store: \(error)") }
     }
@@ -25,12 +25,12 @@ final class LocationStore {
   // MARK: - Reads
   
   func count() -> Int {
-    let req = NSFetchRequest<NSFetchRequestResult>(entityName: "CubeLocation")
+    let req = NSFetchRequest<NSFetchRequestResult>(entityName: "StoredLocation")
     return (try? context.count(for: req)) ?? 0
   }
   
-  func nextBatch(limit: Int = 400) -> [CubeLocation] {
-    let req: NSFetchRequest<CubeLocation> = CubeLocation.fetchRequest()
+  func nextBatch(limit: Int = 400) -> [StoredLocation] {
+    let req: NSFetchRequest<StoredLocation> = StoredLocation.fetchRequest()
     // Oldest-first. ctimestamp is a fixed-width ms-epoch string, so an ascending
     // string sort == chronological. The smoother assumes chronological order and
     // this makes upload draining FIFO.
@@ -40,7 +40,7 @@ final class LocationStore {
   }
   
   func allAsDicts(timestampToDate: (String?) -> String?) -> [[String: String]] {
-    let req: NSFetchRequest<CubeLocation> = CubeLocation.fetchRequest()
+    let req: NSFetchRequest<StoredLocation> = StoredLocation.fetchRequest()
     req.sortDescriptors = [NSSortDescriptor(key: "ctimestamp", ascending: true)]
     let results = (try? context.fetch(req)) ?? []
     return results.map { loc in [
@@ -54,8 +54,8 @@ final class LocationStore {
   // MARK: - Writes
   
   func insert(latitude: String, longitude: String, accuracy: String, online: Bool) {
-    guard let entity = NSEntityDescription.entity(forEntityName: "CubeLocation", in: context),
-          let loc = NSManagedObject(entity: entity, insertInto: context) as? CubeLocation
+    guard let entity = NSEntityDescription.entity(forEntityName: "StoredLocation", in: context),
+          let loc = NSManagedObject(entity: entity, insertInto: context) as? StoredLocation
     else { return }
     loc.clatitude = latitude
     loc.clongitute = longitude
@@ -70,7 +70,7 @@ final class LocationStore {
   func delete(timestamps: [String]) {
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
-      let req = NSFetchRequest<NSFetchRequestResult>(entityName: "CubeLocation")
+      let req = NSFetchRequest<NSFetchRequestResult>(entityName: "StoredLocation")
       req.predicate = NSPredicate(format: "ctimestamp IN %@", timestamps)
       let delete = NSBatchDeleteRequest(fetchRequest: req)
       try? self.context.execute(delete)
@@ -81,7 +81,7 @@ final class LocationStore {
   func deleteAll() {
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
-      let req = NSFetchRequest<NSFetchRequestResult>(entityName: "CubeLocation")
+      let req = NSFetchRequest<NSFetchRequestResult>(entityName: "StoredLocation")
       let delete = NSBatchDeleteRequest(fetchRequest: req)
       try? self.context.execute(delete)
       self.context.reset()
@@ -89,8 +89,8 @@ final class LocationStore {
   }
 }
 
-extension CubeLocation {
-  @nonobjc class func fetchRequest() -> NSFetchRequest<CubeLocation> {
-    return NSFetchRequest<CubeLocation>(entityName: "CubeLocation")
+extension StoredLocation {
+  @nonobjc class func fetchRequest() -> NSFetchRequest<StoredLocation> {
+    return NSFetchRequest<StoredLocation>(entityName: "StoredLocation")
   }
 }

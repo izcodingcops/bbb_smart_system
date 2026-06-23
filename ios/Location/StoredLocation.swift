@@ -1,7 +1,7 @@
 import CoreData
 
-@objc(CubeLocation)
-public class CubeLocation: NSManagedObject {
+@objc(StoredLocation)
+public class StoredLocation: NSManagedObject {
   @NSManaged public var clatitude: String?
   @NSManaged public var clongitute: String?
   @NSManaged public var ctimestamp: String?

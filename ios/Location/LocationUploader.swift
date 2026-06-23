@@ -9,8 +9,8 @@ import Foundation
 
 final class LocationUploader {
   
-  private let store: LocationStore
-  init(store: LocationStore) { self.store = store }
+  private let store: LocationPersistenceStore
+  init(store: LocationPersistenceStore) { self.store = store }
   
   // MARK: - Public API
   
@@ -43,7 +43,7 @@ final class LocationUploader {
     }
   }
   
-  func upload(_ batch: [CubeLocation], completion: @escaping (Bool) -> Void) {
+  func upload(_ batch: [StoredLocation], completion: @escaping (Bool) -> Void) {
     post(batch, completion: completion)
   }
   
@@ -65,7 +65,7 @@ final class LocationUploader {
   
   // MARK: - Networking
   
-  private func post(_ locations: [CubeLocation], completion: @escaping (Bool) -> Void) {
+  private func post(_ locations: [StoredLocation], completion: @escaping (Bool) -> Void) {
     let session  = DefaultsStore.get(.sessionId) ?? ""
     let deviceId = DefaultsStore.get(.deviceId) ?? ""
     let devType  = DefaultsStore.get(.deviceType) ?? ""
@@ -91,7 +91,7 @@ final class LocationUploader {
       ])
     }
     
-    GPSBatchSmoother.smoothInPlace(&locationArray)
+    GPSTrackSmoother.smoothInPlace(&locationArray)
     
     let body: [String: Any] = [
       "data": locationArray,
@@ -114,44 +114,27 @@ final class LocationUploader {
       request.setValue("application/json", forHTTPHeaderField: "Content-Type")
       request.httpBody = jsonData
 
-      // Copy-pasteable curl of the exact request (method + headers + body).
-      print("[Uploader] \(Self.curlString(for: request))")
+      Log.network.debug("→ \(request.curlString)")
 
       URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-//        #if DEBUG
-        if let error { print("[Uploader] network error: \(error.localizedDescription)") }
+        if let error { Log.network.debug("network error: \(error.localizedDescription)") }
+        
         let code = (response as? HTTPURLResponse)?.statusCode ?? -1
         let raw = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
-        print("[Uploader] HTTP \(code) response=\(raw)")
-//        #endif
+        Log.network.debug("← HTTP \(code) response=\(raw)")
+        
         guard let self, error == nil, let data else { completion(false); return }
         guard let resp = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let status = resp["status"] as? Int, status == 200 else { completion(false); return }
+        
         let deletedTimestamps = (resp["data"] as? [String]) ?? timestamps
-//        #if DEBUG
-        print("[Uploader] uploaded \(locations.count); server ts=\(deletedTimestamps.count)")
-//        #endif
+        Log.network.debug("uploaded \(locations.count); server ts=\(deletedTimestamps.count)")
+        
         self.store.delete(timestamps: deletedTimestamps)
         DefaultsStore.set("false", for: .postingData)
+        
         completion(true)
       }.resume()
     }
-  }
-
-  /// Builds a copy-pasteable curl command from a URLRequest — method, headers,
-  /// and body — so a failing upload can be replayed verbatim from a terminal.
-  /// Note: system headers (Content-Length, User-Agent) are added by URLSession
-  /// at send time and won't appear here; curl recomputes Content-Length from --data.
-  private static func curlString(for request: URLRequest) -> String {
-    var parts = ["curl -X \(request.httpMethod ?? "GET")"]
-    request.allHTTPHeaderFields?
-      .sorted { $0.key < $1.key }
-      .forEach { key, value in parts.append("-H '\(key): \(value)'") }
-    if let body = request.httpBody, let bodyStr = String(data: body, encoding: .utf8) {
-      let escaped = bodyStr.replacingOccurrences(of: "'", with: "'\\''")
-      parts.append("--data '\(escaped)'")
-    }
-    parts.append("'\(request.url?.absoluteString ?? "")'")
-    return parts.joined(separator: " ")
   }
 }

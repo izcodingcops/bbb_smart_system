@@ -1,7 +1,7 @@
 #import <React/RCTBridgeModule.h>
 #import <React/RCTEventEmitter.h>
 
-@interface RCT_EXTERN_MODULE(UserDataModule, RCTEventEmitter)
+@interface RCT_EXTERN_MODULE(LocationBridge, RCTEventEmitter)
 
 RCT_EXTERN_METHOD(saveUserDetailsAndStartLocationUpdates:(NSDictionary *)data)
 RCT_EXTERN_METHOD(clearUserDetails)

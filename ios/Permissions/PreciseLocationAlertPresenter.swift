@@ -2,13 +2,7 @@
 //  PreciseLocationAlertPresenter.swift
 //  bbb_smart_system
 //
-//  Generic permission-alert overlay. Presents a single alert at a time on
-//  its own UIWindow at .alert + 1 level so it sits on top of React Native
-//  UI. PermissionGate uses this for location-denied, motion-denied, and
-//  precise-location-OFF messages.
-//
-//  (File name kept for now to avoid Xcode target churn — rename to
-//  PermissionAlertPresenter.swift via Xcode's rename tool when convenient.)
+//  Created by Irtaza Fiaz on 17/06/2026.
 //
 
 import Foundation
@@ -28,6 +22,7 @@ final class PermissionAlertPresenter {
   func show(_ kind: Kind) {
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
+      
       if self.currentKind == kind { return }
       self.tearDown {
         self.present(kind)
