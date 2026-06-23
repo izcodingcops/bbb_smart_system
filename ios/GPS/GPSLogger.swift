@@ -18,6 +18,12 @@ public final class GPSLogger {
     FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
       .appendingPathComponent("gps_track_log.csv")
   }()
+
+  /// Path to the current CSV log, or nil if nothing has been written yet.
+  /// Exposed so the app can share/export the log (see UserDataModule).
+  public static var currentLogURL: URL? {
+    FileManager.default.fileExists(atPath: fileURL.path) ? fileURL : nil
+  }
   
   private static let timeFormat: DateFormatter = {
     let f = DateFormatter()

@@ -22,10 +22,10 @@
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		7672059903CA4D279076B7E1 /* LatoLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 61CD47E677394FF4ADA508E2 /* LatoLight.ttf */; };
 		7B362ED6740441EC8E0A9C55 /* UserDataModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D9E8DAF09E64387876B214E /* UserDataModule.swift */; };
-		7B362ED6740441EC8E0A9C56 /* BBBUserDataModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9E8DAF09E64387876B214F /* BBBUserDataModule.m */; };
+		7B362ED6740441EC8E0A9C56 /* UserDataModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9E8DAF09E64387876B214F /* UserDataModule.m */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		A96CC4E34C7E4DF2B786D159 /* LatoBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DFBF986AE00547709E438793 /* LatoBold.ttf */; };
-		ACE642B0D7E249DB8C49027D /* UserDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = B740D00067F549348E3355EC /* UserDefault.swift */; };
+		ACE642B0D7E249DB8C49027D /* DefaultsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B740D00067F549348E3355EC /* DefaultsStore.swift */; };
 		C2D0879A8F954A2B916ADAFB /* LatoRegular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A9E3C07455604CF09900CC11 /* LatoRegular.ttf */; };
 		CDB88DAED74E4DF1B10A31DD /* LatoBlack.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C93A5463CB0B46E1A16BD2EB /* LatoBlack.ttf */; };
 		CE3093A7D4984E24871C9000 /* LatoItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3E973BBF62874530BC5B24AC /* LatoItalic.ttf */; };
@@ -49,7 +49,7 @@
 		1CB549B0CF61C6D0309D8B84 /* Pods-bbb_smart_system.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-bbb_smart_system.release.xcconfig"; path = "Target Support Files/Pods-bbb_smart_system/Pods-bbb_smart_system.release.xcconfig"; sourceTree = "<group>"; };
 		1D6D20E0E1EC4F45B07B9C93 /* CubeLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CubeLocation.swift; sourceTree = "<group>"; };
 		1D9E8DAF09E64387876B214E /* UserDataModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataModule.swift; sourceTree = "<group>"; };
-		1D9E8DAF09E64387876B214F /* BBBUserDataModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BBBUserDataModule.m; path = bbb_smart_system/BBBUserDataModule.m; sourceTree = "<group>"; };
+		1D9E8DAF09E64387876B214F /* UserDataModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UserDataModule.m; sourceTree = "<group>"; };
 		230B942AFE9B9881B09F5354 /* libPods-bbb_smart_system.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-bbb_smart_system.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B4392A12AC88292D35C810B /* Pods-RNAuthApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RNAuthApp.debug.xcconfig"; path = "Target Support Files/Pods-RNAuthApp/Pods-RNAuthApp.debug.xcconfig"; sourceTree = "<group>"; };
 		3E973BBF62874530BC5B24AC /* LatoItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = LatoItalic.ttf; path = ../src/assets/fonts/LatoItalic.ttf; sourceTree = "<group>"; };
@@ -61,7 +61,7 @@
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = bbb_smart_system/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		A9E3C07455604CF09900CC11 /* LatoRegular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = LatoRegular.ttf; path = ../src/assets/fonts/LatoRegular.ttf; sourceTree = "<group>"; };
 		AFFD73D52BA76DE62A5B9E07 /* Pods-bbb_smart_system.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-bbb_smart_system.debug.xcconfig"; path = "Target Support Files/Pods-bbb_smart_system/Pods-bbb_smart_system.debug.xcconfig"; sourceTree = "<group>"; };
-		B740D00067F549348E3355EC /* UserDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefault.swift; sourceTree = "<group>"; };
+		B740D00067F549348E3355EC /* DefaultsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultsStore.swift; sourceTree = "<group>"; };
 		C93A5463CB0B46E1A16BD2EB /* LatoBlack.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = LatoBlack.ttf; path = ../src/assets/fonts/LatoBlack.ttf; sourceTree = "<group>"; };
 		DFBF986AE00547709E438793 /* LatoBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = LatoBold.ttf; path = ../src/assets/fonts/LatoBold.ttf; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -82,27 +82,59 @@
 		13B07FAE1A68108700A75B9A /* bbb_smart_system */ = {
 			isa = PBXGroup;
 			children = (
-				1D9E8DAF09E64387876B214F /* BBBUserDataModule.m */,
-				667022CCC28C4F0D8DD33D3B /* BBBDataModel.xcdatamodeld */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
-				B740D00067F549348E3355EC /* UserDefault.swift */,
-				1D6D20E0E1EC4F45B07B9C93 /* CubeLocation.swift */,
-				7AE5AA8CA38245929F596A17 /* LocationManager.swift */,
+				667022CCC28C4F0D8DD33D3B /* BBBDataModel.xcdatamodeld */,
+				B740D00067F549348E3355EC /* DefaultsStore.swift */,
+				BB7D67934E50471FADD9E7AF /* Bridge */,
+				AA5A7AF5D9E24FDC8A40D515 /* Location */,
+				E357E23090BB43BAAC49A38B /* GPS */,
+				7456A0A6A97D4F3B8604D078 /* Permissions */,
+			);
+			name = bbb_smart_system;
+			sourceTree = "<group>";
+		};
+		BB7D67934E50471FADD9E7AF /* Bridge */ = {
+			isa = PBXGroup;
+			children = (
 				1D9E8DAF09E64387876B214E /* UserDataModule.swift */,
-				1058B9552FE2A31A007E7A8D /* GPSLogger.swift */,
-				1058B9572FE2A53C007E7A8D /* GPSPowerManager.swift */,
-				1058B9592FE2A6E9007E7A8D /* GPSBatchSmoother.swift */,
+				1D9E8DAF09E64387876B214F /* UserDataModule.m */,
+			);
+			path = Bridge;
+			sourceTree = "<group>";
+		};
+		AA5A7AF5D9E24FDC8A40D515 /* Location */ = {
+			isa = PBXGroup;
+			children = (
+				7AE5AA8CA38245929F596A17 /* LocationManager.swift */,
 				1058B95B2FE2AB0C007E7A8D /* LocationStore.swift */,
 				1058B95D2FE2AB8D007E7A8D /* LocationUploader.swift */,
 				1058B95F2FE2ABF1007E7A8D /* LocationFilterPipeline.swift */,
-				1058B9612FE2AC86007E7A8D /* PreciseLocationAlertPresenter.swift */,
-				1058B9632FE2AEA1007E7A8D /* PermissionGate.swift */,
+				1D6D20E0E1EC4F45B07B9C93 /* CubeLocation.swift */,
 			);
-			name = bbb_smart_system;
+			path = Location;
+			sourceTree = "<group>";
+		};
+		E357E23090BB43BAAC49A38B /* GPS */ = {
+			isa = PBXGroup;
+			children = (
+				1058B9552FE2A31A007E7A8D /* GPSLogger.swift */,
+				1058B9572FE2A53C007E7A8D /* GPSPowerManager.swift */,
+				1058B9592FE2A6E9007E7A8D /* GPSBatchSmoother.swift */,
+			);
+			path = GPS;
+			sourceTree = "<group>";
+		};
+		7456A0A6A97D4F3B8604D078 /* Permissions */ = {
+			isa = PBXGroup;
+			children = (
+				1058B9632FE2AEA1007E7A8D /* PermissionGate.swift */,
+				1058B9612FE2AC86007E7A8D /* PreciseLocationAlertPresenter.swift */,
+			);
+			path = Permissions;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
@@ -330,7 +362,7 @@
 			files = (
 				1058B95C2FE2AB0C007E7A8D /* LocationStore.swift in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
-				ACE642B0D7E249DB8C49027D /* UserDefault.swift in Sources */,
+				ACE642B0D7E249DB8C49027D /* DefaultsStore.swift in Sources */,
 				1058B9642FE2AEA1007E7A8D /* PermissionGate.swift in Sources */,
 				1058B9582FE2A53C007E7A8D /* GPSPowerManager.swift in Sources */,
 				56A35D1A0F834D6EB3CC011D /* CubeLocation.swift in Sources */,
@@ -340,7 +372,7 @@
 				FE53C99ED1734139AD5E9B36 /* LocationManager.swift in Sources */,
 				1058B9602FE2ABF1007E7A8D /* LocationFilterPipeline.swift in Sources */,
 				7B362ED6740441EC8E0A9C55 /* UserDataModule.swift in Sources */,
-				7B362ED6740441EC8E0A9C56 /* BBBUserDataModule.m in Sources */,
+				7B362ED6740441EC8E0A9C56 /* UserDataModule.m in Sources */,
 				1058B95E2FE2AB8D007E7A8D /* LocationUploader.swift in Sources */,
 				EDCEAE7B8559483580E9D850 /* BBBDataModel.xcdatamodeld in Sources */,
 			);

@@ -23,13 +23,17 @@ public final class GPSPowerManager {
   private var motionStarted = false
   
   private let movingAccuracy = kCLLocationAccuracyBest
-  private let movingDistanceFilter: CLLocationDistance = kCLDistanceFilterNone
-  
+  // Baseline restored to the original optimized app: a 5m filter silences the
+  // chip when the worker is stationary, which lets the no-movement timer expire
+  // and the chip drop to REST. (kCLDistanceFilterNone fired ~1Hz even when still,
+  // continuously resetting the timer so REST never triggered.)
+  private let movingDistanceFilter: CLLocationDistance = 5
+
   private let drivingAccuracy = kCLLocationAccuracyBestForNavigation
   private let drivingDistanceFilter: CLLocationDistance = kCLDistanceFilterNone
-  
-  private let restingAccuracy = kCLLocationAccuracyNearestTenMeters
-  private let restingDistanceFilter: CLLocationDistance = 30
+
+  private let restingAccuracy = kCLLocationAccuracyHundredMeters
+  private let restingDistanceFilter: CLLocationDistance = 50
   
   public init(locationManager: CLLocationManager) {
     self.locationManager = locationManager
@@ -60,7 +64,7 @@ public final class GPSPowerManager {
     isResting = true
     lm.desiredAccuracy = restingAccuracy
     lm.distanceFilter = restingDistanceFilter
-    GPSLogger.info("MODE_REST", note: "accuracy=10m filter=30m — chip resting")
+    GPSLogger.info("MODE_REST", note: "accuracy=\(Int(restingAccuracy))m filter=\(Int(restingDistanceFilter))m — chip resting")
   }
   
   public func wake(reason: String) {

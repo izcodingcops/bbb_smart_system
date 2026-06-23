@@ -1,7 +1,7 @@
-import {NativeModules, NativeEventEmitter} from 'react-native';
-import {logger} from './logger';
+import { NativeModules, NativeEventEmitter } from 'react-native';
+import { logger } from './logger';
 
-const {UserDataModule} = NativeModules;
+const { UserDataModule } = NativeModules;
 const emitter = UserDataModule ? new NativeEventEmitter(UserDataModule) : null;
 
 export type PermissionStatus =
@@ -15,7 +15,11 @@ export type PermissionStatus =
   | 'activity_denied'
   | 'activity_blocked';
 
-export type PermissionStage = 'fine' | 'background' | 'activity' | 'notifications';
+export type PermissionStage =
+  | 'fine'
+  | 'background'
+  | 'activity'
+  | 'notifications';
 
 export interface SessionData {
   sessionId: string | number;
@@ -32,7 +36,11 @@ export interface SessionData {
 export const locationTracker = {
   startTracking: (data: SessionData) => {
     if (!UserDataModule) return;
-    logger.info('LocationTracker', 'Starting native location tracking', data.sessionId);
+    logger.info(
+      'LocationTracker',
+      'Starting native location tracking',
+      data.sessionId,
+    );
     UserDataModule.saveUserDetailsAndStartLocationUpdates({
       sessionId: String(data.sessionId),
       deviceId: data.deviceId,
@@ -69,8 +77,25 @@ export const locationTracker = {
   checkCanLogOut: (): Promise<boolean> => {
     if (!UserDataModule) return Promise.resolve(true);
     return new Promise(resolve => {
-      UserDataModule.checkForLogOut((result: string) => resolve(result === 'true'));
+      UserDataModule.checkForLogOut((result: string) =>
+        resolve(result === 'true'),
+      );
     });
+  },
+
+  // ---- Debug --------------------------------------------------------------
+
+  /** Opens the iOS share sheet for the GPS CSV log. Resolves false if the
+   *  native method is unavailable or no log file exists yet. */
+  shareGpsLog: (): Promise<boolean> => {
+    if (!UserDataModule?.shareLogFile) return Promise.resolve(false);
+    return UserDataModule.shareLogFile().then(
+      () => true,
+      (e: unknown) => {
+        logger.warn('LocationTracker', 'shareGpsLog failed', e);
+        return false;
+      },
+    );
   },
 
   // ---- One-shot location --------------------------------------------------
@@ -126,17 +151,23 @@ export const locationTracker = {
 
   onUploadProgress: (callback: (progress: number) => void) => {
     if (!emitter) return () => {};
-    const sub = emitter.addListener('onUploadProgress', (e: {progress: number}) => {
-      callback(e.progress);
-    });
+    const sub = emitter.addListener(
+      'onUploadProgress',
+      (e: { progress: number }) => {
+        callback(e.progress);
+      },
+    );
     return () => sub.remove();
   },
 
   onUploadComplete: (callback: (status: string) => void) => {
     if (!emitter) return () => {};
-    const sub = emitter.addListener('onUploadComplete', (e: {status: string}) => {
-      callback(e.status);
-    });
+    const sub = emitter.addListener(
+      'onUploadComplete',
+      (e: { status: string }) => {
+        callback(e.status);
+      },
+    );
     return () => sub.remove();
   },
 };

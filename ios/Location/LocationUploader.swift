@@ -14,16 +14,13 @@ final class LocationUploader {
   
   // MARK: - Public API
   
-  /// Recursively drains the queue while batches > 5 records exist. Sets
-  /// the `postingData` flag in UserDefaults so multiple callers can't
-  /// stomp on each other.
   func checkAndUploadPending(completion: @escaping (Bool) -> Void) {
-    guard UserDefault.get(.postingData) != "true" else { completion(false); return }
-    UserDefault.set("true", for: .postingData)
+    guard DefaultsStore.get(.postingData) != "true" else { completion(false); return }
+    DefaultsStore.set("true", for: .postingData)
     
     let batch = store.nextBatch(limit: 400)
-    guard batch.count > 5, UserDefault.isUserLoggedIn else {
-      UserDefault.set("false", for: .postingData)
+    guard batch.count > 5, DefaultsStore.isUserLoggedIn else {
+      DefaultsStore.set("false", for: .postingData)
       completion(true); return
     }
     
@@ -32,29 +29,26 @@ final class LocationUploader {
       DispatchQueue.main.async {
         if success {
           if self.store.nextBatch(limit: 400).count <= 5 {
-            UserDefault.set("false", for: .postingData)
+            DefaultsStore.set("false", for: .postingData)
             completion(true)
           } else {
-            UserDefault.set("false", for: .postingData)
+            DefaultsStore.set("false", for: .postingData)
             self.checkAndUploadPending(completion: completion)
           }
         } else {
-          UserDefault.set("false", for: .postingData)
+          DefaultsStore.set("false", for: .postingData)
           completion(false)
         }
       }
     }
   }
   
-  /// Upload a specific batch (used by end-of-session and manual sync).
   func upload(_ batch: [CubeLocation], completion: @escaping (Bool) -> Void) {
     post(batch, completion: completion)
   }
   
   // MARK: - Helpers
   
-  /// Public so the store's `allAsDicts` can format consistently with the
-  /// upload payload.
   func timestampToDate(_ timestamp: String?) -> String? {
     guard let ts = timestamp else { return nil }
     let trimmed = ts.count > 10 ? String(ts.prefix(10)) : ts
@@ -72,13 +66,13 @@ final class LocationUploader {
   // MARK: - Networking
   
   private func post(_ locations: [CubeLocation], completion: @escaping (Bool) -> Void) {
-    let session  = UserDefault.get(.sessionId) ?? ""
-    let deviceId = UserDefault.get(.deviceId) ?? ""
-    let devType  = UserDefault.get(.deviceType) ?? ""
-    let devName  = UserDefault.get(.deviceName) ?? ""
-    let shiftId  = UserDefault.get(.shiftId) ?? ""
-    let userId   = UserDefault.get(.userId) ?? ""
-    let postURL  = UserDefault.get(.cubeUrl) ?? ""
+    let session  = DefaultsStore.get(.sessionId) ?? ""
+    let deviceId = DefaultsStore.get(.deviceId) ?? ""
+    let devType  = DefaultsStore.get(.deviceType) ?? ""
+    let devName  = DefaultsStore.get(.deviceName) ?? ""
+    let shiftId  = DefaultsStore.get(.shiftId) ?? ""
+    let userId   = DefaultsStore.get(.userId) ?? ""
+    let postURL  = DefaultsStore.get(.cubeUrl) ?? ""
     
     guard !userId.isEmpty, !postURL.isEmpty else { completion(false); return }
     
@@ -97,10 +91,6 @@ final class LocationUploader {
       ])
     }
     
-    // Polyline smoothing — each point gets blended with its past+future
-    // neighbours before upload. Raw fixes stay in Core Data; only the
-    // outgoing payload is smoothed, so we can replay raw data later if
-    // the smoother ever needs tuning.
     GPSBatchSmoother.smoothInPlace(&locationArray)
     
     let body: [String: Any] = [
@@ -118,29 +108,50 @@ final class LocationUploader {
       guard let jsonData = try? JSONSerialization.data(withJSONObject: body),
             let urlObj = URL(string: postURL) else { completion(false); return }
 
-      print("[Uploader] POST \(postURL)")
-      print("[Uploader] payload=\(String(data: jsonData, encoding: .utf8) ?? "")")
-
       var request = URLRequest(url: urlObj, timeoutInterval: 30)
       request.httpMethod = "POST"
       request.setValue("application/json", forHTTPHeaderField: "Accept")
       request.setValue("application/json", forHTTPHeaderField: "Content-Type")
       request.httpBody = jsonData
 
+      // Copy-pasteable curl of the exact request (method + headers + body).
+      print("[Uploader] \(Self.curlString(for: request))")
+
       URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+//        #if DEBUG
         if let error { print("[Uploader] network error: \(error.localizedDescription)") }
         let code = (response as? HTTPURLResponse)?.statusCode ?? -1
         let raw = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
         print("[Uploader] HTTP \(code) response=\(raw)")
+//        #endif
         guard let self, error == nil, let data else { completion(false); return }
         guard let resp = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let status = resp["status"] as? Int, status == 200 else { completion(false); return }
         let deletedTimestamps = (resp["data"] as? [String]) ?? timestamps
+//        #if DEBUG
         print("[Uploader] uploaded \(locations.count); server ts=\(deletedTimestamps.count)")
+//        #endif
         self.store.delete(timestamps: deletedTimestamps)
-        UserDefault.set("false", for: .postingData)
+        DefaultsStore.set("false", for: .postingData)
         completion(true)
       }.resume()
     }
+  }
+
+  /// Builds a copy-pasteable curl command from a URLRequest — method, headers,
+  /// and body — so a failing upload can be replayed verbatim from a terminal.
+  /// Note: system headers (Content-Length, User-Agent) are added by URLSession
+  /// at send time and won't appear here; curl recomputes Content-Length from --data.
+  private static func curlString(for request: URLRequest) -> String {
+    var parts = ["curl -X \(request.httpMethod ?? "GET")"]
+    request.allHTTPHeaderFields?
+      .sorted { $0.key < $1.key }
+      .forEach { key, value in parts.append("-H '\(key): \(value)'") }
+    if let body = request.httpBody, let bodyStr = String(data: body, encoding: .utf8) {
+      let escaped = bodyStr.replacingOccurrences(of: "'", with: "'\\''")
+      parts.append("--data '\(escaped)'")
+    }
+    parts.append("'\(request.url?.absoluteString ?? "")'")
+    return parts.joined(separator: " ")
   }
 }

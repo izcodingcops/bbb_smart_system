@@ -88,11 +88,14 @@ client.interceptors.request.use(async config => {
     horizontal_accuracy: loc?.horizontalAccuracy ?? '',
   } as any;
 
-  if (__DEV__) {
-    logger.debug('API', `→ ${(config.method ?? 'GET').toUpperCase()} ${config.url}`);
-    // eslint-disable-next-line no-console
-    console.log(`\n${toCurl(config)}\n`);
-  }
+  // TEMP: __DEV__ gate commented out so the curl prints in Release builds run
+  // via Xcode. RE-ENABLE before shipping — the curl includes the Authorization
+  // token and location headers, which must not land in production logs.
+  // if (__DEV__) {
+  logger.debug('API', `→ ${(config.method ?? 'GET').toUpperCase()} ${config.url}`);
+  // eslint-disable-next-line no-console
+  console.log(`\n${toCurl(config)}\n`);
+  // }
 
   return config;
 });

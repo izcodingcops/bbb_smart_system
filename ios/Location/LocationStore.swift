@@ -31,12 +31,17 @@ final class LocationStore {
   
   func nextBatch(limit: Int = 400) -> [CubeLocation] {
     let req: NSFetchRequest<CubeLocation> = CubeLocation.fetchRequest()
+    // Oldest-first. ctimestamp is a fixed-width ms-epoch string, so an ascending
+    // string sort == chronological. The smoother assumes chronological order and
+    // this makes upload draining FIFO.
+    req.sortDescriptors = [NSSortDescriptor(key: "ctimestamp", ascending: true)]
     req.fetchLimit = limit
     return (try? context.fetch(req)) ?? []
   }
   
   func allAsDicts(timestampToDate: (String?) -> String?) -> [[String: String]] {
     let req: NSFetchRequest<CubeLocation> = CubeLocation.fetchRequest()
+    req.sortDescriptors = [NSSortDescriptor(key: "ctimestamp", ascending: true)]
     let results = (try? context.fetch(req)) ?? []
     return results.map { loc in [
       "latitude": loc.clatitude ?? "",
@@ -48,7 +53,6 @@ final class LocationStore {
   
   // MARK: - Writes
   
-  /// Insert a single fix. Returns nothing — caller logs via GPSLogger.
   func insert(latitude: String, longitude: String, accuracy: String, online: Bool) {
     guard let entity = NSEntityDescription.entity(forEntityName: "CubeLocation", in: context),
           let loc = NSManagedObject(entity: entity, insertInto: context) as? CubeLocation
@@ -85,7 +89,6 @@ final class LocationStore {
   }
 }
 
-// Used by every fetch above — kept next to its only call site.
 extension CubeLocation {
   @nonobjc class func fetchRequest() -> NSFetchRequest<CubeLocation> {
     return NSFetchRequest<CubeLocation>(entityName: "CubeLocation")

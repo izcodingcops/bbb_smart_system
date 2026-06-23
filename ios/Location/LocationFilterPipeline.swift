@@ -33,8 +33,6 @@ enum LocationFilterPipeline {
   
   // MARK: - Age gate
   
-  /// Stale cached fixes (iOS replays them on app start) must be rejected
-  /// before they influence anything below.
   static func ageDecision(for location: CLLocation, maxAge: TimeInterval = 20) -> FilterDecision {
     let age = -location.timestamp.timeIntervalSinceNow
     if age > maxAge {
@@ -65,8 +63,6 @@ enum LocationFilterPipeline {
   
   // MARK: - Jump gate
   
-  /// >100m in <5s is physically impossible at human speeds. Usually iOS
-  /// chip noise or a sudden multipath jump.
   static func jumpDecision(distance: CLLocationDistance,
                            seconds: TimeInterval) -> FilterDecision {
     if distance > 100 && seconds < 5 {
@@ -95,6 +91,13 @@ enum LocationFilterPipeline {
     }
     if s >= 2.0 && seconds >= 1 {
       return .drive
+    }
+    // Safety net: never drop a genuine displacement just because it didn't match
+    // a cadence bucket (e.g. slow drift where speed <= 0.5 but the worker moved
+    // several metres). Runs after the jump + accuracy gates, so it can't admit a
+    // bad fix — it only rescues a good one the cadence rules would have skipped.
+    if distance >= 15 {
+      return s >= 2.0 ? .drive : .walk
     }
     return .none
   }

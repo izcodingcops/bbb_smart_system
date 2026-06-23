@@ -8,8 +8,12 @@ RCT_EXTERN_METHOD(clearUserDetails)
 RCT_EXTERN_METHOD(syncLocationData)
 RCT_EXTERN_METHOD(endUserSession:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(getCurrentLocation:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(checkForLogOut:(RCTResponseSenderBlock)callback)
 RCT_EXTERN_METHOD(uploadOfflineLocationData:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(shareLogFile:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
 @end

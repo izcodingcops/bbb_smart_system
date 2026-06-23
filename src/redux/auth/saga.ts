@@ -5,6 +5,7 @@ import {clearProgram} from '../program/actions';
 import {AUTH_LOGIN, AUTH_LOGOUT} from './types';
 import {LoginCredentials, User, Session} from '../../types/auth';
 import {logger} from '../../utils/logger';
+import {locationTracker} from '../../utils/locationTracker';
 
 function* loginSaga(action: {type: string; payload: LoginCredentials}) {
   try {
@@ -38,14 +39,21 @@ function* loginSaga(action: {type: string; payload: LoginCredentials}) {
 }
 
 function* logoutSaga() {
+  logger.debug('AuthSaga', 'Logout');
   try {
-    logger.debug('AuthSaga', 'Logout');
-    yield put(logoutSuccess());
-    yield put(clearProgram());
-  } catch {
-    yield put(logoutSuccess());
-    yield put(clearProgram());
+    // Flush the leaving user's queued location points — uploaded under THEIR
+    // still-current native session — before we wipe it. endSession resolves
+    // false (never throws) if offline / nothing pending.
+    yield call(locationTracker.endSession);
+  } catch (e) {
+    logger.warn('AuthSaga', 'endSession during logout failed', e);
   }
+  // Clear the native session identity (user_id / sessionId / cube_url), stop
+  // tracking, and drop any remaining queued points. Without this the NEXT user
+  // inherits the previous user_id and their uploads are misattributed.
+  locationTracker.stopTracking();
+  yield put(logoutSuccess());
+  yield put(clearProgram());
 }
 
 export default function* authSaga() {

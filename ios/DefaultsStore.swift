@@ -1,6 +1,6 @@
 import Foundation
 
-enum UserDefaultKey: String {
+enum DefaultsKey: String {
   case sessionId        = "sessionId"
   case deviceId         = "deviceId"
   case deviceType       = "deviceType"
@@ -13,22 +13,22 @@ enum UserDefaultKey: String {
   case timeZone         = "time_zone"
 }
 
-struct UserDefault {
-  static func get(_ key: UserDefaultKey) -> String? {
+struct DefaultsStore {
+  static func get(_ key: DefaultsKey) -> String? {
     return UserDefaults.standard.string(forKey: key.rawValue)
   }
 
-  static func set(_ value: String, for key: UserDefaultKey) {
+  static func set(_ value: String, for key: DefaultsKey) {
     UserDefaults.standard.set(value, forKey: key.rawValue)
   }
 
-  static func remove(_ key: UserDefaultKey) {
+  static func remove(_ key: DefaultsKey) {
     UserDefaults.standard.removeObject(forKey: key.rawValue)
   }
 
   static var isUserLoggedIn: Bool {
-    let userId = UserDefaults.standard.string(forKey: UserDefaultKey.userId.rawValue) ?? ""
-    let cubeUrl = UserDefaults.standard.string(forKey: UserDefaultKey.cubeUrl.rawValue) ?? ""
+    let userId = UserDefaults.standard.string(forKey: DefaultsKey.userId.rawValue) ?? ""
+    let cubeUrl = UserDefaults.standard.string(forKey: DefaultsKey.cubeUrl.rawValue) ?? ""
     return !userId.isEmpty && !cubeUrl.isEmpty
   }
 }

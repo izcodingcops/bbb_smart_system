@@ -17,9 +17,6 @@ import UIKit
 final class PermissionAlertPresenter {
 
   private var alertWindow: UIWindow?
-  // The currently-presented kind, so identical re-shows are no-ops but
-  // different kinds replace each other (e.g. location-denied → motion-denied
-  // after the user fixes location in Settings).
   private var currentKind: Kind?
 
   enum Kind: Equatable {
@@ -31,8 +28,7 @@ final class PermissionAlertPresenter {
   func show(_ kind: Kind) {
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
-      if self.currentKind == kind { return }   // already showing this exact alert
-      // Different alert needs to replace whatever's up.
+      if self.currentKind == kind { return }
       self.tearDown {
         self.present(kind)
       }
@@ -55,11 +51,6 @@ final class PermissionAlertPresenter {
       preferredStyle: .alert
     )
     alert.addAction(UIAlertAction(title: "Settings", style: .default) { [weak self] _ in
-      // The alert auto-dismisses now. We must tear down our overlay UIWindow
-      // and reset state BEFORE opening Settings, otherwise (a) our window
-      // stays as key window and interferes with iOS's app-switch, and (b)
-      // currentKind stays set so the next gate run won't re-show the alert
-      // when the user returns without granting permission.
       self?.clearOverlayState()
       if let url = URL(string: UIApplication.openSettingsURLString) {
         UIApplication.shared.open(url)
@@ -76,8 +67,6 @@ final class PermissionAlertPresenter {
     win.rootViewController?.present(alert, animated: true)
   }
 
-  /// Drops our overlay UIWindow and forgets which kind we last showed, so
-  /// future `show(_:)` calls can present fresh.
   private func clearOverlayState() {
     alertWindow?.isHidden = true
     alertWindow = nil

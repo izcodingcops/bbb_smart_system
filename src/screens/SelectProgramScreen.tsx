@@ -70,6 +70,26 @@ const SelectProgramScreen: React.FC = () => {
     userId: string | number,
   ) => {
     // Permissions are guaranteed granted by handleShiftConfirm before we get here.
+    const deviceName = await DeviceInfo.getDeviceName();
+    const deviceId = getDeviceId();
+
+    // Start continuous native tracking FIRST. This is what saves the session
+    // natively and starts GPS, so it must NOT be gated behind the one-shot
+    // getCurrentLocation ping below — on a fresh install that dependency threw
+    // and silently skipped startTracking, so the app never tracked at all.
+    locationTracker.startTracking({
+      sessionId,
+      deviceId,
+      deviceType: Platform.OS,
+      deviceName,
+      shiftId,
+      horizontal_accuracy: 1,
+      user_id: userId,
+      cube_url: `${MicroService.BASE_APP_API}${ApiEndpoints.addBulkGeoData}`,
+      timezone_str: activeProgramItem?.timezone_str ?? 'America/New_York',
+    });
+
+    // Best-effort initial geo-ping. Skipped if a one-shot fix isn't available.
     try {
       const pos = await locationTracker.getCurrentLocation();
       const { latitude, longitude, accuracy, altitude, heading, timestamp } =
@@ -85,10 +105,6 @@ const SelectProgramScreen: React.FC = () => {
           timestamp,
         }),
       );
-
-      const deviceName = await DeviceInfo.getDeviceName();
-      const deviceId = getDeviceId();
-
       await locationService.addGeoData({
         sessionId,
         latitude,
@@ -101,20 +117,8 @@ const SelectProgramScreen: React.FC = () => {
         user_id: userId,
       });
       logger.info('SelectProgramScreen', 'Location ping sent successfully');
-
-      locationTracker.startTracking({
-        sessionId,
-        deviceId,
-        deviceType: Platform.OS,
-        deviceName,
-        shiftId,
-        horizontal_accuracy: accuracy ?? 1,
-        user_id: userId,
-        cube_url: `${MicroService.BASE_APP_API}${ApiEndpoints.addBulkGeoData}`,
-        timezone_str: activeProgramItem?.timezone_str ?? 'America/New_York',
-      });
     } catch (err) {
-      logger.error('SelectProgramScreen', 'pingLocationAfterShift failed', err);
+      logger.warn('SelectProgramScreen', 'initial ping skipped', err);
     }
   };
 

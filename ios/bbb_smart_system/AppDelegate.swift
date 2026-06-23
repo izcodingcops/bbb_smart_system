@@ -33,7 +33,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // verifyPermissions() shows the persistent Settings-only alert until
     // location + motion are granted, then auto-dismisses.
     LocationManager.shared.verifyPermissions()
-    if UserDefault.isUserLoggedIn {
+    if DefaultsStore.isUserLoggedIn {
       LocationManager.shared.startUpdateLocation()
     }
 
@@ -41,11 +41,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   }
 
   func applicationDidBecomeActive(_ application: UIApplication) {
+    // Self-heal the upload lock: if an upload's completion never fired before
+    // the app was suspended, posting_Data can stay "true" and block all future
+    // uploads until relaunch. Clearing it on foreground recovers without one.
+    DefaultsStore.set("false", for: .postingData)
+
     // Re-check on every foreground in case the user just returned from
     // Settings — if they granted permission the alert dismisses, if not it
     // re-shows.
     LocationManager.shared.verifyPermissions()
-    if UserDefault.isUserLoggedIn {
+    if DefaultsStore.isUserLoggedIn {
       LocationManager.shared.startUpdateLocation()
     }
   }

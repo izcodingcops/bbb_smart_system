@@ -3,9 +3,6 @@ import CoreLocation
 import Network
 import UIKit
 
-private let kDistanceFilter: CLLocationDistance = 10.0
-private let kDesiredAccuracy: CLLocationAccuracy = kCLLocationAccuracyBest
-
 final class LocationManager: NSObject {
 
   static let shared = LocationManager()
@@ -13,22 +10,17 @@ final class LocationManager: NSObject {
   // MARK: - Properties
   
   private var locationManager: CLLocationManager?
-  // Exposed so the accuracy gate in didUpdateLocations can read isDriving
-  // and lastWakeAt. Created lazily once locationManager exists.
+
   private var gpsPower: GPSPowerManager?
   private var currentLocation: CLLocation?
 
-  // Most recent fresh fix we've seen — used as the backup wake source when
-  // Motion permission is denied. Compares consecutive fresh fixes (NOT the
-  // saved anchor), so a stale anchor can't cause false wakes. Cleared on
-  // app launch, so iOS-replayed cached fixes after restart can't poison it
-  // for more than one reading.
   private var lastSeenLocation: CLLocation?
 
   private var noMovementTimer: Timer?
   private var bgTaskId: UIBackgroundTaskIdentifier = .invalid
-  private var isPosting = false
   private var isOnline = false
+  private var isTracking = false
+  private var restTickCount = 0
 
   private let pathMonitor = NWPathMonitor()
   private let monitorQueue = DispatchQueue(label: "com.bbb.network-monitor")
@@ -43,7 +35,7 @@ final class LocationManager: NSObject {
   
   private override init() {
     super.init()
-    UserDefault.set("false", for: .postingData)
+    DefaultsStore.set("false", for: .postingData)
     startNetworkMonitor()
   }
 
@@ -51,13 +43,18 @@ final class LocationManager: NSObject {
   
   private func startNetworkMonitor() {
     pathMonitor.pathUpdateHandler = { [weak self] path in
-      guard let self else { return }
-      let wasOffline = !self.isOnline
-      self.isOnline = path.status == .satisfied
-      NSLog("[Network] → %@. Pending: %lu", self.isOnline ? "ONLINE" : "OFFLINE", self.locationCount())
-      if self.isOnline && wasOffline && self.locationCount() > 0 {
-        NSLog("[Sync] Back online — draining queued records")
-        self.uploadDataToServer()
+      let satisfied = path.status == .satisfied
+      // NWPathMonitor fires on a background queue; Core Data (viewContext) and
+      // the upload kickoff must run on main, so hop over before touching either.
+      DispatchQueue.main.async {
+        guard let self else { return }
+        let wasOffline = !self.isOnline
+        self.isOnline = satisfied
+        NSLog("[Network] → %@. Pending: %lu", self.isOnline ? "ONLINE" : "OFFLINE", self.locationCount())
+        if self.isOnline && wasOffline && self.locationCount() > 0 {
+          NSLog("[Sync] Back online — draining queued records")
+          self.uploadDataToServer()
+        }
       }
     }
     pathMonitor.start(queue: monitorQueue)
@@ -65,11 +62,6 @@ final class LocationManager: NSObject {
 
   // MARK: - Public API
 
-  /// Runs the permission gate regardless of login state. If anything is
-  /// missing the gate shows the blocking Settings-deep-link alert; once all
-  /// permissions are granted the alert auto-dismisses. Safe to call on every
-  /// app launch and applicationDidBecomeActive — it never starts tracking,
-  /// it only verifies permissions.
   func verifyPermissions() {
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
@@ -82,7 +74,7 @@ final class LocationManager: NSObject {
   }
 
   func startUpdateLocation() {
-    guard UserDefault.isUserLoggedIn else { return }
+    guard DefaultsStore.isUserLoggedIn else { return }
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
       if self.locationManager == nil {
@@ -92,19 +84,17 @@ final class LocationManager: NSObject {
         self.gpsPower = GPSPowerManager(locationManager: lm)
       }
       self.locationManager?.delegate = self
-      // One-stop permission check: location auth, precise location, motion
-      // auth. If anything is missing the gate either triggers a system
-      // prompt (notDetermined) or shows a Settings-deep-link alert
-      // (denied/restricted). Either way we bail; the gate will re-evaluate
-      // via didChangeAuthorization or applicationDidBecomeActive.
       guard self.permissionGate.canStartTracking(locationManager: self.locationManager) else {
         return
       }
-      self.locationManager?.distanceFilter = kDistanceFilter
-      self.locationManager?.desiredAccuracy = kDesiredAccuracy
-      // Match old app: never let iOS pause GPS on its own. Our own REST
-      // mode (GPSPowerManager) handles power saving deterministically;
-      // iOS's auto-pause has unpredictable wake-up latency.
+
+      // Already running — don't re-apply FULL power. Foregrounding calls this
+      // again (AppDelegate.applicationDidBecomeActive); re-running gpsPower.start()
+      // would yank the chip out of REST on every foreground. Permissions were
+      // already re-checked above, which is the only thing we need on re-entry.
+      guard !self.isTracking else { return }
+      self.isTracking = true
+
       self.locationManager?.pausesLocationUpdatesAutomatically = false
       self.locationManager?.showsBackgroundLocationIndicator = true
       self.locationManager?.allowsBackgroundLocationUpdates = true
@@ -121,6 +111,7 @@ final class LocationManager: NSObject {
   func stopLocationUpdates() {
     DispatchQueue.main.async { [weak self] in
       guard let self, let mgr = self.locationManager else { return }
+      self.isTracking = false
       mgr.pausesLocationUpdatesAutomatically = false
       mgr.showsBackgroundLocationIndicator = false
       mgr.allowsBackgroundLocationUpdates = false
@@ -145,8 +136,7 @@ final class LocationManager: NSObject {
       guard let self else { return }
       NSLog("[Sync] Upload starting — %lu records queued", self.locationCount())
       self.checkAndUploadPending { success in
-        NSLog("[Sync] Upload %@ — %lu pending",
-              success ? "SUCCESS" : "FAILURE", self.locationCount())
+        NSLog("[Sync] Upload %@ — %lu pending", success ? "SUCCESS" : "FAILURE", self.locationCount())
       }
     }
   }
@@ -156,6 +146,13 @@ final class LocationManager: NSObject {
   // MARK: - Store pass-throughs (public API surface)
 
   func locationCount() -> Int { store.count() }
+
+  /// Most recent known fix, for the JS one-shot getCurrentLocation bridge.
+  /// Prefers the freshest seen fix, then the last saved one, then CoreLocation's
+  /// own cached location.
+  func latestLocation() -> CLLocation? {
+    lastSeenLocation ?? currentLocation ?? locationManager?.location
+  }
 
   func savedLocationsBatch() -> [CubeLocation] { store.nextBatch(limit: 400) }
 
@@ -195,9 +192,15 @@ final class LocationManager: NSObject {
     noMovementTimer?.invalidate()
     noMovementTimer = Timer.scheduledTimer(withTimeInterval: 120, repeats: true) { [weak self] _ in
       guard let self else { return }
-      // 120s with no accepted fix = worker is stationary → rest the chip.
-      // No-op if motion sensor disagrees, or if already resting (heartbeat).
       self.gpsPower?.enterRestMode()
+      // While stationary, drop a "presence" point roughly every 6 min so the
+      // trail proves the worker was on-site. saveBucket records nothing when
+      // distance == 0, so without this a long stop is an empty gap.
+      self.restTickCount += 1
+      if self.restTickCount >= 3 {
+        self.restTickCount = 0
+        self.insertPresencePoint()
+      }
       if self.isOnline { self.uploadDataToServer() }
     }
     RunLoop.main.add(noMovementTimer!, forMode: .common)
@@ -206,6 +209,26 @@ final class LocationManager: NSObject {
   private func resetNoMovementTimer() {
     noMovementTimer?.invalidate()
     noMovementTimer = nil
+    restTickCount = 0
+  }
+
+  /// Stationary heartbeat: re-save the last known location with a fresh
+  /// timestamp while the chip is resting, so presence is recorded during long
+  /// stops. Movement is handled by the normal save path, so this only runs in REST.
+  private func insertPresencePoint() {
+    guard gpsPower?.isResting == true, let loc = currentLocation else { return }
+    let lat = String(format: "%.7f", loc.coordinate.latitude)
+    let lon = String(format: "%.7f", loc.coordinate.longitude)
+    let acc = String(format: "%.2f", loc.horizontalAccuracy)
+    store.insert(latitude: lat, longitude: lon, accuracy: acc, online: isOnline)
+    NSLog("[CoreData] Saved presence point — total pending: %lu", locationCount())
+    GPSLogger.log("SAVE",
+                  lat: loc.coordinate.latitude,
+                  lon: loc.coordinate.longitude,
+                  accuracy: loc.horizontalAccuracy,
+                  speed: 0,
+                  mode: "REST",
+                  note: "presence")
   }
 
   // MARK: - Background task
@@ -230,10 +253,10 @@ extension LocationManager: CLLocationManagerDelegate {
       locations.last?.horizontalAccuracy ?? 0, locations.last?.speed ?? 0
       )
     if let last = locations.last {
-      // A fix arrived during REST → the worker has moved 30m+ since last
-      // fix. Wake the chip back to FULL/DRIVE before we even decide whether
-      // to save this point.
-      self.gpsPower?.wake(reason: "new fix")
+      // NOTE: do NOT wake on every fix. Waking is driven only by real movement
+      // (applyBackupWake: moved > wakeDistance) and the motion sensor — matching
+      // the original optimized app. A blanket wake here defeated REST: any fix
+      // arriving while resting instantly forced the chip back to FULL.
       GPSLogger.log("FIX",
                     lat: last.coordinate.latitude,
                     lon: last.coordinate.longitude,
@@ -243,7 +266,7 @@ extension LocationManager: CLLocationManagerDelegate {
                     note: "raw fix from chip")
     }
 
-    guard UserDefault.isUserLoggedIn else { return }
+    guard DefaultsStore.isUserLoggedIn else { return }
 
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
@@ -253,10 +276,6 @@ extension LocationManager: CLLocationManagerDelegate {
       let best = locations.min(by: { $0.horizontalAccuracy < $1.horizontalAccuracy })!
       let mode = self.currentMode()
 
-      // ANY delivered fix means the device physically moved past the
-      // distance filter — even a low-accuracy one. Reset the stationary
-      // countdown BEFORE the quality gates, so bad in-car signal can never
-      // starve the timer and put GPS to rest mid-drive.
       self.resetNoMovementTimer()
       self.startNoMovementTimer()
 
@@ -306,9 +325,6 @@ extension LocationManager: CLLocationManagerDelegate {
         self.insertLocation(latitude: latStr, longitude: lonStr, accuracy: accStr)
       }
 
-      // Burst upload trigger: under continuous movement the no-movement
-      // timer never fires (reset on every fix), so without this the queue
-      // grows unbounded. 200 = same threshold the old app uses.
       if self.isOnline && self.locationCount() > 200 {
         self.uploadDataToServer()
       }
@@ -323,11 +339,6 @@ extension LocationManager: CLLocationManagerDelegate {
     return "FULL"
   }
 
-  /// Backup wake-up (used if Motion permission is denied): while resting,
-  /// a fix clearly outside the error circle of the previous fresh fix
-  /// means real movement. Runs BEFORE the accuracy gate, because REST-mode
-  /// fixes are low-accuracy on purpose. Compares consecutive fresh fixes,
-  /// never the saved anchor — so a wrong anchor can't cause false wakes.
   private func applyBackupWake(for best: CLLocation) {
     guard let power = gpsPower, power.isResting, let prevSeen = lastSeenLocation else { return }
     let moved = best.distance(from: prevSeen)
@@ -359,10 +370,6 @@ extension LocationManager: CLLocationManagerDelegate {
   }
 
   func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-    // Re-run the gate on every auth change. Covers: user just answered the
-    // first-launch prompt, user flipped Precise ON/OFF in Settings, user
-    // changed Always↔WhenInUse, etc. The gate decides whether to start,
-    // show an alert, or do nothing.
     startUpdateLocation()
   }
 
