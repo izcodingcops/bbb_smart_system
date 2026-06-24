@@ -13,11 +13,20 @@ final class LocationBridge: RCTEventEmitter {
   // MARK: - RCTEventEmitter
   
   override func supportedEvents() -> [String]! {
-    return ["onUploadProgress", "onUploadComplete"]
+    return ["onUploadProgress", "onUploadComplete", "onConnectivityChange"]
   }
-  
-  override func startObserving() { hasListeners = true }
-  override func stopObserving()  { hasListeners = false }
+
+  override func startObserving() {
+    hasListeners = true
+    LocationManager.shared.onConnectivityChange = { [weak self] online in
+      self?.sendEvent(withName: "onConnectivityChange", body: ["isOnline": online])
+    }
+  }
+
+  override func stopObserving() {
+    hasListeners = false
+    LocationManager.shared.onConnectivityChange = nil
+  }
   
   override static func requiresMainQueueSetup() -> Bool { true }
   
@@ -193,6 +202,21 @@ final class LocationBridge: RCTEventEmitter {
       }
       presenter.present(activityVC, animated: true) { resolve(true) }
     }
+  }
+
+  @objc func getConnectivityStatus(_ resolve: @escaping RCTPromiseResolveBlock,
+                                   rejecter reject: @escaping RCTPromiseRejectBlock) {
+    resolve(LocationManager.shared.currentlyOnline)
+  }
+
+  @objc func setSmoothingFilter(_ name: String) {
+    let valid = ["gaussian", "kalman", "none"]
+    DefaultsStore.set(valid.contains(name) ? name : "gaussian", for: .smoothingFilter)
+  }
+
+  @objc func getSmoothingFilter(_ resolve: @escaping RCTPromiseResolveBlock,
+                                rejecter reject: @escaping RCTPromiseRejectBlock) {
+    resolve(DefaultsStore.get(.smoothingFilter) ?? "gaussian")
   }
 
   /// Walks from the key window's root to the top-most presented controller.

@@ -58,6 +58,9 @@ const ProfileScreen: React.FC = () => {
             <Text style={{fontSize: 13, color: '#6B7280', marginTop: 2}}>
               @{user?.username ?? '—'}
             </Text>
+            <Text style={{fontSize: 12, color: '#9CA3AF', marginTop: 4}}>
+              ID: {user?.id ?? '—'}
+            </Text>
           </View>
         </View>
 

@@ -91,7 +91,11 @@ final class LocationUploader {
       ])
     }
     
-    GPSTrackSmoother.smoothInPlace(&locationArray)
+    switch DefaultsStore.get(.smoothingFilter) {
+    case "kalman": GPSKalmanSmoother.smoothInPlace(&locationArray)
+    case "none":   break
+    default:       GPSTrackSmoother.smoothInPlace(&locationArray)
+    }
     
     let body: [String: Any] = [
       "data": locationArray,

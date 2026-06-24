@@ -19,6 +19,7 @@ final class LocationManager: NSObject {
   private var noMovementTimer: Timer?
   private var bgTaskId: UIBackgroundTaskIdentifier = .invalid
   private var isOnline = false
+  var onConnectivityChange: ((Bool) -> Void)?
   private var isTracking = false
   private var restTickCount = 0
 
@@ -50,6 +51,7 @@ final class LocationManager: NSObject {
         guard let self else { return }
         let wasOffline = !self.isOnline
         self.isOnline = satisfied
+        self.onConnectivityChange?(satisfied)
         Log.network.info("→ \(self.isOnline ? "ONLINE" : "OFFLINE"). Pending: \(self.locationCount())")
         if self.isOnline && wasOffline && self.locationCount() > 0 {
           Log.network.info("back online — draining queued records")
@@ -61,6 +63,8 @@ final class LocationManager: NSObject {
   }
 
   // MARK: - Public API
+
+  var currentlyOnline: Bool { isOnline }
 
   func verifyPermissions() {
     DispatchQueue.main.async { [weak self] in

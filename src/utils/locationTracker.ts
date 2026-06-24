@@ -4,6 +4,8 @@ import { logger } from './logger';
 const { LocationBridge } = NativeModules;
 const emitter = LocationBridge ? new NativeEventEmitter(LocationBridge) : null;
 
+export type SmoothingFilter = 'gaussian' | 'kalman' | 'none';
+
 export type PermissionStatus =
   | 'ok'
   | 'services_off'
@@ -96,6 +98,29 @@ export const locationTracker = {
         return false;
       },
     );
+  },
+
+  getConnectivityStatus: (): Promise<boolean> => {
+    if (!LocationBridge?.getConnectivityStatus) return Promise.resolve(true);
+    return LocationBridge.getConnectivityStatus();
+  },
+
+  onConnectivityChange: (callback: (isOnline: boolean) => void) => {
+    if (!emitter) return () => {};
+    const sub = emitter.addListener(
+      'onConnectivityChange',
+      (e: { isOnline: boolean }) => callback(e.isOnline),
+    );
+    return () => sub.remove();
+  },
+
+  getSmoothingFilter: (): Promise<SmoothingFilter> => {
+    if (!LocationBridge?.getSmoothingFilter) return Promise.resolve('gaussian');
+    return LocationBridge.getSmoothingFilter();
+  },
+
+  setSmoothingFilter: (name: SmoothingFilter) => {
+    LocationBridge?.setSmoothingFilter?.(name);
   },
 
   // ---- One-shot location --------------------------------------------------

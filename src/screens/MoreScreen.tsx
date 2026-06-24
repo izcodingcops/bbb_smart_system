@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MenuItem } from '../types/navigation';
-import { locationTracker } from '../utils/locationTracker';
+import { locationTracker, SmoothingFilter } from '../utils/locationTracker';
 
 const ICON_MAP: Record<string, string> = {
   home: '⌂',
@@ -18,6 +18,17 @@ interface MoreScreenProps {
 }
 
 const MoreScreen: React.FC<MoreScreenProps> = ({ items, onSelect }) => {
+  const [filter, setFilter] = useState<SmoothingFilter>('gaussian');
+
+  useEffect(() => {
+    locationTracker.getSmoothingFilter().then(setFilter);
+  }, []);
+
+  const selectFilter = (value: SmoothingFilter) => {
+    setFilter(value);
+    locationTracker.setSmoothingFilter(value);
+  };
+
   const handleShareGpsLog = async () => {
     const ok = await locationTracker.shareGpsLog();
     if (!ok) {
@@ -140,6 +151,55 @@ const MoreScreen: React.FC<MoreScreenProps> = ({ items, onSelect }) => {
             </Text>
             <Text style={{ fontSize: 18, color: '#9CA3AF' }}>›</Text>
           </TouchableOpacity>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              borderTopWidth: 1,
+              borderTopColor: '#F3F4F6',
+            }}
+          >
+            <Text
+              style={{
+                flex: 1,
+                fontSize: 15,
+                fontWeight: '500',
+                color: '#111827',
+              }}
+            >
+              GPS Smoothing
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {(['gaussian', 'kalman', 'none'] as SmoothingFilter[]).map(value => {
+                const selected = filter === value;
+                return (
+                  <TouchableOpacity
+                    key={value}
+                    onPress={() => selectFilter(value)}
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: 8,
+                      backgroundColor: selected ? '#1D4889' : '#EFF6FF',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontWeight: '600',
+                        color: selected ? '#fff' : '#1D4889',
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {value}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>

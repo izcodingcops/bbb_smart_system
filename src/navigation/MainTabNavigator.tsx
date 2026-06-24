@@ -2,17 +2,18 @@ import React, {useEffect, useState} from 'react';
 import {Text, TouchableOpacity, View, Image} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAppDispatch} from '../redux/store';
-import {fontFamilies} from '../constants/fonts';
-
-const {LATO} = fontFamilies;
 import {GetMenuItems, GetMenuLoading} from '../redux/navigation/selectors';
 import {requestMenuList} from '../redux/navigation/actions';
+import {fontFamilies} from '../constants/fonts';
+import {locationTracker} from '../utils/locationTracker';
 import HomeScreen from '../screens/HomeScreen';
 import MaintenanceScreen from '../screens/MaintenanceScreen';
 import FixtureScreen from '../screens/FixtureScreen';
 import IncidentScreen from '../screens/IncidentScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import MoreScreen from '../screens/MoreScreen';
+
+const {LATO} = fontFamilies;
 
 const SCREEN_MAP: Record<string, React.ComponentType<any>> = {
   Home: HomeScreen,
@@ -37,6 +38,33 @@ const MainTabNavigator: React.FC = () => {
   const menuItems = GetMenuItems();
   const isLoading = GetMenuLoading();
   const [activeScreen, setActiveScreen] = useState<string>('');
+  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [showBar, setShowBar] = useState<boolean>(false);
+  const hideTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    locationTracker.getConnectivityStatus().then(online => {
+      if (!mounted) return;
+      setIsOnline(online);
+      setShowBar(!online);
+    });
+    const unsub = locationTracker.onConnectivityChange(online => {
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+      setIsOnline(online);
+      if (!online) {
+        setShowBar(true);
+      } else {
+        setShowBar(true);
+        hideTimer.current = setTimeout(() => setShowBar(false), 3000);
+      }
+    });
+    return () => {
+      mounted = false;
+      unsub();
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (menuItems.length === 0) {
@@ -81,6 +109,36 @@ const MainTabNavigator: React.FC = () => {
   return (
     <SafeAreaView edges={['bottom']} style={{flex: 1, backgroundColor: '#FFFFFF'}}>
       <View style={{flex: 1}}>{renderContent()}</View>
+
+      {/* Online / offline status strip */}
+      {showBar && (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            paddingVertical: 5,
+            backgroundColor: isOnline ? '#ECFDF5' : '#FEF2F2',
+          }}>
+          <View
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: 4,
+              backgroundColor: isOnline ? '#10B981' : '#EF4444',
+            }}
+          />
+          <Text
+            style={{
+              fontFamily: LATO.regular,
+              fontSize: 11,
+              color: isOnline ? '#065F46' : '#991B1B',
+            }}>
+            {isOnline ? 'Online' : 'Offline'}
+          </Text>
+        </View>
+      )}
 
       {/* Tab bar — pill-shaped top, layered background, upward shadow */}
       <View

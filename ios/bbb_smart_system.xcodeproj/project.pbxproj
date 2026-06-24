@@ -18,6 +18,7 @@
 		1058B9712FE2B000007E7A8D /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9702FE2B000007E7A8D /* Log.swift */; };
 		1058B9732FE2B000007E7A8D /* URLRequest+cURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9722FE2B000007E7A8D /* URLRequest+cURL.swift */; };
 		10D8ED0A2FEABB2D0059D8E6 /* LocationDataModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 10D8ED082FEABB2D0059D8E6 /* LocationDataModel.xcdatamodeld */; };
+		10E683092FEBCF5000C89361 /* GPSKalmanSmoother.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10E683082FEBCF5000C89361 /* GPSKalmanSmoother.swift */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		56A35D1A0F834D6EB3CC011D /* StoredLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D6D20E0E1EC4F45B07B9C93 /* StoredLocation.swift */; };
 		68E9D63A51E82699821398A5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
@@ -47,6 +48,7 @@
 		1058B9702FE2B000007E7A8D /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
 		1058B9722FE2B000007E7A8D /* URLRequest+cURL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLRequest+cURL.swift"; sourceTree = "<group>"; };
 		10D8ED092FEABB2D0059D8E6 /* LocationDataModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = LocationDataModel.xcdatamodel; sourceTree = "<group>"; };
+		10E683082FEBCF5000C89361 /* GPSKalmanSmoother.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPSKalmanSmoother.swift; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* bbb_smart_system.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = bbb_smart_system.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = bbb_smart_system/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = bbb_smart_system/Info.plist; sourceTree = "<group>"; };
@@ -206,6 +208,7 @@
 		E357E23090BB43BAAC49A38B /* GPS */ = {
 			isa = PBXGroup;
 			children = (
+				10E683082FEBCF5000C89361 /* GPSKalmanSmoother.swift */,
 				1058B9552FE2A31A007E7A8D /* GPSLogger.swift */,
 				1058B9572FE2A53C007E7A8D /* LocationModeManager.swift */,
 				1058B9592FE2A6E9007E7A8D /* GPSTrackSmoother.swift */,
@@ -395,6 +398,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1058B95C2FE2AB0C007E7A8D /* LocationPersistenceStore.swift in Sources */,
+				10E683092FEBCF5000C89361 /* GPSKalmanSmoother.swift in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 				ACE642B0D7E249DB8C49027D /* DefaultsStore.swift in Sources */,
 				1058B9642FE2AEA1007E7A8D /* PermissionGate.swift in Sources */,

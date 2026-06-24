@@ -11,6 +11,7 @@ enum DefaultsKey: String {
   case cubeUrl          = "cube_url"
   case postingData      = "posting_Data"
   case timeZone         = "time_zone"
+  case smoothingFilter  = "smoothing_filter"   // "gaussian" | "kalman"
 }
 
 struct DefaultsStore {
