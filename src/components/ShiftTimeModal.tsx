@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, {useState} from 'react';
+import {View, Text, TouchableOpacity, ActivityIndicator, StyleSheet} from 'react-native';
 import BottomSheet from './BottomSheet';
+import {theme} from '../theme';
 
 interface Props {
   visible: boolean;
@@ -26,13 +27,7 @@ const formatDate = (date: Date, timeZone?: string): string =>
     timeZone,
   });
 
-const ShiftTimeModal: React.FC<Props> = ({
-  visible,
-  isLoading,
-  onConfirm,
-  onClose,
-  timeZone,
-}) => {
+const ShiftTimeModal: React.FC<Props> = ({visible, isLoading, onConfirm, onClose, timeZone}) => {
   const [startTime] = useState(() => new Date());
   const [endTime] = useState(() => {
     const d = new Date();
@@ -42,110 +37,111 @@ const ShiftTimeModal: React.FC<Props> = ({
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: 20,
-          borderBottomWidth: 1,
-          borderBottomColor: '#F0F0F0',
-        }}
-      >
-        <Text style={{ fontSize: 16, fontWeight: '700', color: '#1A1A1A' }}>
-          Shift Hours
-        </Text>
-        <TouchableOpacity onPress={onClose} style={{ padding: 4 }}>
-          <Text style={{ fontSize: 18, color: '#9CA3AF', fontWeight: '600' }}>
-            ✕
-          </Text>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Shift Hours</Text>
+        <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+          <Text style={styles.closeText}>✕</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={{ padding: 20, gap: 16 }}>
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: '#F0F5FF',
-              borderRadius: 12,
-              padding: 16,
-              borderWidth: 1,
-              borderColor: '#DBEAFE',
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 12,
-                color: '#3B82F6',
-                fontWeight: '600',
-                marginBottom: 4,
-              }}
-            >
-              START TIME
-            </Text>
-            <Text style={{ fontSize: 20, fontWeight: '700', color: '#1D4889' }}>
+      <View style={styles.body}>
+        <View style={styles.timeRow}>
+          <View style={[styles.timeCard, styles.startCard]}>
+            <Text style={[styles.timeLabel, {color: '#3B82F6'}]}>START TIME</Text>
+            <Text style={[styles.timeValue, {color: theme.colors.primaryDark}]}>
               {formatTime(startTime, timeZone)}
             </Text>
-            <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>
-              {formatDate(startTime, timeZone)}
-            </Text>
+            <Text style={styles.dateValue}>{formatDate(startTime, timeZone)}</Text>
           </View>
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: '#F0FFF4',
-              borderRadius: 12,
-              padding: 16,
-              borderWidth: 1,
-              borderColor: '#BBF7D0',
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 12,
-                color: '#16A34A',
-                fontWeight: '600',
-                marginBottom: 4,
-              }}
-            >
-              END TIME
-            </Text>
-            <Text style={{ fontSize: 20, fontWeight: '700', color: '#15803D' }}>
+          <View style={[styles.timeCard, styles.endCard]}>
+            <Text style={[styles.timeLabel, {color: theme.colors.success}]}>END TIME</Text>
+            <Text style={[styles.timeValue, {color: '#15803D'}]}>
               {formatTime(endTime, timeZone)}
             </Text>
-            <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>
-              {formatDate(endTime, timeZone)}
-            </Text>
+            <Text style={styles.dateValue}>{formatDate(endTime, timeZone)}</Text>
           </View>
         </View>
 
-        <Text style={{ fontSize: 13, color: '#9CA3AF', textAlign: 'center' }}>
-          8-hour shift starting now
-        </Text>
+        <Text style={styles.hint}>8-hour shift starting now</Text>
 
         <TouchableOpacity
           onPress={() => onConfirm(startTime, endTime)}
           disabled={isLoading}
-          style={{
-            backgroundColor: '#1D4889',
-            borderRadius: 12,
-            paddingVertical: 16,
-            alignItems: 'center',
-            opacity: isLoading ? 0.6 : 1,
-          }}
-        >
+          style={[styles.confirmBtn, isLoading && styles.disabledBtn]}>
           {isLoading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={theme.colors.white} />
           ) : (
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
-              Start Shift
-            </Text>
+            <Text style={styles.confirmText}>Start Shift</Text>
           )}
         </TouchableOpacity>
       </View>
     </BottomSheet>
   );
 };
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: theme.spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  headerTitle: {
+    fontSize: theme.fontSize.md,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.text,
+  },
+  closeBtn: {padding: theme.spacing.xs},
+  closeText: {
+    fontSize: 18,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.textMuted,
+  },
+  body: {padding: theme.spacing.xl, gap: 16},
+  timeRow: {flexDirection: 'row', gap: theme.spacing.md},
+  timeCard: {
+    flex: 1,
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.lg,
+    borderWidth: 1,
+  },
+  startCard: {backgroundColor: '#F0F5FF', borderColor: '#DBEAFE'},
+  endCard: {backgroundColor: '#F0FFF4', borderColor: '#BBF7D0'},
+  timeLabel: {
+    fontSize: theme.fontSize.xs,
+    fontFamily: theme.fonts.bold,
+    marginBottom: theme.spacing.xs,
+  },
+  timeValue: {
+    fontSize: theme.fontSize.lg,
+    fontFamily: theme.fonts.bold,
+  },
+  dateValue: {
+    fontSize: theme.fontSize.xs,
+    fontFamily: theme.fonts.regular,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  hint: {
+    fontSize: theme.fontSize.sm,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+  },
+  confirmBtn: {
+    backgroundColor: theme.colors.primaryDark,
+    borderRadius: theme.radius.md,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  disabledBtn: {opacity: 0.6},
+  confirmText: {
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.white,
+    fontSize: theme.fontSize.base,
+  },
+});
 
 export default ShiftTimeModal;
