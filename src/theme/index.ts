@@ -1,0 +1,78 @@
+import {fontFamilies} from '../constants/fonts';
+
+export const theme = {
+  colors: {
+    primary: '#0066B2',
+    primaryDark: '#1D4889',
+    primaryLight: '#EFF6FF',
+    background: '#F7F7F7',
+    surface: '#FFFFFF',
+    border: '#EAEDF0',
+    borderLight: '#EBEBEB',
+    text: '#1A1A1A',
+    textSecondary: '#667085',
+    textMuted: '#9CA3AF',
+    white: '#FFFFFF',
+    error: '#EF4444',
+    success: '#16A34A',
+    overlay: 'rgba(0,0,0,0.4)',
+  },
+  fonts: {
+    light: fontFamilies.LATO.light,
+    regular: fontFamilies.LATO.regular,
+    medium: fontFamilies.LATO.medium,
+    bold: fontFamilies.LATO.bold,
+    black: fontFamilies.LATO.black,
+  },
+  fontSize: {
+    xs: 12,
+    sm: 13,
+    base: 15,
+    md: 16,
+    lg: 20,
+    xl: 22,
+    xxl: 24,
+  },
+  radius: {
+    sm: 8,
+    md: 12,
+    lg: 14,
+    xl: 20,
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 20,
+    xxl: 24,
+  },
+  shadow: {
+    card: {
+      shadowColor: '#101828',
+      shadowOffset: {width: 1, height: 1},
+      shadowOpacity: 0.05,
+      shadowRadius: 3,
+      elevation: 1,
+    },
+    button: {
+      shadowColor: '#00467A',
+      shadowOffset: {width: 0, height: 0},
+      shadowOpacity: 1,
+      shadowRadius: 7,
+      elevation: 4,
+    },
+    fab: {
+      shadowColor: '#000',
+      shadowOffset: {width: 0, height: 4},
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+  },
+  common: {
+    row: {flexDirection: 'row' as const, alignItems: 'center' as const},
+    center: {alignItems: 'center' as const, justifyContent: 'center' as const},
+    flex1: {flex: 1},
+  },
+} as const;
