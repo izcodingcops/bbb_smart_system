@@ -5,9 +5,11 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  StyleSheet,
 } from 'react-native';
-import { TaskItem } from '../types/program';
+import {TaskItem} from '../types/program';
 import BottomSheet from './BottomSheet';
+import {theme} from '../theme';
 
 interface Props {
   visible: boolean;
@@ -26,80 +28,102 @@ const PositionModal: React.FC<Props> = ({
   onSelect,
   onClose,
 }) => (
-  <BottomSheet
-    visible={visible}
-    onClose={onClose}
-    sheetStyle={{ maxHeight: '70%' }}
-  >
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-      }}
-    >
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 16, fontWeight: '700', color: '#1A1A1A' }}>
-          Select Position
-        </Text>
-        <Text
-          style={{ fontSize: 13, color: '#667085', marginTop: 2 }}
-          numberOfLines={1}
-        >
-          {programName}
-        </Text>
+  <BottomSheet visible={visible} onClose={onClose} sheetStyle={{maxHeight: '70%'}}>
+    <View style={styles.header}>
+      <View style={theme.common.flex1}>
+        <Text style={styles.title}>Select Position</Text>
+        <Text style={styles.subtitle} numberOfLines={1}>{programName}</Text>
       </View>
-      <TouchableOpacity onPress={onClose} style={{ padding: 4 }}>
-        <Text style={{ fontSize: 18, color: '#9CA3AF', fontWeight: '600' }}>
-          ✕
-        </Text>
+      <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+        <Text style={styles.closeText}>✕</Text>
       </TouchableOpacity>
     </View>
 
     {isLoading ? (
-      <View style={{ padding: 40, alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#1D4889" />
-        <Text style={{ color: '#9CA3AF', marginTop: 12, fontSize: 14 }}>
-          Loading positions…
-        </Text>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primaryDark} />
+        <Text style={styles.loadingText}>Loading positions…</Text>
       </View>
     ) : (
       <FlatList
         data={tasks}
         keyExtractor={item => String(item.id)}
-        contentContainerStyle={{ padding: 12 }}
-        renderItem={({ item }) => (
+        contentContainerStyle={styles.listContent}
+        renderItem={({item}) => (
           <TouchableOpacity
             onPress={() => onSelect(item)}
-            style={{
-              paddingVertical: 14,
-              paddingHorizontal: 16,
-              marginBottom: 8,
-              backgroundColor: '#F7F9FC',
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: '#E5E7EB',
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={{ fontSize: 15, color: '#1A1A1A', fontWeight: '500' }}>
-              {item.name}
-            </Text>
+            style={styles.listItem}
+            activeOpacity={0.7}>
+            <Text style={styles.listItemText}>{item.name}</Text>
           </TouchableOpacity>
         )}
         ListEmptyComponent={
-          <View style={{ padding: 32, alignItems: 'center' }}>
-            <Text style={{ color: '#9CA3AF', fontSize: 14 }}>
-              No positions available
-            </Text>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No positions available</Text>
           </View>
         }
       />
     )}
   </BottomSheet>
 );
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: theme.spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  title: {
+    fontSize: theme.fontSize.md,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.text,
+  },
+  subtitle: {
+    fontSize: theme.fontSize.sm,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
+  },
+  closeBtn: {padding: theme.spacing.xs},
+  closeText: {
+    fontSize: 18,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.textMuted,
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.textMuted,
+    marginTop: theme.spacing.md,
+    fontSize: theme.fontSize.xs + 2,
+  },
+  listContent: {padding: theme.spacing.md},
+  listItem: {
+    paddingVertical: 14,
+    paddingHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
+    backgroundColor: '#F7F9FC',
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  listItemText: {
+    fontSize: theme.fontSize.base,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.text,
+  },
+  emptyContainer: {padding: 32, alignItems: 'center'},
+  emptyText: {
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.textMuted,
+    fontSize: theme.fontSize.xs + 2,
+  },
+});
 
 export default PositionModal;
