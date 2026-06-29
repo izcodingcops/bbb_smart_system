@@ -5,9 +5,7 @@ import {
   Animated,
   Easing,
   Pressable,
-  StyleSheet,
   ViewStyle,
-  StyleProp,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,7 +14,7 @@ interface Props {
   onClose: () => void;
   children: React.ReactNode;
   /** Extra style for the white sheet (e.g. {maxHeight: '70%'}). */
-  sheetStyle?: StyleProp<ViewStyle>;
+  sheetStyle?: ViewStyle;
 }
 
 const BottomSheet: React.FC<Props> = ({
@@ -63,21 +61,26 @@ const BottomSheet: React.FC<Props> = ({
       transparent
       onRequestClose={onClose}
     >
-      <View style={styles.fill}>
+      <View className="flex-1">
         {/* Dim backdrop — fades in place. */}
         <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: 'rgba(0,0,0,0.4)', opacity: progress },
-          ]}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.4)',
+            opacity: progress,
+          }}
         />
         {/* Spacer above the sheet — fills the gap and dismisses on tap. */}
-        <Pressable style={styles.fill} onPress={onClose} />
+        <Pressable className="flex-1" onPress={onClose} />
         {/* Sheet — measured for the slide; pinned to the bottom by the spacer. */}
         <Animated.View
           onLayout={e => setSheetHeight(e.nativeEvent.layout.height)}
+          className="bg-white rounded-tl-[20px] rounded-tr-[20px]"
           style={[
-            styles.sheet,
             { paddingBottom: insets.bottom, transform: [{ translateY }] },
             sheetStyle,
           ]}
@@ -88,14 +91,5 @@ const BottomSheet: React.FC<Props> = ({
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  fill: { flex: 1 },
-  sheet: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-});
 
 export default BottomSheet;
