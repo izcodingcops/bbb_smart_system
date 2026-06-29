@@ -4,6 +4,13 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
+      fontFamily: {
+        'lato-light': ['Lato-Light'],
+        'lato': ['Lato-Regular'],
+        'lato-medium': ['Lato-Regular'],
+        'lato-bold': ['Lato-Bold'],
+        'lato-black': ['Lato-Black'],
+      },
       colors: {
         primary: {
           DEFAULT: '#1D4889',
