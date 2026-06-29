@@ -230,7 +230,8 @@ final class LocationManager: NSObject {
 
   private func beginBackgroundTask() {
     guard bgTaskId == .invalid else { return }
-    bgTaskId = UIApplication.shared.beginBackgroundTask {
+    bgTaskId = UIApplication.shared.beginBackgroundTask { [weak self] in
+      guard let self else { return }
       UIApplication.shared.endBackgroundTask(self.bgTaskId)
       self.bgTaskId = .invalid
     }
