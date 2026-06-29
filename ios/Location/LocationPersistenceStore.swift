@@ -72,8 +72,17 @@ final class LocationPersistenceStore {
       let req = NSFetchRequest<NSFetchRequestResult>(entityName: "StoredLocation")
       req.predicate = NSPredicate(format: "ctimestamp IN %@", timestamps)
       let batchDelete = NSBatchDeleteRequest(fetchRequest: req)
-      try? context.execute(batchDelete)
-      context.reset()
+      batchDelete.resultType = .resultTypeObjectIDs
+      // Merge only the deleted object IDs back into the context rather than
+      // calling context.reset(), which would discard any pending inserts from
+      // concurrent location updates.
+      if let result = try? context.execute(batchDelete) as? NSBatchDeleteResult,
+         let ids = result.result as? [NSManagedObjectID] {
+        NSManagedObjectContext.mergeChanges(
+          fromRemoteContextSave: [NSDeletedObjectsKey: ids],
+          into: [context]
+        )
+      }
     }
   }
 
@@ -81,8 +90,14 @@ final class LocationPersistenceStore {
     context.performAndWait {
       let req = NSFetchRequest<NSFetchRequestResult>(entityName: "StoredLocation")
       let batchDelete = NSBatchDeleteRequest(fetchRequest: req)
-      try? context.execute(batchDelete)
-      context.reset()
+      batchDelete.resultType = .resultTypeObjectIDs
+      if let result = try? context.execute(batchDelete) as? NSBatchDeleteResult,
+         let ids = result.result as? [NSManagedObjectID] {
+        NSManagedObjectContext.mergeChanges(
+          fromRemoteContextSave: [NSDeletedObjectsKey: ids],
+          into: [context]
+        )
+      }
     }
   }
 }

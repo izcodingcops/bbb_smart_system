@@ -15,6 +15,7 @@ final class LocationUploader {
 
   // MARK: - Public API
 
+  // Must be called on the main queue — isUploading has no lock.
   func checkAndUploadPending(completion: @escaping (Bool) -> Void) {
     guard !isUploading else { completion(false); return }
     isUploading = true
