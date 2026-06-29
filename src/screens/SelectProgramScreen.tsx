@@ -7,6 +7,7 @@ import {
   FlatList,
   ActivityIndicator,
   Platform,
+  StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DeviceInfo, { getDeviceId } from 'react-native-device-info';
@@ -33,6 +34,7 @@ import { ApiEndpoints } from '../api/apiEndpoints';
 import { logger } from '../utils/logger';
 import PositionModal from '../components/PositionModal';
 import ShiftTimeModal from '../components/ShiftTimeModal';
+import {theme} from '../theme';
 
 const SelectProgramScreen: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -280,53 +282,38 @@ const SelectProgramScreen: React.FC = () => {
     }
   };
 
-  const renderItem = ({ item }: { item: Program }) => {
+  const renderItem = ({item}: {item: Program}) => {
     const isSelected = selectedProgram?.id === item.id;
     return (
       <TouchableOpacity
-        className={`mx-4 mb-2.5 rounded-xl px-4 py-4 flex-row justify-between items-center border ${
-          isSelected ? 'border-primary bg-blue-50' : 'border-gray-200 bg-white'
-        }`}
+        style={[styles.programItem, isSelected ? styles.programItemSelected : null]}
         onPress={() => handleProgramSelect(item)}
-        activeOpacity={0.7}
-      >
+        activeOpacity={0.7}>
         <Text
-          className={`flex-1 text-[15px] ${
-            isSelected ? 'text-primary font-semibold' : 'text-gray-900'
-          }`}
-          numberOfLines={1}
-        >
+          style={[styles.programName, isSelected ? styles.programNameSelected : null]}
+          numberOfLines={1}>
           {item.program_name}
         </Text>
-        {isSelected && (
-          <Text className="text-primary font-bold text-lg ml-3">✓</Text>
-        )}
+        {isSelected && <Text style={styles.checkmark}>✓</Text>}
       </TouchableOpacity>
     );
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      {/* Header */}
-      <View className="px-5 pt-4 pb-2 flex-row items-center justify-between">
-        <Text className="text-2xl font-bold text-gray-900">
-          Select A Program
-        </Text>
-        <TouchableOpacity
-          className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
-          onPress={() => dispatch(logout())}
-        >
-          <Text className="text-gray-500 text-base font-bold">✕</Text>
+    <SafeAreaView style={styles.root}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Select A Program</Text>
+        <TouchableOpacity style={styles.closeBtn} onPress={() => dispatch(logout())}>
+          <Text style={styles.closeBtnText}>✕</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Search */}
-      <View className="mx-4 mt-3 mb-2 flex-row items-center bg-gray-100 rounded-xl px-4">
-        <Text className="text-gray-400 mr-2 text-base">⌕</Text>
+      <View style={styles.searchContainer}>
+        <Text style={styles.searchIcon}>⌕</Text>
         <TextInput
-          className="flex-1 py-3 text-[15px] text-gray-900"
+          style={styles.searchInput}
           placeholder="Search by Program Name"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={theme.colors.textMuted}
           value={search}
           onChangeText={setSearch}
           autoCapitalize="none"
@@ -335,33 +322,27 @@ const SelectProgramScreen: React.FC = () => {
         />
         {search.length > 0 && (
           <TouchableOpacity onPress={() => setSearch('')}>
-            <Text className="text-gray-400 text-base">✕</Text>
+            <Text style={styles.searchClearText}>✕</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Selected Program Banner */}
       {selectedProgram && !search && (
-        <View className="mx-4 mt-2 mb-1 bg-blue-50 border border-primary rounded-xl px-4 py-3 flex-row items-center justify-between">
-          <View className="flex-1">
-            <Text className="text-xs font-semibold text-primary uppercase tracking-wider mb-0.5">
-              Selected Program
-            </Text>
-            <Text
-              className="text-[15px] text-gray-900 font-medium"
-              numberOfLines={1}
-            >
+        <View style={styles.selectedBanner}>
+          <View style={theme.common.flex1}>
+            <Text style={styles.selectedBannerLabel}>Selected Program</Text>
+            <Text style={styles.selectedBannerName} numberOfLines={1}>
               {selectedProgram.program_name}
             </Text>
           </View>
-          <Text className="text-primary font-bold text-xl ml-3">✓</Text>
+          <Text style={styles.checkmarkLarge}>✓</Text>
         </View>
       )}
 
       {isLoading && programs.length === 0 ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#1D4889" />
-          <Text className="text-gray-400 mt-3 text-sm">Loading programs…</Text>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primaryDark} />
+          <Text style={styles.loadingText}>Loading programs…</Text>
         </View>
       ) : (
         <FlatList
@@ -369,19 +350,19 @@ const SelectProgramScreen: React.FC = () => {
           keyExtractor={item => item.id}
           renderItem={renderItem}
           ListHeaderComponent={() => (
-            <View className="px-4 py-3">
-              <Text className="text-gray-500 text-sm font-medium">
+            <View style={styles.listHeader}>
+              <Text style={styles.listHeaderText}>
                 {filteredPrograms.length} Available Program
                 {filteredPrograms.length !== 1 ? 's' : ''}
               </Text>
             </View>
           )}
           ListEmptyComponent={() => (
-            <View className="items-center justify-center py-16">
-              <Text className="text-gray-400 text-base">No programs found</Text>
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No programs found</Text>
             </View>
           )}
-          contentContainerStyle={{ paddingBottom: 32 }}
+          contentContainerStyle={styles.listContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         />
@@ -406,5 +387,140 @@ const SelectProgramScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  root: {flex: 1, backgroundColor: theme.colors.surface},
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg + 4,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: 8,
+  },
+  headerTitle: {
+    fontSize: theme.fontSize.xxl,
+    fontFamily: theme.fonts.bold,
+    color: '#111827',
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeBtnText: {
+    fontFamily: theme.fonts.bold,
+    color: '#6B7280',
+    fontSize: theme.fontSize.md,
+  },
+  searchContainer: {
+    marginHorizontal: theme.spacing.lg,
+    marginTop: 12,
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.lg,
+  },
+  searchIcon: {color: '#9CA3AF', marginRight: 8, fontSize: theme.fontSize.md},
+  searchInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: theme.fontSize.base,
+    fontFamily: theme.fonts.regular,
+    color: '#111827',
+  },
+  searchClearText: {color: '#9CA3AF', fontSize: theme.fontSize.md},
+  selectedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: theme.spacing.lg,
+    marginTop: 8,
+    marginBottom: 4,
+    backgroundColor: theme.colors.primaryLight,
+    borderWidth: 1,
+    borderColor: theme.colors.primaryDark,
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: 12,
+  },
+  selectedBannerLabel: {
+    fontSize: theme.fontSize.xs,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.primaryDark,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 2,
+  },
+  selectedBannerName: {
+    fontSize: theme.fontSize.base,
+    fontFamily: theme.fonts.medium,
+    color: '#111827',
+  },
+  checkmarkLarge: {
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.primaryDark,
+    fontSize: theme.fontSize.xl,
+    marginLeft: 12,
+  },
+  loadingContainer: {flex: 1, alignItems: 'center', justifyContent: 'center'},
+  loadingText: {
+    fontFamily: theme.fonts.regular,
+    color: '#9CA3AF',
+    marginTop: 12,
+    fontSize: theme.fontSize.xs + 2,
+  },
+  listHeader: {paddingHorizontal: theme.spacing.lg, paddingVertical: 12},
+  listHeaderText: {
+    fontFamily: theme.fonts.medium,
+    color: '#6B7280',
+    fontSize: theme.fontSize.xs + 2,
+  },
+  listContent: {paddingBottom: 32},
+  emptyContainer: {alignItems: 'center', justifyContent: 'center', paddingVertical: 64},
+  emptyText: {
+    fontFamily: theme.fonts.regular,
+    color: '#9CA3AF',
+    fontSize: theme.fontSize.md,
+  },
+  programItem: {
+    marginHorizontal: theme.spacing.lg,
+    marginBottom: 10,
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.lg,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: theme.colors.surface,
+  },
+  programItemSelected: {
+    borderColor: theme.colors.primaryDark,
+    backgroundColor: '#EFF6FF',
+  },
+  programName: {
+    flex: 1,
+    fontSize: theme.fontSize.base,
+    fontFamily: theme.fonts.regular,
+    color: '#111827',
+  },
+  programNameSelected: {
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.primaryDark,
+  },
+  checkmark: {
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.primaryDark,
+    fontSize: theme.fontSize.lg,
+    marginLeft: 12,
+  },
+});
 
 export default SelectProgramScreen;
