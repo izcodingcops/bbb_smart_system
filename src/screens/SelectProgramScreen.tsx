@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
   },
   programItemSelected: {
     borderColor: theme.colors.primaryDark,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: theme.colors.primaryLight,
   },
   programName: {
     flex: 1,

@@ -5,7 +5,7 @@ export const theme = {
     primary: '#0066B2',
     primaryDark: '#1D4889',
     primaryLight: '#EFF6FF',
-    background: '#F7F7F7',
+    background: '#F3F4F6',
     surface: '#FFFFFF',
     border: '#EAEDF0',
     borderLight: '#EBEBEB',
@@ -15,6 +15,7 @@ export const theme = {
     white: '#FFFFFF',
     error: '#EF4444',
     success: '#16A34A',
+    info: '#3B82F6',
     overlay: 'rgba(0,0,0,0.4)',
   },
   fonts: {

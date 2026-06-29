@@ -47,7 +47,7 @@ const ShiftTimeModal: React.FC<Props> = ({visible, isLoading, onConfirm, onClose
       <View style={styles.body}>
         <View style={styles.timeRow}>
           <View style={[styles.timeCard, styles.startCard]}>
-            <Text style={[styles.timeLabel, {color: '#3B82F6'}]}>START TIME</Text>
+            <Text style={[styles.timeLabel, {color: theme.colors.info}]}>START TIME</Text>
             <Text style={[styles.timeValue, {color: theme.colors.primaryDark}]}>
               {formatTime(startTime, timeZone)}
             </Text>
