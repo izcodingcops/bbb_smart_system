@@ -60,6 +60,11 @@ public enum GPSTrackSmoother {
       var sumLat = 0.0
       var sumLon = 0.0
       
+      // Intentionally acausal: this smoother runs on a stored batch before
+      // upload, so future fixes are available. A centered (symmetric) kernel
+      // gives lower RMSE than a one-sided causal filter. Do NOT convert to
+      // causal/one-sided — it is correct as written for offline batch use.
+
       // Walk left from i, stopping at a gap.
       var j = i
       while j >= 0 && valid[j] {

@@ -14,6 +14,9 @@ public enum GPSKalmanSmoother {
   private static let gapSec: Double = 60.0
 
   // Assumed manoeuvring acceleration (m/s²) — drives the process noise Q.
+  // 3 m/s² covers both pedestrian (~1.5 m/s² peak) and automotive (~3–4 m/s²).
+  // Increase for harder-accelerating vehicles; decrease for pedestrian-only use
+  // to get tighter smoothing. Changing this rescales the entire Q matrix.
   private static let sigmaAccel: Double = 3.0
 
   public static func smoothInPlace(_ points: inout [[String: String]]) {
