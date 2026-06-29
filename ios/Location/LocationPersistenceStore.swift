@@ -68,23 +68,21 @@ final class LocationPersistenceStore {
   // MARK: - Deletes
   
   func delete(timestamps: [String]) {
-    DispatchQueue.main.async { [weak self] in
-      guard let self else { return }
+    context.performAndWait {
       let req = NSFetchRequest<NSFetchRequestResult>(entityName: "StoredLocation")
       req.predicate = NSPredicate(format: "ctimestamp IN %@", timestamps)
-      let delete = NSBatchDeleteRequest(fetchRequest: req)
-      try? self.context.execute(delete)
-      self.context.reset()
+      let batchDelete = NSBatchDeleteRequest(fetchRequest: req)
+      try? context.execute(batchDelete)
+      context.reset()
     }
   }
-  
+
   func deleteAll() {
-    DispatchQueue.main.async { [weak self] in
-      guard let self else { return }
+    context.performAndWait {
       let req = NSFetchRequest<NSFetchRequestResult>(entityName: "StoredLocation")
-      let delete = NSBatchDeleteRequest(fetchRequest: req)
-      try? self.context.execute(delete)
-      self.context.reset()
+      let batchDelete = NSBatchDeleteRequest(fetchRequest: req)
+      try? context.execute(batchDelete)
+      context.reset()
     }
   }
 }
