@@ -1,4 +1,3 @@
-import './global.css';
 import React from 'react';
 import {ActivityIndicator, StatusBar, View} from 'react-native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
