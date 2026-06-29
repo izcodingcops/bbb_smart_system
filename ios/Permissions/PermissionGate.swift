@@ -18,13 +18,6 @@ final class PermissionGate {
   
 
   func canStartTracking(locationManager: CLLocationManager?) -> Bool {
-    let servicesEnabled = CLLocationManager.locationServicesEnabled()
-    if !servicesEnabled {
-      Log.permissions.warn("BLOCK_LOCATION — device-wide Location Services is OFF")
-      alert.show(.locationDenied)
-      return false
-    }
-
     let locStatus: CLAuthorizationStatus = {
       if #available(iOS 14, *) {
         return locationManager?.authorizationStatus ?? .notDetermined
