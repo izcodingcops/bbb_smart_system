@@ -8,35 +8,36 @@
 import Foundation
 
 final class LocationUploader {
-  
+
   private let store: LocationPersistenceStore
+  private var isUploading = false
   init(store: LocationPersistenceStore) { self.store = store }
-  
+
   // MARK: - Public API
-  
+
   func checkAndUploadPending(completion: @escaping (Bool) -> Void) {
-    guard DefaultsStore.get(.postingData) != "true" else { completion(false); return }
-    DefaultsStore.set("true", for: .postingData)
-    
+    guard !isUploading else { completion(false); return }
+    isUploading = true
+
     let batch = store.nextBatch(limit: 400)
     guard batch.count > 5, DefaultsStore.isUserLoggedIn else {
-      DefaultsStore.set("false", for: .postingData)
+      isUploading = false
       completion(true); return
     }
-    
+
     post(batch) { [weak self] success in
       guard let self else { return }
       DispatchQueue.main.async {
         if success {
           if self.store.nextBatch(limit: 400).count <= 5 {
-            DefaultsStore.set("false", for: .postingData)
+            self.isUploading = false
             completion(true)
           } else {
-            DefaultsStore.set("false", for: .postingData)
+            self.isUploading = false
             self.checkAndUploadPending(completion: completion)
           }
         } else {
-          DefaultsStore.set("false", for: .postingData)
+          self.isUploading = false
           completion(false)
         }
       }
@@ -121,7 +122,7 @@ final class LocationUploader {
       Log.network.debug("→ \(request.curlString)")
 
       URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-        if let error { Log.network.debug("network error: \(error.localizedDescription)") }
+        if let error { Log.network.error("network error: \(error.localizedDescription)") }
         
         let code = (response as? HTTPURLResponse)?.statusCode ?? -1
         let raw = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
@@ -135,8 +136,6 @@ final class LocationUploader {
         Log.network.debug("uploaded \(locations.count); server ts=\(deletedTimestamps.count)")
         
         self.store.delete(timestamps: deletedTimestamps)
-        DefaultsStore.set("false", for: .postingData)
-        
         completion(true)
       }.resume()
     }
