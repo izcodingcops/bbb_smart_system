@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { MenuItem } from '../types/navigation';
-import { locationTracker, SmoothingFilter } from '../utils/locationTracker';
+import React, {useEffect, useState} from 'react';
+import {View, Text, TouchableOpacity, ScrollView, Alert, StyleSheet} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {MenuItem} from '../types/navigation';
+import {locationTracker, SmoothingFilter} from '../utils/locationTracker';
+import {theme} from '../theme';
 
 const ICON_MAP: Record<string, string> = {
   home: '⌂',
@@ -17,7 +18,7 @@ interface MoreScreenProps {
   onSelect: (screen: string) => void;
 }
 
-const MoreScreen: React.FC<MoreScreenProps> = ({ items, onSelect }) => {
+const MoreScreen: React.FC<MoreScreenProps> = ({items, onSelect}) => {
   const [filter, setFilter] = useState<SmoothingFilter>('gaussian');
 
   useEffect(() => {
@@ -37,162 +38,48 @@ const MoreScreen: React.FC<MoreScreenProps> = ({ items, onSelect }) => {
   };
 
   return (
-    <SafeAreaView
-      edges={['top']}
-      style={{ flex: 1, backgroundColor: '#F3F4F6' }}
-    >
-      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
-        <Text style={{ fontSize: 22, fontWeight: '700', color: '#111827' }}>
-          More
-        </Text>
+    <SafeAreaView edges={['top']} style={styles.root}>
+      <View style={styles.pageHeader}>
+        <Text style={styles.pageTitle}>More</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <View
-          style={{
-            backgroundColor: '#fff',
-            borderRadius: 14,
-            overflow: 'hidden',
-          }}
-        >
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.menuCard}>
           {items.map((item, index) => (
             <TouchableOpacity
               key={item.id}
               onPress={() => onSelect(item.screen_name)}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                paddingHorizontal: 16,
-                paddingVertical: 14,
-                borderBottomWidth: index < items.length - 1 ? 1 : 0,
-                borderBottomColor: '#F3F4F6',
-              }}
-            >
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 9,
-                  backgroundColor: '#EFF6FF',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: 14,
-                }}
-              >
-                <Text style={{ fontSize: 18, color: '#1D4889' }}>
-                  {ICON_MAP[item.menu_icon] ?? '○'}
-                </Text>
+              style={[styles.menuRow, index < items.length - 1 && styles.menuRowBorder]}>
+              <View style={styles.menuIcon}>
+                <Text style={styles.menuIconText}>{ICON_MAP[item.menu_icon] ?? '○'}</Text>
               </View>
-              <Text
-                style={{
-                  flex: 1,
-                  fontSize: 15,
-                  fontWeight: '500',
-                  color: '#111827',
-                }}
-              >
-                {item.menu_name}
-              </Text>
-              <Text style={{ fontSize: 18, color: '#9CA3AF' }}>›</Text>
+              <Text style={styles.menuLabel}>{item.menu_name}</Text>
+              <Text style={styles.rowArrow}>›</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text
-          style={{
-            fontSize: 12,
-            fontWeight: '600',
-            color: '#9CA3AF',
-            marginTop: 24,
-            marginBottom: 8,
-            marginLeft: 4,
-          }}
-        >
-          DEBUG
-        </Text>
-        <View
-          style={{
-            backgroundColor: '#fff',
-            borderRadius: 14,
-            overflow: 'hidden',
-          }}
-        >
-          <TouchableOpacity
-            onPress={handleShareGpsLog}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-            }}
-          >
-            <View
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 9,
-                backgroundColor: '#EFF6FF',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: 14,
-              }}
-            >
-              <Text style={{ fontSize: 18, color: '#1D4889' }}>⇪</Text>
+        <Text style={styles.sectionLabel}>DEBUG</Text>
+        <View style={styles.menuCard}>
+          <TouchableOpacity onPress={handleShareGpsLog} style={styles.menuRow}>
+            <View style={styles.menuIcon}>
+              <Text style={styles.menuIconText}>⇪</Text>
             </View>
-            <Text
-              style={{
-                flex: 1,
-                fontSize: 15,
-                fontWeight: '500',
-                color: '#111827',
-              }}
-            >
-              Share GPS Log
-            </Text>
-            <Text style={{ fontSize: 18, color: '#9CA3AF' }}>›</Text>
+            <Text style={styles.menuLabel}>Share GPS Log</Text>
+            <Text style={styles.rowArrow}>›</Text>
           </TouchableOpacity>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-              borderTopWidth: 1,
-              borderTopColor: '#F3F4F6',
-            }}
-          >
-            <Text
-              style={{
-                flex: 1,
-                fontSize: 15,
-                fontWeight: '500',
-                color: '#111827',
-              }}
-            >
-              GPS Smoothing
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
+
+          <View style={[styles.menuRow, styles.menuRowBorderTop, styles.filterRow]}>
+            <Text style={styles.menuLabel}>GPS Smoothing</Text>
+            <View style={styles.filterBtns}>
               {(['gaussian', 'kalman', 'none'] as SmoothingFilter[]).map(value => {
                 const selected = filter === value;
                 return (
                   <TouchableOpacity
                     key={value}
                     onPress={() => selectFilter(value)}
-                    style={{
-                      paddingHorizontal: 12,
-                      paddingVertical: 6,
-                      borderRadius: 8,
-                      backgroundColor: selected ? '#1D4889' : '#EFF6FF',
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        fontWeight: '600',
-                        color: selected ? '#fff' : '#1D4889',
-                        textTransform: 'capitalize',
-                      }}
-                    >
+                    style={[styles.filterBtn, selected && styles.filterBtnSelected]}>
+                    <Text style={[styles.filterBtnText, selected && styles.filterBtnTextSelected]}>
                       {value}
                     </Text>
                   </TouchableOpacity>
@@ -205,5 +92,61 @@ const MoreScreen: React.FC<MoreScreenProps> = ({ items, onSelect }) => {
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  root: {flex: 1, backgroundColor: '#F3F4F6'},
+  pageHeader: {paddingHorizontal: theme.spacing.lg, paddingTop: 12, paddingBottom: 8},
+  pageTitle: {fontSize: theme.fontSize.xl, fontFamily: theme.fonts.bold, color: '#111827'},
+  scroll: {padding: theme.spacing.lg},
+  menuCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg,
+    overflow: 'hidden',
+  },
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: 14,
+  },
+  menuRowBorder: {borderBottomWidth: 1, borderBottomColor: '#F3F4F6'},
+  menuRowBorderTop: {borderTopWidth: 1, borderTopColor: '#F3F4F6'},
+  filterRow: {flexWrap: 'wrap'},
+  menuIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 9,
+    backgroundColor: theme.colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  menuIconText: {fontSize: 18, color: theme.colors.primaryDark},
+  menuLabel: {flex: 1, fontSize: theme.fontSize.base, fontFamily: theme.fonts.medium, color: '#111827'},
+  rowArrow: {fontSize: 18, color: theme.colors.textMuted},
+  sectionLabel: {
+    fontSize: theme.fontSize.xs,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.textMuted,
+    marginTop: theme.spacing.xxl,
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  filterBtns: {flexDirection: 'row', gap: 8},
+  filterBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.primaryLight,
+  },
+  filterBtnSelected: {backgroundColor: theme.colors.primaryDark},
+  filterBtnText: {
+    fontSize: theme.fontSize.sm,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.primaryDark,
+    textTransform: 'capitalize',
+  },
+  filterBtnTextSelected: {color: theme.colors.white},
+});
 
 export default MoreScreen;

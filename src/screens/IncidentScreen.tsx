@@ -1,14 +1,21 @@
 import React from 'react';
-import {View, Text} from 'react-native';
+import {View, Text, StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {theme} from '../theme';
 
 const IncidentScreen: React.FC = () => (
-  <SafeAreaView className="flex-1 bg-gray-100">
-    <View className="flex-1 items-center justify-center">
-      <Text className="text-xl font-bold text-gray-400">Incident</Text>
-      <Text className="text-sm text-gray-400 mt-1">Coming soon</Text>
+  <SafeAreaView style={styles.root}>
+    <View style={[styles.root, theme.common.center]}>
+      <Text style={styles.heading}>Incident</Text>
+      <Text style={styles.sub}>Coming soon</Text>
     </View>
   </SafeAreaView>
 );
+
+const styles = StyleSheet.create({
+  root: {flex: 1, backgroundColor: '#F3F4F6'},
+  heading: {fontSize: theme.fontSize.lg, fontFamily: theme.fonts.bold, color: '#9CA3AF'},
+  sub: {fontSize: theme.fontSize.xs + 2, fontFamily: theme.fonts.regular, color: '#9CA3AF', marginTop: 4},
+});
 
 export default IncidentScreen;
