@@ -18,14 +18,7 @@ final class PermissionGate {
   
 
   func canStartTracking(locationManager: CLLocationManager?) -> Bool {
-    var servicesEnabled = true
-    let group = DispatchGroup()
-    group.enter()
-    DispatchQueue.global(qos: .userInitiated).async {
-      servicesEnabled = CLLocationManager.locationServicesEnabled()
-      group.leave()
-    }
-    group.wait()
+    let servicesEnabled = CLLocationManager.locationServicesEnabled()
     if !servicesEnabled {
       Log.permissions.warn("BLOCK_LOCATION — device-wide Location Services is OFF")
       alert.show(.locationDenied)
