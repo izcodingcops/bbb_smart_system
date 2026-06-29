@@ -8,9 +8,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
 } from 'react-native';
 import {useAuth} from '../hooks/useAuth';
 import LoadingOverlay from '../components/LoadingOverlay';
+import {theme} from '../theme';
 
 const LoginScreen: React.FC = () => {
   const {login, isLoading, error, dismissError} = useAuth();
@@ -47,37 +49,27 @@ const LoginScreen: React.FC = () => {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-gray-100"
+      style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView
-        contentContainerClassName="flex-grow"
+        contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled">
 
-        <View className="bg-primary px-6 pt-20 pb-16 items-center">
-          <Text className="text-4xl font-extrabold text-white tracking-widest mb-1">
-            BBB
-          </Text>
-          <Text className="text-white/60 text-sm tracking-wider">
-            SMART SYSTEM
-          </Text>
+        <View style={styles.hero}>
+          <Text style={styles.heroTitle}>BBB</Text>
+          <Text style={styles.heroSubtitle}>SMART SYSTEM</Text>
         </View>
 
-        <View className="bg-white mx-5 -mt-7 rounded-2xl px-6 py-8 shadow-md">
-          <Text className="text-xl font-bold text-gray-900 mb-1">
-            Welcome back
-          </Text>
-          <Text className="text-sm text-gray-400 mb-6">
-            Sign in to your account
-          </Text>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Welcome back</Text>
+          <Text style={styles.cardSubtitle}>Sign in to your account</Text>
 
-          <View className="mb-4">
-            <Text className="text-sm font-semibold text-gray-700 mb-2">
-              Username
-            </Text>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Username</Text>
             <TextInput
-              className={`border ${fieldErrors.username ? 'border-red-500' : 'border-gray-200'} rounded-xl px-4 py-3 text-[15px] text-gray-900 bg-gray-50`}
+              style={[styles.input, fieldErrors.username ? styles.inputError : null]}
               placeholder="Enter your username"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
               value={username}
@@ -89,20 +81,16 @@ const LoginScreen: React.FC = () => {
               }}
             />
             {fieldErrors.username ? (
-              <Text className="text-red-500 text-xs mt-1">
-                {fieldErrors.username}
-              </Text>
+              <Text style={styles.fieldError}>{fieldErrors.username}</Text>
             ) : null}
           </View>
 
-          <View className="mb-6">
-            <Text className="text-sm font-semibold text-gray-700 mb-2">
-              Password
-            </Text>
+          <View style={[styles.fieldGroup, styles.lastFieldGroup]}>
+            <Text style={styles.fieldLabel}>Password</Text>
             <TextInput
-              className={`border ${fieldErrors.password ? 'border-red-500' : 'border-gray-200'} rounded-xl px-4 py-3 text-[15px] text-gray-900 bg-gray-50`}
+              style={[styles.input, fieldErrors.password ? styles.inputError : null]}
               placeholder="••••••••"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.colors.textMuted}
               secureTextEntry
               value={password}
               onChangeText={v => {
@@ -113,23 +101,19 @@ const LoginScreen: React.FC = () => {
               }}
             />
             {fieldErrors.password ? (
-              <Text className="text-red-500 text-xs mt-1">
-                {fieldErrors.password}
-              </Text>
+              <Text style={styles.fieldError}>{fieldErrors.password}</Text>
             ) : null}
           </View>
 
           <TouchableOpacity
-            className={`bg-primary rounded-xl py-4 items-center ${isLoading ? 'opacity-60' : ''}`}
+            style={[styles.submitBtn, isLoading && styles.disabledBtn]}
             onPress={handleLogin}
             disabled={isLoading}
             activeOpacity={0.85}>
-            <Text className="text-white font-bold text-base">Sign In</Text>
+            <Text style={styles.submitText}>Sign In</Text>
           </TouchableOpacity>
 
-          <Text className="text-center text-xs text-gray-400 mt-5">
-            Demo: johndoe / password123
-          </Text>
+          <Text style={styles.hint}>Demo: johndoe / password123</Text>
         </View>
       </ScrollView>
 
@@ -137,5 +121,100 @@ const LoginScreen: React.FC = () => {
     </KeyboardAvoidingView>
   );
 };
+
+const styles = StyleSheet.create({
+  root: {flex: 1, backgroundColor: '#F3F4F6'},
+  scroll: {flexGrow: 1},
+  hero: {
+    backgroundColor: theme.colors.primaryDark,
+    paddingHorizontal: theme.spacing.xl + 4,
+    paddingTop: 80,
+    paddingBottom: 64,
+    alignItems: 'center',
+  },
+  heroTitle: {
+    fontSize: 36,
+    fontFamily: theme.fonts.black,
+    color: theme.colors.white,
+    letterSpacing: 6,
+    marginBottom: 4,
+  },
+  heroSubtitle: {
+    fontFamily: theme.fonts.medium,
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: theme.fontSize.sm,
+    letterSpacing: 3,
+  },
+  card: {
+    backgroundColor: theme.colors.surface,
+    marginHorizontal: theme.spacing.lg + 4,
+    marginTop: -28,
+    borderRadius: theme.radius.xl,
+    paddingHorizontal: theme.spacing.xl + 4,
+    paddingVertical: 32,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cardTitle: {
+    fontSize: theme.fontSize.xl,
+    fontFamily: theme.fonts.bold,
+    color: '#111827',
+    marginBottom: 4,
+  },
+  cardSubtitle: {
+    fontSize: theme.fontSize.xs + 2,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.textMuted,
+    marginBottom: theme.spacing.xl + 4,
+  },
+  fieldGroup: {marginBottom: theme.spacing.md},
+  lastFieldGroup: {marginBottom: theme.spacing.xl + 4},
+  fieldLabel: {
+    fontSize: theme.fontSize.xs + 2,
+    fontFamily: theme.fonts.bold,
+    color: '#374151',
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: 12,
+    fontSize: theme.fontSize.base,
+    fontFamily: theme.fonts.regular,
+    color: '#111827',
+    backgroundColor: '#F9FAFB',
+  },
+  inputError: {borderColor: theme.colors.error},
+  fieldError: {
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.error,
+    fontSize: theme.fontSize.xs,
+    marginTop: 4,
+  },
+  submitBtn: {
+    backgroundColor: theme.colors.primaryDark,
+    borderRadius: theme.radius.md,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  disabledBtn: {opacity: 0.6},
+  submitText: {
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.white,
+    fontSize: theme.fontSize.md,
+  },
+  hint: {
+    textAlign: 'center',
+    fontSize: theme.fontSize.xs,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.textMuted,
+    marginTop: theme.spacing.lg + 4,
+  },
+});
 
 export default LoginScreen;
