@@ -112,22 +112,20 @@ final class LocationBridge: RCTEventEmitter {
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
       let mgr = LocationManager.shared
-      mgr.stopLocationUpdates()
       let total = mgr.locationCount()
       self.processSyncUpload(mgr: mgr, total: total, uploaded: 0)
     }
   }
-  
+
   private func processSyncUpload(mgr: LocationManager, total: Int, uploaded: Int) {
     var mutableUploaded = uploaded
     let batch = mgr.savedLocationsBatch()
-    
+
     if batch.isEmpty {
       if hasListeners { sendEvent(withName: "onUploadComplete", body: ["status": "completed"]) }
-      mgr.startUpdateLocation()
       return
     }
-    
+
     mgr.uploadBatch(batch) { [weak self] success in
       guard let self else { return }
       if success {
@@ -139,7 +137,6 @@ final class LocationBridge: RCTEventEmitter {
         }
       } else {
         if self.hasListeners { self.sendEvent(withName: "onUploadComplete", body: ["status": "Retry"]) }
-        mgr.startUpdateLocation()
       }
     }
   }
