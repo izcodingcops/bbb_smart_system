@@ -1,12 +1,17 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {View, Text, TouchableOpacity, TextInput, Image, ActivityIndicator} from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  Image,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {GetSelectedProgram} from '../redux/program/selectors';
-import {fontFamilies} from '../constants/fonts';
 import {locationTracker} from '../utils/locationTracker';
-
-const {LATO} = fontFamilies;
-const BLUE = '#0066B2';
+import {theme} from '../theme';
 
 const STAT_ICONS: Record<string, any> = {
   assigned: require('../assets/icons/stat_assigned.png'),
@@ -23,18 +28,11 @@ const StatCard = ({
   count: number;
   iconKey: string;
 }) => (
-  <View className="flex-1 bg-white rounded-xl border border-[rgba(186,186,186,0.25)] p-3 gap-4">
-    <Text
-      className="text-xs text-[#656565]"
-      style={{fontFamily: LATO.medium}}
-      numberOfLines={1}>
-      {label}
-    </Text>
-    <View className="flex-row justify-between items-center">
-      <Text className="text-base text-[#3B3B3B]" style={{fontFamily: LATO.bold}}>
-        {count}
-      </Text>
-      <Image source={STAT_ICONS[iconKey]} className="w-5 h-5" />
+  <View style={styles.statCard}>
+    <Text style={styles.statLabel} numberOfLines={1}>{label}</Text>
+    <View style={styles.statRow}>
+      <Text style={styles.statCount}>{count}</Text>
+      <Image source={STAT_ICONS[iconKey]} style={styles.statIcon} />
     </View>
   </View>
 );
@@ -64,147 +62,270 @@ const HomeScreen: React.FC = () => {
   }, [isSyncing]);
 
   return (
-    <View className="flex-1 bg-[#0066B2]">
-      <SafeAreaView className="bg-[#0066B2] pb-4" edges={['top']}>
-        <View className="flex-row items-center px-4 gap-8">
-          <View className="flex-1 gap-1">
-            <View className="flex-row items-center gap-1">
+    <View style={styles.root}>
+      <SafeAreaView style={styles.header} edges={['top']}>
+        <View style={[theme.common.row, styles.headerInner]}>
+          <View style={[theme.common.flex1, styles.headerTextCol]}>
+            <View style={[theme.common.row, styles.gap4]}>
               <Image
                 source={require('../assets/icons/marker_pin.png')}
-                className="w-5 h-5"
-                style={{tintColor: '#FFFFFF'}}
+                style={[styles.icon20, {tintColor: theme.colors.white}]}
               />
-              <Text
-                className="flex-1 text-white text-xl"
-                style={{fontFamily: LATO.bold, lineHeight: 24}}
-                numberOfLines={1}>
-                {selectedProgram?.program_name ??
-                  'Akron Oh Downtown Akron Partnership 1350'}
+              <Text style={styles.programName} numberOfLines={1}>
+                {selectedProgram?.program_name ?? 'Akron Oh Downtown Akron Partnership 1350'}
               </Text>
             </View>
-            <View className="flex-row items-center gap-1 pl-6">
-              <Text
-                className="text-[#ECECEC] text-xs"
-                style={{fontFamily: LATO.regular}}>
-                Shift Type:
-              </Text>
-              <Text
-                className="text-[#ECECEC] text-xs"
-                style={{fontFamily: LATO.regular}}>
-                Cleaning
-              </Text>
+            <View style={[theme.common.row, styles.shiftRow]}>
+              <Text style={styles.shiftLabel}>Shift Type:</Text>
+              <Text style={styles.shiftLabel}>Cleaning</Text>
               <Image
                 source={require('../assets/icons/chevron_left.png')}
-                className="w-3.5 h-3.5"
-                style={{tintColor: '#FFFFFF'}}
+                style={[styles.icon14, {tintColor: theme.colors.white}]}
               />
             </View>
           </View>
 
-          <View className="w-[50px] h-[50px] rounded-lg bg-white/20 overflow-hidden items-center justify-center">
-            <View className="absolute w-10 h-px bg-white/30 top-[17px]" />
-            <View className="absolute w-px h-10 bg-white/30 left-[17px]" />
-            <View className="w-2 h-2 rounded-full bg-white/80 mb-1" />
+          <View style={styles.mapGrid}>
+            <View style={styles.mapGridHLine} />
+            <View style={styles.mapGridVLine} />
+            <View style={styles.mapGridDot} />
           </View>
         </View>
 
-        <View
-          className="flex-row items-center mx-4 mt-3 px-3 py-[9px] bg-white/30 rounded-xl border border-white/30"
-          style={{
-            gap: 10,
-            shadowColor: '#0064AF',
-            shadowOffset: {width: 0, height: 0},
-            shadowOpacity: 1,
-            shadowRadius: 6,
-            elevation: 4,
-          }}>
+        <View style={styles.searchBar}>
           <Image
             source={require('../assets/icons/search.png')}
-            className="w-5 h-5"
-            style={{tintColor: '#FFFFFF'}}
+            style={[styles.icon20, {tintColor: theme.colors.white}]}
           />
           <TextInput
-            className="flex-1 text-white text-base p-0"
-            style={{fontFamily: LATO.medium, lineHeight: 24}}
+            style={styles.searchInput}
             placeholder="Search here..."
             placeholderTextColor="rgba(255,255,255,0.7)"
           />
         </View>
       </SafeAreaView>
 
-      <View className="flex-1 bg-[#F7F7F7] rounded-t-2xl">
-        <View className="flex-row gap-2 px-4 pt-4">
+      <View style={styles.body}>
+        <View style={styles.statRow3}>
           <StatCard label="Assigned Work" count={0} iconKey="assigned" />
           <StatCard label="Unassign Work" count={0} iconKey="unassign" />
           <StatCard label="My Work" count={0} iconKey="mywork" />
         </View>
 
-        <View className="h-px bg-[#DEDEDE] mx-4 mt-[10px]" />
+        <View style={styles.divider} />
 
-        <View className="items-center px-4 pt-10 gap-6">
-          <Image
-            source={require('../assets/icons/empty_icon.png')}
-            className="w-[60px] h-[60px]"
-          />
-          <View className="items-center gap-2.5">
-            <Text
-              className="text-[#1A1A1A] text-xl text-center"
-              style={{fontFamily: LATO.bold, lineHeight: 22}}>
-              No work to show yet
-            </Text>
-            <Text
-              className="text-[#667085] text-sm text-center"
-              style={{fontFamily: LATO.medium, lineHeight: 18}}>
-              Work appears when assigned by your supervisor, requested by a
-              user, or created by you as needed.
+        <View style={styles.emptyState}>
+          <Image source={require('../assets/icons/empty_icon.png')} style={styles.emptyIcon} />
+          <View style={styles.emptyTextGroup}>
+            <Text style={styles.emptyTitle}>No work to show yet</Text>
+            <Text style={styles.emptyBody}>
+              Work appears when assigned by your supervisor, requested by a user, or created by you as needed.
             </Text>
           </View>
         </View>
       </View>
 
-      {/* Sync status toast */}
       {syncStatus && (
-        <View className="absolute bottom-[160px] left-4 right-4 bg-gray-800 rounded-xl px-4 py-3 items-center">
-          <Text className="text-white text-sm" style={{fontFamily: LATO.medium}}>
-            {syncStatus}
-          </Text>
+        <View style={styles.syncToast}>
+          <Text style={styles.syncToastText}>{syncStatus}</Text>
         </View>
       )}
 
-      {/* Location FAB + Sync Now */}
-      <View className="absolute right-4 bottom-[100px] gap-2">
+      <View style={styles.fabArea}>
         <TouchableOpacity
           onPress={handleSyncNow}
           disabled={isSyncing}
-          className="flex-row items-center px-3 py-3 bg-[rgba(0,102,178,0.08)] rounded-2xl"
-          style={{
-            gap: 8,
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 4},
-            shadowOpacity: 0.25,
-            shadowRadius: 4,
-            elevation: 5,
-            opacity: isSyncing ? 0.6 : 1,
-          }}
+          style={[styles.fab, isSyncing && styles.fabDisabled, theme.shadow.fab]}
           activeOpacity={0.8}>
           {isSyncing ? (
-            <ActivityIndicator size="small" color={BLUE} />
+            <ActivityIndicator size="small" color={theme.colors.primary} />
           ) : (
             <Image
               source={require('../assets/icons/map.png')}
-              className="w-5 h-5"
-              style={{tintColor: BLUE}}
+              style={[styles.icon20, {tintColor: theme.colors.primary}]}
             />
           )}
-          <Text
-            className="text-base text-[#0066B2]"
-            style={{fontFamily: LATO.bold, lineHeight: 20}}>
-            {isSyncing ? 'Syncing…' : 'Sync Now'}
-          </Text>
+          <Text style={styles.fabText}>{isSyncing ? 'Syncing…' : 'Sync Now'}</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  root: {flex: 1, backgroundColor: theme.colors.primary},
+  header: {backgroundColor: theme.colors.primary, paddingBottom: theme.spacing.lg},
+  headerInner: {
+    paddingHorizontal: theme.spacing.lg,
+    gap: 32,
+  },
+  headerTextCol: {gap: 4},
+  gap4: {gap: 4},
+  programName: {
+    flex: 1,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.white,
+    fontSize: theme.fontSize.lg,
+    lineHeight: 24,
+  },
+  shiftRow: {gap: 4, paddingLeft: 24},
+  shiftLabel: {
+    fontFamily: theme.fonts.regular,
+    color: '#ECECEC',
+    fontSize: theme.fontSize.xs,
+  },
+  icon20: {width: 20, height: 20},
+  icon14: {width: 14, height: 14},
+  mapGrid: {
+    width: 50,
+    height: 50,
+    borderRadius: theme.radius.sm,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mapGridHLine: {
+    position: 'absolute',
+    width: 40,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    top: 17,
+  },
+  mapGridVLine: {
+    position: 'absolute',
+    width: 1,
+    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    left: 17,
+  },
+  mapGridDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    marginBottom: 4,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginHorizontal: theme.spacing.lg,
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+    shadowColor: '#0064AF',
+    shadowOffset: {width: 0, height: 0},
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.white,
+    fontSize: theme.fontSize.md,
+    padding: 0,
+    lineHeight: 24,
+  },
+  body: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+    borderTopLeftRadius: theme.radius.xl,
+    borderTopRightRadius: theme.radius.xl,
+  },
+  statRow3: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(186,186,186,0.25)',
+    padding: 12,
+    gap: 16,
+  },
+  statLabel: {
+    fontSize: theme.fontSize.xs,
+    fontFamily: theme.fonts.medium,
+    color: '#656565',
+  },
+  statRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
+  statCount: {
+    fontSize: theme.fontSize.md,
+    fontFamily: theme.fonts.bold,
+    color: '#3B3B3B',
+  },
+  statIcon: {width: 20, height: 20},
+  divider: {height: 1, backgroundColor: '#DEDEDE', marginHorizontal: theme.spacing.lg, marginTop: 10},
+  emptyState: {
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: 40,
+    gap: 24,
+  },
+  emptyIcon: {width: 60, height: 60},
+  emptyTextGroup: {alignItems: 'center', gap: 10},
+  emptyTitle: {
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.text,
+    fontSize: theme.fontSize.lg,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  emptyBody: {
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.textSecondary,
+    fontSize: theme.fontSize.xs + 2,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  syncToast: {
+    position: 'absolute',
+    bottom: 160,
+    left: theme.spacing.lg,
+    right: theme.spacing.lg,
+    backgroundColor: '#1F2937',
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  syncToastText: {
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.white,
+    fontSize: theme.fontSize.xs + 2,
+  },
+  fabArea: {
+    position: 'absolute',
+    right: theme.spacing.lg,
+    bottom: 100,
+    gap: 8,
+  },
+  fab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(0,102,178,0.08)',
+    borderRadius: theme.radius.xl,
+  },
+  fabDisabled: {opacity: 0.6},
+  fabText: {
+    fontSize: theme.fontSize.md,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.primary,
+    lineHeight: 20,
+  },
+});
 
 export default HomeScreen;
