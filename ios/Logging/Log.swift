@@ -32,10 +32,8 @@ enum Log {
     }
 
     func info(_ message: @autoclosure () -> String) {
-      #if DEBUG
       let text = message()
       logger.info("\(text, privacy: .public)")
-      #endif
     }
 
     func warn(_ message: @autoclosure () -> String) {

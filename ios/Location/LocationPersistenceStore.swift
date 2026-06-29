@@ -68,23 +68,36 @@ final class LocationPersistenceStore {
   // MARK: - Deletes
   
   func delete(timestamps: [String]) {
-    DispatchQueue.main.async { [weak self] in
-      guard let self else { return }
+    context.performAndWait {
       let req = NSFetchRequest<NSFetchRequestResult>(entityName: "StoredLocation")
       req.predicate = NSPredicate(format: "ctimestamp IN %@", timestamps)
-      let delete = NSBatchDeleteRequest(fetchRequest: req)
-      try? self.context.execute(delete)
-      self.context.reset()
+      let batchDelete = NSBatchDeleteRequest(fetchRequest: req)
+      batchDelete.resultType = .resultTypeObjectIDs
+      // Merge only the deleted object IDs back into the context rather than
+      // calling context.reset(), which would discard any pending inserts from
+      // concurrent location updates.
+      if let result = try? context.execute(batchDelete) as? NSBatchDeleteResult,
+         let ids = result.result as? [NSManagedObjectID] {
+        NSManagedObjectContext.mergeChanges(
+          fromRemoteContextSave: [NSDeletedObjectsKey: ids],
+          into: [context]
+        )
+      }
     }
   }
-  
+
   func deleteAll() {
-    DispatchQueue.main.async { [weak self] in
-      guard let self else { return }
+    context.performAndWait {
       let req = NSFetchRequest<NSFetchRequestResult>(entityName: "StoredLocation")
-      let delete = NSBatchDeleteRequest(fetchRequest: req)
-      try? self.context.execute(delete)
-      self.context.reset()
+      let batchDelete = NSBatchDeleteRequest(fetchRequest: req)
+      batchDelete.resultType = .resultTypeObjectIDs
+      if let result = try? context.execute(batchDelete) as? NSBatchDeleteResult,
+         let ids = result.result as? [NSManagedObjectID] {
+        NSManagedObjectContext.mergeChanges(
+          fromRemoteContextSave: [NSDeletedObjectsKey: ids],
+          into: [context]
+        )
+      }
     }
   }
 }

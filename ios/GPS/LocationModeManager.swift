@@ -83,7 +83,7 @@ public final class LocationModeManager {
     } else {
       lm.desiredAccuracy = movingAccuracy
       lm.distanceFilter = movingDistanceFilter
-      GPSLogger.info("MODE_FULL", note: "accuracy=best filter=none reason=\(reason)")
+      GPSLogger.info("MODE_FULL", note: "accuracy=best filter=\(Int(movingDistanceFilter))m reason=\(reason)")
     }
   }
   
