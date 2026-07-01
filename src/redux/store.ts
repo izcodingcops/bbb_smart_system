@@ -1,15 +1,11 @@
 import {configureStore} from '@reduxjs/toolkit';
-import createSagaMiddleware from 'redux-saga';
 import {persistStore, persistReducer} from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {TypedUseSelectorHook, useDispatch, useSelector} from 'react-redux';
 import rootReducer from './rootReducer';
-import rootSaga from './rootSaga';
 import {apiSlice} from './api/apiSlice';
 import {startConnectivitySync} from './connectivitySync';
 import {resetOfflineSyncing} from './offlineQueue/slice';
-
-const sagaMiddleware = createSagaMiddleware();
 
 const persistConfig = {
   key: 'root',
@@ -22,13 +18,9 @@ const persistedReducer = persistReducer(persistConfig, rootReducer);
 export const store = configureStore({
   reducer: persistedReducer,
   middleware: getDefaultMiddleware =>
-    getDefaultMiddleware({serializableCheck: false})
-      .concat(sagaMiddleware)
-      .concat(apiSlice.middleware),
+    getDefaultMiddleware({serializableCheck: false}).concat(apiSlice.middleware),
 });
 export const persistor = persistStore(store);
-
-sagaMiddleware.run(rootSaga);
 
 store.dispatch(resetOfflineSyncing());
 startConnectivitySync(store.dispatch);
