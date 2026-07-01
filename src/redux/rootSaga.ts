@@ -3,12 +3,11 @@ import {eventChannel, EventChannel} from 'redux-saga';
 import {logger} from '../utils/logger';
 import {locationTracker} from '../utils/locationTracker';
 import authSaga from './auth/saga';
-import programSaga from './program/saga';
 import offlineQueueSaga from './offlineQueue/saga';
 import maintenanceSaga from './maintenance/saga';
 import {requestOfflineSync, resetOfflineSyncing} from './offlineQueue/actions';
 
-const sagas = [authSaga, programSaga, offlineQueueSaga, maintenanceSaga];
+const sagas = [authSaga, offlineQueueSaga, maintenanceSaga];
 
 export function createConnectivityChannel(): EventChannel<boolean> {
   return eventChannel(emit => {

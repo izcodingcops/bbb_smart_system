@@ -1,7 +1,7 @@
 import {call, put, takeLatest} from 'redux-saga/effects';
 import {authService} from '../../api/services/authService';
 import {loginSuccess, loginFailure, logoutSuccess} from './actions';
-import {clearProgram} from '../program/actions';
+import {clearProgram} from '../program/slice';
 import {AUTH_LOGIN, AUTH_LOGOUT} from './types';
 import {LoginCredentials, User, Session} from '../../types/auth';
 import {logger} from '../../utils/logger';

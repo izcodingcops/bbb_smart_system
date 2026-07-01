@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -12,13 +12,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DeviceInfo, { getDeviceId } from 'react-native-device-info';
 import { useAppDispatch } from '../redux/store';
-import {
-  GetPrograms,
-  GetSelectedProgram,
-  GetProgramLoading,
-} from '../redux/program/selectors';
+import { GetSelectedProgram } from '../redux/program/selectors';
 import { GetUser } from '../redux/auth/selectors';
-import { requestProgramList, selectProgram } from '../redux/program/actions';
+import { useListProgramsQuery } from '../redux/program/api';
+import { selectProgram } from '../redux/program/slice';
 import { logout } from '../redux/auth/actions';
 import { updateLocation } from '../redux/location/slice';
 import { Program, TaskItem } from '../types/program';
@@ -38,9 +35,8 @@ import {theme} from '../theme';
 
 const SelectProgramScreen: React.FC = () => {
   const dispatch = useAppDispatch();
-  const programs = GetPrograms();
+  const {data: programs = [], isLoading} = useListProgramsQuery();
   const selectedProgram = GetSelectedProgram();
-  const isLoading = GetProgramLoading();
   const user = GetUser();
 
   const [search, setSearch] = useState('');
@@ -58,13 +54,6 @@ const SelectProgramScreen: React.FC = () => {
   const [isShiftLoading, setIsShiftLoading] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
   const [selectProgramRes, setSelectProgramRes] = useState<any>(null);
-
-  useEffect(() => {
-    dispatch(requestProgramList());
-    // iOS location authorization is requested natively by
-    // BBBLocationManager.verifyPermissions() (called at launch and on every
-    // foreground in AppDelegate), so no JS-side request is needed here.
-  }, [dispatch]);
 
   const pingLocationAfterShift = async (
     sessionId: string | number,
