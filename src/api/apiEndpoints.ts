@@ -23,4 +23,7 @@ export const ApiEndpoints = {
   /****** Home ******/
   taskAndTemplates: 'shifts/homePage',
   homepageWorkAssignList: 'work/listRecent',
+
+  /****** Offline ******/
+  uploadFile: 'work/uploadFile',
 };
