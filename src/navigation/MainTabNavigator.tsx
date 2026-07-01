@@ -7,7 +7,7 @@ import {requestMenuList} from '../redux/navigation/actions';
 import {fontFamilies} from '../constants/fonts';
 import {locationTracker} from '../utils/locationTracker';
 import HomeScreen from '../screens/HomeScreen';
-import MaintenanceScreen from '../screens/MaintenanceScreen';
+import MaintenanceNavigator from './MaintenanceNavigator';
 import FixtureScreen from '../screens/FixtureScreen';
 import IncidentScreen from '../screens/IncidentScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -17,7 +17,7 @@ const {LATO} = fontFamilies;
 
 const SCREEN_MAP: Record<string, React.ComponentType<any>> = {
   Home: HomeScreen,
-  Maintenance: MaintenanceScreen,
+  Maintenance: MaintenanceNavigator,
   Fixture: FixtureScreen,
   Incident: IncidentScreen,
   Profile: ProfileScreen,
