@@ -16,11 +16,7 @@ const MaintenanceNavigator: React.FC = () => (
   <Stack.Navigator screenOptions={{headerShown: false}}>
     <Stack.Screen name="MaintenanceList" component={MaintenanceScreen} />
     <Stack.Screen name="MaintenanceDetail" component={MaintenanceDetailScreen} />
-    <Stack.Screen
-      name="MaintenanceForm"
-      component={MaintenanceFormScreen}
-      options={{presentation: 'modal'}}
-    />
+    <Stack.Screen name="MaintenanceForm" component={MaintenanceFormScreen} />
   </Stack.Navigator>
 );
 

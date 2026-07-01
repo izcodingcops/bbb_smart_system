@@ -1,5 +1,16 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {View, Text, TextInput, ScrollView, TouchableOpacity, StyleSheet} from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+  LayoutChangeEvent,
+  StyleSheet,
+} from 'react-native';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {theme} from '../theme';
@@ -16,6 +27,7 @@ import {
   GetMaintenanceSubmitError,
 } from '../redux/maintenance/selectors';
 import SegmentedControl from '../components/SegmentedControl';
+import AssigneeTypeSelector from '../components/AssigneeTypeSelector';
 import SearchablePickerSheet, {PickerOption} from '../components/SearchablePickerSheet';
 import DateTimeField from '../components/DateTimeField';
 import ImageUploadField, {UploadedImage} from '../components/ImageUploadField';
@@ -45,7 +57,9 @@ const MaintenanceFormScreen: React.FC = () => {
   const currentLocation = useAppSelector(state => state.location.currentLocation);
 
   const [activeTab, setActiveTab] = useState('basic');
-  const [activePicker, setActivePicker] = useState<'type' | 'assignee' | 'business' | null>(null);
+  const [activePicker, setActivePicker] = useState<'type' | 'assignee' | 'business' | 'zone' | null>(
+    null,
+  );
   const [confirmVisible, setConfirmVisible] = useState(false);
 
   const [maintenanceType, setMaintenanceType] = useState<PickerOption | null>(null);
@@ -53,12 +67,15 @@ const MaintenanceFormScreen: React.FC = () => {
   const [assigneeType, setAssigneeType] = useState<MaintenanceAssigneeType | null>(null);
   const [assignee, setAssignee] = useState<PickerOption | null>(null);
   const [priority, setPriority] = useState<MaintenancePriority>('Low');
+  const [zone, setZone] = useState<PickerOption | null>(null);
   const [describeLocation, setDescribeLocation] = useState('');
   const [business, setBusiness] = useState<PickerOption | null>(null);
   const [description, setDescription] = useState('');
   const [image, setImage] = useState<UploadedImage | null>(null);
 
   const wasSubmitting = useRef(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const sectionOffsets = useRef<Record<string, number>>({});
 
   useEffect(() => {
     dispatch(requestMaintenanceDropdowns());
@@ -90,6 +107,7 @@ const MaintenanceFormScreen: React.FC = () => {
     department_id: assigneeType === 'Department' ? assignee?.id : undefined,
     priority,
     address: currentLocation ? `${currentLocation.latitude}, ${currentLocation.longitude}` : '',
+    zone_id: zone?.id,
     location_description: describeLocation,
     business_location: business?.id,
     description,
@@ -113,118 +131,154 @@ const MaintenanceFormScreen: React.FC = () => {
   const assigneeOptions: PickerOption[] =
     assigneeType === 'Department' ? dropdowns.departments : dropdowns.ambassadors;
 
+  const registerSectionOffset = (key: string) => (event: LayoutChangeEvent) => {
+    sectionOffsets.current[key] = event.nativeEvent.layout.y;
+  };
+
+  const handleTabPress = (key: string) => {
+    setActiveTab(key);
+    const y = sectionOffsets.current[key] ?? 0;
+    scrollRef.current?.scrollTo({y: Math.max(y - theme.spacing.md, 0), animated: true});
+  };
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = event.nativeEvent.contentOffset.y + 24;
+    const entries = Object.entries(sectionOffsets.current).sort((a, b) => a[1] - b[1]);
+    let current = entries[0]?.[0];
+    for (const [key, offset] of entries) {
+      if (y >= offset) {
+        current = key;
+      }
+    }
+    if (current && current !== activeTab) {
+      setActiveTab(current);
+    }
+  };
+
   return (
     <View style={styles.root}>
       <View style={styles.header}>
         <TouchableOpacity testID="maintenance-form-close" onPress={() => navigation.goBack()}>
           <Text style={styles.closeText}>✕</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{isEdit ? 'Edit Maintenance' : 'Add Maintenance'}</Text>
+        <View style={styles.headerTitleGroup}>
+          <Text style={styles.headerTitle}>{isEdit ? 'Edit Maintenance' : 'Add Maintenance'}</Text>
+          {isEdit && selected && <Text style={styles.headerSubtitle}>{selected.ticket_number}</Text>}
+        </View>
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollSpyTabs tabs={TABS} activeKey={activeTab} onTabPress={setActiveTab} />
+      <ScrollSpyTabs tabs={TABS} activeKey={activeTab} onTabPress={handleTabPress} />
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        {activeTab === 'basic' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Basic Details</Text>
-            <Text style={styles.label}>Maintenance Type</Text>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}>
+        <View style={styles.card} onLayout={registerSectionOffset('basic')}>
+          <Text style={styles.sectionTitle}>Basic Details</Text>
+          <Text style={styles.label}>Maintenance Type</Text>
+          <TouchableOpacity
+            testID="maintenance-type-trigger"
+            style={styles.input}
+            onPress={() => setActivePicker('type')}>
+            <Text style={styles.value}>{maintenanceType?.label ?? 'Select maintenance type'}</Text>
+          </TouchableOpacity>
+
+          <DateTimeField
+            label="Request Date & Time"
+            value={requestDate}
+            onChange={setRequestDate}
+            testID="maintenance-request-date"
+          />
+
+          <Text style={styles.label}>Choose Assignee</Text>
+          <AssigneeTypeSelector
+            testID="maintenance-assignee-type"
+            value={assigneeType}
+            onChange={value => {
+              setAssigneeType(value);
+              setAssignee(null);
+            }}
+          />
+          {assigneeType && (
             <TouchableOpacity
-              testID="maintenance-type-trigger"
+              testID="maintenance-assignee-trigger"
               style={styles.input}
-              onPress={() => setActivePicker('type')}>
-              <Text style={styles.value}>{maintenanceType?.label ?? 'Select maintenance type'}</Text>
+              onPress={() => setActivePicker('assignee')}>
+              <Text style={styles.value}>
+                {assignee?.label ?? `Select ${assigneeType.toLowerCase()}`}
+              </Text>
             </TouchableOpacity>
+          )}
 
-            <DateTimeField
-              label="Request Date & Time"
-              value={requestDate}
-              onChange={setRequestDate}
-              testID="maintenance-request-date"
-            />
+          <Text style={styles.label}>Priority</Text>
+          <SegmentedControl
+            testID="maintenance-priority"
+            options={[
+              {label: 'Low', value: 'Low'},
+              {label: 'Medium', value: 'Medium'},
+              {label: 'High', value: 'High'},
+            ]}
+            value={priority}
+            onChange={value => setPriority(value as MaintenancePriority)}
+          />
+        </View>
 
-            <Text style={styles.label}>Choose Assignee</Text>
-            <SegmentedControl
-              testID="maintenance-assignee-type"
-              options={[
-                {label: 'Ambassador', value: 'Ambassador'},
-                {label: 'Department', value: 'Department'},
-              ]}
-              value={assigneeType}
-              onChange={value => {
-                setAssigneeType(value as MaintenanceAssigneeType);
-                setAssignee(null);
-              }}
-            />
-            {assigneeType && (
-              <TouchableOpacity
-                testID="maintenance-assignee-trigger"
-                style={styles.input}
-                onPress={() => setActivePicker('assignee')}>
-                <Text style={styles.value}>
-                  {assignee?.label ?? `Select ${assigneeType.toLowerCase()}`}
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            <Text style={styles.label}>Priority</Text>
-            <SegmentedControl
-              testID="maintenance-priority"
-              options={[
-                {label: 'Low', value: 'Low'},
-                {label: 'Medium', value: 'Medium'},
-                {label: 'High', value: 'High'},
-              ]}
-              value={priority}
-              onChange={value => setPriority(value as MaintenancePriority)}
-            />
-          </View>
-        )}
-
-        {activeTab === 'location' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Location Details</Text>
+        <View style={styles.card} onLayout={registerSectionOffset('location')}>
+          <Text style={styles.sectionTitle}>Location Details</Text>
+          <View style={styles.addressRow}>
             <Text style={styles.label}>Address</Text>
-            <Text style={styles.value}>
+            <Text style={styles.changeLocationText}>Change Location</Text>
+          </View>
+          <View style={styles.addressBox}>
+            <Image source={require('../assets/icons/marker_pin.png')} style={styles.pinIcon} />
+            <Text style={styles.addressText}>
               {currentLocation
                 ? `${currentLocation.latitude}, ${currentLocation.longitude}`
                 : 'Location unavailable'}
             </Text>
           </View>
-        )}
 
-        {activeTab === 'other' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Other Details</Text>
-            <Text style={styles.label}>Describe Location</Text>
-            <TextInput
-              testID="maintenance-describe-location"
-              style={styles.input}
-              placeholder="Enter location"
-              value={describeLocation}
-              onChangeText={setDescribeLocation}
-            />
-            <Text style={styles.label}>Business Name</Text>
-            <TouchableOpacity
-              testID="maintenance-business-trigger"
-              style={styles.input}
-              onPress={() => setActivePicker('business')}>
-              <Text style={styles.value}>{business?.label ?? 'Select business name'}</Text>
-            </TouchableOpacity>
-            <Text style={styles.label}>Description</Text>
-            <TextInput
-              testID="maintenance-description"
-              style={[styles.input, styles.textarea]}
-              placeholder="Enter description"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-            />
-            <Text style={styles.label}>Image</Text>
-            <ImageUploadField value={image} onChange={setImage} testID="maintenance-image" />
-          </View>
-        )}
+          <Text style={styles.label}>Zone</Text>
+          <TouchableOpacity
+            testID="maintenance-zone-trigger"
+            style={styles.input}
+            onPress={() => setActivePicker('zone')}>
+            <Text style={styles.value}>{zone?.label ?? 'Select zone'}</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.card} onLayout={registerSectionOffset('other')}>
+          <Text style={styles.sectionTitle}>Other Details</Text>
+          <Text style={styles.label}>Describe Location</Text>
+          <TextInput
+            testID="maintenance-describe-location"
+            style={styles.input}
+            placeholder="Enter location"
+            value={describeLocation}
+            onChangeText={setDescribeLocation}
+          />
+          <Text style={styles.label}>Business Name</Text>
+          <TouchableOpacity
+            testID="maintenance-business-trigger"
+            style={styles.input}
+            onPress={() => setActivePicker('business')}>
+            <Text style={styles.value}>{business?.label ?? 'Select business name'}</Text>
+          </TouchableOpacity>
+          <Text style={styles.label}>Description</Text>
+          <TextInput
+            testID="maintenance-description"
+            style={[styles.input, styles.textarea]}
+            placeholder="Enter description"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+          />
+          <Text style={styles.label}>Image</Text>
+          <ImageUploadField value={image} onChange={setImage} testID="maintenance-image" />
+        </View>
       </ScrollView>
 
       <TouchableOpacity
@@ -251,6 +305,16 @@ const MaintenanceFormScreen: React.FC = () => {
         options={assigneeOptions}
         onSelect={option => {
           setAssignee(option);
+          setActivePicker(null);
+        }}
+        onClose={() => setActivePicker(null)}
+      />
+      <SearchablePickerSheet
+        visible={activePicker === 'zone'}
+        title="Zone"
+        options={dropdowns.zones}
+        onSelect={option => {
+          setZone(option);
           setActivePicker(null);
         }}
         onClose={() => setActivePicker(null)}
@@ -288,11 +352,24 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   closeText: {fontSize: 18, fontFamily: theme.fonts.bold, color: theme.colors.textMuted},
+  headerTitleGroup: {alignItems: 'center'},
   headerTitle: {fontFamily: theme.fonts.bold, fontSize: theme.fontSize.md, color: theme.colors.text},
+  headerSubtitle: {
+    fontFamily: theme.fonts.regular,
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.textMuted,
+    marginTop: 2,
+  },
   headerSpacer: {width: 24},
   scroll: {flex: 1},
-  scrollContent: {padding: theme.spacing.lg, gap: theme.spacing.md},
-  section: {gap: theme.spacing.md},
+  scrollContent: {padding: theme.spacing.lg, gap: theme.spacing.md, paddingBottom: theme.spacing.xxl},
+  card: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.md,
+    ...theme.shadow.card,
+  },
   sectionTitle: {fontFamily: theme.fonts.bold, fontSize: theme.fontSize.md, color: theme.colors.text},
   label: {fontSize: theme.fontSize.xs + 2, fontFamily: theme.fonts.bold, color: '#374151'},
   input: {
@@ -305,6 +382,21 @@ const styles = StyleSheet.create({
   },
   textarea: {minHeight: 96, textAlignVertical: 'top'},
   value: {fontSize: theme.fontSize.base, fontFamily: theme.fonts.regular, color: '#111827'},
+  addressRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
+  changeLocationText: {fontFamily: theme.fonts.bold, fontSize: theme.fontSize.xs, color: theme.colors.primary},
+  addressBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: 12,
+    backgroundColor: '#F9FAFB',
+  },
+  pinIcon: {width: 16, height: 16, marginTop: 2, tintColor: theme.colors.textMuted},
+  addressText: {flex: 1, fontSize: theme.fontSize.base, fontFamily: theme.fonts.regular, color: '#111827'},
   saveBtn: {
     margin: theme.spacing.lg,
     backgroundColor: theme.colors.primaryDark,
