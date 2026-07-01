@@ -1,16 +1,12 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {View, Text, TextInput, Image, TouchableOpacity, FlatList, StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {theme} from '../theme';
-import {useAppDispatch} from '../redux/store';
-import {requestMaintenanceList, setMaintenanceFilters} from '../redux/maintenance/actions';
-import {
-  GetMaintenanceList,
-  GetMaintenanceListLoading,
-  GetMaintenanceFilters,
-} from '../redux/maintenance/selectors';
+import {useAppDispatch, useAppSelector} from '../redux/store';
+import {setFilters} from '../redux/maintenance/slice';
+import {useListMaintenanceQuery} from '../redux/maintenance/api';
 import MaintenanceCard from '../components/MaintenanceCard';
 import {MaintenanceStackParamList} from '../navigation/MaintenanceNavigator';
 
@@ -26,18 +22,12 @@ type Nav = NativeStackNavigationProp<MaintenanceStackParamList, 'MaintenanceList
 const MaintenanceScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const dispatch = useAppDispatch();
-  const list = GetMaintenanceList();
-  const isLoading = GetMaintenanceListLoading();
-  const filters = GetMaintenanceFilters();
+  const filters = useAppSelector(state => state.maintenance.filters);
+  const {data: list = [], isLoading} = useListMaintenanceQuery({page: 1, filters});
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    dispatch(requestMaintenanceList(1, filters));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters]);
-
   const onSearchSubmit = () => {
-    dispatch(setMaintenanceFilters({...filters, search}));
+    dispatch(setFilters({...filters, search}));
   };
 
   const toggleFilter = (key: 'type' | 'business' | 'priority' | 'status') => {
@@ -47,7 +37,7 @@ const MaintenanceScreen: React.FC = () => {
     } else {
       next[key] = 'true';
     }
-    dispatch(setMaintenanceFilters(next));
+    dispatch(setFilters(next));
   };
 
   return (

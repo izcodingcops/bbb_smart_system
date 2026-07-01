@@ -14,18 +14,13 @@ import {
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {theme} from '../theme';
-import {useAppDispatch, useAppSelector} from '../redux/store';
+import {useAppSelector} from '../redux/store';
 import {
-  requestMaintenanceDropdowns,
-  requestMaintenanceCreate,
-  requestMaintenanceEdit,
-} from '../redux/maintenance/actions';
-import {
-  GetMaintenanceDropdowns,
-  GetSelectedMaintenance,
-  GetMaintenanceSubmitting,
-  GetMaintenanceSubmitError,
-} from '../redux/maintenance/selectors';
+  useGetMaintenanceDropdownsQuery,
+  useGetMaintenanceDetailQuery,
+  useCreateMaintenanceMutation,
+  useUpdateMaintenanceMutation,
+} from '../redux/maintenance/api';
 import SegmentedControl from '../components/SegmentedControl';
 import AssigneeTypeSelector from '../components/AssigneeTypeSelector';
 import SearchablePickerSheet, {PickerOption} from '../components/SearchablePickerSheet';
@@ -48,12 +43,14 @@ const TABS = [
 const MaintenanceFormScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const route = useRoute<FormRoute>();
-  const dispatch = useAppDispatch();
   const isEdit = Boolean(route.params?.id);
-  const selected = GetSelectedMaintenance();
-  const dropdowns = GetMaintenanceDropdowns();
-  const isSubmitting = GetMaintenanceSubmitting();
-  const submitError = GetMaintenanceSubmitError();
+  const {data: selected} = useGetMaintenanceDetailQuery(route.params?.id as string, {skip: !isEdit});
+  const {data: dropdowns = {types: [], departments: [], ambassadors: [], businesses: [], zones: []}} =
+    useGetMaintenanceDropdownsQuery();
+  const [createMaintenance, {isLoading: isCreating, error: createError}] = useCreateMaintenanceMutation();
+  const [updateMaintenance, {isLoading: isUpdating, error: updateError}] = useUpdateMaintenanceMutation();
+  const isSubmitting = isCreating || isUpdating;
+  const submitError = (createError as any)?.message ?? (updateError as any)?.message ?? null;
   const currentLocation = useAppSelector(state => state.location.currentLocation);
 
   const [activeTab, setActiveTab] = useState('basic');
@@ -73,13 +70,8 @@ const MaintenanceFormScreen: React.FC = () => {
   const [description, setDescription] = useState('');
   const [image, setImage] = useState<UploadedImage | null>(null);
 
-  const wasSubmitting = useRef(false);
   const scrollRef = useRef<ScrollView>(null);
   const sectionOffsets = useRef<Record<string, number>>({});
-
-  useEffect(() => {
-    dispatch(requestMaintenanceDropdowns());
-  }, [dispatch]);
 
   useEffect(() => {
     if (isEdit && selected) {
@@ -91,13 +83,6 @@ const MaintenanceFormScreen: React.FC = () => {
       setDescription(selected.description ?? '');
     }
   }, [isEdit, selected]);
-
-  useEffect(() => {
-    if (wasSubmitting.current && !isSubmitting && !submitError) {
-      navigation.goBack();
-    }
-    wasSubmitting.current = isSubmitting;
-  }, [isSubmitting, submitError, navigation]);
 
   const buildPayload = () => ({
     maintenance_type_id: maintenanceType?.id ?? '',
@@ -117,7 +102,10 @@ const MaintenanceFormScreen: React.FC = () => {
 
   const handleSave = () => {
     if (isEdit && route.params.id) {
-      dispatch(requestMaintenanceEdit(route.params.id, buildPayload()));
+      updateMaintenance({id: route.params.id, payload: buildPayload()})
+        .unwrap()
+        .then(() => navigation.goBack())
+        .catch(() => {});
     } else {
       setConfirmVisible(true);
     }
@@ -125,7 +113,10 @@ const MaintenanceFormScreen: React.FC = () => {
 
   const handleConfirmCreate = () => {
     setConfirmVisible(false);
-    dispatch(requestMaintenanceCreate(buildPayload(), image));
+    createMaintenance({payload: buildPayload(), image})
+      .unwrap()
+      .then(() => navigation.goBack())
+      .catch(() => {});
   };
 
   const assigneeOptions: PickerOption[] =

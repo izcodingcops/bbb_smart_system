@@ -3,7 +3,7 @@ import authReducer from './auth/slice';
 import programReducer from './program/slice';
 import locationReducer from './location/slice';
 import offlineQueueReducer from './offlineQueue/slice';
-import maintenanceReducer from './maintenance/reducer';
+import maintenanceReducer from './maintenance/slice';
 import {apiSlice} from './api/apiSlice';
 
 const rootReducer = combineReducers({

@@ -1,8 +1,7 @@
 import {all, call, spawn} from 'redux-saga/effects';
 import {logger} from '../utils/logger';
-import maintenanceSaga from './maintenance/saga';
 
-const sagas = [maintenanceSaga];
+const sagas: Array<() => Generator> = [];
 
 export default function* rootSaga() {
   yield all(

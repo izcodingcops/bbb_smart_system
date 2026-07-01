@@ -1,15 +1,13 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet} from 'react-native';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {theme} from '../theme';
-import {useAppDispatch} from '../redux/store';
 import {
-  requestMaintenanceDetail,
-  requestMaintenanceComment,
-  requestMaintenanceDelete,
-} from '../redux/maintenance/actions';
-import {GetSelectedMaintenance} from '../redux/maintenance/selectors';
+  useGetMaintenanceDetailQuery,
+  useAddMaintenanceCommentMutation,
+  useRemoveMaintenanceMutation,
+} from '../redux/maintenance/api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import BottomSheet from '../components/BottomSheet';
 import {MaintenanceStackParamList} from '../navigation/MaintenanceNavigator';
@@ -20,29 +18,26 @@ type DetailRoute = RouteProp<MaintenanceStackParamList, 'MaintenanceDetail'>;
 const MaintenanceDetailScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const route = useRoute<DetailRoute>();
-  const dispatch = useAppDispatch();
-  const record = GetSelectedMaintenance();
+  const {data: record} = useGetMaintenanceDetailQuery(route.params.id);
+  const [addComment] = useAddMaintenanceCommentMutation();
+  const [removeMaintenance] = useRemoveMaintenanceMutation();
 
   const [commentVisible, setCommentVisible] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
-
-  useEffect(() => {
-    dispatch(requestMaintenanceDetail(route.params.id));
-  }, [dispatch, route.params.id]);
 
   if (!record) {
     return <View style={styles.root} />;
   }
 
   const handleAddComment = () => {
-    dispatch(requestMaintenanceComment(record.id, commentText));
+    addComment({id: record.id, text: commentText});
     setCommentText('');
     setCommentVisible(false);
   };
 
   const handleDelete = () => {
-    dispatch(requestMaintenanceDelete(record.id));
+    removeMaintenance(record.id);
     setDeleteConfirmVisible(false);
     navigation.goBack();
   };
