@@ -1,5 +1,5 @@
 import {combineReducers} from 'redux';
-import authReducer from './auth/reducer';
+import authReducer from './auth/slice';
 import programReducer from './program/slice';
 import locationReducer from './location/slice';
 import offlineQueueReducer from './offlineQueue/reducer';

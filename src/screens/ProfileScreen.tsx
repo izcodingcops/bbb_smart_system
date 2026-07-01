@@ -2,7 +2,7 @@ import React from 'react';
 import {View, Text, TouchableOpacity, Alert, StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAppDispatch} from '../redux/store';
-import {logout} from '../redux/auth/actions';
+import {logout} from '../redux/auth/slice';
 import {GetUser} from '../redux/selectors';
 import {theme} from '../theme';
 

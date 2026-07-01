@@ -1,6 +1,6 @@
 import {useCallback} from 'react';
 import {useAppDispatch} from '../redux/store';
-import {login, logout, clearError} from '../redux/auth/actions';
+import {login, logout, clearError} from '../redux/auth/slice';
 import {LoginCredentials} from '../types/auth';
 import {GetUser, GetSession, GetIsAuthenticated, GetAuthLoading, GetAuthError} from '../redux/selectors';
 

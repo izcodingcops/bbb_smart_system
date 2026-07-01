@@ -16,7 +16,7 @@ import { GetSelectedProgram } from '../redux/program/selectors';
 import { GetUser } from '../redux/auth/selectors';
 import { useListProgramsQuery } from '../redux/program/api';
 import { selectProgram } from '../redux/program/slice';
-import { logout } from '../redux/auth/actions';
+import { logout } from '../redux/auth/slice';
 import { updateLocation } from '../redux/location/slice';
 import { Program, TaskItem } from '../types/program';
 import { programService } from '../api/services/programService';

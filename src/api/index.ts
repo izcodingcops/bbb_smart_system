@@ -124,7 +124,7 @@ client.interceptors.response.use(
     }
     if (status === 401 || status === 403) {
       const {store} = require('../redux/store');
-      const {logout} = require('../redux/auth/actions');
+      const {logout} = require('../redux/auth/slice');
       store.dispatch(logout());
     }
     return Promise.reject(error);
