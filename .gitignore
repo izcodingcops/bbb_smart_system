@@ -78,3 +78,7 @@ CLAUDE.local.md
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# graphify
+graphify-out/
+**/graphify-out/

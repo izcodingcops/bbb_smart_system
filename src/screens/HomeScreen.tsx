@@ -85,22 +85,23 @@ const HomeScreen: React.FC = () => {
             </View>
           </View>
 
-          <View style={styles.mapGrid}>
-            <View style={styles.mapGridHLine} />
-            <View style={styles.mapGridVLine} />
-            <View style={styles.mapGridDot} />
-          </View>
+          <TouchableOpacity style={styles.plusBtn} activeOpacity={0.8}>
+            <Image
+              source={require('../assets/icons/plus.png')}
+              style={[styles.icon20, {tintColor: theme.colors.white}]}
+            />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.searchBar}>
           <Image
             source={require('../assets/icons/search.png')}
-            style={[styles.icon20, {tintColor: theme.colors.white}]}
+            style={[styles.icon20, {tintColor: theme.colors.whiteMuted}]}
           />
           <TextInput
             style={styles.searchInput}
             placeholder="Search here..."
-            placeholderTextColor="rgba(255,255,255,0.7)"
+            placeholderTextColor={theme.colors.whiteMuted}
           />
         </View>
       </SafeAreaView>
@@ -171,40 +172,18 @@ const styles = StyleSheet.create({
   shiftRow: {gap: 4, paddingLeft: 24},
   shiftLabel: {
     fontFamily: theme.fonts.regular,
-    color: '#ECECEC',
+    color: theme.colors.textLight,
     fontSize: theme.fontSize.xs,
   },
   icon20: {width: 20, height: 20},
   icon14: {width: 14, height: 14},
-  mapGrid: {
-    width: 50,
-    height: 50,
-    borderRadius: theme.radius.sm,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    overflow: 'hidden',
+  plusBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.whiteGhost,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  mapGridHLine: {
-    position: 'absolute',
-    width: 40,
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    top: 17,
-  },
-  mapGridVLine: {
-    position: 'absolute',
-    width: 1,
-    height: 40,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    left: 17,
-  },
-  mapGridDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    marginBottom: 4,
   },
   searchBar: {
     flexDirection: 'row',
@@ -214,11 +193,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingHorizontal: 12,
     paddingVertical: 9,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: theme.colors.whiteSubtle,
     borderRadius: theme.radius.md,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-    shadowColor: '#0064AF',
+    borderColor: theme.colors.whiteSubtle,
+    shadowColor: theme.colors.primaryDark,
     shadowOffset: {width: 0, height: 0},
     shadowOpacity: 1,
     shadowRadius: 6,
@@ -249,23 +228,23 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.md,
     borderWidth: 1,
-    borderColor: 'rgba(186,186,186,0.25)',
+    borderColor: theme.colors.border,
     padding: 12,
-    gap: 16,
+    gap: 8,
   },
   statLabel: {
     fontSize: theme.fontSize.xs,
     fontFamily: theme.fonts.medium,
-    color: '#656565',
+    color: theme.colors.textLabel,
   },
   statRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
   statCount: {
     fontSize: theme.fontSize.md,
     fontFamily: theme.fonts.bold,
-    color: '#3B3B3B',
+    color: theme.colors.textDark,
   },
   statIcon: {width: 20, height: 20},
-  divider: {height: 1, backgroundColor: '#DEDEDE', marginHorizontal: theme.spacing.lg, marginTop: 10},
+  divider: {height: 1, backgroundColor: theme.colors.divider, marginHorizontal: theme.spacing.lg, marginTop: 10},
   emptyState: {
     alignItems: 'center',
     paddingHorizontal: theme.spacing.lg,
@@ -293,7 +272,7 @@ const styles = StyleSheet.create({
     bottom: 160,
     left: theme.spacing.lg,
     right: theme.spacing.lg,
-    backgroundColor: '#1F2937',
+    backgroundColor: theme.colors.toastBg,
     borderRadius: theme.radius.md,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: 12,
@@ -316,7 +295,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    backgroundColor: 'rgba(0,102,178,0.08)',
+    backgroundColor: theme.colors.primaryAlpha,
     borderRadius: theme.radius.xl,
   },
   fabDisabled: {opacity: 0.6},
