@@ -5,13 +5,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {TypedUseSelectorHook, useDispatch, useSelector} from 'react-redux';
 import rootReducer from './rootReducer';
 import rootSaga from './rootSaga';
+import {apiSlice} from './api/apiSlice';
 
 const sagaMiddleware = createSagaMiddleware();
 
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  blacklist: ['location'],
+  blacklist: ['location', 'api'],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -19,7 +20,9 @@ const persistedReducer = persistReducer(persistConfig, rootReducer);
 export const store = configureStore({
   reducer: persistedReducer,
   middleware: getDefaultMiddleware =>
-    getDefaultMiddleware({thunk: false, serializableCheck: false}).concat(sagaMiddleware),
+    getDefaultMiddleware({thunk: false, serializableCheck: false})
+      .concat(sagaMiddleware)
+      .concat(apiSlice.middleware),
 });
 export const persistor = persistStore(store);
 

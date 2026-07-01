@@ -5,6 +5,7 @@ import navigationReducer from './navigation/reducer';
 import locationReducer from './location/reducer';
 import offlineQueueReducer from './offlineQueue/reducer';
 import maintenanceReducer from './maintenance/reducer';
+import {apiSlice} from './api/apiSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -13,6 +14,7 @@ const rootReducer = combineReducers({
   location: locationReducer,
   offlineQueue: offlineQueueReducer,
   maintenance: maintenanceReducer,
+  [apiSlice.reducerPath]: apiSlice.reducer,
 });
 
 export default rootReducer;
