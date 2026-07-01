@@ -6,6 +6,8 @@ import {TypedUseSelectorHook, useDispatch, useSelector} from 'react-redux';
 import rootReducer from './rootReducer';
 import rootSaga from './rootSaga';
 import {apiSlice} from './api/apiSlice';
+import {startConnectivitySync} from './connectivitySync';
+import {resetOfflineSyncing} from './offlineQueue/slice';
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -27,6 +29,9 @@ export const store = configureStore({
 export const persistor = persistStore(store);
 
 sagaMiddleware.run(rootSaga);
+
+store.dispatch(resetOfflineSyncing());
+startConnectivitySync(store.dispatch);
 
 export type RootState = ReturnType<typeof rootReducer>;
 export type AppDispatch = typeof store.dispatch;
