@@ -1,7 +1,7 @@
 module.exports = {
   preset: '@react-native/jest-preset',
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-redux|immer|@reduxjs|@react-navigation|react-native-safe-area-context)/)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-redux|immer|@reduxjs|@react-navigation|react-native-safe-area-context|react-native-image-picker)/)',
   ],
   moduleNameMapper: {
     '^@react-native-async-storage/async-storage$':
