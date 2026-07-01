@@ -17,9 +17,6 @@ RCT_EXTERN_METHOD(shareLogFile:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(getConnectivityStatus:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
-RCT_EXTERN_METHOD(setSmoothingFilter:(NSString *)name)
-RCT_EXTERN_METHOD(getSmoothingFilter:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject)
 
 @end
  

@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		1058B9562FE2A31A007E7A8D /* GPSLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9552FE2A31A007E7A8D /* GPSLogger.swift */; };
 		1058B9582FE2A53C007E7A8D /* LocationModeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9572FE2A53C007E7A8D /* LocationModeManager.swift */; };
-		1058B95A2FE2A6E9007E7A8D /* GPSTrackSmoother.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B9592FE2A6E9007E7A8D /* GPSTrackSmoother.swift */; };
 		1058B95C2FE2AB0C007E7A8D /* LocationPersistenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B95B2FE2AB0C007E7A8D /* LocationPersistenceStore.swift */; };
 		1058B95E2FE2AB8D007E7A8D /* LocationUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B95D2FE2AB8D007E7A8D /* LocationUploader.swift */; };
 		1058B9602FE2ABF1007E7A8D /* LocationFilterPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1058B95F2FE2ABF1007E7A8D /* LocationFilterPipeline.swift */; };
@@ -39,7 +38,6 @@
 /* Begin PBXFileReference section */
 		1058B9552FE2A31A007E7A8D /* GPSLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPSLogger.swift; sourceTree = "<group>"; };
 		1058B9572FE2A53C007E7A8D /* LocationModeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationModeManager.swift; sourceTree = "<group>"; };
-		1058B9592FE2A6E9007E7A8D /* GPSTrackSmoother.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPSTrackSmoother.swift; sourceTree = "<group>"; };
 		1058B95B2FE2AB0C007E7A8D /* LocationPersistenceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationPersistenceStore.swift; sourceTree = "<group>"; };
 		1058B95D2FE2AB8D007E7A8D /* LocationUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationUploader.swift; sourceTree = "<group>"; };
 		1058B95F2FE2ABF1007E7A8D /* LocationFilterPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationFilterPipeline.swift; sourceTree = "<group>"; };
@@ -211,7 +209,6 @@
 				10E683082FEBCF5000C89361 /* GPSKalmanSmoother.swift */,
 				1058B9552FE2A31A007E7A8D /* GPSLogger.swift */,
 				1058B9572FE2A53C007E7A8D /* LocationModeManager.swift */,
-				1058B9592FE2A6E9007E7A8D /* GPSTrackSmoother.swift */,
 			);
 			path = GPS;
 			sourceTree = "<group>";
@@ -405,7 +402,6 @@
 				1058B9582FE2A53C007E7A8D /* LocationModeManager.swift in Sources */,
 				56A35D1A0F834D6EB3CC011D /* StoredLocation.swift in Sources */,
 				1058B9562FE2A31A007E7A8D /* GPSLogger.swift in Sources */,
-				1058B95A2FE2A6E9007E7A8D /* GPSTrackSmoother.swift in Sources */,
 				1058B9622FE2AC86007E7A8D /* PreciseLocationAlertPresenter.swift in Sources */,
 				10D8ED0A2FEABB2D0059D8E6 /* LocationDataModel.xcdatamodeld in Sources */,
 				FE53C99ED1734139AD5E9B36 /* LocationManager.swift in Sources */,

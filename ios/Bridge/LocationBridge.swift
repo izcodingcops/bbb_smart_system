@@ -206,16 +206,6 @@ final class LocationBridge: RCTEventEmitter {
     resolve(LocationManager.shared.currentlyOnline)
   }
 
-  @objc func setSmoothingFilter(_ name: String) {
-    let valid = ["gaussian", "kalman", "none"]
-    DefaultsStore.set(valid.contains(name) ? name : "gaussian", for: .smoothingFilter)
-  }
-
-  @objc func getSmoothingFilter(_ resolve: @escaping RCTPromiseResolveBlock,
-                                rejecter reject: @escaping RCTPromiseRejectBlock) {
-    resolve(DefaultsStore.get(.smoothingFilter) ?? "gaussian")
-  }
-
   /// Walks from the key window's root to the top-most presented controller.
   private static func topViewController() -> UIViewController? {
     let keyWindow = UIApplication.shared.connectedScenes

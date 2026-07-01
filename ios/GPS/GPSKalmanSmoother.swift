@@ -5,9 +5,8 @@
 
 import Foundation
 
-/// Alternative to GPSTrackSmoother: a 2D constant-velocity Kalman filter with a
-/// Rauch–Tung–Striebel backward pass (a true smoother, not just a causal filter).
-/// Same public shape and same payload keys as GPSTrackSmoother so it's a drop-in.
+/// A 2D constant-velocity Kalman filter with a Rauch–Tung–Striebel backward
+/// pass (a true smoother, not just a causal filter).
 public enum GPSKalmanSmoother {
 
   // Time gap larger than this = a different segment; reset the filter.
@@ -29,7 +28,7 @@ public enum GPSKalmanSmoother {
     var acc   = [Double](repeating: 0, count: count)
     var valid = [Bool](repeating: false, count: count)
 
-    // Same parsing as GPSTrackSmoother (timestamp is ms since epoch).
+    // Timestamps are ms since epoch.
     for i in 0..<count {
       let d = points[i]
       guard let tsStr = d["timestamp"], let ts = Double(tsStr),

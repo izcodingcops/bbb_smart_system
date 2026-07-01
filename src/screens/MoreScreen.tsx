@@ -1,8 +1,8 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import {View, Text, TouchableOpacity, ScrollView, Alert, StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {MenuItem} from '../types/navigation';
-import {locationTracker, SmoothingFilter} from '../utils/locationTracker';
+import {locationTracker} from '../utils/locationTracker';
 import {theme} from '../theme';
 
 const ICON_MAP: Record<string, string> = {
@@ -19,17 +19,6 @@ interface MoreScreenProps {
 }
 
 const MoreScreen: React.FC<MoreScreenProps> = ({items, onSelect}) => {
-  const [filter, setFilter] = useState<SmoothingFilter>('gaussian');
-
-  useEffect(() => {
-    locationTracker.getSmoothingFilter().then(setFilter);
-  }, []);
-
-  const selectFilter = (value: SmoothingFilter) => {
-    setFilter(value);
-    locationTracker.setSmoothingFilter(value);
-  };
-
   const handleShareGpsLog = async () => {
     const ok = await locationTracker.shareGpsLog();
     if (!ok) {
@@ -68,25 +57,6 @@ const MoreScreen: React.FC<MoreScreenProps> = ({items, onSelect}) => {
             <Text style={styles.menuLabel}>Share GPS Log</Text>
             <Text style={styles.rowArrow}>›</Text>
           </TouchableOpacity>
-
-          <View style={[styles.menuRow, styles.menuRowBorderTop, styles.filterRow]}>
-            <Text style={styles.menuLabel}>GPS Smoothing</Text>
-            <View style={styles.filterBtns}>
-              {(['gaussian', 'kalman', 'none'] as SmoothingFilter[]).map(value => {
-                const selected = filter === value;
-                return (
-                  <TouchableOpacity
-                    key={value}
-                    onPress={() => selectFilter(value)}
-                    style={[styles.filterBtn, selected && styles.filterBtnSelected]}>
-                    <Text style={[styles.filterBtnText, selected && styles.filterBtnTextSelected]}>
-                      {value}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -110,8 +80,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   menuRowBorder: {borderBottomWidth: 1, borderBottomColor: '#F3F4F6'},
-  menuRowBorderTop: {borderTopWidth: 1, borderTopColor: '#F3F4F6'},
-  filterRow: {flexWrap: 'wrap'},
   menuIcon: {
     width: 36,
     height: 36,
@@ -132,21 +100,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginLeft: 4,
   },
-  filterBtns: {flexDirection: 'row', gap: 8},
-  filterBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: theme.radius.sm,
-    backgroundColor: theme.colors.primaryLight,
-  },
-  filterBtnSelected: {backgroundColor: theme.colors.primaryDark},
-  filterBtnText: {
-    fontSize: theme.fontSize.sm,
-    fontFamily: theme.fonts.bold,
-    color: theme.colors.primaryDark,
-    textTransform: 'capitalize',
-  },
-  filterBtnTextSelected: {color: theme.colors.white},
 });
 
 export default MoreScreen;
