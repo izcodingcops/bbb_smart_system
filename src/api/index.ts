@@ -9,6 +9,8 @@ import {MicroService} from './microService';
 import {toCurl} from './curlPrinter';
 import {logger} from '../utils/logger';
 import {getActiveProgramId} from './headerContext';
+import {locationTracker} from '../utils/locationTracker';
+import {OfflineError} from './offlineError';
 
 const client = axios.create({
   baseURL: MicroService.BASE_APP_API,
@@ -49,7 +51,14 @@ async function getDeviceCached() {
   return cachedDevice;
 }
 
-client.interceptors.request.use(async config => {
+export async function requestInterceptor(config: any) {
+  if (config.offlineQueueable) {
+    const online = await locationTracker.getConnectivityStatus();
+    if (!online) {
+      throw new OfflineError();
+    }
+  }
+
   const {store} = require('../redux/store');
   const state = store.getState();
 
@@ -91,7 +100,9 @@ client.interceptors.request.use(async config => {
   }
 
   return config;
-});
+}
+
+client.interceptors.request.use(requestInterceptor);
 
 client.interceptors.response.use(
   response => {
