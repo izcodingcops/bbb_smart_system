@@ -1,9 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Text, TouchableOpacity, View, Image} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useAppDispatch} from '../redux/store';
-import {GetMenuItems, GetMenuLoading} from '../redux/navigation/selectors';
-import {requestMenuList} from '../redux/navigation/actions';
+import {useGetMenuItemsQuery} from '../redux/navigation/api';
 import {fontFamilies} from '../constants/fonts';
 import {locationTracker} from '../utils/locationTracker';
 import HomeScreen from '../screens/HomeScreen';
@@ -34,9 +32,7 @@ const ICON_MAP: Record<string, any> = {
 const MORE_SCREEN = '__more__';
 
 const MainTabNavigator: React.FC = () => {
-  const dispatch = useAppDispatch();
-  const menuItems = GetMenuItems();
-  const isLoading = GetMenuLoading();
+  const {data: menuItems = [], isLoading} = useGetMenuItemsQuery();
   const [activeScreen, setActiveScreen] = useState<string>('');
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [showBar, setShowBar] = useState<boolean>(false);
@@ -65,12 +61,6 @@ const MainTabNavigator: React.FC = () => {
       if (hideTimer.current) clearTimeout(hideTimer.current);
     };
   }, []);
-
-  useEffect(() => {
-    if (menuItems.length === 0) {
-      dispatch(requestMenuList());
-    }
-  }, [dispatch, menuItems.length]);
 
   useEffect(() => {
     if (menuItems.length > 0 && !activeScreen) {
