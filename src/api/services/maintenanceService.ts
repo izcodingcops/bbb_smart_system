@@ -7,6 +7,8 @@ import {
   MaintenanceListFilters,
   MaintenanceComment,
 } from '../../types/maintenance';
+import {API_MOCKS} from '../../config/apiMocks';
+import {mockMaintenanceService} from './mockMaintenanceService';
 
 interface MaintenanceListResponse {
   status: number;
@@ -23,7 +25,7 @@ interface MaintenanceDropdownsResponse {
   data: MaintenanceDropdowns;
 }
 
-export const maintenanceService = {
+const realMaintenanceService = {
   list: (page: number, filters: MaintenanceListFilters): Promise<MaintenanceListResponse> => {
     const params = new URLSearchParams({page: String(page), app: 'true'});
     if (filters.search) params.append('search', filters.search);
@@ -54,3 +56,7 @@ export const maintenanceService = {
   addComment: (id: string, text: string): Promise<{status: number; data: MaintenanceComment}> =>
     client.post(ApiEndpoints.maintenanceComment, {maintenance_id: id, text}).then(r => r.data),
 };
+
+export const maintenanceService = API_MOCKS.maintenance
+  ? mockMaintenanceService
+  : realMaintenanceService;
