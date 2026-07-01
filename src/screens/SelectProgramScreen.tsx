@@ -20,7 +20,7 @@ import {
 import { GetUser } from '../redux/auth/selectors';
 import { requestProgramList, selectProgram } from '../redux/program/actions';
 import { logout } from '../redux/auth/actions';
-import { updateLocation } from '../redux/location/actions';
+import { updateLocation } from '../redux/location/slice';
 import { Program, TaskItem } from '../types/program';
 import { programService } from '../api/services/programService';
 import { shiftService } from '../api/services/shiftService';
