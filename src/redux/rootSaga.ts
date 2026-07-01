@@ -1,14 +1,36 @@
-import {all, spawn, call} from 'redux-saga/effects';
+import {all, spawn, call, put, take} from 'redux-saga/effects';
+import {eventChannel, EventChannel} from 'redux-saga';
 import {logger} from '../utils/logger';
+import {locationTracker} from '../utils/locationTracker';
 import authSaga from './auth/saga';
 import programSaga from './program/saga';
 import navigationSaga from './navigation/saga';
+import offlineQueueSaga from './offlineQueue/saga';
+import {requestOfflineSync, resetOfflineSyncing} from './offlineQueue/actions';
 
-const sagas = [authSaga, programSaga, navigationSaga];
+const sagas = [authSaga, programSaga, navigationSaga, offlineQueueSaga];
+
+export function createConnectivityChannel(): EventChannel<boolean> {
+  return eventChannel(emit => {
+    const unsubscribe = locationTracker.onConnectivityChange(online => emit(online));
+    return () => unsubscribe();
+  });
+}
+
+export function* watchConnectivityForSync() {
+  const channel: EventChannel<boolean> = yield call(createConnectivityChannel);
+  while (true) {
+    const online: boolean = yield take(channel);
+    if (online) {
+      yield put(requestOfflineSync());
+    }
+  }
+}
 
 export default function* rootSaga() {
-  yield all(
-    sagas.map(saga =>
+  yield put(resetOfflineSyncing());
+  yield all([
+    ...sagas.map(saga =>
       spawn(function* () {
         while (true) {
           try {
@@ -20,5 +42,6 @@ export default function* rootSaga() {
         }
       }),
     ),
-  );
+    spawn(watchConnectivityForSync),
+  ]);
 }
