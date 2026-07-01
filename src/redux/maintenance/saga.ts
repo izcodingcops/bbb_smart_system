@@ -28,7 +28,7 @@ import {
   maintenanceDeleteSuccess,
   maintenanceDeleteFailure,
 } from './actions';
-import {enqueueOfflineRecord} from '../offlineQueue/actions';
+import {enqueueOfflineRecord} from '../offlineQueue/slice';
 
 export function* fetchMaintenanceList(action: any) {
   try {

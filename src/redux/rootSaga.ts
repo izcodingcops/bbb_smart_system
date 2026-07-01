@@ -2,11 +2,10 @@ import {all, spawn, call, put, take} from 'redux-saga/effects';
 import {eventChannel, EventChannel} from 'redux-saga';
 import {logger} from '../utils/logger';
 import {locationTracker} from '../utils/locationTracker';
-import offlineQueueSaga from './offlineQueue/saga';
 import maintenanceSaga from './maintenance/saga';
-import {requestOfflineSync, resetOfflineSyncing} from './offlineQueue/actions';
+import {syncOfflineQueue, resetOfflineSyncing} from './offlineQueue/slice';
 
-const sagas = [offlineQueueSaga, maintenanceSaga];
+const sagas = [maintenanceSaga];
 
 export function createConnectivityChannel(): EventChannel<boolean> {
   return eventChannel(emit => {
@@ -20,7 +19,7 @@ export function* watchConnectivityForSync() {
   while (true) {
     const online: boolean = yield take(channel);
     if (online) {
-      yield put(requestOfflineSync());
+      yield put(syncOfflineQueue());
     }
   }
 }

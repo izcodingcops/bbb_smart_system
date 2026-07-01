@@ -2,7 +2,7 @@ import {combineReducers} from 'redux';
 import authReducer from './auth/slice';
 import programReducer from './program/slice';
 import locationReducer from './location/slice';
-import offlineQueueReducer from './offlineQueue/reducer';
+import offlineQueueReducer from './offlineQueue/slice';
 import maintenanceReducer from './maintenance/reducer';
 import {apiSlice} from './api/apiSlice';
 
