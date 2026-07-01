@@ -26,4 +26,10 @@ export const ApiEndpoints = {
 
   /****** Offline ******/
   uploadFile: 'work/uploadFile',
+
+  /****** Maintenance ******/
+  maintenanceBase: 'maintenanceRequest',
+  maintenanceList: 'maintenanceRequest/for-app',
+  maintenanceDropdowns: 'maintenanceRequest/requestDropdown',
+  maintenanceComment: 'maintenanceRequest/addComment',
 };

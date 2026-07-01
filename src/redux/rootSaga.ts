@@ -6,9 +6,10 @@ import authSaga from './auth/saga';
 import programSaga from './program/saga';
 import navigationSaga from './navigation/saga';
 import offlineQueueSaga from './offlineQueue/saga';
+import maintenanceSaga from './maintenance/saga';
 import {requestOfflineSync, resetOfflineSyncing} from './offlineQueue/actions';
 
-const sagas = [authSaga, programSaga, navigationSaga, offlineQueueSaga];
+const sagas = [authSaga, programSaga, navigationSaga, offlineQueueSaga, maintenanceSaga];
 
 export function createConnectivityChannel(): EventChannel<boolean> {
   return eventChannel(emit => {

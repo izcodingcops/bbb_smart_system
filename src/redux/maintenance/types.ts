@@ -1,0 +1,29 @@
+export const MAINTENANCE_LIST_REQUEST = 'maintenance/LIST_REQUEST';
+export const MAINTENANCE_LIST_SUCCESS = 'maintenance/LIST_SUCCESS';
+export const MAINTENANCE_LIST_FAILURE = 'maintenance/LIST_FAILURE';
+export const MAINTENANCE_SET_FILTERS = 'maintenance/SET_FILTERS';
+
+export const MAINTENANCE_DETAIL_REQUEST = 'maintenance/DETAIL_REQUEST';
+export const MAINTENANCE_DETAIL_SUCCESS = 'maintenance/DETAIL_SUCCESS';
+export const MAINTENANCE_DETAIL_FAILURE = 'maintenance/DETAIL_FAILURE';
+
+export const MAINTENANCE_DROPDOWNS_REQUEST = 'maintenance/DROPDOWNS_REQUEST';
+export const MAINTENANCE_DROPDOWNS_SUCCESS = 'maintenance/DROPDOWNS_SUCCESS';
+export const MAINTENANCE_DROPDOWNS_FAILURE = 'maintenance/DROPDOWNS_FAILURE';
+
+export const MAINTENANCE_CREATE_REQUEST = 'maintenance/CREATE_REQUEST';
+export const MAINTENANCE_CREATE_SUCCESS = 'maintenance/CREATE_SUCCESS';
+export const MAINTENANCE_CREATE_QUEUED = 'maintenance/CREATE_QUEUED';
+export const MAINTENANCE_CREATE_FAILURE = 'maintenance/CREATE_FAILURE';
+
+export const MAINTENANCE_EDIT_REQUEST = 'maintenance/EDIT_REQUEST';
+export const MAINTENANCE_EDIT_SUCCESS = 'maintenance/EDIT_SUCCESS';
+export const MAINTENANCE_EDIT_FAILURE = 'maintenance/EDIT_FAILURE';
+
+export const MAINTENANCE_COMMENT_REQUEST = 'maintenance/COMMENT_REQUEST';
+export const MAINTENANCE_COMMENT_SUCCESS = 'maintenance/COMMENT_SUCCESS';
+export const MAINTENANCE_COMMENT_FAILURE = 'maintenance/COMMENT_FAILURE';
+
+export const MAINTENANCE_DELETE_REQUEST = 'maintenance/DELETE_REQUEST';
+export const MAINTENANCE_DELETE_SUCCESS = 'maintenance/DELETE_SUCCESS';
+export const MAINTENANCE_DELETE_FAILURE = 'maintenance/DELETE_FAILURE';

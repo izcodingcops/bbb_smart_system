@@ -4,6 +4,7 @@ import programReducer from './program/reducer';
 import navigationReducer from './navigation/reducer';
 import locationReducer from './location/reducer';
 import offlineQueueReducer from './offlineQueue/reducer';
+import maintenanceReducer from './maintenance/reducer';
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -11,6 +12,7 @@ const rootReducer = combineReducers({
   navigation: navigationReducer,
   location: locationReducer,
   offlineQueue: offlineQueueReducer,
+  maintenance: maintenanceReducer,
 });
 
 export default rootReducer;
