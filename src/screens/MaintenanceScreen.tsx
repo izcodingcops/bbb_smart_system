@@ -1,22 +1,55 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {View, Text, TextInput, Image, TouchableOpacity, FlatList, StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useNavigation} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {theme} from '../theme';
+import {useAppDispatch} from '../redux/store';
+import {requestMaintenanceList, setMaintenanceFilters} from '../redux/maintenance/actions';
+import {
+  GetMaintenanceList,
+  GetMaintenanceListLoading,
+  GetMaintenanceFilters,
+} from '../redux/maintenance/selectors';
+import MaintenanceCard from '../components/MaintenanceCard';
+import {MaintenanceStackParamList} from '../navigation/MaintenanceNavigator';
 
-const FILTER_CHIPS = [
-  'Type', 'Business Name', 'Priority', 'Status',
-  'Date Range', 'Completed By', 'Assigned To',
+const FILTER_CHIPS: Array<{key: 'type' | 'business' | 'priority' | 'status'; label: string}> = [
+  {key: 'type', label: 'Type'},
+  {key: 'business', label: 'Business Name'},
+  {key: 'priority', label: 'Priority'},
+  {key: 'status', label: 'Status'},
 ];
 
+type Nav = NativeStackNavigationProp<MaintenanceStackParamList, 'MaintenanceList'>;
+
 const MaintenanceScreen: React.FC = () => {
+  const navigation = useNavigation<Nav>();
+  const dispatch = useAppDispatch();
+  const list = GetMaintenanceList();
+  const isLoading = GetMaintenanceListLoading();
+  const filters = GetMaintenanceFilters();
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    dispatch(requestMaintenanceList(1, filters));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
+
+  const onSearchSubmit = () => {
+    dispatch(setMaintenanceFilters({...filters, search}));
+  };
+
+  const toggleFilter = (key: 'type' | 'business' | 'priority' | 'status') => {
+    const next = {...filters};
+    if (next[key]) {
+      delete next[key];
+    } else {
+      next[key] = 'true';
+    }
+    dispatch(setMaintenanceFilters(next));
+  };
+
   return (
     <View style={styles.root}>
       <SafeAreaView edges={['top']} style={styles.headerSafe}>
@@ -24,10 +57,14 @@ const MaintenanceScreen: React.FC = () => {
           <View style={styles.titleRow}>
             <Text style={styles.title}>Maintenance</Text>
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>0</Text>
+              <Text style={styles.badgeText}>{list.length}</Text>
             </View>
           </View>
-          <TouchableOpacity style={[styles.addBtn, theme.shadow.button]} activeOpacity={0.8}>
+          <TouchableOpacity
+            testID="maintenance-add-button"
+            style={[styles.addBtn, theme.shadow.button]}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('MaintenanceForm', {})}>
             <Image
               source={require('../assets/icons/plus.png')}
               style={[styles.icon24, {tintColor: theme.colors.white}]}
@@ -36,51 +73,71 @@ const MaintenanceScreen: React.FC = () => {
         </View>
       </SafeAreaView>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
-
-        <View style={styles.filterSection}>
-          <View style={[styles.searchBar, theme.shadow.card]}>
-            <Image
-              source={require('../assets/icons/search.png')}
-              style={[styles.icon20, {tintColor: theme.colors.textSecondary}]}
-            />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search maintenance..."
-              placeholderTextColor={theme.colors.textSecondary}
-            />
-          </View>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipsRow}>
-            {FILTER_CHIPS.map(chip => (
-              <TouchableOpacity key={chip} style={styles.chip} activeOpacity={0.7}>
-                <Text style={styles.chipText}>{chip}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+      <View style={styles.filterSection}>
+        <View style={[styles.searchBar, theme.shadow.card]}>
+          <Image
+            source={require('../assets/icons/search.png')}
+            style={[styles.icon20, {tintColor: theme.colors.textSecondary}]}
+          />
+          <TextInput
+            testID="maintenance-search-input"
+            style={styles.searchInput}
+            placeholder="Search maintenance..."
+            placeholderTextColor={theme.colors.textSecondary}
+            value={search}
+            onChangeText={setSearch}
+            onSubmitEditing={onSearchSubmit}
+            returnKeyType="search"
+          />
         </View>
 
-        <View style={styles.emptyState}>
-          <View style={styles.emptyIconWrap}>
-            <Image
-              source={require('../assets/icons/maintenance_tools.png')}
-              style={styles.emptyIcon}
-            />
-          </View>
-          <View style={styles.emptyTextGroup}>
-            <Text style={styles.emptyTitle}>No maintenance to show yet</Text>
-            <Text style={styles.emptyBody}>
-              Maintenance will appear when assigned by your supervisor, and you can also create it as needed.
-            </Text>
-          </View>
+        <View style={styles.chipsRow}>
+          {FILTER_CHIPS.map(chip => (
+            <TouchableOpacity
+              key={chip.key}
+              testID={`maintenance-filter-${chip.key}`}
+              style={[styles.chip, filters[chip.key] && styles.chipActive]}
+              activeOpacity={0.7}
+              onPress={() => toggleFilter(chip.key)}>
+              <Text style={[styles.chipText, filters[chip.key] && styles.chipTextActive]}>
+                {chip.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
-      </ScrollView>
+      </View>
+
+      <FlatList
+        testID="maintenance-list"
+        data={list}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.listContent}
+        renderItem={({item}) => (
+          <MaintenanceCard
+            record={item}
+            onPress={() => navigation.navigate('MaintenanceDetail', {id: item.id})}
+          />
+        )}
+        ListEmptyComponent={
+          !isLoading ? (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIconWrap}>
+                <Image
+                  source={require('../assets/icons/maintenance_tools.png')}
+                  style={styles.emptyIcon}
+                />
+              </View>
+              <View style={styles.emptyTextGroup}>
+                <Text style={styles.emptyTitle}>No maintenance to show yet</Text>
+                <Text style={styles.emptyBody}>
+                  Maintenance will appear when assigned by your supervisor, and you can also
+                  create it as needed.
+                </Text>
+              </View>
+            </View>
+          ) : null
+        }
+      />
     </View>
   );
 };
@@ -125,9 +182,7 @@ const styles = StyleSheet.create({
   },
   icon20: {width: 20, height: 20},
   icon24: {width: 24, height: 24},
-  scroll: {flex: 1},
-  scrollContent: {paddingTop: 12, paddingBottom: 8},
-  filterSection: {paddingHorizontal: theme.spacing.lg, gap: 8},
+  filterSection: {paddingHorizontal: theme.spacing.lg, paddingTop: 12, gap: 8},
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -147,7 +202,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginLeft: 8,
   },
-  chipsRow: {gap: 8},
+  chipsRow: {flexDirection: 'row', gap: 8},
   chip: {
     backgroundColor: theme.colors.surface,
     borderWidth: 1,
@@ -156,11 +211,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
-  chipText: {
-    fontFamily: theme.fonts.medium,
-    color: '#454545',
-    fontSize: theme.fontSize.xs,
-  },
+  chipActive: {borderColor: theme.colors.primary, backgroundColor: theme.colors.primaryLight},
+  chipText: {fontFamily: theme.fonts.medium, color: '#454545', fontSize: theme.fontSize.xs},
+  chipTextActive: {color: theme.colors.primary, fontFamily: theme.fonts.bold},
+  listContent: {paddingTop: 12, paddingBottom: 24},
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
