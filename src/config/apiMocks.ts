@@ -8,4 +8,5 @@ export const API_MOCKS = {
   program: false,
   shift: false,
   location: false,
+  fileUpload: false,
 };

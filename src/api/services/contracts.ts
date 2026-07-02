@@ -17,6 +17,7 @@ import {
   MaintenanceComment,
 } from '../../types/maintenance';
 import {ProgramListResponse, SelectProgramResponse, TaskItem} from '../../types/program';
+import {OfflineFile} from '../../types/offline';
 
 export interface MaintenanceListResponse {
   status: number;
@@ -89,4 +90,8 @@ export interface GeoDataBody {
 
 export interface LocationServiceContract {
   addGeoData: (body: GeoDataBody) => Promise<{status: number; data: any}>;
+}
+
+export interface FileUploadServiceContract {
+  upload: (file: OfflineFile) => Promise<string>;
 }
