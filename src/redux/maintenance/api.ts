@@ -1,4 +1,5 @@
 import {apiSlice} from '../api/apiSlice';
+import {withErrorLogging} from '../api/queryFnHelpers';
 import {maintenanceService} from '../../api/services/maintenanceService';
 import {OfflineError} from '../../api/offlineError';
 import {enqueueOfflineRecord} from '../offlineQueue/slice';
@@ -16,49 +17,34 @@ interface CreateArgs {
   image: MaintenanceImage | null;
 }
 
-interface CreateResult {
-  queued: boolean;
-  record?: MaintenanceRecord;
-}
+type CreateResult = {queued: true} | {queued: false; record: MaintenanceRecord};
 
 export const maintenanceApi = apiSlice.injectEndpoints({
   endpoints: builder => ({
     list: builder.query<MaintenanceRecord[], {page: number; filters: MaintenanceListFilters}>({
-      queryFn: async ({page, filters}) => {
-        try {
+      queryFn: ({page, filters}) =>
+        withErrorLogging('MaintenanceApi', 'Failed to load maintenance requests.', async () => {
           const response = await maintenanceService.list(page, filters);
-          return {data: response.data.rows};
-        } catch (error: any) {
-          logger.error('MaintenanceApi', 'Failed to load list', error);
-          return {error: {message: error?.message ?? 'Failed to load maintenance requests.'}};
-        }
-      },
+          return response.data.rows;
+        }),
       providesTags: ['MaintenanceList'],
     }),
 
     detail: builder.query<MaintenanceRecord, string>({
-      queryFn: async id => {
-        try {
+      queryFn: id =>
+        withErrorLogging('MaintenanceApi', 'Failed to load maintenance request.', async () => {
           const response = await maintenanceService.detail(id);
-          return {data: response.data};
-        } catch (error: any) {
-          logger.error('MaintenanceApi', 'Failed to load detail', error);
-          return {error: {message: error?.message ?? 'Failed to load maintenance request.'}};
-        }
-      },
+          return response.data;
+        }),
       providesTags: (_result, _error, id) => [{type: 'MaintenanceDetail', id}],
     }),
 
     dropdowns: builder.query<MaintenanceDropdowns, void>({
-      queryFn: async () => {
-        try {
+      queryFn: () =>
+        withErrorLogging('MaintenanceApi', 'Failed to load dropdown options.', async () => {
           const response = await maintenanceService.getDropdowns();
-          return {data: response.data};
-        } catch (error: any) {
-          logger.error('MaintenanceApi', 'Failed to load dropdowns', error);
-          return {error: {message: error?.message ?? 'Failed to load dropdown options.'}};
-        }
-      },
+          return response.data;
+        }),
       providesTags: ['MaintenanceDropdowns'],
     }),
 
@@ -83,45 +69,31 @@ export const maintenanceApi = apiSlice.injectEndpoints({
           return {error: {message: error?.message ?? 'Failed to create maintenance request.'}};
         }
       },
-      invalidatesTags: result => (result && !result.queued ? ['MaintenanceList'] : []),
+      invalidatesTags: result => (result?.queued === false ? ['MaintenanceList'] : []),
     }),
 
     update: builder.mutation<MaintenanceRecord, {id: string; payload: MaintenancePayload}>({
-      queryFn: async ({id, payload}) => {
-        try {
+      queryFn: ({id, payload}) =>
+        withErrorLogging('MaintenanceApi', 'Failed to update maintenance request.', async () => {
           const response = await maintenanceService.update(id, payload);
-          return {data: response.data};
-        } catch (error: any) {
-          logger.error('MaintenanceApi', 'Failed to edit', error);
-          return {error: {message: error?.message ?? 'Failed to update maintenance request.'}};
-        }
-      },
+          return response.data;
+        }),
       invalidatesTags: (_result, _error, {id}) => ['MaintenanceList', {type: 'MaintenanceDetail', id}],
     }),
 
     remove: builder.mutation<void, string>({
-      queryFn: async id => {
-        try {
+      queryFn: id =>
+        withErrorLogging('MaintenanceApi', 'Failed to delete maintenance request.', async () => {
           await maintenanceService.remove(id);
-          return {data: undefined};
-        } catch (error: any) {
-          logger.error('MaintenanceApi', 'Failed to delete', error);
-          return {error: {message: error?.message ?? 'Failed to delete maintenance request.'}};
-        }
-      },
+        }),
       invalidatesTags: (_result, _error, id) => ['MaintenanceList', {type: 'MaintenanceDetail', id}],
     }),
 
     addComment: builder.mutation<void, {id: string; text: string}>({
-      queryFn: async ({id, text}) => {
-        try {
+      queryFn: ({id, text}) =>
+        withErrorLogging('MaintenanceApi', 'Failed to add comment.', async () => {
           await maintenanceService.addComment(id, text);
-          return {data: undefined};
-        } catch (error: any) {
-          logger.error('MaintenanceApi', 'Failed to add comment', error);
-          return {error: {message: error?.message ?? 'Failed to add comment.'}};
-        }
-      },
+        }),
     }),
   }),
 });
