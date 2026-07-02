@@ -16,6 +16,7 @@ import {
   MaintenanceListFilters,
   MaintenanceComment,
 } from '../../types/maintenance';
+import {ProgramListResponse, SelectProgramResponse, TaskItem} from '../../types/program';
 
 export interface MaintenanceListResponse {
   status: number;
@@ -44,4 +45,19 @@ export interface MaintenanceServiceContract {
 
 export interface AuthServiceContract {
   login: (credentials: LoginCredentials) => Promise<LoginResponse>;
+}
+
+export interface ProgramTaskListResponse {
+  status: number;
+  message?: string;
+  data: {count: number; rows: TaskItem[]};
+}
+
+export interface ProgramServiceContract {
+  listPrograms: () => Promise<ProgramListResponse>;
+  getTaskList: (programId: string | number) => Promise<ProgramTaskListResponse>;
+  selectProgram: (
+    programId: string | number,
+    shiftId: string | number,
+  ) => Promise<SelectProgramResponse>;
 }
