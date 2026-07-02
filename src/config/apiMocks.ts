@@ -9,4 +9,5 @@ export const API_MOCKS = {
   shift: false,
   location: false,
   fileUpload: false,
+  navigation: true,
 };

@@ -18,6 +18,7 @@ import {
 } from '../../types/maintenance';
 import {ProgramListResponse, SelectProgramResponse, TaskItem} from '../../types/program';
 import {OfflineFile} from '../../types/offline';
+import {MenuItem} from '../../types/navigation';
 
 export interface MaintenanceListResponse {
   status: number;
@@ -94,4 +95,13 @@ export interface LocationServiceContract {
 
 export interface FileUploadServiceContract {
   upload: (file: OfflineFile) => Promise<string>;
+}
+
+export interface NavigationMenuResponse {
+  status: number;
+  data: MenuItem[];
+}
+
+export interface NavigationServiceContract {
+  getMenuItems: () => Promise<NavigationMenuResponse>;
 }
