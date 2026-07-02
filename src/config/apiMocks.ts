@@ -7,4 +7,5 @@ export const API_MOCKS = {
   auth: false,
   program: false,
   shift: false,
+  location: false,
 };

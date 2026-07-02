@@ -1,19 +1,14 @@
 import client from '../index';
 import {ApiEndpoints} from '../apiEndpoints';
+import {API_MOCKS} from '../../config/apiMocks';
+import {mockLocationService} from './mockLocationService';
+import {LocationServiceContract, GeoDataBody} from './contracts';
 
-export interface GeoDataBody {
-  sessionId: string | number;
-  latitude: number;
-  longitude: number;
-  deviceId: string;
-  deviceType: string;
-  deviceName: string;
-  shiftId: string | number;
-  horizontal_accuracy: number;
-  user_id: string | number;
-}
-
-export const locationService = {
+const liveLocationService = {
   addGeoData: (body: GeoDataBody): Promise<{status: number; data: any}> =>
     client.post(ApiEndpoints.addGeoData, body).then(r => r.data),
-};
+} satisfies LocationServiceContract;
+
+export const locationService: LocationServiceContract = API_MOCKS.location
+  ? mockLocationService
+  : liveLocationService;
