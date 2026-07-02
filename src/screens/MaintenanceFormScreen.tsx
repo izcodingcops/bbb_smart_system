@@ -14,6 +14,7 @@ import {
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {theme} from '../theme';
+import {skipToken} from '@reduxjs/toolkit/query/react';
 import {useAppSelector} from '../redux/store';
 import {
   useGetMaintenanceDropdownsQuery,
@@ -21,6 +22,7 @@ import {
   useCreateMaintenanceMutation,
   useUpdateMaintenanceMutation,
 } from '../redux/maintenance/api';
+import {getErrorMessage} from '../redux/api/queryFnHelpers';
 import SegmentedControl from '../components/SegmentedControl';
 import AssigneeTypeSelector from '../components/AssigneeTypeSelector';
 import SearchablePickerSheet, {PickerOption} from '../components/SearchablePickerSheet';
@@ -44,13 +46,13 @@ const MaintenanceFormScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const route = useRoute<FormRoute>();
   const isEdit = Boolean(route.params?.id);
-  const {data: selected} = useGetMaintenanceDetailQuery(route.params?.id as string, {skip: !isEdit});
+  const {data: selected} = useGetMaintenanceDetailQuery(route.params?.id ?? skipToken);
   const {data: dropdowns = {types: [], departments: [], ambassadors: [], businesses: [], zones: []}} =
     useGetMaintenanceDropdownsQuery();
   const [createMaintenance, {isLoading: isCreating, error: createError}] = useCreateMaintenanceMutation();
   const [updateMaintenance, {isLoading: isUpdating, error: updateError}] = useUpdateMaintenanceMutation();
   const isSubmitting = isCreating || isUpdating;
-  const submitError = (createError as any)?.message ?? (updateError as any)?.message ?? null;
+  const submitError = getErrorMessage(createError) ?? getErrorMessage(updateError);
   const currentLocation = useAppSelector(state => state.location.currentLocation);
 
   const [activeTab, setActiveTab] = useState('basic');
