@@ -1,31 +1,16 @@
 import client from '../index';
 import {ApiEndpoints} from '../apiEndpoints';
-import {
-  MaintenanceRecord,
-  MaintenancePayload,
-  MaintenanceDropdowns,
-  MaintenanceListFilters,
-  MaintenanceComment,
-} from '../../types/maintenance';
+import {MaintenancePayload, MaintenanceListFilters} from '../../types/maintenance';
 import {API_MOCKS} from '../../config/apiMocks';
 import {mockMaintenanceService} from './mockMaintenanceService';
+import {
+  MaintenanceServiceContract,
+  MaintenanceListResponse,
+  MaintenanceDetailResponse,
+  MaintenanceDropdownsResponse,
+} from './contracts';
 
-interface MaintenanceListResponse {
-  status: number;
-  data: {count: number; rows: MaintenanceRecord[]};
-}
-
-interface MaintenanceDetailResponse {
-  status: number;
-  data: MaintenanceRecord;
-}
-
-interface MaintenanceDropdownsResponse {
-  status: number;
-  data: MaintenanceDropdowns;
-}
-
-const realMaintenanceService = {
+const liveMaintenanceService = {
   list: (page: number, filters: MaintenanceListFilters): Promise<MaintenanceListResponse> => {
     const params = new URLSearchParams({page: String(page), app: 'true'});
     if (filters.search) params.append('search', filters.search);
@@ -53,10 +38,10 @@ const realMaintenanceService = {
   getDropdowns: (): Promise<MaintenanceDropdownsResponse> =>
     client.get(ApiEndpoints.maintenanceDropdowns).then(r => r.data),
 
-  addComment: (id: string, text: string): Promise<{status: number; data: MaintenanceComment}> =>
+  addComment: (id: string, text: string) =>
     client.post(ApiEndpoints.maintenanceComment, {maintenance_id: id, text}).then(r => r.data),
-};
+} satisfies MaintenanceServiceContract;
 
-export const maintenanceService = API_MOCKS.maintenance
+export const maintenanceService: MaintenanceServiceContract = API_MOCKS.maintenance
   ? mockMaintenanceService
-  : realMaintenanceService;
+  : liveMaintenanceService;

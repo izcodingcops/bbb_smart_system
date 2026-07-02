@@ -6,6 +6,7 @@ import {
   MaintenanceComment,
 } from '../../types/maintenance';
 import {generateId} from '../../utils/generateId';
+import {MaintenanceServiceContract} from './contracts';
 
 const MOCK_DELAY = 400;
 
@@ -144,7 +145,7 @@ function matchesFilters(record: MaintenanceRecord, filters: MaintenanceListFilte
   return true;
 }
 
-export const mockMaintenanceService = {
+const mockMaintenanceServiceContract = {
   list: (_page: number, filters: MaintenanceListFilters) => {
     const rows = records.filter(record => matchesFilters(record, filters));
     return delay({status: 200, data: {count: rows.length, rows}});
@@ -202,6 +203,10 @@ export const mockMaintenanceService = {
     return delay({status: 200, data: comment});
   },
 
+} satisfies MaintenanceServiceContract;
+
+export const mockMaintenanceService = {
+  ...mockMaintenanceServiceContract,
   __reset: () => {
     records = seedRecords();
     commentsByRecord = {};
