@@ -1,16 +1,14 @@
 import client from '../index';
 import {ApiEndpoints} from '../apiEndpoints';
+import {API_MOCKS} from '../../config/apiMocks';
+import {mockShiftService} from './mockShiftService';
+import {ShiftServiceContract, StartShiftBody} from './contracts';
 
-export interface StartShiftBody {
-  actual_shift_date: string;
-  actual_shift_end_date: string;
-  task_id: string | number;
-  program_id: string | number;
-  timezone_str: string;
-  server_date: string;
-}
-
-export const shiftService = {
+const liveShiftService = {
   startShift: (body: StartShiftBody): Promise<{status: number; data: any}> =>
     client.post(ApiEndpoints.startShift, body).then(r => r.data),
-};
+} satisfies ShiftServiceContract;
+
+export const shiftService: ShiftServiceContract = API_MOCKS.shift
+  ? mockShiftService
+  : liveShiftService;
