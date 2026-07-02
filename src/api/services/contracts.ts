@@ -8,6 +8,7 @@
  * compiler catches it. The service file itself picks which implementation
  * to export based on src/config/apiMocks.ts.
  */
+import {LoginCredentials, LoginResponse} from '../../types/auth';
 import {
   MaintenanceRecord,
   MaintenancePayload,
@@ -39,4 +40,8 @@ export interface MaintenanceServiceContract {
   remove: (id: string) => Promise<{status: number}>;
   getDropdowns: () => Promise<MaintenanceDropdownsResponse>;
   addComment: (id: string, text: string) => Promise<{status: number; data: MaintenanceComment}>;
+}
+
+export interface AuthServiceContract {
+  login: (credentials: LoginCredentials) => Promise<LoginResponse>;
 }
