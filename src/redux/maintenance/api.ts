@@ -3,6 +3,7 @@ import {withErrorLogging} from '../api/queryFnHelpers';
 import {maintenanceService} from '../../api/services/maintenance/maintenanceService';
 import {OfflineError} from '../../api/offlineError';
 import {enqueueOfflineRecord} from '../offlineQueue/slice';
+import {persistOfflineFile} from '../../utils/offlineFileStore';
 import {logger} from '../../utils/logger';
 import {
   MaintenanceRecord,
@@ -55,12 +56,22 @@ export const maintenanceApi = apiSlice.injectEndpoints({
           return {data: {queued: false, record: response.data}};
         } catch (error: any) {
           if (error instanceof OfflineError) {
+            const files = image
+              ? [
+                  await persistOfflineFile({
+                    fieldKey: 'image',
+                    uri: image.uri,
+                    name: image.name,
+                    type: image.type,
+                  }),
+                ]
+              : [];
             dispatch(
               enqueueOfflineRecord({
                 endpoint: 'addMaintenance-v2',
                 baseUrl: 'WEB',
                 payload: {...payload},
-                files: image ? [{fieldKey: 'image', uri: image.uri, name: image.name, type: image.type}] : [],
+                files,
               }),
             );
             return {data: {queued: true}};
