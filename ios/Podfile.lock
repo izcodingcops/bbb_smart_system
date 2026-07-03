@@ -1886,6 +1886,8 @@ PODS:
     - Yoga
   - RNDeviceInfo (15.0.2):
     - React-Core
+  - RNFS (2.20.0):
+    - React-Core
   - RNScreens (4.24.0):
     - hermes-engine
     - RCTRequired
@@ -2060,6 +2062,7 @@ DEPENDENCIES:
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
+  - RNFS (from `../node_modules/react-native-fs`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
@@ -2222,6 +2225,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/datetimepicker"
   RNDeviceInfo:
     :path: "../node_modules/react-native-device-info"
+  RNFS:
+    :path: "../node_modules/react-native-fs"
   RNScreens:
     :path: "../node_modules/react-native-screens"
   RNSVG:
@@ -2232,7 +2237,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   BVLinearGradient: cb006ba232a1f3e4f341bb62c42d1098c284da70
   FBLazyVector: ed7eadee1965b0b918ca9d0f2c2328f7eb3fd095
-  hermes-engine: 990208c5eb421ebcb5af2df44b2635131b5f2689
+  hermes-engine: 5845a9f2cd5f10a0b4aca8cf00cdb0bb3c3153f7
   RCTDeprecation: d69f6f20a20f669a0aa3115ab1109f28e98ae03e
   RCTRequired: 305a8212b9d90fa335b6a6a960e5212bbb434484
   RCTSwiftUI: 00bb3e8491b1368a47563ef0c8824601d9875ed3
@@ -2241,7 +2246,7 @@ SPEC CHECKSUMS:
   React: 6dbd7825a18782848e8c62f1feb16b344cb17ac6
   React-callinvoker: 90c70d14c7ca646fdae3e25e8d9fbb0fbb20459c
   React-Core: 9dce76263f670de254e896f317676e7e95369ac2
-  React-Core-prebuilt: 7cba25783e1ac274f67c29fbd5945ee88a60ad6d
+  React-Core-prebuilt: 7b26de0d00f242cbc57464173af19faca69347e5
   React-CoreModules: b9fadb43261b88cb0d3a2d59808603567e995095
   React-cxxreact: 6b36616248fea28ce6dfbffcf09322321eb96186
   React-debug: 8f85c5da52e386c83482e45744f6e61b39b9493d
@@ -2304,10 +2309,11 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: 52da2413bc956c40a4de19ad32a92b87248f7ce8
   ReactCodegen: aac672d7021359dc55fbd6d63f56192651664f09
   ReactCommon: 66763e5bd1b778828ff6cb82d771b7162a5215c2
-  ReactNativeDependencies: a426db925d59248ad1b1bfd49714f7ffeb92da69
+  ReactNativeDependencies: 2116b3e0b1bb6fbc1f9130575f656d0e77b7259b
   RNCAsyncStorage: 2ad919e88b8bc2cd80e8697ce66d04d006743283
   RNDateTimePicker: 7b2738f1e595f83c14580a11c476872755c5befc
   RNDeviceInfo: 4c852998208b60dc192ae3529e5867817719ad1e
+  RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
   RNScreens: 01b065ded2dfe7987bcce770ff3a196be417ff41
   RNSVG: 0e52210d4d43165e7e2cf9c890a9848b27e513ac
   Yoga: b1085f68c014785350a2afdc95eaef0d49f23ccb
