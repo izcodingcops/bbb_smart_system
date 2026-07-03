@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
 import {View, Text, TextInput, Image, TouchableOpacity, FlatList, StyleSheet} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {theme} from '../theme';
@@ -8,6 +7,8 @@ import {useAppDispatch, useAppSelector} from '../redux/store';
 import {setFilters} from '../redux/maintenance/slice';
 import {useListMaintenanceQuery} from '../redux/maintenance/api';
 import MaintenanceCard from '../components/MaintenanceCard';
+import MaintenanceHeader from '../components/MaintenanceHeader';
+import PlusIcon from '../components/icons/PlusIcon';
 import {MaintenanceStackParamList} from '../navigation/MaintenanceNavigator';
 
 const FILTER_CHIPS: Array<{key: 'type' | 'business' | 'priority' | 'status'; label: string}> = [
@@ -42,26 +43,27 @@ const MaintenanceScreen: React.FC = () => {
 
   return (
     <View style={styles.root}>
-      <SafeAreaView edges={['top']} style={styles.headerSafe}>
-        <View style={styles.headerRow}>
+      <MaintenanceHeader
+        align="start"
+        bordered
+        title={
           <View style={styles.titleRow}>
             <Text style={styles.title}>Maintenance</Text>
             <View style={styles.badge}>
               <Text style={styles.badgeText}>{list.length}</Text>
             </View>
           </View>
+        }
+        right={
           <TouchableOpacity
             testID="maintenance-add-button"
             style={[styles.addBtn, theme.shadow.button]}
             activeOpacity={0.8}
             onPress={() => navigation.navigate('MaintenanceForm', {})}>
-            <Image
-              source={require('../assets/icons/plus.png')}
-              style={[styles.icon24, {tintColor: theme.colors.white}]}
-            />
+            <PlusIcon size={24} color={theme.colors.white} />
           </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+        }
+      />
 
       <View style={styles.filterSection}>
         <View style={[styles.searchBar, theme.shadow.card]}>
@@ -134,15 +136,6 @@ const MaintenanceScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   root: {flex: 1, backgroundColor: theme.colors.background},
-  headerSafe: {backgroundColor: theme.colors.surface, borderBottomWidth: 1, borderBottomColor: '#EEE'},
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: 12,
-    paddingTop: 4,
-  },
   titleRow: {flexDirection: 'row', alignItems: 'flex-end', gap: 8},
   title: {
     fontSize: theme.fontSize.xxl,

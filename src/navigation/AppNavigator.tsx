@@ -6,6 +6,7 @@ import {GetSelectedProgram} from '../redux/program/selectors';
 import LoginScreen from '../screens/LoginScreen';
 import SelectProgramScreen from '../screens/SelectProgramScreen';
 import MainTabNavigator from './MainTabNavigator';
+import {theme} from '../theme';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -21,7 +22,12 @@ const AppNavigator: React.FC = () => {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{headerShown: false, animation: 'fade'}}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          animation: 'fade',
+          contentStyle: {backgroundColor: theme.colors.background},
+        }}>
         {!isAuthenticated ? (
           <Stack.Screen name="Login" component={LoginScreen} />
         ) : !selectedProgram ? (

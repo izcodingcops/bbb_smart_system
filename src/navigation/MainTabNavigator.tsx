@@ -2,8 +2,10 @@ import React, {useEffect, useState} from 'react';
 import {Text, TouchableOpacity, View, Image} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useGetMenuItemsQuery} from '../redux/navigation/api';
+import {useAppSelector} from '../redux/store';
 import {fontFamilies} from '../constants/fonts';
 import {locationTracker} from '../utils/locationTracker';
+import {theme} from '../theme';
 import HomeScreen from '../screens/HomeScreen';
 import MaintenanceNavigator from './MaintenanceNavigator';
 import FixtureScreen from '../screens/FixtureScreen';
@@ -33,6 +35,7 @@ const MORE_SCREEN = '__more__';
 
 const MainTabNavigator: React.FC = () => {
   const {data: menuItems = [], isLoading} = useGetMenuItemsQuery();
+  const tabBarHidden = useAppSelector(state => state.ui.tabBarHidden);
   const [activeScreen, setActiveScreen] = useState<string>('');
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [showBar, setShowBar] = useState<boolean>(false);
@@ -97,9 +100,13 @@ const MainTabNavigator: React.FC = () => {
   };
 
   return (
-    <SafeAreaView edges={['bottom']} style={{flex: 1, backgroundColor: '#FFFFFF'}}>
+    <SafeAreaView
+      edges={tabBarHidden ? [] : ['bottom']}
+      style={{flex: 1, backgroundColor: theme.colors.background}}>
       <View style={{flex: 1}}>{renderContent()}</View>
 
+      {!tabBarHidden && (
+        <>
       {/* Online / offline status strip */}
       {showBar && (
         <View
@@ -229,6 +236,8 @@ const MainTabNavigator: React.FC = () => {
         )}
         </View>
       </View>
+        </>
+      )}
     </SafeAreaView>
   );
 };

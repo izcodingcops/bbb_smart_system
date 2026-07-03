@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
-  LayoutChangeEvent,
   StyleSheet,
 } from 'react-native';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import CloseIcon from '../components/icons/CloseIcon';
+import MaintenanceHeader from '../components/MaintenanceHeader';
 import {theme} from '../theme';
 import {skipToken} from '@reduxjs/toolkit/query/react';
 import {useAppSelector} from '../redux/store';
@@ -29,20 +29,15 @@ import SearchablePickerSheet, {PickerOption} from '../components/SearchablePicke
 import DateTimeField from '../components/DateTimeField';
 import ImageUploadField, {UploadedImage} from '../components/ImageUploadField';
 import ConfirmDialog from '../components/ConfirmDialog';
-import ScrollSpyTabs from '../components/ScrollSpyTabs';
+import {useHideTabBar} from '../hooks/useHideTabBar';
 import {MaintenanceStackParamList} from '../navigation/MaintenanceNavigator';
 import {MaintenancePriority, MaintenanceAssigneeType} from '../types/maintenance';
 
 type Nav = NativeStackNavigationProp<MaintenanceStackParamList, 'MaintenanceForm'>;
 type FormRoute = RouteProp<MaintenanceStackParamList, 'MaintenanceForm'>;
 
-const TABS = [
-  {key: 'basic', label: 'Basic Details'},
-  {key: 'location', label: 'Location Details'},
-  {key: 'other', label: 'Other Details'},
-];
-
 const MaintenanceFormScreen: React.FC = () => {
+  useHideTabBar();
   const navigation = useNavigation<Nav>();
   const route = useRoute<FormRoute>();
   const isEdit = Boolean(route.params?.id);
@@ -55,7 +50,6 @@ const MaintenanceFormScreen: React.FC = () => {
   const submitError = getErrorMessage(createError) ?? getErrorMessage(updateError);
   const currentLocation = useAppSelector(state => state.location.currentLocation);
 
-  const [activeTab, setActiveTab] = useState('basic');
   const [activePicker, setActivePicker] = useState<'type' | 'assignee' | 'business' | 'zone' | null>(
     null,
   );
@@ -71,9 +65,6 @@ const MaintenanceFormScreen: React.FC = () => {
   const [business, setBusiness] = useState<PickerOption | null>(null);
   const [description, setDescription] = useState('');
   const [image, setImage] = useState<UploadedImage | null>(null);
-
-  const scrollRef = useRef<ScrollView>(null);
-  const sectionOffsets = useRef<Record<string, number>>({});
 
   useEffect(() => {
     if (isEdit && selected) {
@@ -124,52 +115,24 @@ const MaintenanceFormScreen: React.FC = () => {
   const assigneeOptions: PickerOption[] =
     assigneeType === 'Department' ? dropdowns.departments : dropdowns.ambassadors;
 
-  const registerSectionOffset = (key: string) => (event: LayoutChangeEvent) => {
-    sectionOffsets.current[key] = event.nativeEvent.layout.y;
-  };
-
-  const handleTabPress = (key: string) => {
-    setActiveTab(key);
-    const y = sectionOffsets.current[key] ?? 0;
-    scrollRef.current?.scrollTo({y: Math.max(y - theme.spacing.md, 0), animated: true});
-  };
-
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const y = event.nativeEvent.contentOffset.y + 24;
-    const entries = Object.entries(sectionOffsets.current).sort((a, b) => a[1] - b[1]);
-    let current = entries[0]?.[0];
-    for (const [key, offset] of entries) {
-      if (y >= offset) {
-        current = key;
-      }
-    }
-    if (current && current !== activeTab) {
-      setActiveTab(current);
-    }
-  };
-
   return (
     <View style={styles.root}>
-      <View style={styles.header}>
-        <TouchableOpacity testID="maintenance-form-close" onPress={() => navigation.goBack()}>
-          <Text style={styles.closeText}>✕</Text>
-        </TouchableOpacity>
-        <View style={styles.headerTitleGroup}>
-          <Text style={styles.headerTitle}>{isEdit ? 'Edit Maintenance' : 'Add Maintenance'}</Text>
-          {isEdit && selected && <Text style={styles.headerSubtitle}>{selected.ticket_number}</Text>}
-        </View>
-        <View style={styles.headerSpacer} />
-      </View>
+      <MaintenanceHeader
+        variant="gradient"
+        title={isEdit ? 'Edit Maintenance' : 'Add Maintenance'}
+        subtitle={isEdit && selected ? selected.ticket_number : undefined}
+        left={
+          <TouchableOpacity
+            testID="maintenance-form-close"
+            style={styles.closeBtn}
+            onPress={() => navigation.goBack()}>
+            <CloseIcon size={16} color={theme.colors.textMuted} />
+          </TouchableOpacity>
+        }
+      />
 
-      <ScrollSpyTabs tabs={TABS} activeKey={activeTab} onTabPress={handleTabPress} />
-
-      <ScrollView
-        ref={scrollRef}
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}>
-        <View style={styles.card} onLayout={registerSectionOffset('basic')}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.card}>
           <Text style={styles.sectionTitle}>Basic Details</Text>
           <Text style={styles.label}>Maintenance Type</Text>
           <TouchableOpacity
@@ -219,7 +182,7 @@ const MaintenanceFormScreen: React.FC = () => {
           />
         </View>
 
-        <View style={styles.card} onLayout={registerSectionOffset('location')}>
+        <View style={styles.card}>
           <Text style={styles.sectionTitle}>Location Details</Text>
           <View style={styles.addressRow}>
             <Text style={styles.label}>Address</Text>
@@ -243,7 +206,7 @@ const MaintenanceFormScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.card} onLayout={registerSectionOffset('other')}>
+        <View style={styles.card}>
           <Text style={styles.sectionTitle}>Other Details</Text>
           <Text style={styles.label}>Describe Location</Text>
           <TextInput
@@ -274,13 +237,15 @@ const MaintenanceFormScreen: React.FC = () => {
         </View>
       </ScrollView>
 
-      <TouchableOpacity
-        testID="maintenance-form-save"
-        style={styles.saveBtn}
-        onPress={handleSave}
-        activeOpacity={0.85}>
-        <Text style={styles.saveText}>{isEdit ? 'Update' : 'Save'}</Text>
-      </TouchableOpacity>
+      <SafeAreaView edges={['bottom']} style={styles.saveWrap}>
+        <TouchableOpacity
+          testID="maintenance-form-save"
+          style={styles.saveBtn}
+          onPress={handleSave}
+          activeOpacity={0.85}>
+          <Text style={styles.saveText}>{isEdit ? 'Update' : 'Save'}</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
 
       <SearchablePickerSheet
         visible={activePicker === 'type'}
@@ -337,23 +302,14 @@ const MaintenanceFormScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   root: {flex: 1, backgroundColor: theme.colors.background},
-  header: {
-    flexDirection: 'row',
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: theme.radius.sm,
+    backgroundColor: 'rgba(255,255,255,0.6)',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: theme.spacing.lg,
-    backgroundColor: theme.colors.surface,
+    justifyContent: 'center',
   },
-  closeText: {fontSize: 18, fontFamily: theme.fonts.bold, color: theme.colors.textMuted},
-  headerTitleGroup: {alignItems: 'center'},
-  headerTitle: {fontFamily: theme.fonts.bold, fontSize: theme.fontSize.md, color: theme.colors.text},
-  headerSubtitle: {
-    fontFamily: theme.fonts.regular,
-    fontSize: theme.fontSize.xs,
-    color: theme.colors.textMuted,
-    marginTop: 2,
-  },
-  headerSpacer: {width: 24},
   scroll: {flex: 1},
   scrollContent: {padding: theme.spacing.lg, gap: theme.spacing.md, paddingBottom: theme.spacing.xxl},
   card: {
@@ -390,8 +346,10 @@ const styles = StyleSheet.create({
   },
   pinIcon: {width: 16, height: 16, marginTop: 2, tintColor: theme.colors.textMuted},
   addressText: {flex: 1, fontSize: theme.fontSize.base, fontFamily: theme.fonts.regular, color: '#111827'},
+  saveWrap: {paddingBottom: theme.spacing.sm},
   saveBtn: {
-    margin: theme.spacing.lg,
+    marginHorizontal: theme.spacing.lg,
+    marginTop: theme.spacing.lg,
     backgroundColor: theme.colors.primaryDark,
     borderRadius: theme.radius.md,
     paddingVertical: 16,

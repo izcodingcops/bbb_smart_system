@@ -85,4 +85,7 @@ export const theme = {
     center: {alignItems: 'center' as const, justifyContent: 'center' as const},
     flex1: {flex: 1},
   },
+  gradients: {
+    maintenanceHeader: ['#d4e1ee', '#d7ebe04b'] as [string, string],
+  },
 } as const;

@@ -10,7 +10,7 @@ import {resetOfflineSyncing} from './offlineQueue/slice';
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  blacklist: ['location', 'api'],
+  blacklist: ['location', 'api', 'ui'],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

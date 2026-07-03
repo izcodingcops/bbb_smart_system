@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {theme} from '../theme';
@@ -10,12 +11,17 @@ import {
 } from '../redux/maintenance/api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import BottomSheet from '../components/BottomSheet';
+import MaintenanceHeader from '../components/MaintenanceHeader';
+import TrashIcon from '../components/icons/TrashIcon';
+import PencilIcon from '../components/icons/PencilIcon';
+import {useHideTabBar} from '../hooks/useHideTabBar';
 import {MaintenanceStackParamList} from '../navigation/MaintenanceNavigator';
 
 type Nav = NativeStackNavigationProp<MaintenanceStackParamList, 'MaintenanceDetail'>;
 type DetailRoute = RouteProp<MaintenanceStackParamList, 'MaintenanceDetail'>;
 
 const MaintenanceDetailScreen: React.FC = () => {
+  useHideTabBar();
   const navigation = useNavigation<Nav>();
   const route = useRoute<DetailRoute>();
   const {data: record} = useGetMaintenanceDetailQuery(route.params.id);
@@ -44,24 +50,28 @@ const MaintenanceDetailScreen: React.FC = () => {
 
   return (
     <View style={styles.root}>
-      <View style={styles.header}>
-        <TouchableOpacity testID="maintenance-detail-back" onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>‹</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Maintenance</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity testID="maintenance-detail-delete" onPress={() => setDeleteConfirmVisible(true)}>
-            <Text style={styles.deleteIcon}>🗑</Text>
+      <MaintenanceHeader
+        title="Maintenance"
+        left={
+          <TouchableOpacity testID="maintenance-detail-back" onPress={() => navigation.goBack()}>
+            <Text style={styles.backText}>‹</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            testID="maintenance-detail-edit"
-            onPress={() => navigation.navigate('MaintenanceForm', {id: record.id})}>
-            <Text style={styles.editIcon}>✎</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        }
+        right={
+          <View style={styles.headerActions}>
+            <TouchableOpacity testID="maintenance-detail-delete" onPress={() => setDeleteConfirmVisible(true)}>
+              <TrashIcon size={18} color={theme.colors.error} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="maintenance-detail-edit"
+              onPress={() => navigation.navigate('MaintenanceForm', {id: record.id})}>
+              <PencilIcon size={18} color={theme.colors.primary} />
+            </TouchableOpacity>
+          </View>
+        }
+      />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <Text style={styles.ticket}>{record.ticket_number}</Text>
 
         <Text style={styles.sectionTitle}>Basic Details</Text>
@@ -75,12 +85,14 @@ const MaintenanceDetailScreen: React.FC = () => {
         <Text style={styles.row}>Describe Location: {record.location_description ?? 'N/A'}</Text>
       </ScrollView>
 
-      <TouchableOpacity
-        testID="maintenance-detail-add-comment"
-        style={styles.commentBtn}
-        onPress={() => setCommentVisible(true)}>
-        <Text style={styles.commentBtnText}>Add Comment</Text>
-      </TouchableOpacity>
+      <SafeAreaView edges={['bottom']} style={styles.commentWrap}>
+        <TouchableOpacity
+          testID="maintenance-detail-add-comment"
+          style={styles.commentBtn}
+          onPress={() => setCommentVisible(true)}>
+          <Text style={styles.commentBtnText}>Add Comment</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
 
       <BottomSheet
         visible={commentVisible}
@@ -124,18 +136,9 @@ const MaintenanceDetailScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   root: {flex: 1, backgroundColor: theme.colors.background},
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: theme.spacing.lg,
-    backgroundColor: theme.colors.surface,
-  },
   backText: {fontSize: 24, color: theme.colors.text},
-  headerTitle: {fontFamily: theme.fonts.bold, fontSize: theme.fontSize.md, color: theme.colors.text},
   headerActions: {flexDirection: 'row', gap: theme.spacing.md},
-  deleteIcon: {fontSize: 18, color: theme.colors.error},
-  editIcon: {fontSize: 18, color: theme.colors.primary},
+  scroll: {flex: 1},
   content: {padding: theme.spacing.lg, gap: theme.spacing.sm},
   ticket: {fontFamily: theme.fonts.bold, fontSize: theme.fontSize.lg, color: theme.colors.text},
   sectionTitle: {
@@ -145,7 +148,12 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.md,
   },
   row: {fontFamily: theme.fonts.regular, fontSize: theme.fontSize.xs + 2, color: theme.colors.textSecondary},
-  commentBtn: {margin: theme.spacing.lg, alignItems: 'center'},
+  commentWrap: {paddingBottom: theme.spacing.sm},
+  commentBtn: {
+    marginHorizontal: theme.spacing.lg,
+    marginTop: theme.spacing.lg,
+    alignItems: 'center',
+  },
   commentBtnText: {fontFamily: theme.fonts.bold, color: theme.colors.primary},
   commentSheet: {padding: theme.spacing.xl, gap: theme.spacing.md},
   commentInput: {

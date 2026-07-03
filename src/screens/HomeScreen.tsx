@@ -12,6 +12,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {GetSelectedProgram} from '../redux/program/selectors';
 import {locationTracker} from '../utils/locationTracker';
 import {theme} from '../theme';
+import PlusIcon from '../components/icons/PlusIcon';
 
 const STAT_ICONS: Record<string, any> = {
   assigned: require('../assets/icons/stat_assigned.png'),
@@ -86,10 +87,7 @@ const HomeScreen: React.FC = () => {
           </View>
 
           <TouchableOpacity style={styles.plusBtn} activeOpacity={0.8}>
-            <Image
-              source={require('../assets/icons/plus.png')}
-              style={[styles.icon20, {tintColor: theme.colors.white}]}
-            />
+            <PlusIcon size={20} color={theme.colors.white} />
           </TouchableOpacity>
         </View>
 

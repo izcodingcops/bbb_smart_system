@@ -4,7 +4,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {theme} from '../theme';
 
 const IncidentScreen: React.FC = () => (
-  <SafeAreaView style={styles.root}>
+  <SafeAreaView style={styles.root} edges={['top']}>
     <View style={[styles.root, theme.common.center]}>
       <Text style={styles.heading}>Incident</Text>
       <Text style={styles.sub}>Coming soon</Text>
