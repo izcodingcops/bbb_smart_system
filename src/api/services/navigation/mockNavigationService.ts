@@ -1,6 +1,6 @@
-import {MOCK_MENU_ITEMS} from '../../constants';
-import {MenuItem} from '../../types/navigation';
-import {NavigationServiceContract} from './contracts';
+import {MOCK_MENU_ITEMS} from '../../../constants';
+import {MenuItem} from '../../../types/navigation';
+import {NavigationServiceContract} from './contract';
 
 const MOCK_DELAY = 400;
 

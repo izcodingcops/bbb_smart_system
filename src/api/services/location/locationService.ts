@@ -1,8 +1,8 @@
-import client from '../index';
-import {ApiEndpoints} from '../apiEndpoints';
-import {API_MOCKS} from '../../config/apiMocks';
+import client from '../../index';
+import {ApiEndpoints} from '../../apiEndpoints';
+import {API_MOCKS} from '../../../config/apiMocks';
 import {mockLocationService} from './mockLocationService';
-import {LocationServiceContract, GeoDataBody} from './contracts';
+import {LocationServiceContract, GeoDataBody} from './contract';
 
 const liveLocationService = {
   addGeoData: (body: GeoDataBody): Promise<{status: number; data: any}> =>

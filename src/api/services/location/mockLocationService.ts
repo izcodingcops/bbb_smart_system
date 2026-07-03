@@ -1,4 +1,4 @@
-import {LocationServiceContract, GeoDataBody} from './contracts';
+import {LocationServiceContract, GeoDataBody} from './contract';
 
 const MOCK_DELAY = 150;
 

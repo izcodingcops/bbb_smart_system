@@ -1,6 +1,6 @@
-import {LoginCredentials, LoginResponse} from '../../types/auth';
-import {MOCK_USERS} from '../../constants';
-import {AuthServiceContract} from './contracts';
+import {LoginCredentials, LoginResponse} from '../../../types/auth';
+import {MOCK_USERS} from '../../../constants';
+import {AuthServiceContract} from './contract';
 
 const MOCK_DELAY = 800;
 

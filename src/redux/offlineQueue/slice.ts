@@ -1,7 +1,7 @@
 import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit';
 import client from '../../api/index';
 import {MicroService} from '../../api/microService';
-import {fileUploadService} from '../../api/services/fileUploadService';
+import {fileUploadService} from '../../api/services/fileUpload/fileUploadService';
 import {logger} from '../../utils/logger';
 import {generateId} from '../../utils/generateId';
 import {OfflineRecord} from '../../types/offline';

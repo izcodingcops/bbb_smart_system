@@ -1,14 +1,14 @@
-import client from '../index';
-import {ApiEndpoints} from '../apiEndpoints';
-import {MaintenancePayload, MaintenanceListFilters} from '../../types/maintenance';
-import {API_MOCKS} from '../../config/apiMocks';
+import client from '../../index';
+import {ApiEndpoints} from '../../apiEndpoints';
+import {MaintenancePayload, MaintenanceListFilters} from '../../../types/maintenance';
+import {API_MOCKS} from '../../../config/apiMocks';
 import {mockMaintenanceService} from './mockMaintenanceService';
 import {
   MaintenanceServiceContract,
   MaintenanceListResponse,
   MaintenanceDetailResponse,
   MaintenanceDropdownsResponse,
-} from './contracts';
+} from './contract';
 
 const liveMaintenanceService = {
   list: (page: number, filters: MaintenanceListFilters): Promise<MaintenanceListResponse> => {

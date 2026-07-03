@@ -1,7 +1,7 @@
-import {generateId} from '../../utils/generateId';
-import {MOCK_PROGRAMS} from '../../constants';
-import {SelectProgramResponse, TaskItem} from '../../types/program';
-import {ProgramServiceContract, ProgramTaskListResponse} from './contracts';
+import {generateId} from '../../../utils/generateId';
+import {MOCK_PROGRAMS} from '../../../constants';
+import {SelectProgramResponse, TaskItem} from '../../../types/program';
+import {ProgramServiceContract, ProgramTaskListResponse} from './contract';
 
 const MOCK_DELAY = 400;
 

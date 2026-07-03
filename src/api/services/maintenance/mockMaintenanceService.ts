@@ -4,9 +4,9 @@ import {
   MaintenanceDropdowns,
   MaintenanceListFilters,
   MaintenanceComment,
-} from '../../types/maintenance';
-import {generateId} from '../../utils/generateId';
-import {MaintenanceServiceContract} from './contracts';
+} from '../../../types/maintenance';
+import {generateId} from '../../../utils/generateId';
+import {MaintenanceServiceContract} from './contract';
 
 const MOCK_DELAY = 400;
 

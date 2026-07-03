@@ -1,6 +1,6 @@
 import {apiSlice} from '../api/apiSlice';
 import {withErrorLogging} from '../api/queryFnHelpers';
-import {navigationService} from '../../api/services/navigationService';
+import {navigationService} from '../../api/services/navigation/navigationService';
 import {MenuItem} from '../../types/navigation';
 
 export const navigationApi = apiSlice.injectEndpoints({

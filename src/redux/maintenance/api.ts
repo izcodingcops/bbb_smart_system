@@ -1,6 +1,6 @@
 import {apiSlice} from '../api/apiSlice';
 import {withErrorLogging} from '../api/queryFnHelpers';
-import {maintenanceService} from '../../api/services/maintenanceService';
+import {maintenanceService} from '../../api/services/maintenance/maintenanceService';
 import {OfflineError} from '../../api/offlineError';
 import {enqueueOfflineRecord} from '../offlineQueue/slice';
 import {logger} from '../../utils/logger';

@@ -1,5 +1,5 @@
-import {generateId} from '../../utils/generateId';
-import {ShiftServiceContract, StartShiftBody} from './contracts';
+import {generateId} from '../../../utils/generateId';
+import {ShiftServiceContract, StartShiftBody} from './contract';
 
 const MOCK_DELAY = 400;
 

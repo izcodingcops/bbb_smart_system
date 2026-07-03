@@ -1,8 +1,8 @@
-import client from '../index';
-import {ApiEndpoints} from '../apiEndpoints';
-import {API_MOCKS} from '../../config/apiMocks';
+import client from '../../index';
+import {ApiEndpoints} from '../../apiEndpoints';
+import {API_MOCKS} from '../../../config/apiMocks';
 import {mockNavigationService} from './mockNavigationService';
-import {NavigationServiceContract, NavigationMenuResponse} from './contracts';
+import {NavigationServiceContract, NavigationMenuResponse} from './contract';
 
 const liveNavigationService = {
   getMenuItems: (): Promise<NavigationMenuResponse> =>

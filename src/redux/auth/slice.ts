@@ -1,5 +1,5 @@
 import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
-import {authService} from '../../api/services/authService';
+import {authService} from '../../api/services/auth/authService';
 import {locationTracker} from '../../utils/locationTracker';
 import {clearProgram} from '../program/slice';
 import {AuthState, LoginCredentials, User, Session} from '../../types/auth';

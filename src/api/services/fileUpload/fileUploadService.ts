@@ -1,9 +1,9 @@
-import client from '../index';
-import {ApiEndpoints} from '../apiEndpoints';
-import {OfflineFile} from '../../types/offline';
-import {API_MOCKS} from '../../config/apiMocks';
+import client from '../../index';
+import {ApiEndpoints} from '../../apiEndpoints';
+import {OfflineFile} from '../../../types/offline';
+import {API_MOCKS} from '../../../config/apiMocks';
 import {mockFileUploadService} from './mockFileUploadService';
-import {FileUploadServiceContract} from './contracts';
+import {FileUploadServiceContract} from './contract';
 
 interface UploadFileResponse {
   status: number;

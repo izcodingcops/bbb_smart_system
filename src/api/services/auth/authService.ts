@@ -1,9 +1,9 @@
-import {LoginCredentials, LoginResponse} from '../../types/auth';
-import client from '../index';
-import {ApiEndpoints} from '../apiEndpoints';
-import {API_MOCKS} from '../../config/apiMocks';
+import {LoginCredentials, LoginResponse} from '../../../types/auth';
+import client from '../../index';
+import {ApiEndpoints} from '../../apiEndpoints';
+import {API_MOCKS} from '../../../config/apiMocks';
 import {mockAuthService} from './mockAuthService';
-import {AuthServiceContract} from './contracts';
+import {AuthServiceContract} from './contract';
 
 const liveAuthService = {
   login: (credentials: LoginCredentials): Promise<LoginResponse> =>

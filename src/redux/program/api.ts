@@ -1,6 +1,6 @@
 import {apiSlice} from '../api/apiSlice';
 import {withErrorLogging} from '../api/queryFnHelpers';
-import {programService} from '../../api/services/programService';
+import {programService} from '../../api/services/program/programService';
 import {Program} from '../../types/program';
 
 export const programApi = apiSlice.injectEndpoints({

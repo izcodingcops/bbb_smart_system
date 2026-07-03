@@ -1,6 +1,6 @@
-import {generateId} from '../../utils/generateId';
-import {OfflineFile} from '../../types/offline';
-import {FileUploadServiceContract} from './contracts';
+import {generateId} from '../../../utils/generateId';
+import {OfflineFile} from '../../../types/offline';
+import {FileUploadServiceContract} from './contract';
 
 const MOCK_DELAY = 400;
 

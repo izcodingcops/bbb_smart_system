@@ -1,9 +1,9 @@
-import {ProgramListResponse, SelectProgramResponse} from '../../types/program';
-import client from '../index';
-import {ApiEndpoints} from '../apiEndpoints';
-import {API_MOCKS} from '../../config/apiMocks';
+import {ProgramListResponse, SelectProgramResponse} from '../../../types/program';
+import client from '../../index';
+import {ApiEndpoints} from '../../apiEndpoints';
+import {API_MOCKS} from '../../../config/apiMocks';
 import {mockProgramService} from './mockProgramService';
-import {ProgramServiceContract, ProgramTaskListResponse} from './contracts';
+import {ProgramServiceContract, ProgramTaskListResponse} from './contract';
 
 const liveProgramService = {
   listPrograms: (): Promise<ProgramListResponse> =>
