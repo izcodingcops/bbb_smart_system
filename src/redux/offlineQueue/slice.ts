@@ -5,6 +5,9 @@ import {fileUploadService} from '../../api/services/fileUpload/fileUploadService
 import {logger} from '../../utils/logger';
 import {generateId} from '../../utils/generateId';
 import {OfflineRecord} from '../../types/offline';
+import {apiSlice} from '../api/apiSlice';
+import {deletePersistedOfflineFile} from '../../utils/offlineFileStore';
+import {tagsForEndpoint} from './tagsForEndpoint';
 
 export interface OfflineQueueState {
   pending: OfflineRecord[];
@@ -42,7 +45,12 @@ export async function syncRecord(
   try {
     const payload = record.files.length ? await uploadRecordFiles(record) : record.payload;
     await client.post(`${baseUrlFor(record)}offline/${record.endpoint}`, payload);
+    await Promise.all(record.files.map(file => deletePersistedOfflineFile(file.uri)));
     dispatch(dequeueOfflineRecords([record.id]));
+    const tags = tagsForEndpoint(record.endpoint);
+    if (tags.length) {
+      dispatch(apiSlice.util.invalidateTags(tags));
+    }
     return true;
   } catch (error: any) {
     logger.warn('OfflineQueueSync', `Failed to sync ${record.endpoint}`, error?.message);
