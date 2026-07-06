@@ -9,6 +9,7 @@ import {useListMaintenanceQuery} from '../redux/maintenance/api';
 import MaintenanceCard from '../components/MaintenanceCard';
 import MaintenanceHeader from '../components/MaintenanceHeader';
 import PlusIcon from '../components/icons/PlusIcon';
+import OfflineSyncBanner from '../components/OfflineSyncBanner';
 import {MaintenanceStackParamList} from '../navigation/MaintenanceNavigator';
 
 const FILTER_CHIPS: Array<{key: 'type' | 'business' | 'priority' | 'status'; label: string}> = [
@@ -98,6 +99,8 @@ const MaintenanceScreen: React.FC = () => {
           ))}
         </View>
       </View>
+
+      <OfflineSyncBanner endpoint="addMaintenance-v2" />
 
       <FlatList
         testID="maintenance-list"
