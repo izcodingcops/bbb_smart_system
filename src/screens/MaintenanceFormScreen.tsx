@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Alert,
   StyleSheet,
 } from 'react-native';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
@@ -108,7 +109,17 @@ const MaintenanceFormScreen: React.FC = () => {
     setConfirmVisible(false);
     createMaintenance({payload: buildPayload(), image})
       .unwrap()
-      .then(() => navigation.goBack())
+      .then(result => {
+        if (result.queued) {
+          Alert.alert(
+            'Saved Offline',
+            "This maintenance request will sync automatically once you're back online.",
+            [{text: 'OK', onPress: () => navigation.goBack()}],
+          );
+        } else {
+          navigation.goBack();
+        }
+      })
       .catch(() => {});
   };
 
