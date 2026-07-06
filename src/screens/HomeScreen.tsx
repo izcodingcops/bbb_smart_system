@@ -11,6 +11,8 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {GetSelectedProgram} from '../redux/program/selectors';
 import {locationTracker} from '../utils/locationTracker';
+import {useAppDispatch} from '../redux/store';
+import {syncOfflineQueue} from '../redux/offlineQueue/slice';
 import {theme} from '../theme';
 import PlusIcon from '../components/icons/PlusIcon';
 
@@ -40,6 +42,7 @@ const StatCard = ({
 
 const HomeScreen: React.FC = () => {
   const selectedProgram = GetSelectedProgram();
+  const dispatch = useAppDispatch();
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
 
@@ -60,7 +63,8 @@ const HomeScreen: React.FC = () => {
     setIsSyncing(true);
     setSyncStatus('Syncing…');
     locationTracker.syncNow();
-  }, [isSyncing]);
+    dispatch(syncOfflineQueue());
+  }, [isSyncing, dispatch]);
 
   return (
     <View style={styles.root}>
