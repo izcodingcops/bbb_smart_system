@@ -6,6 +6,7 @@ import {MaintenanceRecord} from '../types/maintenance';
 interface Props {
   record: MaintenanceRecord;
   onPress: () => void;
+  disableDetails?: boolean;
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -14,7 +15,7 @@ const PRIORITY_COLORS: Record<string, string> = {
   Low: theme.colors.success,
 };
 
-const MaintenanceCard: React.FC<Props> = ({record, onPress}) => (
+const MaintenanceCard: React.FC<Props> = ({record, onPress, disableDetails = false}) => (
   <View style={[styles.card, theme.shadow.card]}>
     <View style={styles.headerRow}>
       <Text style={styles.ticket}>{record.ticket_number}</Text>
@@ -36,13 +37,15 @@ const MaintenanceCard: React.FC<Props> = ({record, onPress}) => (
     <Text style={styles.address} numberOfLines={2}>
       {record.address}
     </Text>
-    <TouchableOpacity
-      testID="maintenance-card-view-details"
-      style={styles.detailsBtn}
-      onPress={onPress}
-      activeOpacity={0.7}>
-      <Text style={styles.detailsText}>View Details →</Text>
-    </TouchableOpacity>
+    {!disableDetails && (
+      <TouchableOpacity
+        testID="maintenance-card-view-details"
+        style={styles.detailsBtn}
+        onPress={onPress}
+        activeOpacity={0.7}>
+        <Text style={styles.detailsText}>View Details →</Text>
+      </TouchableOpacity>
+    )}
   </View>
 );
 

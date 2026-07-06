@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useMemo} from 'react';
 import {View, Text, TextInput, Image, TouchableOpacity, FlatList, StyleSheet} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -11,6 +11,7 @@ import MaintenanceHeader from '../components/MaintenanceHeader';
 import PlusIcon from '../components/icons/PlusIcon';
 import OfflineSyncBanner from '../components/OfflineSyncBanner';
 import {MaintenanceStackParamList} from '../navigation/MaintenanceNavigator';
+import {pendingMaintenanceRecords} from '../api/services/maintenance/offlinePendingRecords';
 
 const FILTER_CHIPS: Array<{key: 'type' | 'business' | 'priority' | 'status'; label: string}> = [
   {key: 'type', label: 'Type'},
@@ -26,6 +27,12 @@ const MaintenanceScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const filters = useAppSelector(state => state.maintenance.filters);
   const {data: list = [], isLoading} = useListMaintenanceQuery({page: 1, filters});
+  const pendingQueueRecords = useAppSelector(state => state.offlineQueue.pending);
+  const offlinePending = useMemo(
+    () => pendingMaintenanceRecords(pendingQueueRecords),
+    [pendingQueueRecords],
+  );
+  const combinedList = [...offlinePending, ...list];
   const [search, setSearch] = useState('');
 
   const onSearchSubmit = () => {
@@ -51,7 +58,7 @@ const MaintenanceScreen: React.FC = () => {
           <View style={styles.titleRow}>
             <Text style={styles.title}>Maintenance</Text>
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>{list.length}</Text>
+              <Text style={styles.badgeText}>{combinedList.length}</Text>
             </View>
           </View>
         }
@@ -104,12 +111,13 @@ const MaintenanceScreen: React.FC = () => {
 
       <FlatList
         testID="maintenance-list"
-        data={list}
+        data={combinedList}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
         renderItem={({item}) => (
           <MaintenanceCard
             record={item}
+            disableDetails={item.status === 'Pending'}
             onPress={() => navigation.navigate('MaintenanceDetail', {id: item.id})}
           />
         )}

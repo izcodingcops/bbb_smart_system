@@ -13,7 +13,7 @@ export interface MaintenanceDropdowns {
 
 export type MaintenancePriority = 'Low' | 'Medium' | 'High';
 export type MaintenanceAssigneeType = 'Ambassador' | 'Department';
-export type MaintenanceStatus = 'Open' | 'InProgress' | 'Completed';
+export type MaintenanceStatus = 'Open' | 'InProgress' | 'Completed' | 'Pending';
 
 export interface MaintenanceImage {
   uri: string;
