@@ -6,10 +6,12 @@ import {
   TextInput,
   Image,
   ActivityIndicator,
+  Alert,
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {locationTracker} from '../utils/locationTracker';
+import {useAuth} from '../hooks/useAuth';
 import {theme} from '../theme';
 import PlusIcon from '../components/icons/PlusIcon';
 
@@ -38,8 +40,16 @@ const StatCard = ({
 );
 
 const HomeScreen: React.FC = () => {
+  const {logout} = useAuth();
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
+
+  const handleLogout = useCallback(() => {
+    Alert.alert('Log out', 'Are you sure you want to log out?', [
+      {text: 'Cancel', style: 'cancel'},
+      {text: 'Log out', style: 'destructive', onPress: () => logout()},
+    ]);
+  }, [logout]);
 
   useEffect(() => {
     const removeProgress = locationTracker.onUploadProgress(progress => {
@@ -84,9 +94,18 @@ const HomeScreen: React.FC = () => {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.plusBtn} activeOpacity={0.8}>
-            <PlusIcon size={20} color={theme.colors.white} />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.plusBtn} activeOpacity={0.8}>
+              <PlusIcon size={20} color={theme.colors.white} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.logoutBtn}
+              activeOpacity={0.8}
+              onPress={handleLogout}>
+              <Text style={styles.logoutIcon}>⏻</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.searchBar}>
@@ -173,6 +192,11 @@ const styles = StyleSheet.create({
   },
   icon20: {width: 20, height: 20},
   icon14: {width: 14, height: 14},
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   plusBtn: {
     width: 40,
     height: 40,
@@ -180,6 +204,19 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.whiteGhost,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  logoutBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.whiteGhost,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutIcon: {
+    fontSize: 20,
+    color: theme.colors.white,
+    lineHeight: 24,
   },
   searchBar: {
     flexDirection: 'row',
