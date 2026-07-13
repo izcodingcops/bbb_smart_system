@@ -9,10 +9,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {GetSelectedProgram} from '../redux/program/selectors';
 import {locationTracker} from '../utils/locationTracker';
-import {useAppDispatch} from '../redux/store';
-import {syncOfflineQueue} from '../redux/offlineQueue/slice';
 import {theme} from '../theme';
 import PlusIcon from '../components/icons/PlusIcon';
 
@@ -41,8 +38,6 @@ const StatCard = ({
 );
 
 const HomeScreen: React.FC = () => {
-  const selectedProgram = GetSelectedProgram();
-  const dispatch = useAppDispatch();
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
 
@@ -63,8 +58,7 @@ const HomeScreen: React.FC = () => {
     setIsSyncing(true);
     setSyncStatus('Syncing…');
     locationTracker.syncNow();
-    dispatch(syncOfflineQueue());
-  }, [isSyncing, dispatch]);
+  }, [isSyncing]);
 
   return (
     <View style={styles.root}>
@@ -77,7 +71,7 @@ const HomeScreen: React.FC = () => {
                 style={[styles.icon20, {tintColor: theme.colors.white}]}
               />
               <Text style={styles.programName} numberOfLines={1}>
-                {selectedProgram?.program_name ?? 'Akron Oh Downtown Akron Partnership 1350'}
+                Akron Oh Downtown Akron Partnership 1350
               </Text>
             </View>
             <View style={[theme.common.row, styles.shiftRow]}>
