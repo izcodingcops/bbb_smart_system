@@ -1,7 +1,6 @@
 import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 import {authService} from '../../api/services/auth/authService';
 import {locationTracker} from '../../utils/locationTracker';
-import {clearProgram} from '../program/slice';
 import {AuthState, LoginCredentials, User, Session} from '../../types/auth';
 
 const initialState: AuthState = {
@@ -32,20 +31,13 @@ export const login = createAsyncThunk(
   },
 );
 
-export const logout = createAsyncThunk('auth/logout', async (_: void, {dispatch}) => {
+export const logout = createAsyncThunk('auth/logout', async (_: void) => {
   try {
-    // Flush the leaving user's queued location points — uploaded under THEIR
-    // still-current native session — before we wipe it. endSession resolves
-    // false (never throws) if offline / nothing pending.
     await locationTracker.endSession();
   } catch {
     // best-effort; native session gets cleared below regardless
   }
-  // Clear the native session identity (user_id / sessionId / cube_url), stop
-  // tracking, and drop any remaining queued points. Without this the NEXT
-  // user inherits the previous user_id and their uploads are misattributed.
   locationTracker.stopTracking();
-  dispatch(clearProgram());
 });
 
 const authSlice = createSlice({

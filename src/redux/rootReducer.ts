@@ -1,18 +1,10 @@
 import {combineReducers} from 'redux';
 import authReducer from './auth/slice';
-import programReducer from './program/slice';
-import locationReducer from './location/slice';
-import offlineQueueReducer from './offlineQueue/slice';
-import maintenanceReducer from './maintenance/slice';
 import uiReducer from './ui/slice';
 import {apiSlice} from './api/apiSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
-  program: programReducer,
-  location: locationReducer,
-  offlineQueue: offlineQueueReducer,
-  maintenance: maintenanceReducer,
   ui: uiReducer,
   [apiSlice.reducerPath]: apiSlice.reducer,
 });
