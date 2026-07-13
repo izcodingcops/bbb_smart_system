@@ -21,20 +21,3 @@ export async function withErrorLogging<T>(
     return {error: {message: error?.message ?? fallbackMessage}};
   }
 }
-
-/**
- * Narrows an RTK Query hook's `error` field (typed `{message: string} |
- * SerializedError | undefined` for endpoints on this app's apiSlice) down to
- * a displayable string, without an `as any` cast at the call site.
- */
-export function getErrorMessage(error: unknown): string | null {
-  if (
-    error &&
-    typeof error === 'object' &&
-    'message' in error &&
-    typeof (error as {message?: unknown}).message === 'string'
-  ) {
-    return (error as {message: string}).message;
-  }
-  return null;
-}
