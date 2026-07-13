@@ -1,14 +1,9 @@
-import client from '../../index';
-import {ApiEndpoints} from '../../apiEndpoints';
-import {API_MOCKS} from '../../../config/apiMocks';
+import {API_TRANSPORT} from '../../../config/transport';
 import {mockNavigationService} from './mockNavigationService';
-import {NavigationServiceContract, NavigationMenuResponse} from './contract';
+import {graphqlNavigationService} from './graphqlNavigationService';
+import {NavigationServiceContract} from './contract';
 
-const liveNavigationService = {
-  getMenuItems: (): Promise<NavigationMenuResponse> =>
-    client.get(ApiEndpoints.sideMenu).then(r => r.data),
-} satisfies NavigationServiceContract;
-
-export const navigationService: NavigationServiceContract = API_MOCKS.navigation
-  ? mockNavigationService
-  : liveNavigationService;
+export const navigationService: NavigationServiceContract =
+  API_TRANSPORT.navigation === 'graphql'
+    ? graphqlNavigationService
+    : mockNavigationService;

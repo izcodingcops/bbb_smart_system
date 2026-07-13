@@ -1,13 +1,7 @@
-import {LoginCredentials, LoginResponse} from '../../../types/auth';
-import client from '../../index';
-import {ApiEndpoints} from '../../apiEndpoints';
-import {API_MOCKS} from '../../../config/apiMocks';
+import {API_TRANSPORT} from '../../../config/transport';
 import {mockAuthService} from './mockAuthService';
+import {graphqlAuthService} from './graphqlAuthService';
 import {AuthServiceContract} from './contract';
 
-const liveAuthService = {
-  login: (credentials: LoginCredentials): Promise<LoginResponse> =>
-    client.post<LoginResponse>(ApiEndpoints.login, credentials).then(r => r.data),
-} satisfies AuthServiceContract;
-
-export const authService: AuthServiceContract = API_MOCKS.auth ? mockAuthService : liveAuthService;
+export const authService: AuthServiceContract =
+  API_TRANSPORT.auth === 'graphql' ? graphqlAuthService : mockAuthService;
