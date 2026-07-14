@@ -236,7 +236,9 @@ const ShiftSetupScreen: React.FC = () => {
               style={styles.timeRow}
               activeOpacity={0.7}
               onPress={() => setShowPicker(true)}>
-              <ClockIcon size={20} color={theme.colors.primary} />
+              <View style={styles.timeBadge}>
+                <ClockIcon size={20} color={theme.colors.primary} />
+              </View>
               <View style={styles.timeText}>
                 <Text style={styles.timeLabel}>STARTS AT</Text>
                 <Text style={styles.timeValue}>{formatWhen(startTime)}</Text>
@@ -247,7 +249,9 @@ const ShiftSetupScreen: React.FC = () => {
             <View style={styles.timeDivider} />
 
             <View style={styles.timeRow}>
-              <ClockIcon size={20} color={theme.colors.textMuted} />
+              <View style={[styles.timeBadge, styles.timeBadgeMuted]}>
+                <ClockIcon size={20} color={theme.colors.textMuted} />
+              </View>
               <View style={styles.timeText}>
                 <Text style={styles.timeLabel}>STOPS AT</Text>
                 <Text style={[styles.timeValue, styles.timeValueMuted]}>
@@ -355,7 +359,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: theme.colors.white,
     borderRadius: theme.radius.lg,
-    padding: theme.spacing.md,
+    paddingVertical: 14,
+    paddingHorizontal: theme.spacing.lg,
     ...theme.shadow.card,
   },
   programPin: {
@@ -474,8 +479,18 @@ const styles = StyleSheet.create({
   timeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: theme.spacing.md,
+    paddingVertical: 14,
+    paddingHorizontal: theme.spacing.lg,
   },
+  timeBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: theme.radius.md,
+    backgroundColor: '#EAF2FB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timeBadgeMuted: {backgroundColor: '#F1F3F5'},
   timeDivider: {height: 1, backgroundColor: theme.colors.border},
   timeText: {flex: 1, marginLeft: theme.spacing.md},
   timeLabel: {
