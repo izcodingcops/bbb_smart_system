@@ -1,11 +1,21 @@
-import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
+import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit';
 import {authService} from '../../api/services/auth/authService';
 import {locationTracker} from '../../utils/locationTracker';
-import {AuthState, LoginCredentials, User, Session} from '../../types/auth';
+import {
+  AuthState,
+  LoginCredentials,
+  User,
+  Session,
+  Program,
+  ShiftType,
+} from '../../types/auth';
 
 const initialState: AuthState = {
   user: null,
   session: null,
+  programs: [],
+  activeProgramId: null,
+  shiftTypes: [],
   isLoading: false,
   error: null,
   isAuthenticated: false,
@@ -27,7 +37,9 @@ export const login = createAsyncThunk(
       enable_shift_entry: response.data.enable_shift_entry,
     };
     const session: Session = {token: response.data.token};
-    return {user, session};
+    const programs: Program[] = response.data.programs ?? [];
+    const shiftTypes: ShiftType[] = response.data.shift_types ?? [];
+    return {user, session, programs, shiftTypes};
   },
 );
 
@@ -47,6 +59,9 @@ const authSlice = createSlice({
     clearError(state) {
       state.error = null;
     },
+    selectProgram(state, action: PayloadAction<string>) {
+      state.activeProgramId = action.payload;
+    },
   },
   extraReducers: builder => {
     builder
@@ -58,6 +73,14 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload.user;
         state.session = action.payload.session;
+        state.programs = action.payload.programs;
+        state.shiftTypes = action.payload.shiftTypes;
+        // Auto-select when there's nothing to choose (0 or 1 program) so the
+        // selection screen only appears for 2+ programs.
+        state.activeProgramId =
+          action.payload.programs.length <= 1
+            ? action.payload.programs[0]?.id ?? null
+            : null;
         state.isAuthenticated = true;
       })
       .addCase(login.rejected, (state, action) => {
@@ -71,5 +94,5 @@ const authSlice = createSlice({
   },
 });
 
-export const {clearError} = authSlice.actions;
+export const {clearError, selectProgram} = authSlice.actions;
 export default authSlice.reducer;

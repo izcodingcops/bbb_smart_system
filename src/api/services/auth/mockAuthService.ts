@@ -1,5 +1,5 @@
 import {LoginCredentials, LoginResponse} from '../../../types/auth';
-import {MOCK_USERS} from '../../../constants';
+import {MOCK_USERS, MOCK_SHIFT_TYPES} from '../../../constants';
 import {AuthServiceContract} from './contract';
 
 const MOCK_DELAY = 800;
@@ -37,6 +37,8 @@ export const mockAuthService = {
         username: match.username,
         email: match.email,
         avatar: match.avatar,
+        programs: match.programs,
+        shift_types: MOCK_SHIFT_TYPES,
       },
     });
   },

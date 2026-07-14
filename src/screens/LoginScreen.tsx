@@ -24,8 +24,8 @@ import {theme} from '../theme';
 const LoginScreen: React.FC = () => {
   const {login, isLoading, error, dismissError} = useAuth();
 
-  const [username, setUsername] = useState('0000waqas');
-  const [password, setPassword] = useState('Test@!23');
+  const [username, setUsername] = useState('janesmith');
+  const [password, setPassword] = useState('admin123');
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({username: '', password: ''});
 

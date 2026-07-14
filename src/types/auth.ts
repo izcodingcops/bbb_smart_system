@@ -11,9 +11,25 @@ export interface Session {
   token: string;
 }
 
+export interface Program {
+  id: string;
+  name: string;
+  address: string;
+}
+
+export interface ShiftType {
+  id: string;
+  name: string;
+  // Icon key mapped to a component in the shift-setup screen.
+  icon: string;
+}
+
 export interface AuthState {
   user: User | null;
   session: Session | null;
+  programs: Program[];
+  activeProgramId: string | null;
+  shiftTypes: ShiftType[];
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
@@ -36,6 +52,8 @@ export interface LoginResponse {
     username: string;
     email?: string;
     avatar?: string;
+    programs?: Program[];
+    shift_types?: ShiftType[];
   };
 }
 
