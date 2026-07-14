@@ -10,8 +10,15 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../hooks/useAuth';
 import LoadingOverlay from '../components/LoadingOverlay';
+import UserIcon from '../components/icons/UserIcon';
+import LockIcon from '../components/icons/LockIcon';
+import EyeIcon from '../components/icons/EyeIcon';
+import ArrowRightIcon from '../components/icons/ArrowRightIcon';
+import GlobeIcon from '../components/icons/GlobeIcon';
 import {theme} from '../theme';
 
 const LoginScreen: React.FC = () => {
@@ -19,6 +26,7 @@ const LoginScreen: React.FC = () => {
 
   const [username, setUsername] = useState('0000waqas');
   const [password, setPassword] = useState('Test@!23');
+  const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({username: '', password: ''});
 
   useEffect(() => {
@@ -48,159 +56,260 @@ const LoginScreen: React.FC = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled">
+    <LinearGradient
+      colors={['#DCE9F5', '#EAF1F0', '#E4EFDD']}
+      start={{x: 0, y: 0}}
+      end={{x: 1, y: 1}}
+      style={styles.root}>
+      <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
 
-        <View style={styles.hero}>
-          <Text style={styles.heroTitle}>BBB</Text>
-          <Text style={styles.heroSubtitle}>SMART SYSTEM</Text>
-        </View>
+            <View style={styles.langRow}>
+              <TouchableOpacity style={styles.langPill} activeOpacity={0.8}>
+                <GlobeIcon size={16} color="#374151" />
+                <Text style={styles.langText}>English</Text>
+                <View style={styles.langBadge}>
+                  <Text style={styles.langBadgeText}>EN</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Welcome back</Text>
-          <Text style={styles.cardSubtitle}>Sign in to your account</Text>
+            <View style={styles.center}>
+              <View style={styles.header}>
+                <Text style={styles.title}>Welcome back</Text>
+                <Text style={styles.subtitle}>
+                  Sign in to start your shift and manage your work in the field.
+                </Text>
+              </View>
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Username</Text>
-            <TextInput
-              style={[styles.input, fieldErrors.username ? styles.inputError : null]}
-              placeholder="Enter your username"
-              placeholderTextColor={theme.colors.textMuted}
-              autoCapitalize="none"
-              autoCorrect={false}
-              value={username}
-              onChangeText={v => {
-                setUsername(v);
-                if (fieldErrors.username) {
-                  setFieldErrors(p => ({...p, username: ''}));
-                }
-              }}
-            />
-            {fieldErrors.username ? (
-              <Text style={styles.fieldError}>{fieldErrors.username}</Text>
-            ) : null}
-          </View>
+              <View style={styles.card}>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>USERNAME OR EMAIL</Text>
+              <View
+                style={[
+                  styles.inputWrap,
+                  fieldErrors.username ? styles.inputError : null,
+                ]}>
+                <UserIcon size={20} color={theme.colors.textMuted} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your username"
+                  placeholderTextColor={theme.colors.textMuted}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  value={username}
+                  onChangeText={v => {
+                    setUsername(v);
+                    if (fieldErrors.username) {
+                      setFieldErrors(p => ({...p, username: ''}));
+                    }
+                  }}
+                />
+              </View>
+              {fieldErrors.username ? (
+                <Text style={styles.fieldError}>{fieldErrors.username}</Text>
+              ) : null}
+            </View>
 
-          <View style={[styles.fieldGroup, styles.lastFieldGroup]}>
-            <Text style={styles.fieldLabel}>Password</Text>
-            <TextInput
-              style={[styles.input, fieldErrors.password ? styles.inputError : null]}
-              placeholder="••••••••"
-              placeholderTextColor={theme.colors.textMuted}
-              secureTextEntry
-              value={password}
-              onChangeText={v => {
-                setPassword(v);
-                if (fieldErrors.password) {
-                  setFieldErrors(p => ({...p, password: ''}));
-                }
-              }}
-            />
-            {fieldErrors.password ? (
-              <Text style={styles.fieldError}>{fieldErrors.password}</Text>
-            ) : null}
-          </View>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>PASSWORD</Text>
+              <View
+                style={[
+                  styles.inputWrap,
+                  fieldErrors.password ? styles.inputError : null,
+                ]}>
+                <LockIcon size={20} color={theme.colors.textMuted} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••••"
+                  placeholderTextColor={theme.colors.textMuted}
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={v => {
+                    setPassword(v);
+                    if (fieldErrors.password) {
+                      setFieldErrors(p => ({...p, password: ''}));
+                    }
+                  }}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(s => !s)}
+                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                  <EyeIcon
+                    size={20}
+                    color={theme.colors.textMuted}
+                    off={showPassword}
+                  />
+                </TouchableOpacity>
+              </View>
+              {fieldErrors.password ? (
+                <Text style={styles.fieldError}>{fieldErrors.password}</Text>
+              ) : null}
+            </View>
 
-          <TouchableOpacity
-            style={[styles.submitBtn, isLoading && styles.disabledBtn]}
-            onPress={handleLogin}
-            disabled={isLoading}
-            activeOpacity={0.85}>
-            <Text style={styles.submitText}>Sign In</Text>
-          </TouchableOpacity>
+              <TouchableOpacity style={styles.forgotBtn} activeOpacity={0.7}>
+                <Text style={styles.forgotText}>Forgot password?</Text>
+              </TouchableOpacity>
+            </View>
 
-          <Text style={styles.hint}>Demo: johndoe / password123</Text>
-        </View>
-      </ScrollView>
+            <TouchableOpacity
+              style={[styles.submitBtn, isLoading && styles.disabledBtn]}
+              onPress={handleLogin}
+              disabled={isLoading}
+              activeOpacity={0.85}>
+              <Text style={styles.submitText}>Log in</Text>
+              <ArrowRightIcon size={20} color={theme.colors.white} />
+            </TouchableOpacity>
+            </View>
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>
+                Trouble signing in? Contact your{' '}
+                <Text style={styles.footerBold}>management</Text>.
+              </Text>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
 
       <LoadingOverlay visible={isLoading} message="Signing in…" />
-    </KeyboardAvoidingView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: '#F3F4F6'},
-  scroll: {flexGrow: 1},
-  hero: {
-    backgroundColor: theme.colors.primaryDark,
-    paddingHorizontal: theme.spacing.xl + 4,
-    paddingTop: 80,
-    paddingBottom: 64,
+  root: {flex: 1},
+  flex: {flex: 1},
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: theme.spacing.xxl,
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.xxl,
+  },
+  center: {flex: 1, justifyContent: 'center'},
+  langRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  langPill: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: theme.colors.white,
+    borderRadius: 999,
+    paddingLeft: 12,
+    paddingRight: 6,
+    paddingVertical: 6,
+    ...theme.shadow.card,
   },
-  heroTitle: {
-    fontSize: 36,
-    fontFamily: theme.fonts.black,
-    color: theme.colors.white,
-    letterSpacing: 6,
-    marginBottom: 4,
-  },
-  heroSubtitle: {
+  langText: {
     fontFamily: theme.fonts.medium,
-    color: 'rgba(255,255,255,0.6)',
     fontSize: theme.fontSize.sm,
-    letterSpacing: 3,
+    color: '#374151',
+    marginHorizontal: 8,
+  },
+  langBadge: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: 999,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  langBadgeText: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 11,
+    color: theme.colors.white,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.xxl + 8,
+  },
+  title: {
+    fontSize: 28,
+    lineHeight: 28,
+    letterSpacing: -0.6,
+    fontFamily: theme.fonts.black,
+    color: '#181B1F',
+    textAlign: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  subtitle: {
+    fontSize: 14.5,
+    lineHeight: 21,
+    fontFamily: theme.fonts.bold,
+    color: '#5B5F66',
+    textAlign: 'center',
+    paddingHorizontal: theme.spacing.md,
   },
   card: {
-    backgroundColor: theme.colors.surface,
-    marginHorizontal: theme.spacing.lg + 4,
-    marginTop: -28,
+    backgroundColor: 'rgba(255,255,255,0.55)',
     borderRadius: theme.radius.xl,
-    paddingHorizontal: theme.spacing.xl + 4,
-    paddingVertical: 32,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    padding: theme.spacing.xxl,
+    ...theme.shadow.card,
   },
-  cardTitle: {
-    fontSize: theme.fontSize.xl,
-    fontFamily: theme.fonts.bold,
-    color: '#111827',
-    marginBottom: 4,
-  },
-  cardSubtitle: {
-    fontSize: theme.fontSize.xs + 2,
-    fontFamily: theme.fonts.regular,
-    color: theme.colors.textMuted,
-    marginBottom: theme.spacing.xl + 4,
-  },
-  fieldGroup: {marginBottom: theme.spacing.md},
-  lastFieldGroup: {marginBottom: theme.spacing.xl + 4},
+  fieldGroup: {marginBottom: theme.spacing.lg},
   fieldLabel: {
-    fontSize: theme.fontSize.xs + 2,
-    fontFamily: theme.fonts.bold,
-    color: '#374151',
-    marginBottom: 8,
+    fontSize: 12,
+    lineHeight: 12,
+    fontFamily: theme.fonts.black,
+    color: '#5B5F66',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    marginBottom: theme.spacing.sm,
+  },
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.white,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: theme.radius.md,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: 12,
-    fontSize: theme.fontSize.base,
-    fontFamily: theme.fonts.regular,
-    color: '#111827',
-    backgroundColor: '#F9FAFB',
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: theme.spacing.sm,
+    fontSize: 16,
+    lineHeight: 16,
+    fontFamily: theme.fonts.bold,
+    color: '#1A1C1E',
   },
   inputError: {borderColor: theme.colors.error},
   fieldError: {
     fontFamily: theme.fonts.regular,
     color: theme.colors.error,
     fontSize: theme.fontSize.xs,
-    marginTop: 4,
+    marginTop: theme.spacing.xs,
+  },
+  forgotBtn: {alignSelf: 'flex-end', marginTop: theme.spacing.xs},
+  forgotText: {
+    fontFamily: theme.fonts.black,
+    fontSize: 13.5,
+    lineHeight: 13.5,
+    textAlign: 'right',
+    color: theme.colors.primary,
   },
   submitBtn: {
-    backgroundColor: theme.colors.primaryDark,
-    borderRadius: theme.radius.md,
-    paddingVertical: 16,
+    flexDirection: 'row',
+    backgroundColor: theme.colors.primary,
+    height: 56,
+    borderRadius: 16,
+    gap: 9,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: theme.spacing.xxl,
+    shadowColor: '#0066B2',
+    shadowOffset: {width: 0, height: 12},
+    shadowOpacity: 0.28,
+    shadowRadius: 13,
+    elevation: 8,
   },
   disabledBtn: {opacity: 0.6},
   submitText: {
@@ -208,12 +317,21 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontSize: theme.fontSize.md,
   },
-  hint: {
-    textAlign: 'center',
-    fontSize: theme.fontSize.xs,
-    fontFamily: theme.fonts.regular,
+  footer: {
+    paddingTop: theme.spacing.lg,
+    alignItems: 'center',
+  },
+  footerText: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 13,
+    lineHeight: 13,
     color: theme.colors.textMuted,
-    marginTop: theme.spacing.lg + 4,
+    textAlign: 'center',
+  },
+  footerBold: {
+    fontFamily: theme.fonts.black,
+    fontSize: 13,
+    color: theme.colors.textSecondary,
   },
 });
 
