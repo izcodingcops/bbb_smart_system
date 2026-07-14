@@ -25,7 +25,7 @@ const LoginScreen: React.FC = () => {
   const {login, isLoading, error, dismissError} = useAuth();
 
   const [username, setUsername] = useState('janesmith');
-  const [password, setPassword] = useState('admin123');
+  const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({username: '', password: ''});
 

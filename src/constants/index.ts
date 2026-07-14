@@ -18,11 +18,11 @@ export const MOCK_PROGRAMS = [
 
 export const MOCK_SHIFT_TYPES = [
   {id: 'st1', name: 'Cleaning', icon: 'cleaning'},
-  // {id: 'st2', name: 'General', icon: 'general'},
-  // {id: 'st3', name: 'Hospitality', icon: 'hospitality'},
-  // {id: 'st4', name: 'Management', icon: 'management'},
-  // {id: 'st5', name: 'Outreach', icon: 'outreach'},
-  // {id: 'st6', name: 'Safety', icon: 'safety'},
+  {id: 'st2', name: 'General', icon: 'general'},
+  {id: 'st3', name: 'Hospitality', icon: 'hospitality'},
+  {id: 'st4', name: 'Management', icon: 'management'},
+  {id: 'st5', name: 'Outreach', icon: 'outreach'},
+  {id: 'st6', name: 'Safety', icon: 'safety'},
 ];
 
 export const MOCK_USERS = [
@@ -40,7 +40,7 @@ export const MOCK_USERS = [
     id: '2',
     username: 'janesmith',
     email: 'admin@example.com',
-    password: 'admin123',
+    password: 'password123',
     name: 'Jane Smith',
     avatar: 'https://i.pravatar.cc/150?img=2',
     enable_shift_entry: false,

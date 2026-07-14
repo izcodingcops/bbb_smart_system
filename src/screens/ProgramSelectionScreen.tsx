@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {View, Text, TouchableOpacity, ScrollView, StyleSheet} from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import ScreenBackground from '../components/ScreenBackground';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useAuth} from '../hooks/useAuth';
@@ -58,11 +58,7 @@ const ProgramSelectionScreen: React.FC = () => {
   };
 
   return (
-    <LinearGradient
-      colors={['#DCE9F5', '#EAF1F0', '#E4EFDD']}
-      start={{x: 0, y: 0}}
-      end={{x: 1, y: 1}}
-      style={styles.root}>
+    <ScreenBackground style={styles.root}>
       <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
         <View style={styles.stepRow}>
           <Text style={styles.stepText}>
@@ -105,7 +101,7 @@ const ProgramSelectionScreen: React.FC = () => {
           </Text>
         </View>
       </SafeAreaView>
-    </LinearGradient>
+    </ScreenBackground>
   );
 };
 

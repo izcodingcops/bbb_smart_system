@@ -7,8 +7,8 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import ScreenBackground from '../components/ScreenBackground';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -79,20 +79,38 @@ const ShiftSetupScreen: React.FC = () => {
   );
   const [startTime, setStartTime] = useState<Date>(new Date());
   const [autoEnd, setAutoEnd] = useState(true);
-  const [showPicker, setShowPicker] = useState(false);
+  const [manualStopTime, setManualStopTime] = useState<Date | null>(null);
+  const [picker, setPicker] = useState<'start' | 'stop' | null>(null);
 
-  const stopTime = new Date(startTime.getTime() + SHIFT_HOURS * 3600 * 1000);
+  const autoStopTime = new Date(startTime.getTime() + SHIFT_HOURS * 3600 * 1000);
+  // When auto-end is on the stop time is derived; otherwise the user picks it.
+  const stopTime = autoEnd ? autoStopTime : manualStopTime ?? autoStopTime;
   // Multi-program users reach this screen via ProgramSelection (so back/change
   // and a "Step 2 of 2" indicator apply). Single-program users start here.
   const cameFromSelection = navigation.canGoBack();
 
   const onChangeTime = (event: DateTimePickerEvent, date?: Date) => {
+    const target = picker;
     if (Platform.OS === 'android') {
-      setShowPicker(false);
+      setPicker(null);
     }
     if (event.type === 'set' && date) {
-      setStartTime(date);
+      if (target === 'stop') {
+        setManualStopTime(date);
+      } else {
+        setStartTime(date);
+      }
     }
+  };
+
+  const toggleAutoEnd = () => {
+    setAutoEnd(prev => {
+      // Seed the manual stop with the current auto value when switching off.
+      if (prev && !manualStopTime) {
+        setManualStopTime(autoStopTime);
+      }
+      return !prev;
+    });
   };
 
   const handleStart = () => {
@@ -103,6 +121,7 @@ const ShiftSetupScreen: React.FC = () => {
       startShift({
         shiftTypeId: selectedTypeId,
         startTime: startTime.toISOString(),
+        stopTime: stopTime.toISOString(),
         autoEnd,
       }),
     );
@@ -151,11 +170,7 @@ const ShiftSetupScreen: React.FC = () => {
   };
 
   return (
-    <LinearGradient
-      colors={['#DCE9F5', '#EAF1F0', '#E4EFDD']}
-      start={{x: 0, y: 0}}
-      end={{x: 1, y: 1}}
-      style={styles.root}>
+    <ScreenBackground style={styles.root}>
       <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
         <View style={styles.topRow}>
           {navigation.canGoBack() ? (
@@ -235,7 +250,7 @@ const ShiftSetupScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.timeRow}
               activeOpacity={0.7}
-              onPress={() => setShowPicker(true)}>
+              onPress={() => setPicker('start')}>
               <View style={styles.timeBadge}>
                 <ClockIcon size={20} color={theme.colors.primary} />
               </View>
@@ -248,25 +263,37 @@ const ShiftSetupScreen: React.FC = () => {
 
             <View style={styles.timeDivider} />
 
-            <View style={styles.timeRow}>
-              <View style={[styles.timeBadge, styles.timeBadgeMuted]}>
-                <ClockIcon size={20} color={theme.colors.textMuted} />
+            <TouchableOpacity
+              style={styles.timeRow}
+              activeOpacity={autoEnd ? 1 : 0.7}
+              disabled={autoEnd}
+              onPress={() => setPicker('stop')}>
+              <View style={[styles.timeBadge, autoEnd && styles.timeBadgeMuted]}>
+                <ClockIcon
+                  size={20}
+                  color={autoEnd ? theme.colors.textMuted : theme.colors.primary}
+                />
               </View>
               <View style={styles.timeText}>
                 <Text style={styles.timeLabel}>STOPS AT</Text>
-                <Text style={[styles.timeValue, styles.timeValueMuted]}>
+                <Text
+                  style={[styles.timeValue, autoEnd && styles.timeValueMuted]}>
                   {formatWhen(stopTime)}
                 </Text>
               </View>
-            </View>
+              {autoEnd ? null : (
+                <ChevronRightIcon size={20} color={theme.colors.textMuted} />
+              )}
+            </TouchableOpacity>
           </View>
 
-          {showPicker ? (
+          {picker ? (
             <DateTimePicker
-              value={startTime}
+              value={picker === 'stop' ? stopTime : startTime}
               mode="time"
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              maximumDate={new Date()}
+              maximumDate={picker === 'start' ? new Date() : undefined}
+              minimumDate={picker === 'stop' ? startTime : undefined}
               onChange={onChangeTime}
             />
           ) : null}
@@ -274,7 +301,7 @@ const ShiftSetupScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.checkboxRow}
             activeOpacity={0.7}
-            onPress={() => setAutoEnd(v => !v)}>
+            onPress={toggleAutoEnd}>
             <View style={[styles.checkbox, autoEnd && styles.checkboxOn]}>
               {autoEnd ? <CheckIcon size={14} color={theme.colors.white} /> : null}
             </View>
@@ -304,7 +331,7 @@ const ShiftSetupScreen: React.FC = () => {
           </View>
         ) : null}
       </SafeAreaView>
-    </LinearGradient>
+    </ScreenBackground>
   );
 };
 
