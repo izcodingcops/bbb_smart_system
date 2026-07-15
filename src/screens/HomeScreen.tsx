@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
+import Svg, {Defs, RadialGradient, Rect, Stop} from 'react-native-svg';
 import ScreenBackground from '../components/ScreenBackground';
 import BellIcon from '../components/icons/BellIcon';
 import PlusIcon from '../components/icons/PlusIcon';
@@ -89,6 +90,7 @@ const HomeScreen: React.FC = () => {
   const [tab, setTab] = useState<WorkBucket>('assigned');
   const [refreshing, setRefreshing] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [cardSize, setCardSize] = useState({w: 0, h: 0});
 
   useEffect(() => {
     if (paused) {
@@ -214,11 +216,56 @@ const HomeScreen: React.FC = () => {
           </View>
 
           {/* Shift card */}
+          <View style={styles.shiftCardShadow}>
           <LinearGradient
             colors={['#1E72C4', '#0A5AAB']}
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
-            style={styles.shiftCard}>
+            style={styles.shiftCard}
+            onLayout={e =>
+              setCardSize({
+                w: e.nativeEvent.layout.width,
+                h: e.nativeEvent.layout.height,
+              })
+            }>
+            {cardSize.w > 0 ? (
+              <Svg
+                width={cardSize.w}
+                height={cardSize.h}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none">
+                <Defs>
+                  <RadialGradient
+                    id="shiftGlowA"
+                    cx={cardSize.w * 0.2}
+                    cy={cardSize.h * 0.05}
+                    r={cardSize.w * 0.5}
+                    gradientUnits="userSpaceOnUse">
+                    <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.32} />
+                    <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
+                  </RadialGradient>
+                  <RadialGradient
+                    id="shiftGlowB"
+                    cx={cardSize.w * 0.92}
+                    cy={cardSize.h * 0.95}
+                    r={cardSize.w * 0.42}
+                    gradientUnits="userSpaceOnUse">
+                    <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.14} />
+                    <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
+                  </RadialGradient>
+                </Defs>
+                <Rect
+                  width={cardSize.w}
+                  height={cardSize.h}
+                  fill="url(#shiftGlowA)"
+                />
+                <Rect
+                  width={cardSize.w}
+                  height={cardSize.h}
+                  fill="url(#shiftGlowB)"
+                />
+              </Svg>
+            ) : null}
             <View style={styles.shiftCardInner}>
             <View style={styles.shiftTop}>
               <View style={styles.shiftChip}>
@@ -263,6 +310,7 @@ const HomeScreen: React.FC = () => {
             </View>
             </View>
           </LinearGradient>
+          </View>
 
           {/* Offline notice */}
           {!isOnline ? (
@@ -422,7 +470,7 @@ const styles = StyleSheet.create({
   root: {flex: 1},
   flex: {flex: 1},
   scroll: {
-    paddingHorizontal: theme.spacing.xxl,
+    paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.md,
     paddingBottom: 120,
   },
@@ -553,13 +601,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textSecondary,
   },
-  shiftCard: {
+  shiftCardShadow: {
     borderRadius: 20,
     shadowColor: '#0A5AAB',
     shadowOffset: {width: 0, height: 12},
     shadowOpacity: 0.28,
     shadowRadius: 16,
     elevation: 8,
+  },
+  shiftCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   shiftCardInner: {
     paddingHorizontal: theme.spacing.lg,
@@ -794,7 +846,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    right: theme.spacing.xxl,
+    right: theme.spacing.lg,
     bottom: theme.spacing.xxl,
     width: 56,
     height: 56,
