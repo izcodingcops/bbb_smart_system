@@ -1,10 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {Text, TouchableOpacity, View, Image} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useGetMenuItemsQuery} from '../redux/navigation/api';
 import {useAppSelector} from '../redux/store';
 import {fontFamilies} from '../constants/fonts';
-import {locationTracker} from '../utils/locationTracker';
 import {theme} from '../theme';
 import HomeScreen from '../screens/HomeScreen';
 import MoreScreen from '../screens/MoreScreen';
@@ -27,35 +26,9 @@ const MORE_SCREEN = '__more__';
 
 const MainTabNavigator: React.FC = () => {
   const {data: menuItems = [], isLoading} = useGetMenuItemsQuery();
+  const insets = useSafeAreaInsets();
   const tabBarHidden = useAppSelector(state => state.ui.tabBarHidden);
   const [activeScreen, setActiveScreen] = useState<string>('');
-  const [isOnline, setIsOnline] = useState<boolean>(true);
-  const [showBar, setShowBar] = useState<boolean>(false);
-  const hideTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-    locationTracker.getConnectivityStatus().then(online => {
-      if (!mounted) return;
-      setIsOnline(online);
-      setShowBar(!online);
-    });
-    const unsub = locationTracker.onConnectivityChange(online => {
-      if (hideTimer.current) clearTimeout(hideTimer.current);
-      setIsOnline(online);
-      if (!online) {
-        setShowBar(true);
-      } else {
-        setShowBar(true);
-        hideTimer.current = setTimeout(() => setShowBar(false), 3000);
-      }
-    });
-    return () => {
-      mounted = false;
-      unsub();
-      if (hideTimer.current) clearTimeout(hideTimer.current);
-    };
-  }, []);
 
   useEffect(() => {
     if (menuItems.length > 0 && !activeScreen) {
@@ -93,42 +66,12 @@ const MainTabNavigator: React.FC = () => {
 
   return (
     <SafeAreaView
-      edges={tabBarHidden ? [] : ['bottom']}
+      edges={[]}
       style={{flex: 1, backgroundColor: theme.colors.background}}>
       <View style={{flex: 1}}>{renderContent()}</View>
 
       {!tabBarHidden && (
         <>
-      {/* Online / offline status strip */}
-      {showBar && (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            paddingVertical: 5,
-            backgroundColor: isOnline ? '#ECFDF5' : '#FEF2F2',
-          }}>
-          <View
-            style={{
-              width: 7,
-              height: 7,
-              borderRadius: 4,
-              backgroundColor: isOnline ? '#10B981' : '#EF4444',
-            }}
-          />
-          <Text
-            style={{
-              fontFamily: LATO.regular,
-              fontSize: 11,
-              color: isOnline ? '#065F46' : '#991B1B',
-            }}>
-            {isOnline ? 'Online' : 'Offline'}
-          </Text>
-        </View>
-      )}
-
       {/* Tab bar — pill-shaped top, layered background, upward shadow */}
       <View
         style={{
@@ -141,7 +84,7 @@ const MainTabNavigator: React.FC = () => {
           shadowRadius: 40,
           elevation: 16,
           paddingTop: 10,
-          paddingBottom: 8,
+          paddingBottom: Math.max(insets.bottom, 8),
           paddingHorizontal: 16,
         }}>
         <View style={{flexDirection: 'row'}}>

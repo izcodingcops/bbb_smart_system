@@ -17,15 +17,18 @@ export const GetAuthError = () =>
   useSelector((state: RootState) => state.auth.error);
 
 export const GetPrograms = () =>
-  useSelector((state: RootState) => state.auth.programs);
+  useSelector((state: RootState) => state.auth.programs ?? []);
 
 export const GetActiveProgramId = () =>
-  useSelector((state: RootState) => state.auth.activeProgramId);
+  useSelector((state: RootState) => state.auth.activeProgramId ?? null);
 
 export const GetActiveProgram = () =>
-  useSelector((state: RootState) =>
-    state.auth.programs.find(p => p.id === state.auth.activeProgramId) ?? null,
+  useSelector(
+    (state: RootState) =>
+      (state.auth.programs ?? []).find(
+        p => p.id === state.auth.activeProgramId,
+      ) ?? null,
   );
 
 export const GetShiftTypes = () =>
-  useSelector((state: RootState) => state.auth.shiftTypes);
+  useSelector((state: RootState) => state.auth.shiftTypes ?? []);
