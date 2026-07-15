@@ -1,5 +1,12 @@
 import React, {useState} from 'react';
-import {View, Text, TouchableOpacity, ScrollView, StyleSheet} from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import ScreenBackground from '../components/ScreenBackground';
 import {useNavigation} from '@react-navigation/native';
@@ -7,10 +14,14 @@ import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useAuth} from '../hooks/useAuth';
 import type {SetupStackParamList} from '../navigation/SetupNavigator';
 import MapPinIcon from '../components/icons/MapPinIcon';
+import SearchIcon from '../components/icons/SearchIcon';
 import CheckIcon from '../components/icons/CheckIcon';
 import ArrowRightIcon from '../components/icons/ArrowRightIcon';
 import {Program} from '../types/auth';
 import {theme} from '../theme';
+
+// Show the search field once the assigned list gets long enough to scan.
+const SEARCH_THRESHOLD = 6;
 
 const ProgramSelectionScreen: React.FC = () => {
   const {programs, selectProgram, logout} = useAuth();
@@ -18,6 +29,18 @@ const ProgramSelectionScreen: React.FC = () => {
     useNavigation<NativeStackNavigationProp<SetupStackParamList>>();
 
   const [selectedId, setSelectedId] = useState<string>(programs[0]?.id ?? '');
+  const [query, setQuery] = useState('');
+
+  const showSearch = programs.length > SEARCH_THRESHOLD;
+  const q = query.trim().toLowerCase();
+  const visiblePrograms =
+    showSearch && q
+      ? programs.filter(
+          p =>
+            p.name.toLowerCase().includes(q) ||
+            p.address.toLowerCase().includes(q),
+        )
+      : programs;
 
   const handleNext = () => {
     if (selectedId) {
@@ -45,9 +68,12 @@ const ProgramSelectionScreen: React.FC = () => {
           <Text style={styles.cardName} numberOfLines={1}>
             {program.name}
           </Text>
-          <Text style={styles.cardAddress} numberOfLines={1}>
-            {program.address}
-          </Text>
+          <View style={styles.cardAddressRow}>
+            <MapPinIcon size={13} color="#5B5F66" />
+            <Text style={styles.cardAddress} numberOfLines={1}>
+              {program.address}
+            </Text>
+          </View>
         </View>
 
         <View style={[styles.radio, selected && styles.radioSelected]}>
@@ -77,10 +103,31 @@ const ProgramSelectionScreen: React.FC = () => {
           </Text>
         </View>
 
+        {showSearch ? (
+          <View style={styles.searchWrap}>
+            <SearchIcon size={20} color={theme.colors.textMuted} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search programs"
+              placeholderTextColor={theme.colors.textMuted}
+              autoCapitalize="none"
+              autoCorrect={false}
+              value={query}
+              onChangeText={setQuery}
+              returnKeyType="search"
+            />
+          </View>
+        ) : null}
+
         <ScrollView
           contentContainerStyle={styles.list}
+          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
-          {programs.map(renderCard)}
+          {visiblePrograms.length ? (
+            visiblePrograms.map(renderCard)
+          ) : (
+            <Text style={styles.emptyText}>No programs match “{query}”.</Text>
+          )}
         </ScrollView>
 
         <TouchableOpacity
@@ -119,6 +166,32 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   stepNum: {fontFamily: theme.fonts.black, color: theme.colors.primary},
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginHorizontal: theme.spacing.xxl,
+    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontFamily: theme.fonts.medium,
+    fontSize: theme.fontSize.base,
+    color: '#20242A',
+  },
+  emptyText: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 13.5,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    marginTop: theme.spacing.xl,
+  },
   header: {
     paddingHorizontal: theme.spacing.xxl,
     marginTop: theme.spacing.sm,
@@ -184,7 +257,13 @@ const styles = StyleSheet.create({
     color: '#20242A',
     marginBottom: 3,
   },
+  cardAddressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   cardAddress: {
+    flex: 1,
     fontFamily: theme.fonts.bold,
     fontSize: 12.5,
     lineHeight: 12.5,

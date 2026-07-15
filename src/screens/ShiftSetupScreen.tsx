@@ -5,13 +5,10 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Platform,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import ScreenBackground from '../components/ScreenBackground';
-import DateTimePicker, {
-  DateTimePickerEvent,
-} from '@react-native-community/datetimepicker';
+import TimePickerSheet from '../components/TimePickerSheet';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useAppDispatch} from '../redux/store';
@@ -89,18 +86,13 @@ const ShiftSetupScreen: React.FC = () => {
   // and a "Step 2 of 2" indicator apply). Single-program users start here.
   const cameFromSelection = navigation.canGoBack();
 
-  const onChangeTime = (event: DateTimePickerEvent, date?: Date) => {
-    const target = picker;
-    if (Platform.OS === 'android') {
-      setPicker(null);
+  const onConfirmTime = (date: Date) => {
+    if (picker === 'stop') {
+      setManualStopTime(date);
+    } else {
+      setStartTime(date);
     }
-    if (event.type === 'set' && date) {
-      if (target === 'stop') {
-        setManualStopTime(date);
-      } else {
-        setStartTime(date);
-      }
-    }
+    setPicker(null);
   };
 
   const toggleAutoEnd = () => {
@@ -287,16 +279,15 @@ const ShiftSetupScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {picker ? (
-            <DateTimePicker
-              value={picker === 'stop' ? stopTime : startTime}
-              mode="time"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              maximumDate={picker === 'start' ? new Date() : undefined}
-              minimumDate={picker === 'stop' ? startTime : undefined}
-              onChange={onChangeTime}
-            />
-          ) : null}
+          <TimePickerSheet
+            visible={picker !== null}
+            value={picker === 'stop' ? stopTime : startTime}
+            title={picker === 'stop' ? 'Shift stop time' : 'Shift start time'}
+            maximumDate={picker === 'start' ? new Date() : undefined}
+            minimumDate={picker === 'stop' ? startTime : undefined}
+            onConfirm={onConfirmTime}
+            onCancel={() => setPicker(null)}
+          />
 
           <TouchableOpacity
             style={styles.checkboxRow}

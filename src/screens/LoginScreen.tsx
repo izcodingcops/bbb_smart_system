@@ -24,7 +24,7 @@ import {theme} from '../theme';
 const LoginScreen: React.FC = () => {
   const {login, isLoading, error, dismissError} = useAuth();
 
-  const [username, setUsername] = useState('janesmith');
+  const [username, setUsername] = useState('johndoe');
   const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({username: '', password: ''});
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.md,
     paddingBottom: theme.spacing.xxl,
   },
-  center: {flex: 1, justifyContent: 'center'},
+  center: {flexGrow: 1, justifyContent: 'center'},
   langRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
