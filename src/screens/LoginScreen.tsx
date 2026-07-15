@@ -12,7 +12,10 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useNavigation} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useAuth} from '../hooks/useAuth';
+import type {AuthStackParamList} from '../navigation/AuthNavigator';
 import LoadingOverlay from '../components/LoadingOverlay';
 import UserIcon from '../components/icons/UserIcon';
 import LockIcon from '../components/icons/LockIcon';
@@ -23,6 +26,8 @@ import {theme} from '../theme';
 
 const LoginScreen: React.FC = () => {
   const {login, isLoading, error, dismissError} = useAuth();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
 
   const [username, setUsername] = useState('johndoe');
   const [password, setPassword] = useState('password123');
@@ -153,7 +158,10 @@ const LoginScreen: React.FC = () => {
               ) : null}
             </View>
 
-              <TouchableOpacity style={styles.forgotBtn} activeOpacity={0.7}>
+              <TouchableOpacity
+                style={styles.forgotBtn}
+                activeOpacity={0.7}
+                onPress={() => navigation.navigate('ForgotPassword')}>
                 <Text style={styles.forgotText}>Forgot password?</Text>
               </TouchableOpacity>
             </View>

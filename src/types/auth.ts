@@ -57,6 +57,11 @@ export interface LoginResponse {
   };
 }
 
+export interface PasswordResetResponse {
+  status: number;
+  message: string;
+}
+
 export interface ApiError {
   message: string;
   code?: string;

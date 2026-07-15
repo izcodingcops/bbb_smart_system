@@ -3,13 +3,13 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {GetIsAuthenticated} from '../redux/auth/selectors';
 import {GetHasActiveShift} from '../redux/shift/selectors';
-import LoginScreen from '../screens/LoginScreen';
+import AuthNavigator from './AuthNavigator';
 import SetupNavigator from './SetupNavigator';
 import MainTabNavigator from './MainTabNavigator';
 import {theme} from '../theme';
 
 export type RootStackParamList = {
-  Login: undefined;
+  Auth: undefined;
   Setup: undefined;
   Main: undefined;
 };
@@ -29,7 +29,7 @@ const AppNavigator: React.FC = () => {
           contentStyle: {backgroundColor: theme.colors.background},
         }}>
         {!isAuthenticated ? (
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Auth" component={AuthNavigator} />
         ) : !hasActiveShift ? (
           <Stack.Screen name="Setup" component={SetupNavigator} />
         ) : (
