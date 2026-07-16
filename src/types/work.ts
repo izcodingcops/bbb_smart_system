@@ -18,5 +18,10 @@ export interface WorkItem {
 export interface QuickAction {
   id: string;
   label: string;
+  /** Fill behind the icon. */
   tint: string;
+  /** Icon stroke, normally a deeper shade of the tint. */
+  iconColor: string;
+  /** Key into QuickActions' icon map; unknown keys fall back to a generic one. */
+  icon: string;
 }

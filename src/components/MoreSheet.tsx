@@ -1,26 +1,45 @@
 import React from 'react';
 import {View, Text, TouchableOpacity, Alert, StyleSheet} from 'react-native';
 import BottomSheet from './ui/BottomSheet';
+import {
+  AlertTriangleIcon,
+  BoxIcon,
+  BriefcaseIcon,
+  ChevronRightIcon,
+  ClockIcon,
+  FileTextIcon,
+  MapIcon,
+  RefreshIcon,
+  SearchIcon,
+  SendIcon,
+  ToolsIcon,
+  UploadIcon,
+  UserIcon,
+  UserPlusIcon,
+} from './icons';
 import {MenuGroup, MenuItem} from '../types/navigation';
 import {locationTracker} from '../utils/locationTracker';
 import {theme} from '../theme';
 
-const ICON_MAP: Record<string, string> = {
-  home: '⌂',
-  maintenance: '✂',
-  fixture: '⋈',
-  incident: 'ⓘ',
-  profile: '⊙',
-  poi: '◎',
-  dispatch: '⇄',
-  equipment: '⚙',
-  maps: '◈',
-  reports: '▤',
-  documents: '❐',
-  program: '⊞',
-  shift_type: '⇅',
-  shift_details: '☰',
+type IconComponent = React.FC<{size?: number; color?: string}>;
+
+const ICON_MAP: Record<string, IconComponent> = {
+  maintenance: ToolsIcon,
+  fixture: BoxIcon,
+  incident: AlertTriangleIcon,
+  profile: UserIcon,
+  poi: UserPlusIcon,
+  dispatch: SendIcon,
+  equipment: BoxIcon,
+  maps: MapIcon,
+  reports: SearchIcon,
+  documents: FileTextIcon,
+  program: BriefcaseIcon,
+  shift_type: RefreshIcon,
+  shift_details: ClockIcon,
 };
+
+const ROW_ICON = '#181B1F';
 
 const GROUPS: {key: MenuGroup; label: string}[] = [
   {key: 'modules', label: 'MODULES'},
@@ -67,23 +86,25 @@ const MoreSheet: React.FC<Props> = ({
         return (
           <View key={group.key}>
             <Text style={styles.sectionLabel}>{group.label}</Text>
-            {groupItems.map((item, index) => (
-              <TouchableOpacity
-                key={item.id}
-                activeOpacity={0.7}
-                onPress={() => onSelect(item.screen_name)}
-                style={[
-                  styles.row,
-                  index < groupItems.length - 1 && styles.rowBorder,
-                ]}>
-                <View style={styles.rowIcon}>
-                  <Text style={styles.rowIconText}>
-                    {ICON_MAP[item.menu_icon] ?? '○'}
-                  </Text>
-                </View>
-                <Text style={styles.rowLabel}>{item.menu_name}</Text>
-              </TouchableOpacity>
-            ))}
+            {groupItems.map((item, index) => {
+              const Icon = ICON_MAP[item.menu_icon] ?? BoxIcon;
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  activeOpacity={0.7}
+                  onPress={() => onSelect(item.screen_name)}
+                  style={[
+                    styles.row,
+                    index < groupItems.length - 1 && styles.rowBorder,
+                  ]}>
+                  <View style={styles.rowIcon}>
+                    <Icon size={20} color={ROW_ICON} />
+                  </View>
+                  <Text style={styles.rowLabel}>{item.menu_name}</Text>
+                  <ChevronRightIcon size={18} color={theme.colors.textMuted} />
+                </TouchableOpacity>
+              );
+            })}
           </View>
         );
       })}
@@ -94,9 +115,10 @@ const MoreSheet: React.FC<Props> = ({
         onPress={handleShareGpsLog}
         style={styles.row}>
         <View style={styles.rowIcon}>
-          <Text style={styles.rowIconText}>⇪</Text>
+          <UploadIcon size={20} color={ROW_ICON} />
         </View>
         <Text style={styles.rowLabel}>Share GPS Log</Text>
+        <ChevronRightIcon size={18} color={theme.colors.textMuted} />
       </TouchableOpacity>
     </BottomSheet>
   );
@@ -121,15 +143,10 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.border,
   },
   rowIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: theme.radius.sm,
-    backgroundColor: theme.colors.primaryLight,
+    width: 24,
     alignItems: 'center',
-    justifyContent: 'center',
     marginRight: theme.spacing.md,
   },
-  rowIconText: {fontSize: 16, color: theme.colors.primaryDark},
   rowLabel: {
     flex: 1,
     fontFamily: theme.fonts.bold,

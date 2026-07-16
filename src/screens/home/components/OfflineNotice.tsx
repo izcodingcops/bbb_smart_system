@@ -1,5 +1,6 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
+import {WifiOffIcon} from '../../../components/icons';
 import {theme} from '../../../theme';
 
 interface Props {
@@ -8,7 +9,9 @@ interface Props {
 
 const OfflineNotice: React.FC<Props> = ({pendingCount}) => (
   <View style={styles.card}>
-    <View style={styles.icon} />
+    <View style={styles.icon}>
+      <WifiOffIcon size={20} color={theme.colors.textSecondary} />
+    </View>
     <View style={styles.flex}>
       <Text style={styles.title}>It seems you're offline</Text>
       <Text style={styles.body}>
@@ -51,6 +54,8 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: theme.radius.md,
     backgroundColor: '#E6E9ED',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontFamily: theme.fonts.black,

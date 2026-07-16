@@ -1,13 +1,26 @@
 import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import BottomSheet from './ui/BottomSheet';
+import {
+  AlertTriangleIcon,
+  BoxIcon,
+  LogInIcon,
+  LogOutIcon,
+  SprayCanIcon,
+  ToolsIcon,
+  UserPlusIcon,
+} from './icons';
 import {theme} from '../theme';
+
+type IconComponent = React.FC<{size?: number; color?: string}>;
 
 export interface AddRequestTile {
   id: string;
   label: string;
-  tint: string;
+  Icon: IconComponent;
 }
+
+const TILE_ICON = '#181B1F';
 
 /**
  * Static half of the sheet. The "Work Log" section is left out because its one
@@ -18,18 +31,18 @@ const SECTIONS: {key: string; title: string; tiles: AddRequestTile[]}[] = [
     key: 'create',
     title: 'Create New',
     tiles: [
-      {id: 'maintenance', label: 'Maintenance', tint: '#FDE8E4'},
-      {id: 'fixture', label: 'Fixture', tint: '#E4EEFD'},
-      {id: 'incident', label: 'Incident', tint: '#FDF3E4'},
-      {id: 'poi', label: 'POI', tint: '#E7F7EC'},
+      {id: 'maintenance', label: 'Maintenance', Icon: ToolsIcon},
+      {id: 'fixture', label: 'Fixture', Icon: BoxIcon},
+      {id: 'incident', label: 'Incident', Icon: AlertTriangleIcon},
+      {id: 'poi', label: 'POI', Icon: UserPlusIcon},
     ],
   },
   {
     key: 'equipment',
     title: 'Equipment',
     tiles: [
-      {id: 'check_in', label: 'Check In', tint: '#E4EEFD'},
-      {id: 'check_out', label: 'Check Out', tint: '#EFE7FB'},
+      {id: 'check_in', label: 'Check In', Icon: LogInIcon},
+      {id: 'check_out', label: 'Check Out', Icon: LogOutIcon},
     ],
   },
 ];
@@ -57,7 +70,9 @@ const AddRequestsSheet: React.FC<Props> = ({
       style={styles.tile}
       activeOpacity={0.85}
       onPress={() => onSelect(tile.id)}>
-      <View style={[styles.tileIcon, {backgroundColor: tile.tint}]} />
+      <View style={styles.tileIcon}>
+        <tile.Icon size={22} color={TILE_ICON} />
+      </View>
       <Text style={styles.tileLabel}>{tile.label}</Text>
     </TouchableOpacity>
   );
@@ -70,7 +85,7 @@ const AddRequestsSheet: React.FC<Props> = ({
       onClosed={onClosed}>
       <Text style={styles.sectionTitle}>Work Log</Text>
       <View style={styles.grid}>
-        {renderTile({id: 'work_log', label: shiftName, tint: '#E7F7EC'})}
+        {renderTile({id: 'work_log', label: shiftName, Icon: SprayCanIcon})}
       </View>
 
       {SECTIONS.map(section => (
@@ -105,9 +120,8 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
   },
   tileIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: theme.radius.md,
+    height: 28,
+    justifyContent: 'center',
     marginBottom: theme.spacing.xl,
   },
   tileLabel: {

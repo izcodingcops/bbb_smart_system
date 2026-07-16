@@ -3,10 +3,34 @@ import {QuickAction, WorkItem} from '../types/work';
 const ADDRESS = 'Rue Des Hauteurs, Val-David, Quebec J0T 2N0, Canada';
 
 export const MOCK_QUICK_ACTIONS = [
-  {id: 'qa1', label: 'Add Graffiti', tint: '#DCEBFF'},
-  {id: 'qa2', label: 'Add Elevator Check', tint: '#FBE3D6'},
-  {id: 'qa3', label: 'Add Litter Pickup', tint: '#FBEFD1'},
-  {id: 'qa4', label: 'Add Inspection', tint: '#E2E7F5'},
+  {
+    id: 'qa1',
+    label: 'Add Graffiti',
+    tint: '#DCEBFF',
+    iconColor: '#0066B2',
+    icon: 'graffiti',
+  },
+  {
+    id: 'qa2',
+    label: 'Add Elevator Check',
+    tint: '#FBE3D6',
+    iconColor: '#C4501F',
+    icon: 'elevator',
+  },
+  {
+    id: 'qa3',
+    label: 'Add Litter Pickup',
+    tint: '#FBEFD1',
+    iconColor: '#B07D12',
+    icon: 'litter',
+  },
+  {
+    id: 'qa4',
+    label: 'Add Inspection',
+    tint: '#E2E7F5',
+    iconColor: '#4A5A8A',
+    icon: 'inspection',
+  },
 ] satisfies QuickAction[];
 
 export const MOCK_WORK_ITEMS = [
