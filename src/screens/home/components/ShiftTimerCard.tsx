@@ -116,6 +116,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.28,
     shadowRadius: 16,
     elevation: 8,
+    // Paints above the offline notice below it, so this card's shadow falls
+    // across that card's top edge instead of being covered by it.
+    zIndex: 1,
   },
   card: {borderRadius: 20, overflow: 'hidden'},
   inner: {

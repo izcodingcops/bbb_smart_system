@@ -21,6 +21,9 @@ const OfflineNotice: React.FC<Props> = ({pendingCount}) => (
   </View>
 );
 
+/** How far the card slides up behind the shift card above it. */
+const TUCK = theme.spacing.md;
+
 const styles = StyleSheet.create({
   flex: {flex: 1},
   card: {
@@ -30,8 +33,18 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     borderRadius: theme.radius.lg,
     padding: theme.spacing.md,
-    marginTop: theme.spacing.md,
-    ...theme.shadow.card,
+    // Hides this card's top edge behind the shift card, so that card's shadow
+    // lands across it. The tuck is added back as padding to keep the content
+    // clear of the overlap.
+    marginTop: -TUCK,
+    paddingTop: theme.spacing.md + TUCK,
+    marginHorizontal: theme.spacing.lg,
+    shadowColor: '#101828',
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    // Stays under the shift card's elevation (8) so Android keeps it behind.
+    elevation: 4,
   },
   icon: {
     width: 40,

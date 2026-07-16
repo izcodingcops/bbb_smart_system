@@ -6,7 +6,7 @@ import {useAppSelector} from '../redux/store';
 import {fontFamilies} from '../constants/fonts';
 import {theme} from '../theme';
 import HomeScreen from '../screens/home/HomeScreen';
-import MoreScreen from '../screens/MoreScreen';
+import MoreSheet from '../components/MoreSheet';
 import ComingSoonScreen from '../screens/ComingSoonScreen';
 
 const {LATO} = fontFamilies;
@@ -23,13 +23,12 @@ const ICON_MAP: Record<string, any> = {
   profile: require('../assets/icons/tab_profile.png'),
 };
 
-const MORE_SCREEN = '__more__';
-
 const MainTabNavigator: React.FC = () => {
   const {data: menuItems = [], isLoading} = useGetMenuItemsQuery();
   const insets = useSafeAreaInsets();
   const tabBarHidden = useAppSelector(state => state.ui.tabBarHidden);
   const [activeScreen, setActiveScreen] = useState<string>('');
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     if (menuItems.length > 0 && !activeScreen) {
@@ -49,18 +48,9 @@ const MainTabNavigator: React.FC = () => {
   const bottomItems = menuItems.filter(i => i.position === 'bottom');
   const moreItems = menuItems.filter(i => i.position === 'more');
   const isMoreActive =
-    activeScreen === MORE_SCREEN ||
-    moreItems.some(i => i.screen_name === activeScreen);
+    moreOpen || moreItems.some(i => i.screen_name === activeScreen);
 
   const renderContent = () => {
-    if (isMoreActive && activeScreen === MORE_SCREEN) {
-      return (
-        <MoreScreen
-          items={moreItems}
-          onSelect={screen => setActiveScreen(screen)}
-        />
-      );
-    }
     const ActiveScreen = SCREEN_MAP[activeScreen];
     if (!ActiveScreen) {
       // Menu entry without a screen yet — show a placeholder rather than Home.
@@ -139,7 +129,7 @@ const MainTabNavigator: React.FC = () => {
 
         {moreItems.length > 0 && (
           <TouchableOpacity
-            onPress={() => setActiveScreen(MORE_SCREEN)}
+            onPress={() => setMoreOpen(true)}
             style={{
               flex: 1,
               alignItems: 'center',
@@ -181,6 +171,16 @@ const MainTabNavigator: React.FC = () => {
       </View>
         </>
       )}
+
+      <MoreSheet
+        visible={moreOpen}
+        items={moreItems}
+        onSelect={screen => {
+          setMoreOpen(false);
+          setActiveScreen(screen);
+        }}
+        onClose={() => setMoreOpen(false)}
+      />
     </SafeAreaView>
   );
 };

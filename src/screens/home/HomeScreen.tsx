@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import ScreenBackground from '../../components/ScreenBackground';
+import AddRequestsSheet from '../../components/AddRequestsSheet';
 import {PlusIcon} from '../../components/icons';
 import HomeHeader from './components/HomeHeader';
 import ShiftTimerCard from './components/ShiftTimerCard';
@@ -42,6 +43,7 @@ const HomeScreen: React.FC = () => {
 
   const [refreshing, setRefreshing] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [addOpen, setAddOpen] = useState(false);
 
   const firstName = user?.name?.split(' ')[0] ?? 'there';
   const shiftName = shiftTypes.find(t => t.id === shiftTypeId)?.name ?? 'Shift';
@@ -85,6 +87,12 @@ const HomeScreen: React.FC = () => {
     ]);
   }, [logout]);
 
+  // Placeholder — none of the create/check-in flows have screens yet.
+  const handleAddRequest = useCallback((tileId: string) => {
+    setAddOpen(false);
+    Alert.alert('Coming soon', `"${tileId}" is not wired up yet.`);
+  }, []);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     refetchWork();
@@ -119,9 +127,19 @@ const HomeScreen: React.FC = () => {
           <RecentWork items={workItems} />
         </ScrollView>
 
-        <TouchableOpacity style={styles.fab} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.fab}
+          activeOpacity={0.85}
+          onPress={() => setAddOpen(true)}>
           <PlusIcon size={26} color={theme.colors.white} />
         </TouchableOpacity>
+
+        <AddRequestsSheet
+          visible={addOpen}
+          shiftName={shiftName}
+          onSelect={handleAddRequest}
+          onClose={() => setAddOpen(false)}
+        />
       </SafeAreaView>
     </ScreenBackground>
   );
