@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {
   View,
   Text,
+  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -16,7 +17,12 @@ import {
   ScreenScaffold,
   TextField,
 } from '../../components/ui';
-import {CheckIcon} from '../../components/icons';
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  EyeIcon,
+  LockIcon,
+} from '../../components/icons';
 import LoadingOverlay from '../../components/LoadingOverlay';
 import {usePasswordReset} from '../../hooks/usePasswordReset';
 import type {AuthStackParamList} from '../../navigation/AuthNavigator';
@@ -38,12 +44,22 @@ const CreateNewPasswordScreen: React.FC = () => {
 
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [serverError, setServerError] = useState('');
 
   const passed = RULES.map(r => r.test(password));
   const allRulesPass = passed.every(Boolean);
   const matches = confirm.length > 0 && password === confirm;
   const canSubmit = allRulesPass && matches;
+
+  const renderEyeToggle = (shown: boolean, toggle: () => void) => (
+    <TouchableOpacity
+      onPress={toggle}
+      hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+      <EyeIcon size={20} color={theme.colors.textMuted} off={shown} />
+    </TouchableOpacity>
+  );
 
   const handleReset = async () => {
     if (!canSubmit) {
@@ -64,6 +80,7 @@ const CreateNewPasswordScreen: React.FC = () => {
   return (
     <ScreenScaffold
       onBack={() => navigation.goBack()}
+      icon={<LockIcon size={28} color={theme.colors.primary} />}
       title="Create new password"
       subtitle="Your new password must be different from any you've used before.">
       <KeyboardAvoidingView
@@ -77,10 +94,13 @@ const CreateNewPasswordScreen: React.FC = () => {
             <TextField
               label="New password"
               placeholder="Enter new password"
-              secureTextEntry
+              secureTextEntry={!showPassword}
               autoCapitalize="none"
               autoCorrect={false}
               value={password}
+              trailingIcon={renderEyeToggle(showPassword, () =>
+                setShowPassword(s => !s),
+              )}
               onChangeText={v => {
                 setPassword(v);
                 if (serverError) {
@@ -108,10 +128,13 @@ const CreateNewPasswordScreen: React.FC = () => {
             <TextField
               label="Confirm password"
               placeholder="Re-enter new password"
-              secureTextEntry
+              secureTextEntry={!showConfirm}
               autoCapitalize="none"
               autoCorrect={false}
               value={confirm}
+              trailingIcon={renderEyeToggle(showConfirm, () =>
+                setShowConfirm(s => !s),
+              )}
               containerStyle={styles.confirm}
               error={
                 confirm.length > 0 && !matches
@@ -126,6 +149,12 @@ const CreateNewPasswordScreen: React.FC = () => {
             label="Reset password"
             onPress={handleReset}
             disabled={!canSubmit || isLoading}
+            trailingIcon={
+              <ArrowRightIcon
+                size={20}
+                color={canSubmit && !isLoading ? theme.colors.white : '#9AA0A6'}
+              />
+            }
             style={styles.submit}
           />
         </ScrollView>

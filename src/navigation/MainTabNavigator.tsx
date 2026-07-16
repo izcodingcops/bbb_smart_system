@@ -1,6 +1,14 @@
 import React, {useEffect, useState} from 'react';
-import {Text, TouchableOpacity, View, Image} from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Image,
+} from 'react-native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import ScreenBackground from '../components/ScreenBackground';
 import {useGetMenuItemsQuery} from '../redux/navigation/api';
 import {useAppDispatch, useAppSelector} from '../redux/store';
 import {SetupIntent, setSetupIntent} from '../redux/ui/slice';
@@ -89,11 +97,14 @@ const MainTabNavigator: React.FC = () => {
     }
   }, [menuItems, activeScreen]);
 
+  // Briefly on show while the menu loads after a shift starts, so it uses the
+  // app's background and type rather than bare text on white.
   if (isLoading || menuItems.length === 0) {
     return (
-      <View style={{flex: 1, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center'}}>
-        <Text style={{color: '#9CA3AF'}}>Loading...</Text>
-      </View>
+      <ScreenBackground style={styles.loadingRoot}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={styles.loadingText}>Getting things ready…</Text>
+      </ScreenBackground>
     );
   }
 
@@ -253,5 +264,15 @@ const MainTabNavigator: React.FC = () => {
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  loadingRoot: {alignItems: 'center', justifyContent: 'center'},
+  loadingText: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 14.5,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.md,
+  },
+});
 
 export default MainTabNavigator;

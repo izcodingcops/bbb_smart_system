@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
   backBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: theme.radius.lg,
     backgroundColor: theme.colors.white,
     alignItems: 'center',
     justifyContent: 'center',

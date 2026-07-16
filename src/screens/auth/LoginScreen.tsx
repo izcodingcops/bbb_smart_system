@@ -18,6 +18,7 @@ import {PrimaryButton} from '../../components/ui';
 import {useAuth} from '../../hooks/useAuth';
 import type {AuthStackParamList} from '../../navigation/AuthNavigator';
 import LoadingOverlay from '../../components/LoadingOverlay';
+import AlertTriangleIcon from '../../components/icons/AlertTriangleIcon';
 import UserIcon from '../../components/icons/UserIcon';
 import LockIcon from '../../components/icons/LockIcon';
 import EyeIcon from '../../components/icons/EyeIcon';
@@ -72,6 +73,7 @@ const LoginScreen: React.FC = () => {
           style={styles.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <ScrollView
+            style={styles.flex}
             contentContainerStyle={styles.scroll}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
@@ -119,7 +121,10 @@ const LoginScreen: React.FC = () => {
                 />
               </View>
               {fieldErrors.username ? (
-                <Text style={styles.fieldError}>{fieldErrors.username}</Text>
+                <View style={styles.errorRow}>
+                  <AlertTriangleIcon size={15} color={theme.colors.error} />
+                  <Text style={styles.fieldError}>{fieldErrors.username}</Text>
+                </View>
               ) : null}
             </View>
 
@@ -155,7 +160,10 @@ const LoginScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
               {fieldErrors.password ? (
-                <Text style={styles.fieldError}>{fieldErrors.password}</Text>
+                <View style={styles.errorRow}>
+                  <AlertTriangleIcon size={15} color={theme.colors.error} />
+                  <Text style={styles.fieldError}>{fieldErrors.password}</Text>
+                </View>
               ) : null}
             </View>
 
@@ -177,14 +185,16 @@ const LoginScreen: React.FC = () => {
               style={styles.submitBtn}
             />
             </View>
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>
-                Trouble signing in? Contact your{' '}
-                <Text style={styles.footerBold}>management</Text>.
-              </Text>
-            </View>
           </ScrollView>
+
+          {/* Outside the ScrollView so it sits at the bottom of the screen
+              rather than trailing the button once the card fills the view. */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              Trouble signing in? Contact your{' '}
+              <Text style={styles.footerBold}>management</Text>.
+            </Text>
+          </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
 
@@ -287,16 +297,26 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: theme.spacing.sm,
     fontSize: 16,
-    lineHeight: 16,
+    // No lineHeight — see the note on TextField's matching input style.
     fontFamily: theme.fonts.bold,
     color: '#1A1C1E',
   },
-  inputError: {borderColor: theme.colors.error},
+  inputError: {
+    borderColor: theme.colors.error,
+    backgroundColor: theme.colors.errorLight,
+  },
+  errorRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    marginTop: theme.spacing.sm,
+  },
   fieldError: {
-    fontFamily: theme.fonts.regular,
+    flexShrink: 1,
+    fontFamily: theme.fonts.bold,
     color: theme.colors.error,
-    fontSize: theme.fontSize.xs,
-    marginTop: theme.spacing.xs,
+    fontSize: 13,
+    lineHeight: 17,
   },
   forgotBtn: {alignSelf: 'flex-end', marginTop: theme.spacing.xs},
   forgotText: {
@@ -308,7 +328,9 @@ const styles = StyleSheet.create({
   },
   submitBtn: {marginTop: theme.spacing.xxl},
   footer: {
-    paddingTop: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
     alignItems: 'center',
   },
   footerText: {

@@ -8,6 +8,7 @@ import {
   ViewStyle,
   TextInputProps,
 } from 'react-native';
+import AlertTriangleIcon from '../icons/AlertTriangleIcon';
 import {theme} from '../../theme';
 
 interface Props extends TextInputProps {
@@ -44,9 +45,10 @@ const TextField: React.FC<Props> = ({
       {trailingIcon}
     </View>
     {error ? (
-      <Text style={[styles.error, centered && styles.errorCentered]}>
-        {error}
-      </Text>
+      <View style={[styles.errorRow, centered && styles.errorRowCentered]}>
+        <AlertTriangleIcon size={15} color={theme.colors.error} />
+        <Text style={styles.error}>{error}</Text>
+      </View>
     ) : null}
   </View>
 );
@@ -70,24 +72,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     backgroundColor: theme.colors.white,
   },
-  wrapError: {borderColor: theme.colors.error},
+  wrapError: {
+    borderColor: theme.colors.error,
+    backgroundColor: theme.colors.errorLight,
+  },
   input: {
     flex: 1,
     paddingVertical: 14,
     paddingHorizontal: theme.spacing.sm,
     fontSize: 16,
-    lineHeight: 16,
+    // No lineHeight: matching it to fontSize collapses the line box on iOS and
+    // rides the text off-centre against the icons the row centres.
     fontFamily: theme.fonts.bold,
     color: '#1A1C1E',
   },
   inputCentered: {textAlign: 'center'},
-  error: {
-    fontFamily: theme.fonts.bold,
-    color: theme.colors.error,
-    fontSize: theme.fontSize.xs,
+  errorRow: {
+    flexDirection: 'row',
+    // Top-aligned, not centred: the icon should sit against the first line
+    // when the message wraps to two.
+    alignItems: 'flex-start',
+    gap: 6,
     marginTop: theme.spacing.sm,
   },
-  errorCentered: {textAlign: 'center'},
+  errorRowCentered: {justifyContent: 'center'},
+  error: {
+    flexShrink: 1,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.error,
+    fontSize: 13,
+    lineHeight: 17,
+  },
 });
 
 export default TextField;

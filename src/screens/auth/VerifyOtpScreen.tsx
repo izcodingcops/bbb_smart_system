@@ -12,6 +12,11 @@ import {
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {Card, PrimaryButton, ScreenScaffold} from '../../components/ui';
+import {
+  AlertTriangleIcon,
+  ArrowRightIcon,
+  ShieldCheckIcon,
+} from '../../components/icons';
 import LoadingOverlay from '../../components/LoadingOverlay';
 import {usePasswordReset} from '../../hooks/usePasswordReset';
 import type {AuthStackParamList} from '../../navigation/AuthNavigator';
@@ -108,6 +113,7 @@ const VerifyOtpScreen: React.FC = () => {
   return (
     <ScreenScaffold
       onBack={() => navigation.goBack()}
+      icon={<ShieldCheckIcon size={28} color={theme.colors.primary} />}
       title="Enter verification code"
       subtitle={
         <>
@@ -142,7 +148,10 @@ const VerifyOtpScreen: React.FC = () => {
             </View>
 
             {error ? (
-              <Text style={styles.errorText}>{error}</Text>
+              <View style={styles.errorRow}>
+                <AlertTriangleIcon size={15} color={theme.colors.error} />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
             ) : (
               <Text style={styles.validityText}>
                 Code is valid for{' '}
@@ -167,6 +176,12 @@ const VerifyOtpScreen: React.FC = () => {
             label="Verify & continue"
             onPress={handleVerify}
             disabled={isLoading || expired}
+            trailingIcon={
+              <ArrowRightIcon
+                size={20}
+                color={isLoading || expired ? '#9AA0A6' : theme.colors.white}
+              />
+            }
             style={styles.submit}
           />
       </View>
@@ -197,7 +212,11 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
   },
   otpBoxFilled: {borderColor: 'rgba(0,102,178,0.4)'},
-  otpBoxError: {borderColor: theme.colors.error, color: theme.colors.error},
+  otpBoxError: {
+    borderColor: theme.colors.error,
+    backgroundColor: theme.colors.errorLight,
+    color: theme.colors.error,
+  },
   validityText: {
     textAlign: 'center',
     fontFamily: theme.fonts.bold,
@@ -205,10 +224,17 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   validityTime: {fontFamily: theme.fonts.black, color: theme.colors.primary},
+  errorRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    gap: 6,
+  },
   errorText: {
-    textAlign: 'center',
+    flexShrink: 1,
     fontFamily: theme.fonts.bold,
     fontSize: 13,
+    lineHeight: 17,
     color: theme.colors.error,
   },
   divider: {

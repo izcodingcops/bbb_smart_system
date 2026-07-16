@@ -8,10 +8,12 @@ import {theme} from '../../theme';
 
 interface Props {
   children: React.ReactNode;
-  /** Shows a circular back button top-left. */
+  /** Shows a back button top-left. */
   onBack?: () => void;
   /** Rendered on the right of the top row (e.g. a step indicator). */
   topRight?: React.ReactNode;
+  /** Badged above the title in a tinted tile (e.g. a mail icon). */
+  icon?: React.ReactNode;
   title?: string;
   subtitle?: React.ReactNode;
   edges?: Edge[];
@@ -25,6 +27,7 @@ const ScreenScaffold: React.FC<Props> = ({
   children,
   onBack,
   topRight,
+  icon,
   title,
   subtitle,
   edges = ['top', 'bottom'],
@@ -47,9 +50,10 @@ const ScreenScaffold: React.FC<Props> = ({
         </View>
       ) : null}
 
-      {title ? (
+      {icon || title ? (
         <View style={styles.header}>
-          <Text style={styles.title}>{title}</Text>
+          {icon ? <View style={styles.iconTile}>{icon}</View> : null}
+          {title ? <Text style={styles.title}>{title}</Text> : null}
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
       ) : null}
@@ -72,7 +76,7 @@ const styles = StyleSheet.create({
   backBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: theme.radius.lg,
     backgroundColor: theme.colors.white,
     alignItems: 'center',
     justifyContent: 'center',
@@ -83,6 +87,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     marginTop: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
+  },
+  iconTile: {
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    backgroundColor: theme.colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.lg,
+    shadowColor: '#101828',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
   title: {
     fontSize: 26,

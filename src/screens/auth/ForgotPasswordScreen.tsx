@@ -13,6 +13,7 @@ import {
   ScreenScaffold,
   TextField,
 } from '../../components/ui';
+import {ArrowRightIcon, MailIcon} from '../../components/icons';
 import LoadingOverlay from '../../components/LoadingOverlay';
 import {usePasswordReset} from '../../hooks/usePasswordReset';
 import type {AuthStackParamList} from '../../navigation/AuthNavigator';
@@ -45,6 +46,7 @@ const ForgotPasswordScreen: React.FC = () => {
   return (
     <ScreenScaffold
       onBack={() => navigation.goBack()}
+      icon={<MailIcon size={28} color={theme.colors.primary} />}
       title="Forgot password?"
       subtitle="Enter the email linked to your account and we'll send you a 6-digit verification code.">
       <KeyboardAvoidingView
@@ -77,6 +79,9 @@ const ForgotPasswordScreen: React.FC = () => {
             label="Send verification code"
             onPress={handleSend}
             disabled={isLoading}
+            trailingIcon={
+              <ArrowRightIcon size={20} color={theme.colors.white} />
+            }
             style={styles.submit}
           />
         </ScrollView>

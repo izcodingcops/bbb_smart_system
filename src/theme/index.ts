@@ -17,6 +17,8 @@ export const theme = {
     whiteSubtle: 'rgba(255,255,255,0.3)',
     whiteGhost: 'rgba(255,255,255,0.2)',
     error: '#EF4444',
+    /** Fill behind a field in its error state. */
+    errorLight: '#FEF3F2',
     success: '#16A34A',
     info: '#3B82F6',
     overlay: 'rgba(0,0,0,0.4)',
