@@ -139,7 +139,7 @@ const CreateNewPasswordScreen: React.FC = () => {
 const styles = StyleSheet.create({
   flex: {flex: 1},
   scroll: {
-    paddingHorizontal: theme.spacing.xxl,
+    paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.md,
     paddingBottom: theme.spacing.xxl,
   },

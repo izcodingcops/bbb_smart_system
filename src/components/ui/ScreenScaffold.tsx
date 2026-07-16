@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.xxl,
+    paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.sm,
   },
   backBtn: {
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   },
   backPlaceholder: {width: 40, height: 40},
   header: {
-    paddingHorizontal: theme.spacing.xxl,
+    paddingHorizontal: theme.spacing.lg,
     marginTop: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
   },

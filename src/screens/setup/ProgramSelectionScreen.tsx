@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   flex: {flex: 1},
   stepRow: {
     alignItems: 'flex-end',
-    paddingHorizontal: theme.spacing.xxl,
+    paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
   },
   stepText: {
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
-    marginHorizontal: theme.spacing.xxl,
+    marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
     backgroundColor: theme.colors.white,
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xl,
   },
   header: {
-    paddingHorizontal: theme.spacing.xxl,
+    paddingHorizontal: theme.spacing.lg,
     marginTop: theme.spacing.sm,
     marginBottom: theme.spacing.lg,
   },
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
   },
   list: {
-    paddingHorizontal: theme.spacing.xxl,
+    paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.xs,
     paddingBottom: theme.spacing.lg,
     gap: theme.spacing.md,
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
   },
   nextBtn: {
-    marginHorizontal: theme.spacing.xxl,
+    marginHorizontal: theme.spacing.lg,
     marginTop: theme.spacing.sm,
   },
   footer: {

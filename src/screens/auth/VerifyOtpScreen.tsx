@@ -177,7 +177,7 @@ const VerifyOtpScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  body: {flex: 1, paddingHorizontal: theme.spacing.xxl},
+  body: {flex: 1, paddingHorizontal: theme.spacing.lg},
   subtitleStrong: {fontFamily: theme.fonts.black, color: theme.colors.primary},
   otpRow: {
     flexDirection: 'row',
