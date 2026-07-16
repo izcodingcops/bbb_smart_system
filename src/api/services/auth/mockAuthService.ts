@@ -3,7 +3,7 @@ import {
   LoginResponse,
   PasswordResetResponse,
 } from '../../../types/auth';
-import {MOCK_USERS, MOCK_SHIFT_TYPES} from '../../../constants';
+import {MOCK_USERS, MOCK_SHIFT_TYPES} from '../../../mocks';
 import {AuthServiceContract} from './contract';
 
 const MOCK_DELAY = 800;
@@ -79,13 +79,24 @@ export const mockAuthService = {
   },
 
   resetPassword: (
-    _email: string,
+    email: string,
     code: string,
-    _newPassword: string,
+    newPassword: string,
   ): Promise<PasswordResetResponse> => {
     if (code !== MOCK_RESET_CODE) {
       return delay({status: 400, message: 'Verification failed.'});
     }
+    const match = MOCK_USERS.find(
+      u => u.email.toLowerCase() === email.trim().toLowerCase(),
+    );
+    if (!match) {
+      return delay({
+        status: 404,
+        message: 'No account is registered with this email.',
+      });
+    }
+    // Persist for the session so the new password actually works at login.
+    match.password = newPassword;
     return delay({status: 200, message: 'Password reset successfully.'});
   },
 } satisfies AuthServiceContract;

@@ -1,16 +1,10 @@
 import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit';
 import {authService} from '../../api/services/auth/authService';
 import {locationTracker} from '../../utils/locationTracker';
-import {
-  AuthState,
-  LoginCredentials,
-  User,
-  Session,
-  Program,
-  ShiftType,
-} from '../../types/auth';
+import {AuthState, LoginCredentials, User, Session} from '../../types/auth';
+import {Program, ShiftType} from '../../types/shift';
 
-const initialState: AuthState = {
+export const initialAuthState: AuthState = {
   user: null,
   session: null,
   programs: [],
@@ -54,7 +48,7 @@ export const logout = createAsyncThunk('auth/logout', async (_: void) => {
 
 const authSlice = createSlice({
   name: 'auth',
-  initialState,
+  initialState: initialAuthState,
   reducers: {
     clearError(state) {
       state.error = null;
@@ -90,7 +84,7 @@ const authSlice = createSlice({
       .addCase(logout.pending, state => {
         state.isLoading = true;
       })
-      .addCase(logout.fulfilled, () => initialState);
+      .addCase(logout.fulfilled, () => initialAuthState);
   },
 });
 

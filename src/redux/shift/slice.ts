@@ -1,15 +1,8 @@
 import {createSlice, PayloadAction} from '@reduxjs/toolkit';
 import {logout} from '../auth/slice';
+import {ShiftState} from '../../types/shift';
 
-export interface ShiftState {
-  shiftTypeId: string | null;
-  startTime: string | null; // ISO string
-  stopTime: string | null; // ISO string; when autoEnd, derived from startTime
-  autoEnd: boolean;
-  isActive: boolean;
-}
-
-const initialState: ShiftState = {
+export const initialShiftState: ShiftState = {
   shiftTypeId: null,
   startTime: null,
   stopTime: null,
@@ -26,7 +19,7 @@ interface StartShiftPayload {
 
 const shiftSlice = createSlice({
   name: 'shift',
-  initialState,
+  initialState: initialShiftState,
   reducers: {
     startShift(state, action: PayloadAction<StartShiftPayload>) {
       state.shiftTypeId = action.payload.shiftTypeId;
@@ -36,12 +29,12 @@ const shiftSlice = createSlice({
       state.isActive = true;
     },
     endShift() {
-      return initialState;
+      return initialShiftState;
     },
   },
   extraReducers: builder => {
     // Clear any shift setup when the user logs out.
-    builder.addCase(logout.fulfilled, () => initialState);
+    builder.addCase(logout.fulfilled, () => initialShiftState);
   },
 });
 

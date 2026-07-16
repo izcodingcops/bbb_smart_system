@@ -5,7 +5,8 @@
  */
 export type Transport = 'mock' | 'graphql';
 
-export const API_TRANSPORT: Record<'auth' | 'navigation', Transport> = {
+export const API_TRANSPORT: Record<'auth' | 'navigation' | 'work', Transport> = {
   auth: 'mock',
   navigation: 'mock',
+  work: 'mock',
 };

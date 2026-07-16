@@ -14,15 +14,16 @@ import LinearGradient from 'react-native-linear-gradient';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {useAuth} from '../hooks/useAuth';
-import type {AuthStackParamList} from '../navigation/AuthNavigator';
-import LoadingOverlay from '../components/LoadingOverlay';
-import UserIcon from '../components/icons/UserIcon';
-import LockIcon from '../components/icons/LockIcon';
-import EyeIcon from '../components/icons/EyeIcon';
-import ArrowRightIcon from '../components/icons/ArrowRightIcon';
-import GlobeIcon from '../components/icons/GlobeIcon';
-import {theme} from '../theme';
+import {PrimaryButton} from '../../components/ui';
+import {useAuth} from '../../hooks/useAuth';
+import type {AuthStackParamList} from '../../navigation/AuthNavigator';
+import LoadingOverlay from '../../components/LoadingOverlay';
+import UserIcon from '../../components/icons/UserIcon';
+import LockIcon from '../../components/icons/LockIcon';
+import EyeIcon from '../../components/icons/EyeIcon';
+import ArrowRightIcon from '../../components/icons/ArrowRightIcon';
+import GlobeIcon from '../../components/icons/GlobeIcon';
+import {theme} from '../../theme';
 
 const LoginScreen: React.FC = () => {
   const {login, isLoading, error, dismissError} = useAuth();
@@ -166,14 +167,15 @@ const LoginScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              style={[styles.submitBtn, isLoading && styles.disabledBtn]}
+            <PrimaryButton
+              label="Log in"
               onPress={handleLogin}
               disabled={isLoading}
-              activeOpacity={0.85}>
-              <Text style={styles.submitText}>Log in</Text>
-              <ArrowRightIcon size={20} color={theme.colors.white} />
-            </TouchableOpacity>
+              trailingIcon={
+                <ArrowRightIcon size={20} color={theme.colors.white} />
+              }
+              style={styles.submitBtn}
+            />
             </View>
 
             <View style={styles.footer}>
@@ -304,27 +306,7 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     color: theme.colors.primary,
   },
-  submitBtn: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.primary,
-    height: 56,
-    borderRadius: 16,
-    gap: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: theme.spacing.xxl,
-    shadowColor: '#0066B2',
-    shadowOffset: {width: 0, height: 12},
-    shadowOpacity: 0.28,
-    shadowRadius: 13,
-    elevation: 8,
-  },
-  disabledBtn: {opacity: 0.6},
-  submitText: {
-    fontFamily: theme.fonts.bold,
-    color: theme.colors.white,
-    fontSize: theme.fontSize.md,
-  },
+  submitBtn: {marginTop: theme.spacing.xxl},
   footer: {
     paddingTop: theme.spacing.lg,
     alignItems: 'center',

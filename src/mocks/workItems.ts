@@ -1,0 +1,73 @@
+import {QuickAction, WorkItem} from '../types/work';
+
+const ADDRESS = 'Rue Des Hauteurs, Val-David, Quebec J0T 2N0, Canada';
+
+export const MOCK_QUICK_ACTIONS = [
+  {id: 'qa1', label: 'Add Graffiti', tint: '#DCEBFF'},
+  {id: 'qa2', label: 'Add Elevator Check', tint: '#FBE3D6'},
+  {id: 'qa3', label: 'Add Litter Pickup', tint: '#FBEFD1'},
+  {id: 'qa4', label: 'Add Inspection', tint: '#E2E7F5'},
+] satisfies QuickAction[];
+
+export const MOCK_WORK_ITEMS = [
+  {
+    id: '#96211407',
+    category: 'Maintenance',
+    status: 'Open',
+    date: 'February 21, 2026, 10:05 AM',
+    type: 'Alley Cleaning',
+    priority: 'High',
+    assignee: 'Tom Lee',
+    assigneeInitials: 'TL',
+    address: ADDRESS,
+    bucket: 'assigned',
+  },
+  {
+    id: '#96211432',
+    category: 'Maintenance',
+    status: 'In-progress',
+    date: 'February 21, 2026, 10:05 AM',
+    type: 'Alley Cleaning',
+    priority: 'High',
+    assignee: 'Tom Lee',
+    assigneeInitials: 'TL',
+    address: ADDRESS,
+    bucket: 'assigned',
+  },
+  {
+    id: '#96218765',
+    category: 'Maintenance',
+    status: 'Open',
+    date: 'February 20, 2026, 4:12 PM',
+    type: 'Graffiti Removal',
+    priority: 'Medium',
+    assignee: 'Ana Cruz',
+    assigneeInitials: 'AC',
+    address: ADDRESS,
+    bucket: 'assigned',
+  },
+  {
+    id: '#96201180',
+    category: 'Maintenance',
+    status: 'Completed',
+    date: 'February 18, 2026, 9:30 AM',
+    type: 'Litter Pickup',
+    priority: 'Low',
+    assignee: 'Tom Lee',
+    assigneeInitials: 'TL',
+    address: ADDRESS,
+    bucket: 'completed',
+  },
+  {
+    id: '#96200914',
+    category: 'Maintenance',
+    status: 'Completed',
+    date: 'February 17, 2026, 2:45 PM',
+    type: 'Elevator Check',
+    priority: 'Medium',
+    assignee: 'Ana Cruz',
+    assigneeInitials: 'AC',
+    address: ADDRESS,
+    bucket: 'completed',
+  },
+] satisfies WorkItem[];

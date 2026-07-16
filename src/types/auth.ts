@@ -1,3 +1,5 @@
+import {Program, ShiftType} from './shift';
+
 export interface User {
   id: string;
   name: string;
@@ -9,19 +11,6 @@ export interface User {
 
 export interface Session {
   token: string;
-}
-
-export interface Program {
-  id: string;
-  name: string;
-  address: string;
-}
-
-export interface ShiftType {
-  id: string;
-  name: string;
-  // Icon key mapped to a component in the shift-setup screen.
-  icon: string;
 }
 
 export interface AuthState {

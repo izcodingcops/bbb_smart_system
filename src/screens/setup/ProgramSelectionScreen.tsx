@@ -8,17 +8,18 @@ import {
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import ScreenBackground from '../components/ScreenBackground';
+import ScreenBackground from '../../components/ScreenBackground';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {useAuth} from '../hooks/useAuth';
-import type {SetupStackParamList} from '../navigation/SetupNavigator';
-import MapPinIcon from '../components/icons/MapPinIcon';
-import SearchIcon from '../components/icons/SearchIcon';
-import CheckIcon from '../components/icons/CheckIcon';
-import ArrowRightIcon from '../components/icons/ArrowRightIcon';
-import {Program} from '../types/auth';
-import {theme} from '../theme';
+import {PrimaryButton} from '../../components/ui';
+import {useAuth} from '../../hooks/useAuth';
+import type {SetupStackParamList} from '../../navigation/SetupNavigator';
+import MapPinIcon from '../../components/icons/MapPinIcon';
+import SearchIcon from '../../components/icons/SearchIcon';
+import CheckIcon from '../../components/icons/CheckIcon';
+import ArrowRightIcon from '../../components/icons/ArrowRightIcon';
+import {Program} from '../../types/shift';
+import {theme} from '../../theme';
 
 // Show the search field once the assigned list gets long enough to scan.
 const SEARCH_THRESHOLD = 6;
@@ -130,14 +131,13 @@ const ProgramSelectionScreen: React.FC = () => {
           )}
         </ScrollView>
 
-        <TouchableOpacity
-          style={styles.nextBtn}
-          activeOpacity={0.85}
+        <PrimaryButton
+          label="Next"
           onPress={handleNext}
-          disabled={!selectedId}>
-          <Text style={styles.nextText}>Next</Text>
-          <ArrowRightIcon size={20} color={theme.colors.white} />
-        </TouchableOpacity>
+          disabled={!selectedId}
+          trailingIcon={<ArrowRightIcon size={20} color={theme.colors.white} />}
+          style={styles.nextBtn}
+        />
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
@@ -284,25 +284,8 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
   },
   nextBtn: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.primary,
-    height: 56,
-    borderRadius: 16,
-    gap: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginHorizontal: theme.spacing.xxl,
     marginTop: theme.spacing.sm,
-    shadowColor: '#0066B2',
-    shadowOffset: {width: 0, height: 12},
-    shadowOpacity: 0.28,
-    shadowRadius: 13,
-    elevation: 8,
-  },
-  nextText: {
-    fontFamily: theme.fonts.bold,
-    color: theme.colors.white,
-    fontSize: theme.fontSize.md,
   },
   footer: {
     paddingTop: theme.spacing.lg,

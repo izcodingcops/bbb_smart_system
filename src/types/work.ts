@@ -14,3 +14,9 @@ export interface WorkItem {
   address: string;
   bucket: WorkBucket;
 }
+
+export interface QuickAction {
+  id: string;
+  label: string;
+  tint: string;
+}

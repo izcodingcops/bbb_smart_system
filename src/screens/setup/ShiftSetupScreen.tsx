@@ -7,31 +7,32 @@ import {
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import ScreenBackground from '../components/ScreenBackground';
-import TimePickerSheet from '../components/TimePickerSheet';
+import ScreenBackground from '../../components/ScreenBackground';
+import TimePickerSheet from '../../components/TimePickerSheet';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {useAppDispatch} from '../redux/store';
-import {GetActiveProgram, GetShiftTypes} from '../redux/auth/selectors';
-import {startShift} from '../redux/shift/slice';
-import {logout} from '../redux/auth/slice';
-import type {SetupStackParamList} from '../navigation/SetupNavigator';
-import {ShiftType} from '../types/auth';
-import MapPinIcon from '../components/icons/MapPinIcon';
-import ClockIcon from '../components/icons/ClockIcon';
-import PlayIcon from '../components/icons/PlayIcon';
-import CheckIcon from '../components/icons/CheckIcon';
-import ChevronRightIcon from '../components/icons/ChevronRightIcon';
-import ChevronLeftIcon from '../components/icons/ChevronLeftIcon';
-import CleaningIcon from '../components/icons/CleaningIcon';
-import GeneralIcon from '../components/icons/GeneralIcon';
-import HospitalityIcon from '../components/icons/HospitalityIcon';
-import ManagementIcon from '../components/icons/ManagementIcon';
-import OutreachIcon from '../components/icons/OutreachIcon';
-import SafetyIcon from '../components/icons/SafetyIcon';
-import {theme} from '../theme';
-
-const SHIFT_HOURS = 8;
+import {PrimaryButton} from '../../components/ui';
+import {useAppDispatch} from '../../redux/store';
+import {GetActiveProgram, GetShiftTypes} from '../../redux/auth/selectors';
+import {startShift} from '../../redux/shift/slice';
+import {logout} from '../../redux/auth/slice';
+import type {SetupStackParamList} from '../../navigation/SetupNavigator';
+import {ShiftType} from '../../types/shift';
+import MapPinIcon from '../../components/icons/MapPinIcon';
+import ClockIcon from '../../components/icons/ClockIcon';
+import PlayIcon from '../../components/icons/PlayIcon';
+import CheckIcon from '../../components/icons/CheckIcon';
+import ChevronRightIcon from '../../components/icons/ChevronRightIcon';
+import ChevronLeftIcon from '../../components/icons/ChevronLeftIcon';
+import CleaningIcon from '../../components/icons/CleaningIcon';
+import GeneralIcon from '../../components/icons/GeneralIcon';
+import HospitalityIcon from '../../components/icons/HospitalityIcon';
+import ManagementIcon from '../../components/icons/ManagementIcon';
+import OutreachIcon from '../../components/icons/OutreachIcon';
+import SafetyIcon from '../../components/icons/SafetyIcon';
+import {SHIFT_HOURS, SHIFT_MS} from '../../constants/shift';
+import {formatWhen} from '../../utils/time';
+import {theme} from '../../theme';
 
 const SHIFT_ICONS: Record<
   string,
@@ -43,25 +44,6 @@ const SHIFT_ICONS: Record<
   management: ManagementIcon,
   outreach: OutreachIcon,
   safety: SafetyIcon,
-};
-
-const formatWhen = (d: Date): string => {
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(now.getDate() + 1);
-  let day: string;
-  if (d.toDateString() === now.toDateString()) {
-    day = 'Today';
-  } else if (d.toDateString() === tomorrow.toDateString()) {
-    day = 'Tomorrow';
-  } else {
-    day = d.toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
-  }
-  const time = d.toLocaleTimeString(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-  return `${day} · ${time}`;
 };
 
 const ShiftSetupScreen: React.FC = () => {
@@ -79,7 +61,7 @@ const ShiftSetupScreen: React.FC = () => {
   const [manualStopTime, setManualStopTime] = useState<Date | null>(null);
   const [picker, setPicker] = useState<'start' | 'stop' | null>(null);
 
-  const autoStopTime = new Date(startTime.getTime() + SHIFT_HOURS * 3600 * 1000);
+  const autoStopTime = new Date(startTime.getTime() + SHIFT_MS);
   // When auto-end is on the stop time is derived; otherwise the user picks it.
   const stopTime = autoEnd ? autoStopTime : manualStopTime ?? autoStopTime;
   // Multi-program users reach this screen via ProgramSelection (so back/change
@@ -302,14 +284,14 @@ const ShiftSetupScreen: React.FC = () => {
           </TouchableOpacity>
         </ScrollView>
 
-        <TouchableOpacity
-          style={styles.startBtn}
-          activeOpacity={0.85}
+        <PrimaryButton
+          label="Start Shift"
           onPress={handleStart}
-          disabled={!selectedTypeId}>
-          <PlayIcon size={16} color={theme.colors.white} />
-          <Text style={styles.startText}>Start Shift</Text>
-        </TouchableOpacity>
+          disabled={!selectedTypeId}
+          leadingIcon={<PlayIcon size={16} color={theme.colors.white} />}
+          style={styles.startBtn}
+          labelStyle={styles.startText}
+        />
 
         {!cameFromSelection ? (
           <View style={styles.footer}>
@@ -553,24 +535,11 @@ const styles = StyleSheet.create({
     color: theme.colors.textDark,
   },
   startBtn: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.primary,
-    height: 56,
-    borderRadius: 16,
-    gap: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginHorizontal: theme.spacing.xxl,
     marginTop: theme.spacing.sm,
-    shadowColor: '#0066B2',
-    shadowOffset: {width: 0, height: 12},
-    shadowOpacity: 0.28,
-    shadowRadius: 13,
-    elevation: 8,
   },
   startText: {
     fontFamily: theme.fonts.black,
-    color: theme.colors.white,
     fontSize: 17,
     letterSpacing: 0.2,
   },

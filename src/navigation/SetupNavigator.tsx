@@ -1,8 +1,8 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {GetPrograms} from '../redux/selectors';
-import ProgramSelectionScreen from '../screens/ProgramSelectionScreen';
-import ShiftSetupScreen from '../screens/ShiftSetupScreen';
+import ProgramSelectionScreen from '../screens/setup/ProgramSelectionScreen';
+import ShiftSetupScreen from '../screens/setup/ShiftSetupScreen';
 import {theme} from '../theme';
 
 export type SetupStackParamList = {

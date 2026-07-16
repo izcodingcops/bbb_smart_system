@@ -5,8 +5,9 @@ import {useGetMenuItemsQuery} from '../redux/navigation/api';
 import {useAppSelector} from '../redux/store';
 import {fontFamilies} from '../constants/fonts';
 import {theme} from '../theme';
-import HomeScreen from '../screens/HomeScreen';
+import HomeScreen from '../screens/home/HomeScreen';
 import MoreScreen from '../screens/MoreScreen';
+import ComingSoonScreen from '../screens/ComingSoonScreen';
 
 const {LATO} = fontFamilies;
 
@@ -60,7 +61,14 @@ const MainTabNavigator: React.FC = () => {
         />
       );
     }
-    const ActiveScreen = SCREEN_MAP[activeScreen] ?? HomeScreen;
+    const ActiveScreen = SCREEN_MAP[activeScreen];
+    if (!ActiveScreen) {
+      // Menu entry without a screen yet — show a placeholder rather than Home.
+      const label =
+        menuItems.find(i => i.screen_name === activeScreen)?.menu_name ??
+        'Coming soon';
+      return <ComingSoonScreen title={label} />;
+    }
     return <ActiveScreen />;
   };
 

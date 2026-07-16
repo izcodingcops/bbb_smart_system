@@ -1,6 +1,7 @@
 import {useCallback, useState} from 'react';
 import {authService} from '../api/services/auth/authService';
 import {PasswordResetResponse} from '../types/auth';
+import {logger} from '../utils/logger';
 
 /**
  * Drives the forgot-password flow (request code → verify OTP → set new
@@ -10,6 +11,11 @@ import {PasswordResetResponse} from '../types/auth';
 export const usePasswordReset = () => {
   const [isLoading, setIsLoading] = useState(false);
 
+  /**
+   * Runs a service call, translating thrown errors (unimplemented transport,
+   * network failures) into a normal response so callers only branch on
+   * `status` and never face an unhandled rejection.
+   */
   const run = useCallback(
     async (
       fn: () => Promise<PasswordResetResponse>,
@@ -17,6 +23,12 @@ export const usePasswordReset = () => {
       setIsLoading(true);
       try {
         return await fn();
+      } catch (error: any) {
+        logger.error('usePasswordReset', 'Password reset request failed', error);
+        return {
+          status: 500,
+          message: 'Something went wrong. Please try again.',
+        };
       } finally {
         setIsLoading(false);
       }
