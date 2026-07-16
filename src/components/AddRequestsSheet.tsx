@@ -40,6 +40,8 @@ interface Props {
   shiftName: string;
   onSelect: (tileId: string) => void;
   onClose: () => void;
+  /** Fired once the sheet's modal is gone — see BottomSheet's onClosed. */
+  onClosed?: () => void;
 }
 
 const AddRequestsSheet: React.FC<Props> = ({
@@ -47,6 +49,7 @@ const AddRequestsSheet: React.FC<Props> = ({
   shiftName,
   onSelect,
   onClose,
+  onClosed,
 }) => {
   const renderTile = (tile: AddRequestTile) => (
     <TouchableOpacity
@@ -60,7 +63,11 @@ const AddRequestsSheet: React.FC<Props> = ({
   );
 
   return (
-    <BottomSheet visible={visible} title="Add Requests" onClose={onClose}>
+    <BottomSheet
+      visible={visible}
+      title="Add Requests"
+      onClose={onClose}
+      onClosed={onClosed}>
       <Text style={styles.sectionTitle}>Work Log</Text>
       <View style={styles.grid}>
         {renderTile({id: 'work_log', label: shiftName, tint: '#E7F7EC'})}

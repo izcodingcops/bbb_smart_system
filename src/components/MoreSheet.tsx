@@ -32,10 +32,18 @@ interface Props {
   items: MenuItem[];
   onSelect: (screen: string) => void;
   onClose: () => void;
+  /** Fired once the sheet's modal is gone — see BottomSheet's onClosed. */
+  onClosed?: () => void;
 }
 
 /** The "More" tab's menu, grouped into the sections the menu data declares. */
-const MoreSheet: React.FC<Props> = ({visible, items, onSelect, onClose}) => {
+const MoreSheet: React.FC<Props> = ({
+  visible,
+  items,
+  onSelect,
+  onClose,
+  onClosed,
+}) => {
   const handleShareGpsLog = async () => {
     const ok = await locationTracker.shareGpsLog();
     if (!ok) {
@@ -44,7 +52,11 @@ const MoreSheet: React.FC<Props> = ({visible, items, onSelect, onClose}) => {
   };
 
   return (
-    <BottomSheet visible={visible} title="More" onClose={onClose}>
+    <BottomSheet
+      visible={visible}
+      title="More"
+      onClose={onClose}
+      onClosed={onClosed}>
       {GROUPS.map(group => {
         const groupItems = items.filter(
           i => (i.menu_group ?? 'modules') === group.key,

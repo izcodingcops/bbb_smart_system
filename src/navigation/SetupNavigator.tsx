@@ -1,6 +1,7 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {GetPrograms} from '../redux/selectors';
+import {useAppSelector} from '../redux/store';
 import ProgramSelectionScreen from '../screens/setup/ProgramSelectionScreen';
 import ShiftSetupScreen from '../screens/setup/ShiftSetupScreen';
 import {theme} from '../theme';
@@ -13,10 +14,15 @@ export type SetupStackParamList = {
 const Stack = createNativeStackNavigator<SetupStackParamList>();
 
 // Two-step post-login setup: pick a program (only when 2+), then configure the
-// shift. Single-program users start straight at ShiftSetup.
+// shift. Single-program users start straight at ShiftSetup. Arriving here from
+// "Change Shift Type" skips to ShiftSetup, since the program isn't changing.
 const SetupNavigator: React.FC = () => {
   const programs = GetPrograms();
-  const initialRoute = programs.length > 1 ? 'ProgramSelection' : 'ShiftSetup';
+  const setupIntent = useAppSelector(state => state.ui.setupIntent);
+  const initialRoute =
+    setupIntent === 'shift_type' || programs.length <= 1
+      ? 'ShiftSetup'
+      : 'ProgramSelection';
 
   return (
     <Stack.Navigator

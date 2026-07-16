@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Animated,
+  Platform,
   useWindowDimensions,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -17,6 +18,12 @@ interface Props {
   visible: boolean;
   title: string;
   onClose: () => void;
+  /**
+   * Fired once the native modal is really gone. iOS can only present one modal
+   * at a time, so anything that opens another one on the sheet's way out has to
+   * wait for this rather than firing alongside onClose.
+   */
+  onClosed?: () => void;
   children: React.ReactNode;
 }
 
@@ -25,12 +32,23 @@ interface Props {
  * Mount is held until the exit animation finishes, otherwise the Modal would
  * unmount mid-slide and the sheet would vanish instead of retreating.
  */
-const BottomSheet: React.FC<Props> = ({visible, title, onClose, children}) => {
+const BottomSheet: React.FC<Props> = ({
+  visible,
+  title,
+  onClose,
+  onClosed,
+  children,
+}) => {
   const [mounted, setMounted] = useState(visible);
   const [sheetHeight, setSheetHeight] = useState(400);
   const anim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
   const {height: windowHeight} = useWindowDimensions();
+
+  // Read through a ref: the effect below deliberately only tracks `visible`,
+  // so capturing the prop directly would strand an old callback.
+  const onClosedRef = useRef(onClosed);
+  onClosedRef.current = onClosed;
 
   useEffect(() => {
     if (visible) {
@@ -48,6 +66,11 @@ const BottomSheet: React.FC<Props> = ({visible, title, onClose, children}) => {
       }).start(({finished}) => {
         if (finished) {
           setMounted(false);
+          // iOS waits for the Modal's onDismiss instead — dismissal is still
+          // in flight here, and presenting anything now would be dropped.
+          if (Platform.OS !== 'ios') {
+            onClosedRef.current?.();
+          }
         }
       });
     }
@@ -64,7 +87,10 @@ const BottomSheet: React.FC<Props> = ({visible, title, onClose, children}) => {
       transparent
       visible={mounted}
       animationType="none"
-      onRequestClose={onClose}>
+      onRequestClose={onClose}
+      onDismiss={
+        Platform.OS === 'ios' ? () => onClosedRef.current?.() : undefined
+      }>
       <View style={styles.fill}>
         <TouchableWithoutFeedback onPress={onClose}>
           <Animated.View style={[styles.backdrop, {opacity: anim}]} />

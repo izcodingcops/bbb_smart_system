@@ -44,6 +44,7 @@ const HomeScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
+  const [queuedTile, setQueuedTile] = useState<string | null>(null);
 
   const firstName = user?.name?.split(' ')[0] ?? 'there';
   const shiftName = shiftTypes.find(t => t.id === shiftTypeId)?.name ?? 'Shift';
@@ -87,11 +88,20 @@ const HomeScreen: React.FC = () => {
     ]);
   }, [logout]);
 
-  // Placeholder — none of the create/check-in flows have screens yet.
   const handleAddRequest = useCallback((tileId: string) => {
     setAddOpen(false);
-    Alert.alert('Coming soon', `"${tileId}" is not wired up yet.`);
+    setQueuedTile(tileId);
   }, []);
+
+  // Placeholder — none of the create/check-in flows have screens yet. Held
+  // until the sheet's modal is gone, since iOS drops an alert presented while
+  // another modal is still up.
+  const handleAddClosed = useCallback(() => {
+    if (queuedTile) {
+      Alert.alert('Coming soon', `"${queuedTile}" is not wired up yet.`);
+      setQueuedTile(null);
+    }
+  }, [queuedTile]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -139,6 +149,7 @@ const HomeScreen: React.FC = () => {
           shiftName={shiftName}
           onSelect={handleAddRequest}
           onClose={() => setAddOpen(false)}
+          onClosed={handleAddClosed}
         />
       </SafeAreaView>
     </ScreenBackground>

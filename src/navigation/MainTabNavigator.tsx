@@ -2,17 +2,35 @@ import React, {useEffect, useState} from 'react';
 import {Text, TouchableOpacity, View, Image} from 'react-native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useGetMenuItemsQuery} from '../redux/navigation/api';
-import {useAppSelector} from '../redux/store';
+import {useAppDispatch, useAppSelector} from '../redux/store';
+import {SetupIntent, setSetupIntent} from '../redux/ui/slice';
+import {endShift} from '../redux/shift/slice';
+import {GetActiveProgram} from '../redux/auth/selectors';
 import {fontFamilies} from '../constants/fonts';
 import {theme} from '../theme';
 import HomeScreen from '../screens/home/HomeScreen';
 import MoreSheet from '../components/MoreSheet';
+import {ConfirmDialog} from '../components/ui';
 import ComingSoonScreen from '../screens/ComingSoonScreen';
 
 const {LATO} = fontFamilies;
 
 const SCREEN_MAP: Record<string, React.ComponentType<any>> = {
   Home: HomeScreen,
+};
+
+/**
+ * More rows that can't just navigate: changing either of these means ending
+ * the running shift, which drops the app back into the setup flow.
+ */
+const SETUP_INTENTS: Record<string, SetupIntent> = {
+  ChangeProgram: 'program',
+  ChangeShiftType: 'shift_type',
+};
+
+const INTENT_COPY: Record<SetupIntent, string> = {
+  program: 'Switching programs',
+  shift_type: 'Changing shift type',
 };
 
 const ICON_MAP: Record<string, any> = {
@@ -26,9 +44,43 @@ const ICON_MAP: Record<string, any> = {
 const MainTabNavigator: React.FC = () => {
   const {data: menuItems = [], isLoading} = useGetMenuItemsQuery();
   const insets = useSafeAreaInsets();
+  const dispatch = useAppDispatch();
   const tabBarHidden = useAppSelector(state => state.ui.tabBarHidden);
+  const program = GetActiveProgram();
   const [activeScreen, setActiveScreen] = useState<string>('');
   const [moreOpen, setMoreOpen] = useState(false);
+  const [queuedIntent, setQueuedIntent] = useState<SetupIntent | null>(null);
+  const [pendingIntent, setPendingIntent] = useState<SetupIntent | null>(null);
+
+  const handleMoreSelect = (screen: string) => {
+    setMoreOpen(false);
+    const intent = SETUP_INTENTS[screen];
+    if (intent) {
+      // Held until the sheet's modal is gone — see handleMoreClosed.
+      setQueuedIntent(intent);
+    } else {
+      setActiveScreen(screen);
+    }
+  };
+
+  // iOS drops a modal presented while another is still up, so the confirm
+  // dialog can only open once the sheet has actually finished dismissing.
+  const handleMoreClosed = () => {
+    if (queuedIntent) {
+      setPendingIntent(queuedIntent);
+      setQueuedIntent(null);
+    }
+  };
+
+  // Ending the shift is what navigates: AppNavigator swaps to the setup flow
+  // as soon as there's no active shift, and the intent picks the step.
+  const handleEndShift = () => {
+    if (pendingIntent) {
+      dispatch(setSetupIntent(pendingIntent));
+      dispatch(endShift());
+      setPendingIntent(null);
+    }
+  };
 
   useEffect(() => {
     if (menuItems.length > 0 && !activeScreen) {
@@ -175,11 +227,28 @@ const MainTabNavigator: React.FC = () => {
       <MoreSheet
         visible={moreOpen}
         items={moreItems}
-        onSelect={screen => {
-          setMoreOpen(false);
-          setActiveScreen(screen);
-        }}
+        onSelect={handleMoreSelect}
         onClose={() => setMoreOpen(false)}
+        onClosed={handleMoreClosed}
+      />
+
+      <ConfirmDialog
+        visible={pendingIntent !== null}
+        title="End current shift?"
+        message={
+          pendingIntent ? (
+            <Text>
+              {INTENT_COPY[pendingIntent]} will end your current shift on{' '}
+              <Text style={{fontFamily: LATO.black}}>
+                {program?.name ?? 'this program'}
+              </Text>
+              . End the shift to continue?
+            </Text>
+          ) : null
+        }
+        confirmLabel="End Shift"
+        onConfirm={handleEndShift}
+        onCancel={() => setPendingIntent(null)}
       />
     </SafeAreaView>
   );
