@@ -15,6 +15,7 @@ import ShiftTimerCard from './components/ShiftTimerCard';
 import OfflineNotice from './components/OfflineNotice';
 import QuickActions from './components/QuickActions';
 import RecentWork from './components/RecentWork';
+import CheckedInEquipment from './components/CheckedInEquipment';
 import {locationTracker} from '../../utils/locationTracker';
 import {useAuth} from '../../hooks/useAuth';
 import {useAppDispatch} from '../../redux/store';
@@ -25,6 +26,8 @@ import {
   useGetQuickActionsQuery,
   useGetWorkItemsQuery,
 } from '../../redux/work/api';
+import {useGetCheckedInEquipmentQuery} from '../../redux/equipment/api';
+import {EquipmentItem} from '../../types/equipment';
 import {theme} from '../../theme';
 
 // Placeholder — wire to the real sync-queue length once exposed by the tracker.
@@ -40,6 +43,8 @@ const HomeScreen: React.FC = () => {
 
   const {data: workItems = [], refetch: refetchWork} = useGetWorkItemsQuery();
   const {data: quickActions = []} = useGetQuickActionsQuery();
+  const {data: equipment = [], refetch: refetchEquipment} =
+    useGetCheckedInEquipmentQuery();
 
   const [refreshing, setRefreshing] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
@@ -93,6 +98,11 @@ const HomeScreen: React.FC = () => {
     setQueuedTile(tileId);
   }, []);
 
+  // Placeholder — the checkout flow has no screen yet.
+  const handleCheckout = useCallback((item: EquipmentItem) => {
+    Alert.alert('Coming soon', `Checking out ${item.name} is not wired up yet.`);
+  }, []);
+
   // Placeholder — none of the create/check-in flows have screens yet. Held
   // until the sheet's modal is gone, since iOS drops an alert presented while
   // another modal is still up.
@@ -106,8 +116,9 @@ const HomeScreen: React.FC = () => {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     refetchWork();
+    refetchEquipment();
     locationTracker.syncNow();
-  }, [refetchWork]);
+  }, [refetchWork, refetchEquipment]);
 
   return (
     <ScreenBackground style={styles.root}>
@@ -135,6 +146,8 @@ const HomeScreen: React.FC = () => {
           <QuickActions actions={quickActions} />
 
           <RecentWork items={workItems} />
+
+          <CheckedInEquipment items={equipment} onCheckout={handleCheckout} />
         </ScrollView>
 
         <TouchableOpacity

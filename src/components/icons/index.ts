@@ -25,6 +25,7 @@ export {default as MapPinIcon} from './MapPinIcon';
 export {default as OutreachIcon} from './OutreachIcon';
 export {default as PlayIcon} from './PlayIcon';
 export {default as PlusIcon} from './PlusIcon';
+export {default as RadioIcon} from './RadioIcon';
 export {default as RefreshIcon} from './RefreshIcon';
 export {default as SafetyIcon} from './SafetyIcon';
 export {default as SearchIcon} from './SearchIcon';
