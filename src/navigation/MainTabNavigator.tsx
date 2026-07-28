@@ -20,11 +20,13 @@ import HomeScreen from '../screens/home/HomeScreen';
 import MoreSheet from '../components/MoreSheet';
 import {ConfirmDialog} from '../components/ui';
 import ComingSoonScreen from '../screens/ComingSoonScreen';
+import MaintenanceScreen from '../screens/maintenance/MaintenanceScreen';
 
 const {LATO} = fontFamilies;
 
 const SCREEN_MAP: Record<string, React.ComponentType<any>> = {
   Home: HomeScreen,
+  Maintenance: MaintenanceScreen,
 };
 
 /**

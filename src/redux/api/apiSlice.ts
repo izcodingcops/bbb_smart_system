@@ -10,6 +10,6 @@ import {createApi, fakeBaseQuery} from '@reduxjs/toolkit/query/react';
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: fakeBaseQuery<{message: string}>(),
-  tagTypes: ['MenuItems', 'WorkItems', 'QuickActions', 'CheckedInEquipment'],
+  tagTypes: ['MenuItems', 'WorkItems', 'QuickActions', 'CheckedInEquipment', 'MaintenanceRequests'],
   endpoints: () => ({}),
 });
