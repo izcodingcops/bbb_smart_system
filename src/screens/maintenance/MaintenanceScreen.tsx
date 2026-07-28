@@ -248,13 +248,14 @@ const styles = StyleSheet.create({
     paddingBottom: 96,
     gap: theme.spacing.md,
   },
+  // Kept identical to HomeScreen's FAB — same size, radius, offset and shadow.
   fab: {
     position: 'absolute',
     right: theme.spacing.lg,
-    bottom: theme.spacing.lg,
+    bottom: theme.spacing.xxl,
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: 18,
     backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
