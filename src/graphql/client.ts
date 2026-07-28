@@ -41,14 +41,15 @@ const mockLink = new SchemaLink({
 const httpLink = new HttpLink({uri: GRAPHQL_ENDPOINT});
 
 /**
- * Routes each operation by the `feature` its hook put on the context. An
- * operation with no feature stays on the mock, so a forgotten context can never
- * accidentally hit the network.
+ * Routes each operation by the `feature` its hook put on the context.
+ * Anything that is not explicitly set to 'graphql' — no feature, a feature
+ * mapped to 'mock', or an unrecognised feature string — stays on the mock, so
+ * a forgotten context or a typo can never accidentally hit the network.
  */
 const transportLink = ApolloLink.split(
   operation => {
     const feature = operation.getContext().feature as Feature | undefined;
-    return !feature || API_TRANSPORT[feature] === 'mock';
+    return !feature || API_TRANSPORT[feature] !== 'graphql';
   },
   mockLink,
   httpLink,
