@@ -5,16 +5,20 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import AddRequestsSheet from '../../components/AddRequestsSheet';
 import {
   MultiSelectSheet,
   SingleSelectSheet,
   TextField,
 } from '../../components/ui';
-import {SearchIcon, SortIcon} from '../../components/icons';
+import {PlusIcon, SearchIcon, SortIcon} from '../../components/icons';
 import {useGetMaintenanceRequestsQuery} from '../../redux/maintenance/api';
+import {GetShiftTypes} from '../../redux/auth/selectors';
+import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import {
   EMPTY_FILTERS,
   FilterField,
@@ -32,16 +36,28 @@ import {
 import MaintenanceCard from './components/MaintenanceCard';
 import FilterChips, {FIELD_LABEL} from './components/FilterChips';
 import ListSummary from './components/ListSummary';
+import MaintenanceEmptyState from './components/MaintenanceEmptyState';
 import {theme} from '../../theme';
 
 const MaintenanceScreen: React.FC = () => {
-  const {data: requests = [], isLoading} = useGetMaintenanceRequestsQuery();
+  const {
+    data: requests = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useGetMaintenanceRequestsQuery();
 
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('latest');
   const [sortOpen, setSortOpen] = useState(false);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [openFilter, setOpenFilter] = useState<FilterField | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [queuedTile, setQueuedTile] = useState<string | null>(null);
+
+  const shiftTypes = GetShiftTypes();
+  const shiftTypeId = GetActiveShiftTypeId();
+  const shiftName = shiftTypes.find(t => t.id === shiftTypeId)?.name ?? 'Shift';
 
   const visible = useMemo(
     () => applySort(applySearch(applyFilters(requests, filters), search), sort),
@@ -50,6 +66,11 @@ const MaintenanceScreen: React.FC = () => {
 
   const counts = useMemo(() => countByStatus(requests), [requests]);
   const isNarrowed = search.trim().length > 0 || hasAnyFilter(filters);
+
+  const clearSearchAndFilters = () => {
+    setSearch('');
+    setFilters(EMPTY_FILTERS);
+  };
 
   return (
     <View style={styles.root}>
@@ -109,6 +130,32 @@ const MaintenanceScreen: React.FC = () => {
           contentContainerStyle={styles.listContent}
           keyboardShouldPersistTaps="handled"
           renderItem={({item}) => <MaintenanceCard request={item} />}
+          ListEmptyComponent={
+            isError ? (
+              <MaintenanceEmptyState
+                title="Couldn't load maintenance"
+                body="Something went wrong fetching your maintenance requests. Check your connection and try again."
+                actionLabel="Retry"
+                onAction={refetch}
+              />
+            ) : isNarrowed ? (
+              <MaintenanceEmptyState
+                title="No maintenance found"
+                body={
+                  search.trim()
+                    ? `We couldn't find anything for "${search.trim()}". Try a different keyword or clear your filters.`
+                    : 'No maintenance matches these filters. Try clearing them.'
+                }
+                actionLabel="Clear search & filters"
+                onAction={clearSearchAndFilters}
+              />
+            ) : (
+              <MaintenanceEmptyState
+                title="No maintenance to show yet"
+                body="Maintenance will appear when assigned by your supervisor, and you can also create it as needed."
+              />
+            )
+          }
         />
       )}
 
