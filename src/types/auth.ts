@@ -6,7 +6,7 @@ export interface User {
   username: string;
   email?: string;
   avatar?: string;
-  enable_shift_entry?: boolean;
+  enableShiftEntry?: boolean;
 }
 
 export interface Session {
@@ -30,26 +30,56 @@ export interface LoginCredentials {
   login_type: number;
 }
 
-export interface LoginResponse {
-  status: number;
-  message: string;
-  data: {
-    token: string;
-    enable_shift_entry: boolean;
-    id: string | number;
-    name: string;
-    username: string;
-    email?: string;
-    avatar?: string;
-    programs?: Program[];
-    shift_types?: ShiftType[];
-  };
+/* ---------- GraphQL result types ----------
+ * Mirror the unions in src/graphql/features/auth/schema.ts one-for-one.
+ * Hand-written only until the gateway ships an SDL; graphql-codegen then emits
+ * exactly these and this block is deleted. Note the absence of `status`.
+ */
+export interface GqlUser {
+  id: string;
+  name: string;
+  username: string;
+  email: string | null;
+  avatar: string | null;
+  enableShiftEntry: boolean;
+  programs: Program[];
 }
 
-export interface PasswordResetResponse {
-  status: number;
+export interface AuthSession {
+  __typename: 'AuthSession';
+  token: string;
+  user: GqlUser;
+  shiftTypes: ShiftType[];
+}
+export interface InvalidCredentials {
+  __typename: 'InvalidCredentials';
   message: string;
 }
+export interface AccountNotFound {
+  __typename: 'AccountNotFound';
+  message: string;
+}
+export interface InvalidResetCode {
+  __typename: 'InvalidResetCode';
+  message: string;
+}
+export interface PasswordResetRequested {
+  __typename: 'PasswordResetRequested';
+  email: string;
+}
+export interface ResetCodeVerified {
+  __typename: 'ResetCodeVerified';
+  email: string;
+}
+export interface PasswordChanged {
+  __typename: 'PasswordChanged';
+  email: string;
+}
+
+export type LoginResult = AuthSession | InvalidCredentials;
+export type RequestPasswordResetResult = PasswordResetRequested | AccountNotFound;
+export type VerifyResetCodeResult = ResetCodeVerified | InvalidResetCode;
+export type ResetPasswordResult = PasswordChanged | InvalidResetCode | AccountNotFound;
 
 export interface ApiError {
   message: string;

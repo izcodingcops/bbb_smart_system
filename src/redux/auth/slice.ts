@@ -1,8 +1,10 @@
 import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit';
-import {authService} from '../../api/services/auth/authService';
+import {REHYDRATE} from 'redux-persist';
+import {authApi} from '../../graphql/features/auth/hooks';
+import {authToken} from '../../graphql/authToken';
+import {apolloClient} from '../../graphql/client';
 import {locationTracker} from '../../utils/locationTracker';
-import {AuthState, LoginCredentials, User, Session} from '../../types/auth';
-import {Program, ShiftType} from '../../types/shift';
+import {AuthState, LoginCredentials, User} from '../../types/auth';
 
 export const initialAuthState: AuthState = {
   user: null,
@@ -18,22 +20,32 @@ export const initialAuthState: AuthState = {
 export const login = createAsyncThunk(
   'auth/login',
   async (credentials: LoginCredentials, {rejectWithValue}) => {
-    const response = await authService.login(credentials);
-    if (response.status !== 200) {
-      return rejectWithValue(response.message ?? 'Login failed.');
+    const result = await authApi.login(credentials);
+
+    // Not `status !== 200` — the union member IS the outcome, and TypeScript
+    // narrows `result` to InvalidCredentials inside this branch.
+    if (result.__typename !== 'AuthSession') {
+      return rejectWithValue(result.message);
     }
+
+    authToken.set(result.token);
+
     const user: User = {
-      id: String(response.data.id),
-      name: response.data.name,
-      username: response.data.username,
-      email: response.data.email,
-      avatar: response.data.avatar,
-      enable_shift_entry: response.data.enable_shift_entry,
+      id: result.user.id,
+      name: result.user.name,
+      username: result.user.username,
+      // Schema nullables are `null`; app state uses `undefined`.
+      email: result.user.email ?? undefined,
+      avatar: result.user.avatar ?? undefined,
+      enableShiftEntry: result.user.enableShiftEntry,
     };
-    const session: Session = {token: response.data.token};
-    const programs: Program[] = response.data.programs ?? [];
-    const shiftTypes: ShiftType[] = response.data.shift_types ?? [];
-    return {user, session, programs, shiftTypes};
+
+    return {
+      user,
+      session: {token: result.token},
+      programs: result.user.programs,
+      shiftTypes: result.shiftTypes,
+    };
   },
 );
 
@@ -44,6 +56,9 @@ export const logout = createAsyncThunk('auth/logout', async (_: void) => {
     // best-effort; native session gets cleared below regardless
   }
   locationTracker.stopTracking();
+  authToken.set(null);
+  // Drop every cached entity so the next user never sees the previous one's data.
+  await apolloClient.clearStore();
 });
 
 const authSlice = createSlice({
@@ -84,7 +99,19 @@ const authSlice = createSlice({
       .addCase(logout.pending, state => {
         state.isLoading = true;
       })
-      .addCase(logout.fulfilled, () => initialAuthState);
+      .addCase(logout.fulfilled, () => initialAuthState)
+      // A persisted token has to get back into the link on cold start,
+      // otherwise the first request after a relaunch is anonymous.
+      .addMatcher(
+        (action): action is {type: string; payload?: {auth?: AuthState}} =>
+          action.type === REHYDRATE,
+        (_state, action) => {
+          const token = action.payload?.auth?.session?.token;
+          if (token) {
+            authToken.set(token);
+          }
+        },
+      );
   },
 });
 

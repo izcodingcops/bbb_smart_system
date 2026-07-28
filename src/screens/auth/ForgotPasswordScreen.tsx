@@ -36,7 +36,7 @@ const ForgotPasswordScreen: React.FC = () => {
       return;
     }
     const res = await requestCode(value);
-    if (res.status === 200) {
+    if (res.ok) {
       navigation.navigate('VerifyOtp', {email: value});
     } else {
       setError(res.message);

@@ -66,7 +66,7 @@ const CreateNewPasswordScreen: React.FC = () => {
       return;
     }
     const res = await resetPassword(email, code, password);
-    if (res.status === 200) {
+    if (res.ok) {
       Alert.alert(
         'Password reset',
         'Your password has been reset. Please sign in.',

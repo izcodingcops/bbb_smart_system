@@ -89,7 +89,7 @@ const VerifyOtpScreen: React.FC = () => {
       return;
     }
     const res = await verifyCode(email, code);
-    if (res.status === 200) {
+    if (res.ok) {
       navigation.navigate('CreateNewPassword', {email, code});
     } else {
       setError(res.message);
@@ -103,7 +103,7 @@ const VerifyOtpScreen: React.FC = () => {
     setNow(Date.now());
     inputs.current[0]?.focus();
     const res = await requestCode(email);
-    if (res.status !== 200) {
+    if (!res.ok) {
       setError(res.message);
     }
   };

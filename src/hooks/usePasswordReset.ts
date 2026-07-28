@@ -1,34 +1,37 @@
 import {useCallback, useState} from 'react';
-import {authService} from '../api/services/auth/authService';
-import {PasswordResetResponse} from '../types/auth';
+import {authApi} from '../graphql/features/auth/hooks';
 import {logger} from '../utils/logger';
 
+/** What the screens need: did it work, and what to show if not. */
+export interface ResetOutcome {
+  ok: boolean;
+  message: string;
+}
+
 /**
- * Drives the forgot-password flow (request code → verify OTP → set new
- * password) with a shared loading flag. Each call resolves to the service
- * response so screens can branch on status/message.
+ * Drives request code -> verify OTP -> set new password. Each call returns a
+ * union; this is the one place that flattens "which member came back" into the
+ * ok/message pair the screens render, and turns a thrown transport error into
+ * the same shape so callers never face an unhandled rejection.
  */
 export const usePasswordReset = () => {
   const [isLoading, setIsLoading] = useState(false);
 
-  /**
-   * Runs a service call, translating thrown errors (unimplemented transport,
-   * network failures) into a normal response so callers only branch on
-   * `status` and never face an unhandled rejection.
-   */
   const run = useCallback(
     async (
-      fn: () => Promise<PasswordResetResponse>,
-    ): Promise<PasswordResetResponse> => {
+      fn: () => Promise<{__typename: string; message?: string}>,
+      successType: string,
+      successMessage: string,
+    ): Promise<ResetOutcome> => {
       setIsLoading(true);
       try {
-        return await fn();
+        const result = await fn();
+        return result.__typename === successType
+          ? {ok: true, message: successMessage}
+          : {ok: false, message: result.message ?? 'Something went wrong.'};
       } catch (error: any) {
         logger.error('usePasswordReset', 'Password reset request failed', error);
-        return {
-          status: 500,
-          message: 'Something went wrong. Please try again.',
-        };
+        return {ok: false, message: 'Something went wrong. Please try again.'};
       } finally {
         setIsLoading(false);
       }
@@ -37,19 +40,20 @@ export const usePasswordReset = () => {
   );
 
   const requestCode = useCallback(
-    (email: string) => run(() => authService.requestPasswordReset(email)),
+    (email: string) =>
+      run(() => authApi.requestPasswordReset(email), 'PasswordResetRequested', 'Verification code sent.'),
     [run],
   );
 
   const verifyCode = useCallback(
     (email: string, code: string) =>
-      run(() => authService.verifyResetOtp(email, code)),
+      run(() => authApi.verifyResetCode(email, code), 'ResetCodeVerified', 'Code verified.'),
     [run],
   );
 
   const resetPassword = useCallback(
     (email: string, code: string, newPassword: string) =>
-      run(() => authService.resetPassword(email, code, newPassword)),
+      run(() => authApi.resetPassword(email, code, newPassword), 'PasswordChanged', 'Password reset successfully.'),
     [run],
   );
 
