@@ -20,7 +20,15 @@ const PRIORITY_COLOR: Record<MaintenancePriority, string> = {
   Low: '#16A34A',
 };
 
-/** 'Jul 6, 2026 · 08:40 AM' */
+function pad(value: number): string {
+  return String(value).padStart(2, '0');
+}
+
+/**
+ * 'Jul 6, 2026 · 08:40 AM'. The hour is padded by hand because en-US drops a
+ * leading zero from 12-hour times even with `hour: '2-digit'`, which loses the
+ * column alignment the design relies on.
+ */
 function formatRequestedAt(iso: string): string {
   const date = new Date(iso);
   const day = date.toLocaleDateString('en-US', {
@@ -28,12 +36,10 @@ function formatRequestedAt(iso: string): string {
     day: 'numeric',
     year: 'numeric',
   });
-  const time = date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-  });
-  return `${day} · ${time}`;
+  const hours = date.getHours();
+  const suffix = hours >= 12 ? 'PM' : 'AM';
+  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+  return `${day} · ${pad(hour12)}:${pad(date.getMinutes())} ${suffix}`;
 }
 
 interface Props {
