@@ -5,17 +5,9 @@ import {authToken} from '../../graphql/authToken';
 import {apolloClient} from '../../graphql/client';
 import {locationTracker} from '../../utils/locationTracker';
 import {AuthState, LoginCredentials, User} from '../../types/auth';
+import {initialAuthState} from './initialState';
 
-export const initialAuthState: AuthState = {
-  user: null,
-  session: null,
-  programs: [],
-  activeProgramId: null,
-  shiftTypes: [],
-  isLoading: false,
-  error: null,
-  isAuthenticated: false,
-};
+export {initialAuthState};
 
 export const login = createAsyncThunk(
   'auth/login',

@@ -7,6 +7,7 @@
     "graphql:smoke": "tsc --module commonjs --moduleResolution node10 --target es2020 --esModuleInterop --skipLibCheck --outDir .smoke scripts/graphqlSmoke.ts && node .smoke/scripts/graphqlSmoke.js",
     "ios": "react-native run-ios",
     "lint": "eslint .",
+    "migration:smoke": "tsc --module commonjs --moduleResolution node10 --target es2020 --esModuleInterop --skipLibCheck --outDir .smoke scripts/migrationSmoke.ts && node .smoke/scripts/migrationSmoke.js",
     "start": "react-native start"
   },
   "dependencies": {

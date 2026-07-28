@@ -1,14 +1,8 @@
 import {createSlice, PayloadAction} from '@reduxjs/toolkit';
 import {logout} from '../auth/slice';
-import {ShiftState} from '../../types/shift';
+import {initialShiftState} from './initialState';
 
-export const initialShiftState: ShiftState = {
-  shiftTypeId: null,
-  startTime: null,
-  stopTime: null,
-  autoEnd: true,
-  isActive: false,
-};
+export {initialShiftState};
 
 interface StartShiftPayload {
   shiftTypeId: string;

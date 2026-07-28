@@ -1,6 +1,6 @@
 import {MigrationManifest, PersistedState} from 'redux-persist';
-import {initialAuthState} from './auth/slice';
-import {initialShiftState} from './shift/slice';
+import {initialAuthState} from './auth/initialState';
+import {initialShiftState} from './shift/initialState';
 
 /**
  * Bump PERSIST_VERSION and add a migration whenever a persisted slice gains or
@@ -31,21 +31,18 @@ export const migrations: MigrationManifest = {
     if (!previous) {
       return state;
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const {api: _dropped, ...rest} = previous;
+    const rest = {...previous};
+    delete rest.api;
+
     const user = rest.auth?.user;
-    return {
-      ...rest,
-      auth: {
-        ...rest.auth,
-        user: user
-          ? {
-              ...user,
-              enableShiftEntry: user.enableShiftEntry ?? user.enable_shift_entry,
-              enable_shift_entry: undefined,
-            }
-          : user,
-      },
-    } as unknown as PersistedState;
+    if (user) {
+      const nextUser = {...user};
+      nextUser.enableShiftEntry =
+        user.enableShiftEntry ?? user.enable_shift_entry;
+      delete nextUser.enable_shift_entry;
+      rest.auth = {...rest.auth, user: nextUser};
+    }
+
+    return rest as unknown as PersistedState;
   },
 };
