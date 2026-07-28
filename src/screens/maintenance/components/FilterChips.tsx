@@ -76,13 +76,20 @@ const styles = StyleSheet.create({
    * QuickActions is), so without an explicit height it collapses and squeezes
    * the chip labels to nothing while their widths still compute.
    */
-  scroll: {flexGrow: 0, height: CHIP_HEIGHT + theme.spacing.md},
+  scroll: {
+    flexGrow: 0,
+    // Must match the row's chip + vertical padding exactly, or the pills clip.
+    height: CHIP_HEIGHT + theme.spacing.md + theme.spacing.xs,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
     paddingHorizontal: theme.spacing.lg,
+    // Asymmetric on purpose: ListSummary below adds its own top padding, so a
+    // full 12 here would stack into a 24pt gap against the screen's 12 rhythm.
     paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.xs,
   },
   chip: {
     flexDirection: 'row',

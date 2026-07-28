@@ -37,7 +37,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    // Pairs with FilterChips' 4pt bottom padding to make a 12pt gap above,
+    // matching the 12pt gap this leaves below against the first card.
+    paddingTop: theme.spacing.sm,
+    paddingBottom: theme.spacing.md,
   },
   counts: {fontFamily: theme.fonts.black, fontSize: 12, color: '#181B1F'},
   sort: {
