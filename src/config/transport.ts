@@ -1,17 +1,23 @@
 /**
- * Per-feature transport switch. Flip a feature to 'graphql' once its
- * graphql<Feature>Service is wired to a real endpoint. Mock is the default
- * while there is no backend.
+ * Per-feature transport switch. Flip a feature to 'graphql' once the gateway
+ * serves its part of the schema. Both paths execute the same documents, so this
+ * only changes where they run.
  */
 export type Transport = 'mock' | 'graphql';
 
-export const API_TRANSPORT: Record<
-  'auth' | 'navigation' | 'work' | 'equipment' | 'maintenance',
-  Transport
-> = {
+export type Feature =
+  | 'auth'
+  | 'navigation'
+  | 'work'
+  | 'equipment'
+  | 'maintenance';
+
+export const API_TRANSPORT: Record<Feature, Transport> = {
   auth: 'mock',
   navigation: 'mock',
   work: 'mock',
   equipment: 'mock',
   maintenance: 'mock',
 };
+
+export const GRAPHQL_ENDPOINT = 'https://REPLACE_ME/graphql';
