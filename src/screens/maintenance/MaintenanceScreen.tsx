@@ -3,25 +3,34 @@ import {
   View,
   Text,
   FlatList,
+  TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {TextField} from '../../components/ui';
-import {SearchIcon} from '../../components/icons';
+import {
+  MultiSelectSheet,
+  SingleSelectSheet,
+  TextField,
+} from '../../components/ui';
+import {SearchIcon, SortIcon} from '../../components/icons';
 import {useGetMaintenanceRequestsQuery} from '../../redux/maintenance/api';
 import {
   EMPTY_FILTERS,
+  FilterField,
   Filters,
   SORT_LABEL,
+  SORT_OPTIONS,
   SortKey,
   applyFilters,
   applySearch,
   applySort,
   countByStatus,
   hasAnyFilter,
+  optionsForField,
 } from './filtering';
 import MaintenanceCard from './components/MaintenanceCard';
+import FilterChips, {FIELD_LABEL} from './components/FilterChips';
 import ListSummary from './components/ListSummary';
 import {theme} from '../../theme';
 
@@ -29,10 +38,10 @@ const MaintenanceScreen: React.FC = () => {
   const {data: requests = [], isLoading} = useGetMaintenanceRequestsQuery();
 
   const [search, setSearch] = useState('');
-  // Sort and filters become interactive when their sheets land in the next two
-  // tasks; until then the list is always latest-first and unfiltered.
-  const sort: SortKey = 'latest';
-  const filters: Filters = EMPTY_FILTERS;
+  const [sort, setSort] = useState<SortKey>('latest');
+  const [sortOpen, setSortOpen] = useState(false);
+  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [openFilter, setOpenFilter] = useState<FilterField | null>(null);
 
   const visible = useMemo(
     () => applySort(applySearch(applyFilters(requests, filters), search), sort),
@@ -58,8 +67,24 @@ const MaintenanceScreen: React.FC = () => {
             returnKeyType="search"
             leadingIcon={<SearchIcon size={20} />}
           />
+
+          <TouchableOpacity
+            style={[styles.sortButton, sortOpen && styles.sortButtonActive]}
+            activeOpacity={0.8}
+            onPress={() => setSortOpen(true)}>
+            <SortIcon
+              size={20}
+              color={sortOpen ? theme.colors.primary : '#475467'}
+            />
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
+
+      <FilterChips
+        filters={filters}
+        onOpen={setOpenFilter}
+        onClear={field => setFilters(current => ({...current, [field]: []}))}
+      />
 
       {/* Held back while loading, otherwise it flashes "0 Total · 0 Open". */}
       {isLoading ? null : (
@@ -86,6 +111,28 @@ const MaintenanceScreen: React.FC = () => {
           renderItem={({item}) => <MaintenanceCard request={item} />}
         />
       )}
+
+      <SingleSelectSheet
+        visible={sortOpen}
+        title="Sort by"
+        options={SORT_OPTIONS}
+        value={sort}
+        onChange={next => setSort(next as SortKey)}
+        onClose={() => setSortOpen(false)}
+      />
+
+      <MultiSelectSheet
+        visible={openFilter !== null}
+        title={openFilter ? `Filter by ${FIELD_LABEL[openFilter]}` : ''}
+        options={openFilter ? optionsForField(requests, openFilter) : []}
+        value={openFilter ? filters[openFilter] : []}
+        onApply={next => {
+          if (openFilter) {
+            setFilters(current => ({...current, [openFilter]: next}));
+          }
+        }}
+        onClose={() => setOpenFilter(null)}
+      />
     </View>
   );
 };
@@ -108,6 +155,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
   },
   searchField: {flex: 1},
+  sortButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sortButtonActive: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primaryLight,
+  },
   loading: {flex: 1, alignItems: 'center', justifyContent: 'center'},
   listContent: {
     paddingHorizontal: theme.spacing.lg,
