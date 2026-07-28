@@ -31,6 +31,7 @@ export {default as SafetyIcon} from './SafetyIcon';
 export {default as SearchIcon} from './SearchIcon';
 export {default as SendIcon} from './SendIcon';
 export {default as ShieldCheckIcon} from './ShieldCheckIcon';
+export {default as SortIcon} from './SortIcon';
 export {default as SprayCanIcon} from './SprayCanIcon';
 export {default as ToolsIcon} from './ToolsIcon';
 export {default as TrashIcon} from './TrashIcon';
