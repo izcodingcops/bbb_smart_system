@@ -159,6 +159,13 @@ const MaintenanceScreen: React.FC = () => {
         />
       )}
 
+      <TouchableOpacity
+        style={styles.fab}
+        activeOpacity={0.85}
+        onPress={() => setAddOpen(true)}>
+        <PlusIcon size={26} color={theme.colors.white} />
+      </TouchableOpacity>
+
       <SingleSelectSheet
         visible={sortOpen}
         title="Sort by"
@@ -179,6 +186,24 @@ const MaintenanceScreen: React.FC = () => {
           }
         }}
         onClose={() => setOpenFilter(null)}
+      />
+
+      <AddRequestsSheet
+        visible={addOpen}
+        shiftName={shiftName}
+        onSelect={tileId => {
+          setAddOpen(false);
+          // Held until the sheet's modal is gone — iOS drops an alert
+          // presented while another modal is still up.
+          setQueuedTile(tileId);
+        }}
+        onClose={() => setAddOpen(false)}
+        onClosed={() => {
+          if (queuedTile) {
+            Alert.alert('Coming soon', `"${queuedTile}" is not wired up yet.`);
+            setQueuedTile(null);
+          }
+        }}
       />
     </View>
   );
@@ -219,8 +244,21 @@ const styles = StyleSheet.create({
   loading: {flex: 1, alignItems: 'center', justifyContent: 'center'},
   listContent: {
     paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xxl,
+    // Clears the FAB so the last card isn't trapped under it.
+    paddingBottom: 96,
     gap: theme.spacing.md,
+  },
+  fab: {
+    position: 'absolute',
+    right: theme.spacing.lg,
+    bottom: theme.spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...theme.shadow.fab,
   },
 });
 
