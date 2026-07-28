@@ -1,5 +1,11 @@
 import React from 'react';
-import {Text, TouchableOpacity, ScrollView, StyleSheet} from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
 import {FilterField, Filters, QUEUED_OFFLINE_VALUE} from '../filtering';
 import {theme} from '../../../theme';
 
@@ -37,11 +43,12 @@ interface Props {
 }
 
 const FilterChips: React.FC<Props> = ({filters, onOpen, onClear}) => (
-  <ScrollView
-    horizontal
-    showsHorizontalScrollIndicator={false}
-    style={styles.scroll}
-    contentContainerStyle={styles.row}>
+  <View style={styles.wrap}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.scroll}
+      contentContainerStyle={styles.row}>
     {FIELDS.map(field => {
       const selected = filters[field];
       const active = selected.length > 0;
@@ -65,31 +72,35 @@ const FilterChips: React.FC<Props> = ({filters, onOpen, onClear}) => (
           ) : null}
         </TouchableOpacity>
       );
-    })}
-  </ScrollView>
+      })}
+    </ScrollView>
+  </View>
 );
 
 const styles = StyleSheet.create({
   /**
-   * A horizontal ScrollView has no intrinsic height, and this one is a direct
-   * child of the screen's flex column rather than of a vertical ScrollView (as
-   * QuickActions is), so without an explicit height it collapses and squeezes
-   * the chip labels to nothing while their widths still compute.
+   * The wrapper owns all vertical spacing so the ScrollView can be exactly one
+   * chip tall. Putting padding inside the scroll's content container instead
+   * means its height and that padding have to sum perfectly — they don't
+   * survive RN's layout, and the pills get squashed and clipped.
+   *
+   * The explicit height is still required: a horizontal ScrollView has no
+   * intrinsic height, and this one is a direct child of the screen's flex
+   * column rather than of a vertical ScrollView (as QuickActions is), so
+   * without it the row collapses entirely.
    */
-  scroll: {
-    flexGrow: 0,
-    // Must match the row's chip + vertical padding exactly, or the pills clip.
-    height: CHIP_HEIGHT + theme.spacing.xl + theme.spacing.sm,
+  wrap: {
+    paddingTop: theme.spacing.xl,
+    // ListSummary adds its own 12 on top, making the 20pt rhythm the header
+    // block uses throughout.
+    paddingBottom: theme.spacing.sm,
   },
+  scroll: {flexGrow: 0, height: CHIP_HEIGHT},
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
     paddingHorizontal: theme.spacing.lg,
-    // Asymmetric on purpose: ListSummary adds its own 12 on top, so these 8
-    // combine to the 20pt rhythm the header block uses throughout.
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.sm,
   },
   chip: {
     flexDirection: 'row',
