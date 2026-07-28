@@ -6,11 +6,12 @@
 export type Transport = 'mock' | 'graphql';
 
 export const API_TRANSPORT: Record<
-  'auth' | 'navigation' | 'work' | 'equipment',
+  'auth' | 'navigation' | 'work' | 'equipment' | 'maintenance',
   Transport
 > = {
   auth: 'mock',
   navigation: 'mock',
   work: 'mock',
   equipment: 'mock',
+  maintenance: 'mock',
 };

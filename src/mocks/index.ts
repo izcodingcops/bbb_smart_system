@@ -4,3 +4,4 @@ export * from './programs';
 export * from './shiftTypes';
 export * from './users';
 export * from './workItems';
+export * from './maintenance';

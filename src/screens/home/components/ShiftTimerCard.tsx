@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Svg, {Defs, RadialGradient, Rect, Stop} from 'react-native-svg';
@@ -18,7 +18,6 @@ interface Props {
 const ShiftTimerCard: React.FC<Props> = ({shiftName, onEnd}) => {
   const {startDate, elapsedMs, remainingMs, progress, paused, toggleBreak} =
     useShiftTimer();
-  const [size, setSize] = useState({w: 0, h: 0});
 
   return (
     <View style={styles.shadow}>
@@ -26,43 +25,38 @@ const ShiftTimerCard: React.FC<Props> = ({shiftName, onEnd}) => {
         colors={['#1E72C4', '#0A5AAB']}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
-        style={styles.card}
-        onLayout={e =>
-          setSize({
-            w: e.nativeEvent.layout.width,
-            h: e.nativeEvent.layout.height,
-          })
-        }>
-        {size.w > 0 ? (
-          <Svg
-            width={size.w}
-            height={size.h}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none">
-            <Defs>
-              <RadialGradient
-                id="shiftGlowA"
-                cx={size.w * 0.2}
-                cy={size.h * 0.05}
-                r={size.w * 0.5}
-                gradientUnits="userSpaceOnUse">
-                <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.32} />
-                <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
-              </RadialGradient>
-              <RadialGradient
-                id="shiftGlowB"
-                cx={size.w * 0.92}
-                cy={size.h * 0.95}
-                r={size.w * 0.42}
-                gradientUnits="userSpaceOnUse">
-                <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.14} />
-                <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
-              </RadialGradient>
-            </Defs>
-            <Rect width={size.w} height={size.h} fill="url(#shiftGlowA)" />
-            <Rect width={size.w} height={size.h} fill="url(#shiftGlowB)" />
-          </Svg>
-        ) : null}
+        style={styles.card}>
+        {/*
+         * Glow is drawn in objectBoundingBox units (cx/cy/r as 0–1 fractions of
+         * this Svg) so it paints in the same first frame as the gradient above,
+         * instead of popping in after an onLayout measurement pass.
+         */}
+        <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
+          <Defs>
+            <RadialGradient id="shiftGlowA" cx="0.2" cy="0.05" r="0.5">
+              <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.32} />
+              <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
+            </RadialGradient>
+            <RadialGradient id="shiftGlowB" cx="0.92" cy="0.95" r="0.42">
+              <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.14} />
+              <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Rect
+            x="0"
+            y="0"
+            width="100%"
+            height="100%"
+            fill="url(#shiftGlowA)"
+          />
+          <Rect
+            x="0"
+            y="0"
+            width="100%"
+            height="100%"
+            fill="url(#shiftGlowB)"
+          />
+        </Svg>
 
         <View style={styles.inner}>
           <View style={styles.top}>
