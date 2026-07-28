@@ -25,8 +25,8 @@ import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import {
   useGetQuickActionsQuery,
   useGetWorkItemsQuery,
-} from '../../redux/work/api';
-import {useGetCheckedInEquipmentQuery} from '../../redux/equipment/api';
+} from '../../graphql/features/work/hooks';
+import {useGetCheckedInEquipmentQuery} from '../../graphql/features/equipment/hooks';
 import {EquipmentItem} from '../../types/equipment';
 import {theme} from '../../theme';
 
