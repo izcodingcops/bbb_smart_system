@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useGetMaintenanceRequestsQuery} from '../../redux/maintenance/api';
+import MaintenanceCard from './components/MaintenanceCard';
 import {theme} from '../../theme';
 
 const MaintenanceScreen: React.FC = () => {
@@ -29,11 +30,7 @@ const MaintenanceScreen: React.FC = () => {
           data={requests}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
-          renderItem={({item}) => (
-            <Text style={styles.placeholderRow}>
-              {item.id} — {item.type} — {item.status}
-            </Text>
-          )}
+          renderItem={({item}) => <MaintenanceCard request={item} />}
         />
       )}
     </View>
@@ -55,12 +52,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.xxl,
-    gap: theme.spacing.sm,
-  },
-  placeholderRow: {
-    fontFamily: theme.fonts.bold,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
+    gap: theme.spacing.md,
   },
 });
 
