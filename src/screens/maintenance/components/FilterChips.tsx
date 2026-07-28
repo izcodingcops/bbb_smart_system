@@ -12,6 +12,8 @@ export const FIELD_LABEL: Record<FilterField, string> = {
 
 const FIELDS: FilterField[] = ['type', 'businessName', 'priority', 'status'];
 
+const CHIP_HEIGHT = 36;
+
 /**
  * One selected value reads in full ('Priority · High'); more than one collapses
  * to a count, since the chip row can't grow sideways forever.
@@ -38,6 +40,7 @@ const FilterChips: React.FC<Props> = ({filters, onOpen, onClear}) => (
   <ScrollView
     horizontal
     showsHorizontalScrollIndicator={false}
+    style={styles.scroll}
     contentContainerStyle={styles.row}>
     {FIELDS.map(field => {
       const selected = filters[field];
@@ -67,8 +70,16 @@ const FilterChips: React.FC<Props> = ({filters, onOpen, onClear}) => (
 );
 
 const styles = StyleSheet.create({
+  /**
+   * A horizontal ScrollView has no intrinsic height, and this one is a direct
+   * child of the screen's flex column rather than of a vertical ScrollView (as
+   * QuickActions is), so without an explicit height it collapses and squeezes
+   * the chip labels to nothing while their widths still compute.
+   */
+  scroll: {flexGrow: 0, height: CHIP_HEIGHT + theme.spacing.md},
   row: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: theme.spacing.sm,
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.md,
@@ -76,13 +87,13 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
+    height: CHIP_HEIGHT,
     gap: 6,
     borderWidth: 1,
     borderColor: theme.colors.borderLight,
     backgroundColor: theme.colors.white,
     borderRadius: 999,
     paddingHorizontal: 14,
-    paddingVertical: 9,
   },
   chipActive: {
     borderColor: theme.colors.primary,
