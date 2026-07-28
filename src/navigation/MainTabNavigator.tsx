@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import ScreenBackground from '../components/ScreenBackground';
-import {useGetMenuItemsQuery} from '../redux/navigation/api';
+import {useGetMenuItemsQuery} from '../graphql/features/navigation/hooks';
 import {useAppDispatch, useAppSelector} from '../redux/store';
 import {SetupIntent, setSetupIntent} from '../redux/ui/slice';
 import {endShift} from '../redux/shift/slice';
