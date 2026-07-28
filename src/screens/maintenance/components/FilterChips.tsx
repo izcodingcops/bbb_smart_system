@@ -100,7 +100,10 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderLight,
     backgroundColor: theme.colors.white,
     borderRadius: 999,
-    paddingHorizontal: 14,
+    // 12 rather than 14: with one chip active the row lands within a few points
+    // of the screen width, and the wider padding tipped it just over — eating
+    // the trailing padding so the last chip jammed against the edge.
+    paddingHorizontal: theme.spacing.md,
   },
   chipActive: {
     borderColor: theme.colors.primary,
