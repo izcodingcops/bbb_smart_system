@@ -55,7 +55,11 @@ export const logout = createAsyncThunk('auth/logout', async (_: void) => {
   } catch {
     // best-effort; native session gets cleared below regardless
   }
-  locationTracker.stopTracking();
+  try {
+    locationTracker.stopTracking();
+  } catch {
+    // best-effort; the teardown below must happen regardless
+  }
   authToken.set(null);
   // Drop every cached entity so the next user never sees the previous one's data.
   await apolloClient.clearStore();
@@ -100,6 +104,7 @@ const authSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(logout.fulfilled, () => initialAuthState)
+      .addCase(logout.rejected, () => initialAuthState)
       // A persisted token has to get back into the link on cold start,
       // otherwise the first request after a relaunch is anonymous.
       .addMatcher(
