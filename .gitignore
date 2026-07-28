@@ -88,3 +88,6 @@ graphify-out/
 # git worktrees
 .worktrees/
 docs/superpowers/specs/
+
+# graphql smoke runner output
+.smoke/
