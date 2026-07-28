@@ -1,0 +1,153 @@
+import {MaintenanceRequest} from '../../types/maintenance';
+
+export type SortKey = 'latest' | 'oldest' | 'type-asc' | 'type-desc';
+export type FilterField = 'type' | 'businessName' | 'priority' | 'status';
+export type Filters = Record<FilterField, string[]>;
+
+export const EMPTY_FILTERS: Filters = {
+  type: [],
+  businessName: [],
+  priority: [],
+  status: [],
+};
+
+export const SORT_OPTIONS: {value: SortKey; label: string}[] = [
+  {value: 'latest', label: 'Latest first'},
+  {value: 'oldest', label: 'Oldest first'},
+  {value: 'type-asc', label: 'Type A → Z'},
+  {value: 'type-desc', label: 'Type Z → A'},
+];
+
+/** Short form shown on the right of the summary line. */
+export const SORT_LABEL: Record<SortKey, string> = {
+  latest: 'Latest',
+  oldest: 'Oldest',
+  'type-asc': 'Type A → Z',
+  'type-desc': 'Type Z → A',
+};
+
+/**
+ * The status sheet offers a fourth option that isn't a status at all — it
+ * matches records flagged `queuedOffline`. Kept as a sentinel so the rest of
+ * the filter code can stay a plain string comparison.
+ */
+export const QUEUED_OFFLINE_VALUE = '__queued_offline__';
+
+const STATUS_OPTIONS = [
+  {value: 'Open', label: 'Open'},
+  {value: 'In-progress', label: 'In-progress'},
+  {value: 'Completed', label: 'Completed'},
+  {value: QUEUED_OFFLINE_VALUE, label: 'Queued (offline)'},
+];
+
+const PRIORITY_OPTIONS = [
+  {value: 'High', label: 'High'},
+  {value: 'Medium', label: 'Medium'},
+  {value: 'Low', label: 'Low'},
+];
+
+/**
+ * Type and Business Name come from the loaded records so they stay correct as
+ * data changes; Status and Priority use their fixed unions so an option never
+ * disappears just because nothing currently has that value.
+ */
+export function optionsForField(
+  requests: MaintenanceRequest[],
+  field: FilterField,
+): {value: string; label: string}[] {
+  if (field === 'status') {
+    return STATUS_OPTIONS;
+  }
+  if (field === 'priority') {
+    return PRIORITY_OPTIONS;
+  }
+  const values = Array.from(new Set(requests.map(r => r[field]))).sort();
+  return values.map(value => ({value, label: value}));
+}
+
+function matchesField(
+  request: MaintenanceRequest,
+  field: FilterField,
+  selected: string[],
+): boolean {
+  if (selected.length === 0) {
+    return true;
+  }
+  if (field === 'status') {
+    return selected.some(value =>
+      value === QUEUED_OFFLINE_VALUE
+        ? request.queuedOffline
+        : request.status === value,
+    );
+  }
+  return selected.includes(request[field]);
+}
+
+/** AND across fields, OR within a field. */
+export function applyFilters(
+  requests: MaintenanceRequest[],
+  filters: Filters,
+): MaintenanceRequest[] {
+  return requests.filter(request =>
+    (Object.keys(filters) as FilterField[]).every(field =>
+      matchesField(request, field, filters[field]),
+    ),
+  );
+}
+
+/**
+ * Matches id and type only. The placeholder's "ID or name" means the request's
+ * own name — business is reachable through its own chip, and including it here
+ * would make one business name return every request at that location.
+ */
+export function applySearch(
+  requests: MaintenanceRequest[],
+  search: string,
+): MaintenanceRequest[] {
+  const query = search.trim().toLowerCase();
+  if (!query) {
+    return requests;
+  }
+  return requests.filter(
+    request =>
+      request.id.toLowerCase().includes(query) ||
+      request.type.toLowerCase().includes(query),
+  );
+}
+
+export function applySort(
+  requests: MaintenanceRequest[],
+  sort: SortKey,
+): MaintenanceRequest[] {
+  const sorted = [...requests];
+  switch (sort) {
+    case 'latest':
+      return sorted.sort(
+        (a, b) => Date.parse(b.requestedAt) - Date.parse(a.requestedAt),
+      );
+    case 'oldest':
+      return sorted.sort(
+        (a, b) => Date.parse(a.requestedAt) - Date.parse(b.requestedAt),
+      );
+    case 'type-asc':
+      return sorted.sort((a, b) => a.type.localeCompare(b.type));
+    case 'type-desc':
+      return sorted.sort((a, b) => b.type.localeCompare(a.type));
+  }
+}
+
+export function countByStatus(requests: MaintenanceRequest[]): {
+  open: number;
+  inProgress: number;
+} {
+  return {
+    open: requests.filter(r => r.status === 'Open').length,
+    inProgress: requests.filter(r => r.status === 'In-progress').length,
+  };
+}
+
+export function hasAnyFilter(filters: Filters): boolean {
+  return (Object.keys(filters) as FilterField[]).some(
+    field => filters[field].length > 0,
+  );
+}
