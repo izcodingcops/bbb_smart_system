@@ -16,7 +16,7 @@ import {
   TextField,
 } from '../../components/ui';
 import {PlusIcon, SearchIcon, SortIcon} from '../../components/icons';
-import {useGetMaintenanceRequestsQuery} from '../../redux/maintenance/api';
+import {useGetMaintenanceRequestsQuery} from '../../graphql/features/maintenance/hooks';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import {
