@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {formatDateTime} from '../../components/ui';
+import {ConfirmDialog, formatDateTime} from '../../components/ui';
 import {
   ChevronLeftIcon,
   EditIcon,
@@ -17,8 +17,15 @@ import {
   MessageSquareIcon,
   TrashIcon,
 } from '../../components/icons';
-import {useGetMaintenanceRequestQuery} from '../../graphql/features/maintenance/hooks';
-import {MaintenanceStatus} from '../../types/maintenance';
+import {
+  useAddMaintenanceCommentMutation,
+  useDeleteMaintenanceCommentMutation,
+  useGetMaintenanceRequestQuery,
+  useUpdateMaintenanceCommentMutation,
+} from '../../graphql/features/maintenance/hooks';
+import {MaintenanceComment, MaintenanceStatus} from '../../types/maintenance';
+import CommentList from './components/CommentList';
+import CommentSheet from './components/CommentSheet';
 import {theme} from '../../theme';
 
 const STATUS_STYLE: Record<MaintenanceStatus, {bg: string; fg: string}> = {
@@ -59,6 +66,14 @@ interface Props {
 
 const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose}) => {
   const {data: detail, isLoading} = useGetMaintenanceRequestQuery(id);
+  const [commentSheetOpen, setCommentSheetOpen] = useState(false);
+  const [editingComment, setEditingComment] =
+    useState<MaintenanceComment | null>(null);
+  const [deletingComment, setDeletingComment] =
+    useState<MaintenanceComment | null>(null);
+  const {mutate: addComment} = useAddMaintenanceCommentMutation();
+  const {mutate: updateComment} = useUpdateMaintenanceCommentMutation();
+  const {mutate: deleteComment} = useDeleteMaintenanceCommentMutation();
 
   if (isLoading || !detail) {
     return (
@@ -108,7 +123,10 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose}) => {
           <TouchableOpacity
             style={styles.commentButton}
             activeOpacity={0.85}
-            onPress={() => {}}>
+            onPress={() => {
+              setEditingComment(null);
+              setCommentSheetOpen(true);
+            }}>
             <MessageSquareIcon size={17} />
             <Text style={styles.commentButtonText}>Add comment</Text>
           </TouchableOpacity>
@@ -208,7 +226,46 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose}) => {
             />
           </View>
         </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Comment</Text>
+          <CommentList
+            comments={detail.comments}
+            onEdit={comment => {
+              setEditingComment(comment);
+              setCommentSheetOpen(true);
+            }}
+            onDelete={setDeletingComment}
+          />
+        </View>
       </ScrollView>
+
+      <CommentSheet
+        visible={commentSheetOpen}
+        comment={editingComment}
+        onSubmit={(text, images) => {
+          if (editingComment) {
+            updateComment(detail.id, editingComment.id, text, images);
+          } else {
+            addComment(detail.id, text, images);
+          }
+        }}
+        onClose={() => setCommentSheetOpen(false)}
+      />
+
+      <ConfirmDialog
+        visible={deletingComment !== null}
+        title="Delete this comment?"
+        message="The comment and any images attached to it will be removed."
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (deletingComment) {
+            deleteComment(detail.id, deletingComment.id);
+          }
+          setDeletingComment(null);
+        }}
+        onCancel={() => setDeletingComment(null)}
+      />
     </View>
   );
 };
