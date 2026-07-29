@@ -34,6 +34,7 @@ import {
   optionsForField,
 } from './filtering';
 import MaintenanceCard from './components/MaintenanceCard';
+import DateRangeSheet from './components/DateRangeSheet';
 import FilterChips, {FIELD_LABEL} from './components/FilterChips';
 import ListSummary from './components/ListSummary';
 import MaintenanceEmptyState from './components/MaintenanceEmptyState';
@@ -176,15 +177,25 @@ const MaintenanceScreen: React.FC = () => {
       />
 
       <MultiSelectSheet
-        visible={openFilter !== null}
+        visible={openFilter !== null && openFilter !== 'dateRange'}
         title={openFilter ? `Filter by ${FIELD_LABEL[openFilter]}` : ''}
         options={openFilter ? optionsForField(requests, openFilter) : []}
         value={openFilter ? filters[openFilter] : []}
+        searchable={openFilter === 'type' || openFilter === 'businessName'}
         onApply={next => {
           if (openFilter) {
             setFilters(current => ({...current, [openFilter]: next}));
           }
         }}
+        onClose={() => setOpenFilter(null)}
+      />
+
+      <DateRangeSheet
+        visible={openFilter === 'dateRange'}
+        value={filters.dateRange[0] ?? null}
+        onApply={next =>
+          setFilters(current => ({...current, dateRange: next ? [next] : []}))
+        }
         onClose={() => setOpenFilter(null)}
       />
 

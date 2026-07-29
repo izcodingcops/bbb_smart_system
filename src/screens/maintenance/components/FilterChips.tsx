@@ -6,7 +6,7 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
-import {FilterField, Filters, QUEUED_OFFLINE_VALUE} from '../filtering';
+import {FilterField, Filters, formatFilterValue} from '../filtering';
 import {theme} from '../../../theme';
 
 export const FIELD_LABEL: Record<FilterField, string> = {
@@ -14,9 +14,21 @@ export const FIELD_LABEL: Record<FilterField, string> = {
   businessName: 'Business Name',
   priority: 'Priority',
   status: 'Status',
+  dateRange: 'Date Range',
+  completedBy: 'Completed By',
+  assignedTo: 'Assigned To',
 };
 
-const FIELDS: FilterField[] = ['type', 'businessName', 'priority', 'status'];
+// The design's chip order.
+const FIELDS: FilterField[] = [
+  'type',
+  'businessName',
+  'priority',
+  'status',
+  'dateRange',
+  'completedBy',
+  'assignedTo',
+];
 
 const CHIP_HEIGHT = 36;
 
@@ -31,9 +43,7 @@ function chipLabel(field: FilterField, selected: string[]): string {
   if (selected.length > 1) {
     return `${FIELD_LABEL[field]} · ${selected.length}`;
   }
-  const value =
-    selected[0] === QUEUED_OFFLINE_VALUE ? 'Queued (offline)' : selected[0];
-  return `${FIELD_LABEL[field]} · ${value}`;
+  return `${FIELD_LABEL[field]} · ${formatFilterValue(field, selected[0])}`;
 }
 
 interface Props {

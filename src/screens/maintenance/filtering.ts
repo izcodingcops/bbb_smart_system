@@ -1,7 +1,14 @@
 import {MaintenanceRequest} from '../../types/maintenance';
 
 export type SortKey = 'latest' | 'oldest' | 'type-asc' | 'type-desc';
-export type FilterField = 'type' | 'businessName' | 'priority' | 'status';
+export type FilterField =
+  | 'type'
+  | 'businessName'
+  | 'priority'
+  | 'status'
+  | 'dateRange'
+  | 'completedBy'
+  | 'assignedTo';
 export type Filters = Record<FilterField, string[]>;
 
 export const EMPTY_FILTERS: Filters = {
@@ -9,6 +16,9 @@ export const EMPTY_FILTERS: Filters = {
   businessName: [],
   priority: [],
   status: [],
+  dateRange: [],
+  completedBy: [],
+  assignedTo: [],
 };
 
 export const SORT_OPTIONS: {value: SortKey; label: string}[] = [
@@ -33,6 +43,11 @@ export const SORT_LABEL: Record<SortKey, string> = {
  */
 export const QUEUED_OFFLINE_VALUE = '__queued_offline__';
 
+/** Same trick for "Assigned To → Unassigned", which is `assignee === null`. */
+export const UNASSIGNED_VALUE = '__unassigned__';
+
+export const CUSTOM_RANGE_VALUE = 'custom';
+
 const STATUS_OPTIONS = [
   {value: 'Open', label: 'Open'},
   {value: 'In-progress', label: 'In-progress'},
@@ -46,10 +61,77 @@ const PRIORITY_OPTIONS = [
   {value: 'Low', label: 'Low'},
 ];
 
+export const DATE_RANGE_OPTIONS = [
+  {value: 'today', label: 'Today'},
+  {value: 'yesterday', label: 'Yesterday'},
+  {value: 'last7', label: 'Last 7 days'},
+  {value: 'last30', label: 'Last 30 days'},
+  {value: 'thisMonth', label: 'This month'},
+  {value: CUSTOM_RANGE_VALUE, label: 'Custom range…'},
+];
+
 /**
- * Type and Business Name come from the loaded records so they stay correct as
- * data changes; Status and Priority use their fixed unions so an option never
- * disappears just because nothing currently has that value.
+ * A chosen custom range rides inside the same `string[]` as every other filter,
+ * encoded as `custom:2026-07-01:2026-07-05`. That keeps `Filters` a plain
+ * Record and spares every call site an extra parameter.
+ */
+export function encodeCustomRange(from: string, to: string): string {
+  return `${CUSTOM_RANGE_VALUE}:${from}:${to}`;
+}
+
+export function parseCustomRange(
+  value: string,
+): {from: string; to: string} | null {
+  const parts = value.split(':');
+  if (parts.length !== 3 || parts[0] !== CUSTOM_RANGE_VALUE) {
+    return null;
+  }
+  return {from: parts[1], to: parts[2]};
+}
+
+/** Midnight today, in the device's own timezone. */
+function startOfToday(): Date {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return now;
+}
+
+function matchesDateRange(request: MaintenanceRequest, value: string): boolean {
+  const at = new Date(request.requestedAt);
+  const custom = parseCustomRange(value);
+  if (custom) {
+    const from = new Date(`${custom.from}T00:00:00`);
+    const to = new Date(`${custom.to}T23:59:59`);
+    return at >= from && at <= to;
+  }
+
+  const today = startOfToday();
+  const dayMs = 24 * 60 * 60 * 1000;
+  switch (value) {
+    case 'today':
+      return at >= today;
+    case 'yesterday':
+      return at >= new Date(today.getTime() - dayMs) && at < today;
+    case 'last7':
+      return at >= new Date(today.getTime() - 7 * dayMs);
+    case 'last30':
+      return at >= new Date(today.getTime() - 30 * dayMs);
+    case 'thisMonth':
+      return (
+        at.getFullYear() === today.getFullYear() &&
+        at.getMonth() === today.getMonth()
+      );
+    // A bare 'custom' with no dates picked yet matches everything.
+    default:
+      return true;
+  }
+}
+
+/**
+ * Type, Business Name, Completed By and Assigned To come from the loaded
+ * records so they stay correct as data changes; Status, Priority and Date Range
+ * use fixed lists so an option never disappears just because nothing currently
+ * has that value.
  */
 export function optionsForField(
   requests: MaintenanceRequest[],
@@ -60,6 +142,26 @@ export function optionsForField(
   }
   if (field === 'priority') {
     return PRIORITY_OPTIONS;
+  }
+  if (field === 'dateRange') {
+    return DATE_RANGE_OPTIONS;
+  }
+  if (field === 'completedBy') {
+    const names = Array.from(
+      new Set(requests.map(r => r.completedBy).filter((n): n is string => !!n)),
+    ).sort();
+    return names.map(value => ({value, label: value}));
+  }
+  if (field === 'assignedTo') {
+    const names = Array.from(
+      new Set(
+        requests.map(r => r.assignee?.name).filter((n): n is string => !!n),
+      ),
+    ).sort();
+    return [
+      ...names.map(value => ({value, label: value})),
+      {value: UNASSIGNED_VALUE, label: 'Unassigned'},
+    ];
   }
   const values = Array.from(new Set(requests.map(r => r[field]))).sort();
   return values.map(value => ({value, label: value}));
@@ -78,6 +180,19 @@ function matchesField(
       value === QUEUED_OFFLINE_VALUE
         ? request.queuedOffline
         : request.status === value,
+    );
+  }
+  if (field === 'dateRange') {
+    return selected.some(value => matchesDateRange(request, value));
+  }
+  if (field === 'completedBy') {
+    return !!request.completedBy && selected.includes(request.completedBy);
+  }
+  if (field === 'assignedTo') {
+    return selected.some(value =>
+      value === UNASSIGNED_VALUE
+        ? !request.assignee
+        : request.assignee?.name === value,
     );
   }
   return selected.includes(request[field]);
@@ -150,4 +265,32 @@ export function hasAnyFilter(filters: Filters): boolean {
   return (Object.keys(filters) as FilterField[]).some(
     field => filters[field].length > 0,
   );
+}
+
+/** 'Jul 1' — short form used inside a custom-range chip. */
+function shortDate(isoDate: string): string {
+  return new Date(`${isoDate}T00:00:00`).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+/** Turns a stored filter value into what the chip and sheet should show. */
+export function formatFilterValue(field: FilterField, value: string): string {
+  if (value === QUEUED_OFFLINE_VALUE) {
+    return 'Queued (offline)';
+  }
+  if (value === UNASSIGNED_VALUE) {
+    return 'Unassigned';
+  }
+  if (field === 'dateRange') {
+    const custom = parseCustomRange(value);
+    if (custom) {
+      return `${shortDate(custom.from)} – ${shortDate(custom.to)}`;
+    }
+    return (
+      DATE_RANGE_OPTIONS.find(option => option.value === value)?.label ?? value
+    );
+  }
+  return value;
 }
