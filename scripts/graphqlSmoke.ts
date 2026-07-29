@@ -173,6 +173,56 @@ const checks: Check[] = [
     assert.equal(gone.data.maintenanceRequest, null);
   }],
 
+  ['maintenance form options serve every dropdown', async () => {
+    const r: any = await run(
+      'query O($p: ID!) { maintenanceFormOptions(programId: $p) { nextReference types zones departments businessNames fixtures incidents pois equipment fixtureTypes } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.maintenanceFormOptions;
+    assert.ok(o.nextReference.startsWith('#MT-'));
+    assert.equal(o.types.length, 10);
+    assert.equal(o.zones.length, 5);
+    assert.ok(o.fixtures.includes('Bench #B-204'));
+    assert.equal(o.fixtureTypes.length, 10);
+  }],
+
+  ['maintenance comments add, edit and delete', async () => {
+    const added: any = await run(
+      'mutation A($id: ID!, $t: String!, $img: [String!]) { addMaintenanceComment(requestId: $id, text: $t, images: $img) { id text edited images } }',
+      {id: '#MT-40877', t: 'Fixed the loose panel', img: ['file:///tmp/a.jpg']},
+    );
+    assert.equal(added.errors, undefined);
+    assert.equal(added.data.addMaintenanceComment.edited, false);
+    assert.equal(added.data.addMaintenanceComment.images.length, 1);
+    const cid = added.data.addMaintenanceComment.id;
+
+    const edited: any = await run(
+      'mutation E($id: ID!, $cid: ID!, $t: String!) { updateMaintenanceComment(requestId: $id, commentId: $cid, text: $t) { text edited } }',
+      {id: '#MT-40877', cid, t: 'Fixed and photographed'},
+    );
+    assert.equal(edited.data.updateMaintenanceComment.edited, true);
+
+    const removed: any = await run(
+      'mutation R($id: ID!, $cid: ID!) { deleteMaintenanceComment(requestId: $id, commentId: $cid) }',
+      {id: '#MT-40877', cid},
+    );
+    assert.equal(removed.data.deleteMaintenanceComment, cid);
+  }],
+
+  ['fixture quick-create injects a new dropdown option', async () => {
+    const r: any = await run(
+      'mutation F($n: String!, $t: String!) { createMaintenanceFixture(name: $n, fixtureType: $t) }',
+      {n: 'Bench #B-311', t: 'Bench'},
+    );
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.createMaintenanceFixture, 'Bench #B-311');
+    const opts: any = await run(
+      'query O($p: ID!) { maintenanceFormOptions(programId: $p) { fixtures } }', {p: 'p1'},
+    );
+    assert.equal(opts.data.maintenanceFormOptions.fixtures[0], 'Bench #B-311');
+  }],
+
   ['a typo fails loudly', async () => {
     const r: any = await run('query Bad { me { enable_shift_entry } }');
     assert.ok(r.errors?.[0]?.message.includes('Cannot query field'));

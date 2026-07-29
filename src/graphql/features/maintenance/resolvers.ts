@@ -1,6 +1,18 @@
 import {MaintenanceDetail} from '../../../types/maintenance';
 import {sleep} from '../../mockSession';
-import {findRecord, maintenanceStore, nextReference} from './store';
+import {
+  BUSINESS_NAMES,
+  DEPARTMENTS,
+  EQUIPMENT,
+  FIXTURE_TYPES,
+  INCIDENTS,
+  MAINT_TYPES,
+  POIS,
+  ZONES,
+  findRecord,
+  maintenanceStore,
+  nextReference,
+} from './store';
 
 const STATUS: Record<string, string> = {
   Open: 'OPEN',
@@ -91,6 +103,22 @@ export const maintenanceResolvers = {
       const record = findRecord(args.id);
       return record ? toWire(record) : null;
     },
+
+    maintenanceFormOptions: async () => {
+      await sleep();
+      return {
+        nextReference: nextReference(),
+        types: MAINT_TYPES,
+        zones: ZONES,
+        departments: DEPARTMENTS,
+        businessNames: BUSINESS_NAMES,
+        fixtures: maintenanceStore.fixtures,
+        incidents: INCIDENTS,
+        pois: POIS,
+        equipment: EQUIPMENT,
+        fixtureTypes: FIXTURE_TYPES,
+      };
+    },
   },
 
   Mutation: {
@@ -176,6 +204,73 @@ export const maintenanceResolvers = {
       }
       maintenanceStore.records.splice(index, 1);
       return args.id;
+    },
+
+    addMaintenanceComment: async (
+      _: unknown,
+      args: {requestId: string; text: string; images?: string[] | null},
+    ) => {
+      await sleep();
+      const record = findRecord(args.requestId);
+      if (!record) {
+        throw new Error(`Unknown maintenance request: ${args.requestId}`);
+      }
+      const comment = {
+        id: `c${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        text: args.text,
+        edited: false,
+        images: args.images ?? [],
+      };
+      record.comments.unshift(comment);
+      return comment;
+    },
+
+    updateMaintenanceComment: async (
+      _: unknown,
+      args: {
+        requestId: string;
+        commentId: string;
+        text: string;
+        images?: string[] | null;
+      },
+    ) => {
+      await sleep();
+      const record = findRecord(args.requestId);
+      const comment = record?.comments.find(c => c.id === args.commentId);
+      if (!comment) {
+        throw new Error(`Unknown comment: ${args.commentId}`);
+      }
+      comment.text = args.text;
+      comment.edited = true;
+      if (args.images) {
+        comment.images = args.images;
+      }
+      return comment;
+    },
+
+    deleteMaintenanceComment: async (
+      _: unknown,
+      args: {requestId: string; commentId: string},
+    ) => {
+      await sleep();
+      const record = findRecord(args.requestId);
+      if (!record) {
+        throw new Error(`Unknown maintenance request: ${args.requestId}`);
+      }
+      record.comments = record.comments.filter(c => c.id !== args.commentId);
+      return args.commentId;
+    },
+
+    createMaintenanceFixture: async (
+      _: unknown,
+      args: {name: string; fixtureType: string},
+    ) => {
+      await sleep();
+      if (!maintenanceStore.fixtures.includes(args.name)) {
+        maintenanceStore.fixtures.unshift(args.name);
+      }
+      return args.name;
     },
   },
 };
