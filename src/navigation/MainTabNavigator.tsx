@@ -22,6 +22,7 @@ import {ConfirmDialog} from '../components/ui';
 import ComingSoonScreen from '../screens/ComingSoonScreen';
 import MaintenanceScreen from '../screens/maintenance/MaintenanceScreen';
 import WorkScreen from '../screens/work/WorkScreen';
+import FixtureScreen from '../screens/fixture/FixtureScreen';
 
 const {LATO} = fontFamilies;
 
@@ -29,6 +30,7 @@ const SCREEN_MAP: Record<string, React.ComponentType<any>> = {
   Home: HomeScreen,
   Work: WorkScreen,
   Maintenance: MaintenanceScreen,
+  Fixture: FixtureScreen,
 };
 
 /**
