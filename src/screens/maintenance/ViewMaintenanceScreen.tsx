@@ -9,7 +9,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {ConfirmDialog, formatDateTime} from '../../components/ui';
+import {ConfirmDialog, Toast, formatDateTime} from '../../components/ui';
 import {
   ChevronLeftIcon,
   EditIcon,
@@ -20,12 +20,17 @@ import {
 import {
   useAddMaintenanceCommentMutation,
   useDeleteMaintenanceCommentMutation,
+  useDeleteMaintenanceRequestMutation,
   useGetMaintenanceRequestQuery,
+  useMaintenanceFormOptionsQuery,
   useUpdateMaintenanceCommentMutation,
+  useUpdateMaintenanceRequestMutation,
 } from '../../graphql/features/maintenance/hooks';
 import {MaintenanceComment, MaintenanceStatus} from '../../types/maintenance';
+import AddFixtureSheet from './components/AddFixtureSheet';
 import CommentList from './components/CommentList';
 import CommentSheet from './components/CommentSheet';
+import MaintenanceForm, {buildInitialValues} from './components/MaintenanceForm';
 import {theme} from '../../theme';
 
 const STATUS_STYLE: Record<MaintenanceStatus, {bg: string; fg: string}> = {
@@ -62,23 +67,67 @@ export const DetailField: React.FC<FieldProps> = ({
 interface Props {
   id: string;
   onClose: () => void;
+  /** Fires after the record is gone, so the list can pop back and toast. */
+  onDeleted: (reference: string) => void;
 }
 
-const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose}) => {
+const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
+  // Every hook runs before the early returns below — the loading, editing and
+  // detail branches must not change hook order between renders.
   const {data: detail, isLoading} = useGetMaintenanceRequestQuery(id);
   const [commentSheetOpen, setCommentSheetOpen] = useState(false);
   const [editingComment, setEditingComment] =
     useState<MaintenanceComment | null>(null);
   const [deletingComment, setDeletingComment] =
     useState<MaintenanceComment | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [addFixtureOpen, setAddFixtureOpen] = useState(false);
+  const [updatedToast, setUpdatedToast] = useState(false);
   const {mutate: addComment} = useAddMaintenanceCommentMutation();
   const {mutate: updateComment} = useUpdateMaintenanceCommentMutation();
   const {mutate: deleteComment} = useDeleteMaintenanceCommentMutation();
+  const {data: options, refetch: refetchOptions} =
+    useMaintenanceFormOptionsQuery();
+  const {mutate: update, isLoading: isUpdating} =
+    useUpdateMaintenanceRequestMutation();
+  const {mutate: remove} = useDeleteMaintenanceRequestMutation();
 
   if (isLoading || !detail) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  // Edit replaces the detail in place, matching the design's slide-over.
+  if (editing && options) {
+    return (
+      <View style={styles.root}>
+        <MaintenanceForm
+          key={options.fixtures.length}
+          mode="edit"
+          reference={detail.id}
+          options={options}
+          initialValues={buildInitialValues(options, detail)}
+          submitLabel="Update"
+          isSubmitting={isUpdating}
+          onSubmit={async values => {
+            await update(detail.id, values);
+            setEditing(false);
+            setUpdatedToast(true);
+          }}
+          onClose={() => setEditing(false)}
+          onAddFixture={() => setAddFixtureOpen(true)}
+        />
+
+        <AddFixtureSheet
+          visible={addFixtureOpen}
+          options={options}
+          onCreated={() => refetchOptions()}
+          onClose={() => setAddFixtureOpen(false)}
+        />
       </View>
     );
   }
@@ -103,14 +152,14 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose}) => {
             <TouchableOpacity
               style={styles.editButton}
               activeOpacity={0.85}
-              onPress={() => {}}>
+              onPress={() => setEditing(true)}>
               <EditIcon size={16} />
               <Text style={styles.editText}>Edit</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.deleteButton}
               activeOpacity={0.85}
-              onPress={() => {}}>
+              onPress={() => setConfirmDelete(true)}>
               <TrashIcon size={18} color="#CF1322" />
             </TouchableOpacity>
           </View>
@@ -265,6 +314,26 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose}) => {
           setDeletingComment(null);
         }}
         onCancel={() => setDeletingComment(null)}
+      />
+
+      <ConfirmDialog
+        visible={confirmDelete}
+        title="Delete this maintenance?"
+        message={`Maintenance ${detail.id} will be permanently deleted. This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={async () => {
+          setConfirmDelete(false);
+          await remove(detail.id);
+          onDeleted(detail.id);
+        }}
+        onCancel={() => setConfirmDelete(false)}
+      />
+
+      <Toast
+        visible={updatedToast}
+        title="Maintenance updated"
+        message={`${detail.id} was saved successfully.`}
+        onDismiss={() => setUpdatedToast(false)}
       />
     </View>
   );

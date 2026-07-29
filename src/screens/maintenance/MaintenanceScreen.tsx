@@ -164,6 +164,15 @@ const MaintenanceScreen: React.FC = () => {
       <ViewMaintenanceScreen
         id={route.id}
         onClose={() => setRoute({name: 'list'})}
+        onDeleted={reference => {
+          setRoute({name: 'list'});
+          setToast({
+            title: 'Maintenance deleted',
+            message: `${reference} was removed from your Work Log.`,
+            reference,
+            variant: 'danger',
+          });
+        }}
       />
     );
   }
