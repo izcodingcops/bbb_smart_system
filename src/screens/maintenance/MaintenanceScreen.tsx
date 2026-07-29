@@ -1,4 +1,4 @@
-import React, {useMemo, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {
   MultiSelectSheet,
   SingleSelectSheet,
   TextField,
+  Toast,
 } from '../../components/ui';
 import {
   ArrowUpIcon,
@@ -32,6 +33,8 @@ import {
 } from '../../types/maintenance';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
+import {useAppDispatch} from '../../redux/store';
+import {setTabBarHidden} from '../../redux/ui/slice';
 import {
   EMPTY_FILTERS,
   FilterField,
@@ -52,7 +55,21 @@ import StatusMenuSheet from './components/StatusMenuSheet';
 import FilterChips, {FIELD_LABEL} from './components/FilterChips';
 import ListSummary from './components/ListSummary';
 import MaintenanceEmptyState from './components/MaintenanceEmptyState';
+import CreateMaintenanceScreen from './CreateMaintenanceScreen';
 import {theme} from '../../theme';
+
+/** Create and View are full-screen pushes within the Maintenance tab. */
+type MaintenanceRoute =
+  | {name: 'list'}
+  | {name: 'create'}
+  | {name: 'view'; id: string};
+
+interface ToastState {
+  title: string;
+  message: string;
+  reference: string;
+  variant?: 'success' | 'danger';
+}
 
 const MaintenanceScreen: React.FC = () => {
   const {
@@ -77,8 +94,19 @@ const MaintenanceScreen: React.FC = () => {
   const [queuedComplete, setQueuedComplete] =
     useState<MaintenanceRequest | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [route, setRoute] = useState<MaintenanceRoute>({name: 'list'});
+  const [toast, setToast] = useState<ToastState | null>(null);
   const listRef = useRef<FlatList<MaintenanceRequest>>(null);
   const {mutate: setStatus} = useSetMaintenanceStatusMutation();
+  const dispatch = useAppDispatch();
+
+  // Create and View are full-screen pushes — the tab bar has no place there.
+  useEffect(() => {
+    dispatch(setTabBarHidden(route.name !== 'list'));
+    return () => {
+      dispatch(setTabBarHidden(false));
+    };
+  }, [dispatch, route.name]);
 
   // Completing can't be undone from here, so it always asks first; moving to
   // In-progress applies straight away.
@@ -113,6 +141,22 @@ const MaintenanceScreen: React.FC = () => {
     setSearch('');
     setFilters(EMPTY_FILTERS);
   };
+
+  if (route.name === 'create') {
+    return (
+      <CreateMaintenanceScreen
+        onClose={() => setRoute({name: 'list'})}
+        onCreated={reference => {
+          setRoute({name: 'list'});
+          setToast({
+            title: 'Maintenance submitted',
+            message: `${reference} was added to your Work Log.`,
+            reference,
+          });
+        }}
+      />
+    );
+  }
 
   return (
     <View style={styles.root}>
@@ -177,7 +221,7 @@ const MaintenanceScreen: React.FC = () => {
           renderItem={({item}) => (
             <MaintenanceCard
               request={item}
-              onPress={() => {}}
+              onPress={record => setRoute({name: 'view', id: record.id})}
               onStatusPress={setStatusTarget}
             />
           )}
@@ -259,6 +303,26 @@ const MaintenanceScreen: React.FC = () => {
         onCancel={() => setCompleteTarget(null)}
       />
 
+      <Toast
+        visible={toast !== null}
+        title={toast?.title ?? ''}
+        message={toast?.message ?? ''}
+        variant={toast?.variant}
+        // A deleted record has nowhere to go, so it gets no action button.
+        actionLabel={toast?.variant === 'danger' ? undefined : 'View'}
+        onAction={
+          toast?.variant === 'danger'
+            ? undefined
+            : () => {
+                if (toast) {
+                  setRoute({name: 'view', id: toast.reference});
+                }
+                setToast(null);
+              }
+        }
+        onDismiss={() => setToast(null)}
+      />
+
       <SingleSelectSheet
         visible={sortOpen}
         title="Sort by"
@@ -296,6 +360,10 @@ const MaintenanceScreen: React.FC = () => {
         shiftName={shiftName}
         onSelect={tileId => {
           setAddOpen(false);
+          if (tileId === 'maintenance') {
+            setRoute({name: 'create'});
+            return;
+          }
           // Held until the sheet's modal is gone — iOS drops an alert
           // presented while another modal is still up.
           setQueuedTile(tileId);
