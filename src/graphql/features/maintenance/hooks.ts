@@ -216,8 +216,10 @@ export function useMaintenanceFormOptionsQuery() {
   };
 }
 
+// Status changes come from the list, where the detail query isn't mounted —
+// naming it here would make Apollo warn about refetching an inactive query.
 export function useSetMaintenanceStatusMutation() {
-  const [run, {loading}] = useMutation(SET_MAINTENANCE_STATUS, REFRESH_DETAIL);
+  const [run, {loading}] = useMutation(SET_MAINTENANCE_STATUS, REFRESH_LIST);
   return {
     mutate: async (id: string, status: MaintenanceStatus) => {
       await run({variables: {id, status: STATUS_OUT[status]}});

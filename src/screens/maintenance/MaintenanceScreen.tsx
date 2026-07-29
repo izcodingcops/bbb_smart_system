@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, {useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -11,12 +11,25 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import {
+  ConfirmDialog,
   MultiSelectSheet,
   SingleSelectSheet,
   TextField,
 } from '../../components/ui';
-import {PlusIcon, SearchIcon, SortIcon} from '../../components/icons';
-import {useGetMaintenanceRequestsQuery} from '../../graphql/features/maintenance/hooks';
+import {
+  ArrowUpIcon,
+  PlusIcon,
+  SearchIcon,
+  SortIcon,
+} from '../../components/icons';
+import {
+  useGetMaintenanceRequestsQuery,
+  useSetMaintenanceStatusMutation,
+} from '../../graphql/features/maintenance/hooks';
+import {
+  MaintenanceRequest,
+  MaintenanceStatus,
+} from '../../types/maintenance';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import {
@@ -35,6 +48,7 @@ import {
 } from './filtering';
 import MaintenanceCard from './components/MaintenanceCard';
 import DateRangeSheet from './components/DateRangeSheet';
+import StatusMenuSheet from './components/StatusMenuSheet';
 import FilterChips, {FIELD_LABEL} from './components/FilterChips';
 import ListSummary from './components/ListSummary';
 import MaintenanceEmptyState from './components/MaintenanceEmptyState';
@@ -55,6 +69,33 @@ const MaintenanceScreen: React.FC = () => {
   const [openFilter, setOpenFilter] = useState<FilterField | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [queuedTile, setQueuedTile] = useState<string | null>(null);
+  const [statusTarget, setStatusTarget] = useState<MaintenanceRequest | null>(
+    null,
+  );
+  const [completeTarget, setCompleteTarget] =
+    useState<MaintenanceRequest | null>(null);
+  const [queuedComplete, setQueuedComplete] =
+    useState<MaintenanceRequest | null>(null);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const listRef = useRef<FlatList<MaintenanceRequest>>(null);
+  const {mutate: setStatus} = useSetMaintenanceStatusMutation();
+
+  // Completing can't be undone from here, so it always asks first; moving to
+  // In-progress applies straight away.
+  const handleStatusSelect = (status: MaintenanceStatus) => {
+    const target = statusTarget;
+    setStatusTarget(null);
+    if (!target) {
+      return;
+    }
+    if (status === 'Completed') {
+      // Held until the sheet's modal is gone — iOS drops a modal presented
+      // while another is still up, which silently swallowed the dialog.
+      setQueuedComplete(target);
+    } else {
+      setStatus(target.id, status);
+    }
+  };
 
   const shiftTypes = GetShiftTypes();
   const shiftTypeId = GetActiveShiftTypeId();
@@ -126,11 +167,20 @@ const MaintenanceScreen: React.FC = () => {
         </View>
       ) : (
         <FlatList
+          ref={listRef}
           data={visible}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
           keyboardShouldPersistTaps="handled"
-          renderItem={({item}) => <MaintenanceCard request={item} />}
+          scrollEventThrottle={16}
+          onScroll={e => setShowBackToTop(e.nativeEvent.contentOffset.y > 240)}
+          renderItem={({item}) => (
+            <MaintenanceCard
+              request={item}
+              onPress={() => {}}
+              onStatusPress={setStatusTarget}
+            />
+          )}
           ListEmptyComponent={
             isError ? (
               <MaintenanceEmptyState
@@ -160,12 +210,54 @@ const MaintenanceScreen: React.FC = () => {
         />
       )}
 
+      {showBackToTop ? (
+        <TouchableOpacity
+          style={styles.backToTop}
+          activeOpacity={0.85}
+          onPress={() =>
+            listRef.current?.scrollToOffset({offset: 0, animated: true})
+          }>
+          <ArrowUpIcon size={14} />
+          <Text style={styles.backToTopText}>Back to top</Text>
+        </TouchableOpacity>
+      ) : null}
+
       <TouchableOpacity
         style={styles.fab}
         activeOpacity={0.85}
         onPress={() => setAddOpen(true)}>
         <PlusIcon size={26} color={theme.colors.white} />
       </TouchableOpacity>
+
+      <StatusMenuSheet
+        request={statusTarget}
+        onSelect={handleStatusSelect}
+        onClose={() => setStatusTarget(null)}
+        onClosed={() => {
+          if (queuedComplete) {
+            setCompleteTarget(queuedComplete);
+            setQueuedComplete(null);
+          }
+        }}
+      />
+
+      <ConfirmDialog
+        visible={completeTarget !== null}
+        title="Mark as Completed?"
+        message={
+          completeTarget
+            ? `${completeTarget.id} · ${completeTarget.type} will be marked Completed and appear in your synced Work Log.`
+            : ''
+        }
+        confirmLabel="Yes, complete"
+        onConfirm={() => {
+          if (completeTarget) {
+            setStatus(completeTarget.id, 'Completed');
+          }
+          setCompleteTarget(null);
+        }}
+        onCancel={() => setCompleteTarget(null)}
+      />
 
       <SingleSelectSheet
         visible={sortOpen}
@@ -258,6 +350,26 @@ const styles = StyleSheet.create({
     // Clears the FAB so the last card isn't trapped under it.
     paddingBottom: 96,
     gap: theme.spacing.md,
+  },
+  backToTop: {
+    position: 'absolute',
+    alignSelf: 'center',
+    bottom: theme.spacing.xxl + 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#99D3FF',
+    backgroundColor: theme.colors.primaryLight,
+    ...theme.shadow.card,
+  },
+  backToTopText: {
+    fontFamily: theme.fonts.black,
+    fontSize: 13,
+    color: theme.colors.primary,
   },
   // Kept identical to HomeScreen's FAB — same size, radius, offset and shadow.
   fab: {

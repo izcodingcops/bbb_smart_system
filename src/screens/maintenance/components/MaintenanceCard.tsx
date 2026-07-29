@@ -1,6 +1,7 @@
 import React from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {Card} from '../../../components/ui';
+import {ChevronDownIcon, MoreVerticalIcon} from '../../../components/icons';
 import {
   MaintenancePriority,
   MaintenanceRequest,
@@ -42,15 +43,31 @@ function formatRequestedAt(iso: string): string {
   return `${day} · ${pad(hour12)}:${pad(date.getMinutes())} ${suffix}`;
 }
 
-interface Props {
-  request: MaintenanceRequest;
+/**
+ * Completed is terminal, and an unassigned request is the supervisor's to
+ * route — neither offers a status change.
+ */
+export function canChangeStatus(request: MaintenanceRequest): boolean {
+  return request.status !== 'Completed' && !!request.assignee;
 }
 
-const MaintenanceCard: React.FC<Props> = ({request}) => {
+interface Props {
+  request: MaintenanceRequest;
+  onPress: (request: MaintenanceRequest) => void;
+  onStatusPress: (request: MaintenanceRequest) => void;
+}
+
+const MaintenanceCard: React.FC<Props> = ({
+  request,
+  onPress,
+  onStatusPress,
+}) => {
   const status = STATUS_STYLE[request.status];
+  const actionable = canChangeStatus(request);
 
   return (
-    <Card style={styles.card}>
+    <TouchableOpacity activeOpacity={0.9} onPress={() => onPress(request)}>
+      <Card style={styles.card}>
       <View style={styles.headerRow}>
         {/* Shrinks so a long type truncates rather than shoving the pill off. */}
         <View style={styles.headerLeft}>
@@ -59,10 +76,29 @@ const MaintenanceCard: React.FC<Props> = ({request}) => {
             {request.type}
           </Text>
         </View>
-        <View style={[styles.pill, {backgroundColor: status.bg}]}>
-          <Text style={[styles.pillText, {color: status.fg}]}>
-            {request.status}
-          </Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            style={[styles.pill, {backgroundColor: status.bg}]}
+            activeOpacity={actionable ? 0.8 : 1}
+            disabled={!actionable}
+            onPress={() => onStatusPress(request)}>
+            <Text style={[styles.pillText, {color: status.fg}]}>
+              {request.status}
+            </Text>
+            {actionable ? (
+              <ChevronDownIcon size={12} color={status.fg} />
+            ) : null}
+          </TouchableOpacity>
+
+          {actionable ? (
+            <TouchableOpacity
+              style={styles.kebab}
+              activeOpacity={0.7}
+              hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+              onPress={() => onStatusPress(request)}>
+              <MoreVerticalIcon size={17} />
+            </TouchableOpacity>
+          ) : null}
         </View>
       </View>
 
@@ -111,7 +147,8 @@ const MaintenanceCard: React.FC<Props> = ({request}) => {
         <Text style={styles.label}>Address</Text>
         <Text style={styles.value}>{request.address}</Text>
       </View>
-    </Card>
+      </Card>
+    </TouchableOpacity>
   );
 };
 
@@ -137,11 +174,21 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
   },
   pillText: {fontFamily: theme.fonts.black, fontSize: 11},
+  headerRight: {flexDirection: 'row', alignItems: 'center', gap: 2},
+  kebab: {
+    width: 26,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   dateLine: {
     fontFamily: theme.fonts.bold,
     fontSize: 12,
