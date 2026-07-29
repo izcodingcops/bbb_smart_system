@@ -1,8 +1,15 @@
 import {useMemo} from 'react';
-import {useQuery} from '@apollo/client/react';
+import {useMutation, useQuery} from '@apollo/client/react';
 import {GetActiveProgramId} from '../../../redux/auth/selectors';
-import {QuickAction, WorkBucket, WorkItem, WorkPriority, WorkStatus} from '../../../types/work';
-import {GET_QUICK_ACTIONS, GET_WORK_ITEMS} from './documents';
+import {
+  QuickAction,
+  WorkBucket,
+  WorkCategory,
+  WorkItem,
+  WorkPriority,
+  WorkStatus,
+} from '../../../types/work';
+import {GET_QUICK_ACTIONS, GET_WORK_ITEMS, SET_WORK_ITEM_STATUS} from './documents';
 
 interface GqlWorkItem {
   id: string;
@@ -12,10 +19,16 @@ interface GqlWorkItem {
   occurredAt: string;
   type: string;
   priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  zone: string;
   assignee: string;
   assigneeInitials: string;
   address: string;
   bucket: 'ASSIGNED' | 'COMPLETED';
+  outcome: string | null;
+  interaction: string | null;
+  disposition: string | null;
+  businessName: string | null;
+  quantity: string | null;
 }
 
 const STATUS: Record<GqlWorkItem['status'], WorkStatus> = {
@@ -32,26 +45,39 @@ const BUCKET: Record<GqlWorkItem['bucket'], WorkBucket> = {
   ASSIGNED: 'assigned',
   COMPLETED: 'completed',
 };
+const STATUS_OUT: Record<WorkStatus, string> = {
+  Open: 'OPEN',
+  'In-progress': 'IN_PROGRESS',
+  Completed: 'COMPLETED',
+};
 
 const toWorkItem = (item: GqlWorkItem): WorkItem => ({
   id: item.ticketNumber,
-  category: item.category,
+  category: item.category as WorkCategory,
   status: STATUS[item.status],
   date: item.occurredAt,
   type: item.type,
   priority: PRIORITY[item.priority],
+  zone: item.zone,
   assignee: item.assignee,
   assigneeInitials: item.assigneeInitials,
   address: item.address,
   bucket: BUCKET[item.bucket],
+  outcome: item.outcome ?? undefined,
+  interaction: item.interaction ?? undefined,
+  disposition: item.disposition ?? undefined,
+  businessName: item.businessName ?? undefined,
+  quantity: item.quantity ?? undefined,
 });
+
+const WORK_CONTEXT = {context: {feature: 'work'}};
 
 export function useGetWorkItemsQuery() {
   const programId = GetActiveProgramId();
   const {data, loading, error, refetch} = useQuery<{workItems: GqlWorkItem[]}>(
     GET_WORK_ITEMS,
     {
-      context: {feature: 'work'},
+      ...WORK_CONTEXT,
       variables: {programId: programId ?? ''},
       skip: !programId,
     },
@@ -69,7 +95,7 @@ export function useGetQuickActionsQuery() {
   const {data, loading, error, refetch} = useQuery<{quickActions: QuickAction[]}>(
     GET_QUICK_ACTIONS,
     {
-      context: {feature: 'work'},
+      ...WORK_CONTEXT,
       variables: {programId: programId ?? ''},
       skip: !programId,
     },
@@ -80,4 +106,18 @@ export function useGetQuickActionsQuery() {
   const actions = useMemo(() => data?.quickActions ?? [], [data]);
 
   return {data: actions, isLoading: loading, isError: !!error, refetch};
+}
+
+// The mock store mutates in place, so refetch rather than patch the cache.
+export function useSetWorkItemStatusMutation() {
+  const [run, {loading}] = useMutation(SET_WORK_ITEM_STATUS, {
+    ...WORK_CONTEXT,
+    refetchQueries: ['GetWorkItems'],
+  });
+  return {
+    mutate: async (id: string, status: WorkStatus) => {
+      await run({variables: {id, status: STATUS_OUT[status]}});
+    },
+    isLoading: loading,
+  };
 }

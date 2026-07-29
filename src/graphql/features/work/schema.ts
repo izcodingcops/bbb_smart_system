@@ -26,10 +26,17 @@ export const workTypeDefs = /* GraphQL */ `
     occurredAt: String!
     type: String!
     priority: Priority!
+    zone: String!
     assignee: String!
     assigneeInitials: String!
     address: String!
     bucket: WorkBucket!
+    "Completed-card detail fields; which apply depends on category."
+    outcome: String
+    interaction: String
+    disposition: String
+    businessName: String
+    quantity: String
   }
 
   type QuickAction {
@@ -43,5 +50,9 @@ export const workTypeDefs = /* GraphQL */ `
   extend type Query {
     workItems(programId: ID!, bucket: WorkBucket): [WorkItem!]!
     quickActions(programId: ID!): [QuickAction!]!
+  }
+
+  extend type Mutation {
+    setWorkItemStatus(id: ID!, status: WorkStatus!): WorkItem!
   }
 `;

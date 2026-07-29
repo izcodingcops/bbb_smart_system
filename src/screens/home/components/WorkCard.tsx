@@ -16,6 +16,24 @@ const PRIORITY_COLOR: Record<WorkPriority, string> = {
   Low: '#16A34A',
 };
 
+function pad(value: number): string {
+  return String(value).padStart(2, '0');
+}
+
+/** 'Jul 6, 2026 · 08:40 AM' — hour is padded by hand, see MaintenanceCard. */
+function formatOccurredAt(iso: string): string {
+  const date = new Date(iso);
+  const day = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const hours = date.getHours();
+  const suffix = hours >= 12 ? 'PM' : 'AM';
+  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+  return `${day} · ${pad(hour12)}:${pad(date.getMinutes())} ${suffix}`;
+}
+
 interface Props {
   item: WorkItem;
 }
@@ -35,7 +53,7 @@ const WorkCard: React.FC<Props> = ({item}) => {
           </Text>
         </View>
       </View>
-      <Text style={styles.date}>{item.date}</Text>
+      <Text style={styles.date}>{formatOccurredAt(item.date)}</Text>
 
       <View style={styles.divider} />
 

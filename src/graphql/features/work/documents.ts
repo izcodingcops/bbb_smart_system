@@ -10,10 +10,16 @@ export const GET_WORK_ITEMS = gql`
       occurredAt
       type
       priority
+      zone
       assignee
       assigneeInitials
       address
       bucket
+      outcome
+      interaction
+      disposition
+      businessName
+      quantity
     }
   }
 `;
@@ -26,6 +32,16 @@ export const GET_QUICK_ACTIONS = gql`
       tint
       iconColor
       icon
+    }
+  }
+`;
+
+export const SET_WORK_ITEM_STATUS = gql`
+  mutation SetWorkItemStatus($id: ID!, $status: WorkStatus!) {
+    setWorkItemStatus(id: $id, status: $status) {
+      id
+      status
+      bucket
     }
   }
 `;
