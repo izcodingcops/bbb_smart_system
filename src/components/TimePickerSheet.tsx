@@ -22,6 +22,8 @@ interface Props {
   maximumDate?: Date;
   onConfirm: (date: Date) => void;
   onCancel: () => void;
+  /** 'time' (default) or 'date'; DateTimeField opens one of each in turn. */
+  mode?: 'date' | 'time';
 }
 
 /**
@@ -38,6 +40,7 @@ const TimePickerSheet: React.FC<Props> = ({
   maximumDate,
   onConfirm,
   onCancel,
+  mode = 'time',
 }) => {
   const [temp, setTemp] = useState<Date>(value);
   const [mounted, setMounted] = useState(visible);
@@ -74,7 +77,7 @@ const TimePickerSheet: React.FC<Props> = ({
     return (
       <DateTimePicker
         value={value}
-        mode="time"
+        mode={mode}
         display="default"
         minimumDate={minimumDate}
         maximumDate={maximumDate}
@@ -124,7 +127,7 @@ const TimePickerSheet: React.FC<Props> = ({
           </View>
           <DateTimePicker
             value={temp}
-            mode="time"
+            mode={mode}
             display="spinner"
             minimumDate={minimumDate}
             maximumDate={maximumDate}
