@@ -67,7 +67,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    // Lighter than theme.colors.border, so a white-filled field doesn't read
+    // as gray from its outline alone.
+    borderColor: '#EEF0F2',
     borderRadius: theme.radius.md,
     paddingHorizontal: theme.spacing.md,
     backgroundColor: theme.colors.white,

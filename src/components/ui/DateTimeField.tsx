@@ -33,6 +33,13 @@ export function formatDateTime(iso: string): string {
 /**
  * Auto-filled from the device clock, tappable to adjust. Tapping runs the date
  * picker and then the time picker, so one field covers both halves.
+ *
+ * Both steps share a single TimePickerSheet instance, switching its `mode`
+ * prop rather than swapping between two separate ones. Two <Modal>s can't be
+ * visible on iOS at the same moment — even for one frame while one animates
+ * out as the other animates in — so mounting a second Modal to show the time
+ * step silently dropped it. Keeping one Modal open throughout and only
+ * changing what it displays avoids that entirely.
  */
 const DateTimeField: React.FC<Props> = ({
   label,
@@ -66,25 +73,22 @@ const DateTimeField: React.FC<Props> = ({
       <Text style={styles.help}>{helpText}</Text>
 
       <TimePickerSheet
-        visible={stage === 'date'}
-        mode="date"
-        title="Select date"
+        visible={stage !== 'idle'}
+        mode={stage === 'date' ? 'date' : 'time'}
+        title={stage === 'date' ? 'Select date' : 'Select time'}
         value={draft}
-        onConfirm={date => {
-          setDraft(date);
-          setStage('time');
-        }}
-        onCancel={() => setStage('idle')}
-      />
-      <TimePickerSheet
-        visible={stage === 'time'}
-        mode="time"
-        title="Select time"
-        value={draft}
-        onConfirm={time => {
-          // Date half from the first picker, clock half from this one.
+        onConfirm={picked => {
+          if (stage === 'date') {
+            // Date half chosen — keep the sheet open and switch to the time
+            // step; the user hasn't finished yet, so nothing commits.
+            setDraft(picked);
+            setStage('time');
+            return;
+          }
+          // Time half chosen — merge onto the date half already picked and
+          // commit both together.
           const merged = new Date(draft);
-          merged.setHours(time.getHours(), time.getMinutes(), 0, 0);
+          merged.setHours(picked.getHours(), picked.getMinutes(), 0, 0);
           setTouched(true);
           setStage('idle');
           onChange(merged.toISOString());

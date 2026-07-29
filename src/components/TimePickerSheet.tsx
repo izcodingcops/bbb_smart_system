@@ -49,7 +49,6 @@ const TimePickerSheet: React.FC<Props> = ({
 
   useEffect(() => {
     if (visible) {
-      setTemp(value);
       setMounted(true);
       Animated.timing(anim, {
         toValue: 1,
@@ -69,6 +68,16 @@ const TimePickerSheet: React.FC<Props> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+
+  // Resyncs the working value whenever the caller hands over a new one while
+  // already open — e.g. DateTimeField switching this same sheet from its date
+  // step to its time step. Split from the animation effect above so that
+  // resync doesn't also replay the slide-in.
+  useEffect(() => {
+    if (visible) {
+      setTemp(value);
+    }
+  }, [visible, value, mode]);
 
   if (Platform.OS === 'android') {
     if (!visible) {
