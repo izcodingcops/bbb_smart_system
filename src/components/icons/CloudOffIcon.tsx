@@ -6,11 +6,10 @@ interface Props {
   color?: string;
 }
 
-/** Two opposing arrows — ascending/descending sort. */
-const SortIcon: React.FC<Props> = ({size = 20, color = '#475467'}) => (
+const CloudOffIcon: React.FC<Props> = ({size = 13, color = '#C26401'}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
-      d="M7 4.5v15M7 19.5l-3-3M7 19.5l3-3M17 19.5v-15M17 4.5l-3 3M17 4.5l3 3"
+      d="M18 18H7a4 4 0 01-.6-7.95M8 8a5 5 0 019.6 1.4A3.5 3.5 0 0119.5 15M3 3l18 18"
       stroke={color}
       strokeWidth={1.8}
       strokeLinecap="round"
@@ -19,4 +18,4 @@ const SortIcon: React.FC<Props> = ({size = 20, color = '#475467'}) => (
   </Svg>
 );
 
-export default SortIcon;
+export default CloudOffIcon;

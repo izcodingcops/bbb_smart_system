@@ -13,6 +13,7 @@ export {default as ChevronRightIcon} from './ChevronRightIcon';
 export {default as CleaningIcon} from './CleaningIcon';
 export {default as ClipboardCheckIcon} from './ClipboardCheckIcon';
 export {default as ClockIcon} from './ClockIcon';
+export {default as CloudOffIcon} from './CloudOffIcon';
 export {default as EditIcon} from './EditIcon';
 export {default as ElevatorIcon} from './ElevatorIcon';
 export {default as EyeIcon} from './EyeIcon';

@@ -172,7 +172,8 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    // Lighter than theme.colors.border — matches the design's row hairline.
+    borderBottomColor: '#EEF0F2',
   },
   box: {
     width: 20,

@@ -338,6 +338,9 @@ const MaintenanceForm: React.FC<Props> = ({
         title="Submit maintenance?"
         message={`Maintenance ${reference} will be created and added to your Work Log. You can edit it later from the details screen.`}
         confirmLabel="Submit"
+        icon="check"
+        iconTone="primary"
+        confirmTone="primary"
         onConfirm={() => {
           setConfirmSubmit(false);
           onSubmit(values);
@@ -351,6 +354,9 @@ const MaintenanceForm: React.FC<Props> = ({
         message="You have unsaved details. If you leave now, everything you entered on this form will be lost."
         confirmLabel="Discard"
         cancelLabel="Keep editing"
+        icon="warning"
+        iconTone="danger"
+        confirmTone="danger"
         onConfirm={() => {
           setConfirmDiscard(false);
           onClose();

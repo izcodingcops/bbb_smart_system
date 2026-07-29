@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
+import {ChevronDownIcon} from '../../../components/icons';
 import {FilterField, Filters, formatFilterValue} from '../filtering';
 import {theme} from '../../../theme';
 
@@ -79,7 +80,9 @@ const FilterChips: React.FC<Props> = ({filters, onOpen, onClear}) => (
               onPress={() => onClear(field)}>
               <Text style={styles.clearText}>✕</Text>
             </TouchableOpacity>
-          ) : null}
+          ) : (
+            <ChevronDownIcon size={14} color="#8B9099" />
+          )}
         </TouchableOpacity>
       );
       })}
@@ -127,7 +130,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
   },
   chipActive: {
-    borderColor: theme.colors.primary,
+    // Design's --primary-border — lighter than the solid primary blue.
+    borderColor: '#99D3FF',
     backgroundColor: theme.colors.primaryLight,
   },
   chipText: {fontFamily: theme.fonts.bold, fontSize: 13, color: '#454545'},

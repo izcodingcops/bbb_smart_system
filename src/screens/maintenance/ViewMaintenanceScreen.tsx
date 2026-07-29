@@ -307,6 +307,9 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
         title="Delete this comment?"
         message="The comment and any images attached to it will be removed."
         confirmLabel="Delete"
+        icon="warning"
+        iconTone="danger"
+        confirmTone="danger"
         onConfirm={() => {
           if (deletingComment) {
             deleteComment(detail.id, deletingComment.id);
@@ -321,6 +324,9 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
         title="Delete this maintenance?"
         message={`Maintenance ${detail.id} will be permanently deleted. This action cannot be undone.`}
         confirmLabel="Delete"
+        icon="warning"
+        iconTone="danger"
+        confirmTone="danger"
         onConfirm={async () => {
           setConfirmDelete(false);
           await remove(detail.id);

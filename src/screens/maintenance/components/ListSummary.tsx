@@ -1,5 +1,6 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
+import {SortIcon} from '../../../components/icons';
 import {theme} from '../../../theme';
 
 interface Props {
@@ -22,12 +23,25 @@ const ListSummary: React.FC<Props> = ({
   sortLabel,
 }) => (
   <View style={styles.row}>
+    {/* Only the numbers go dark/heavy — the surrounding words stay light. */}
     <Text style={styles.counts}>
-      {isNarrowed
-        ? `${visible} of ${total} requests`
-        : `${total} Total · ${open} Open · ${inProgress} In Progress`}
+      {isNarrowed ? (
+        <>
+          <Text style={styles.countsBold}>{visible}</Text> of{' '}
+          <Text style={styles.countsBold}>{total}</Text> requests
+        </>
+      ) : (
+        <>
+          <Text style={styles.countsBold}>{total}</Text> Total ·{' '}
+          <Text style={styles.countsBold}>{open}</Text> Open ·{' '}
+          <Text style={styles.countsBold}>{inProgress}</Text> In Progress
+        </>
+      )}
     </Text>
-    <Text style={styles.sort}>{sortLabel}</Text>
+    <View style={styles.sortRow}>
+      <SortIcon size={13} color={theme.colors.textSecondary} />
+      <Text style={styles.sort}>{sortLabel}</Text>
+    </View>
   </View>
 );
 
@@ -42,10 +56,16 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.md,
     paddingBottom: theme.spacing.xl,
   },
-  counts: {fontFamily: theme.fonts.black, fontSize: 12, color: '#181B1F'},
+  counts: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+  },
+  countsBold: {fontFamily: theme.fonts.black, color: '#181B1F'},
+  sortRow: {flexDirection: 'row', alignItems: 'center', gap: 5},
   sort: {
     fontFamily: theme.fonts.bold,
-    fontSize: 12,
+    fontSize: 12.5,
     color: theme.colors.textSecondary,
   },
 });

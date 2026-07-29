@@ -7,7 +7,24 @@ import {
   TouchableWithoutFeedback,
   StyleSheet,
 } from 'react-native';
+import CheckIcon from '../icons/CheckIcon';
+import AlertTriangleIcon from '../icons/AlertTriangleIcon';
 import {theme} from '../../theme';
+
+type IconTone = 'primary' | 'success' | 'danger';
+type ConfirmTone = 'primary' | 'danger' | 'dark';
+
+const ICON_TONE_STYLE: Record<IconTone, {bg: string; fg: string}> = {
+  primary: {bg: theme.colors.primaryLight, fg: theme.colors.primary},
+  success: {bg: '#F6FFED', fg: '#389E0D'},
+  danger: {bg: '#FFF2F0', fg: '#CF1322'},
+};
+
+const CONFIRM_TONE_BG: Record<ConfirmTone, string> = {
+  primary: theme.colors.primary,
+  danger: '#CF1322',
+  dark: '#181B1F',
+};
 
 interface Props {
   visible: boolean;
@@ -18,6 +35,12 @@ interface Props {
   cancelLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
+  /** Omit for the plain unmarked icon box existing callers already expect. */
+  icon?: 'check' | 'warning';
+  /** Icon circle's background/foreground pairing. Ignored if `icon` is omitted. */
+  iconTone?: IconTone;
+  /** Confirm button colour. Defaults to the original near-black. */
+  confirmTone?: ConfirmTone;
 }
 
 const ConfirmDialog: React.FC<Props> = ({
@@ -28,41 +51,61 @@ const ConfirmDialog: React.FC<Props> = ({
   cancelLabel = 'Cancel',
   onConfirm,
   onCancel,
-}) => (
-  <Modal
-    transparent
-    visible={visible}
-    animationType="fade"
-    onRequestClose={onCancel}>
-    <TouchableWithoutFeedback onPress={onCancel}>
-      <View style={styles.backdrop}>
-        {/* Swallows taps on the card so they don't reach the dismissing scrim. */}
-        <TouchableWithoutFeedback onPress={() => {}}>
-          <View style={styles.card}>
-            <View style={styles.icon} />
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.message}>{message}</Text>
+  icon,
+  iconTone = 'primary',
+  confirmTone = 'dark',
+}) => {
+  const tone = ICON_TONE_STYLE[iconTone];
 
-            <View style={styles.actions}>
-              <TouchableOpacity
-                style={[styles.button, styles.cancel]}
-                activeOpacity={0.85}
-                onPress={onCancel}>
-                <Text style={styles.cancelText}>{cancelLabel}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.confirm]}
-                activeOpacity={0.85}
-                onPress={onConfirm}>
-                <Text style={styles.confirmText}>{confirmLabel}</Text>
-              </TouchableOpacity>
+  return (
+    <Modal
+      transparent
+      visible={visible}
+      animationType="fade"
+      onRequestClose={onCancel}>
+      <TouchableWithoutFeedback onPress={onCancel}>
+        <View style={styles.backdrop}>
+          {/* Swallows taps on the card so they don't reach the dismissing scrim. */}
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <View style={styles.card}>
+              <View
+                style={[
+                  styles.icon,
+                  icon ? {backgroundColor: tone.bg} : undefined,
+                ]}>
+                {icon === 'check' ? (
+                  <CheckIcon size={22} color={tone.fg} />
+                ) : icon === 'warning' ? (
+                  <AlertTriangleIcon size={22} color={tone.fg} />
+                ) : null}
+              </View>
+              <Text style={styles.title}>{title}</Text>
+              <Text style={styles.message}>{message}</Text>
+
+              <View style={styles.actions}>
+                <TouchableOpacity
+                  style={[styles.button, styles.cancel]}
+                  activeOpacity={0.85}
+                  onPress={onCancel}>
+                  <Text style={styles.cancelText}>{cancelLabel}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    {backgroundColor: CONFIRM_TONE_BG[confirmTone]},
+                  ]}
+                  activeOpacity={0.85}
+                  onPress={onConfirm}>
+                  <Text style={styles.confirmText}>{confirmLabel}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </View>
-    </TouchableWithoutFeedback>
-  </Modal>
-);
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
+};
 
 const styles = StyleSheet.create({
   backdrop: {
@@ -83,6 +126,8 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: theme.radius.md,
     backgroundColor: '#F6EFD8',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: theme.spacing.lg,
   },
   title: {
@@ -115,7 +160,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#181B1F',
   },
-  confirm: {backgroundColor: '#181B1F'},
   confirmText: {
     fontFamily: theme.fonts.black,
     fontSize: 15,

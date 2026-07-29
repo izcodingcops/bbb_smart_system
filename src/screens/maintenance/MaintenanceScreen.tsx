@@ -9,6 +9,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import LinearGradient from 'react-native-linear-gradient';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import {
   ConfirmDialog,
@@ -51,7 +52,6 @@ import {
 } from './filtering';
 import MaintenanceCard from './components/MaintenanceCard';
 import DateRangeSheet from './components/DateRangeSheet';
-import StatusMenuSheet from './components/StatusMenuSheet';
 import FilterChips, {FIELD_LABEL} from './components/FilterChips';
 import ListSummary from './components/ListSummary';
 import MaintenanceEmptyState from './components/MaintenanceEmptyState';
@@ -87,13 +87,10 @@ const MaintenanceScreen: React.FC = () => {
   const [openFilter, setOpenFilter] = useState<FilterField | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [queuedTile, setQueuedTile] = useState<string | null>(null);
-  const [statusTarget, setStatusTarget] = useState<MaintenanceRequest | null>(
-    null,
-  );
   const [completeTarget, setCompleteTarget] =
     useState<MaintenanceRequest | null>(null);
-  const [queuedComplete, setQueuedComplete] =
-    useState<MaintenanceRequest | null>(null);
+  /** Which card's inline status menu is open, if any — only one at a time. */
+  const [menuRequestId, setMenuRequestId] = useState<string | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [route, setRoute] = useState<MaintenanceRoute>({name: 'list'});
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -110,19 +107,17 @@ const MaintenanceScreen: React.FC = () => {
   }, [dispatch, route.name]);
 
   // Completing can't be undone from here, so it always asks first; moving to
-  // In-progress applies straight away.
-  const handleStatusSelect = (status: MaintenanceStatus) => {
-    const target = statusTarget;
-    setStatusTarget(null);
-    if (!target) {
-      return;
-    }
+  // In-progress applies straight away. The menu is an inline popover, not a
+  // modal, so there's no dismiss-then-open dance needed to show the dialog.
+  const handleSelectStatus = (
+    request: MaintenanceRequest,
+    status: MaintenanceStatus,
+  ) => {
+    setMenuRequestId(null);
     if (status === 'Completed') {
-      // Held until the sheet's modal is gone — iOS drops a modal presented
-      // while another is still up, which silently swallowed the dialog.
-      setQueuedComplete(target);
+      setCompleteTarget(request);
     } else {
-      setStatus(target.id, status);
+      setStatus(request.id, status);
     }
   };
 
@@ -236,12 +231,25 @@ const MaintenanceScreen: React.FC = () => {
           contentContainerStyle={styles.listContent}
           keyboardShouldPersistTaps="handled"
           scrollEventThrottle={16}
-          onScroll={e => setShowBackToTop(e.nativeEvent.contentOffset.y > 240)}
+          onScroll={e => {
+            setShowBackToTop(e.nativeEvent.contentOffset.y > 240);
+            // No outside-tap capture on an inline popover, so scrolling is
+            // the dismiss gesture instead.
+            if (menuRequestId) {
+              setMenuRequestId(null);
+            }
+          }}
           renderItem={({item}) => (
             <MaintenanceCard
               request={item}
               onPress={record => setRoute({name: 'view', id: record.id})}
-              onStatusPress={setStatusTarget}
+              menuOpen={menuRequestId === item.id}
+              onToggleMenu={() =>
+                setMenuRequestId(current =>
+                  current === item.id ? null : item.id,
+                )
+              }
+              onSelectStatus={handleSelectStatus}
             />
           )}
           ListEmptyComponent={
@@ -286,23 +294,18 @@ const MaintenanceScreen: React.FC = () => {
       ) : null}
 
       <TouchableOpacity
-        style={styles.fab}
+        style={styles.fabTouchable}
         activeOpacity={0.85}
         onPress={() => setAddOpen(true)}>
-        <PlusIcon size={26} color={theme.colors.white} />
+        <LinearGradient
+          // Design's --primary-hover → --primary, 145deg.
+          colors={['#0092FF', theme.colors.primary]}
+          start={{x: 0.15, y: 0}}
+          end={{x: 0.85, y: 1}}
+          style={styles.fab}>
+          <PlusIcon size={26} color={theme.colors.white} />
+        </LinearGradient>
       </TouchableOpacity>
-
-      <StatusMenuSheet
-        request={statusTarget}
-        onSelect={handleStatusSelect}
-        onClose={() => setStatusTarget(null)}
-        onClosed={() => {
-          if (queuedComplete) {
-            setCompleteTarget(queuedComplete);
-            setQueuedComplete(null);
-          }
-        }}
-      />
 
       <ConfirmDialog
         visible={completeTarget !== null}
@@ -313,6 +316,9 @@ const MaintenanceScreen: React.FC = () => {
             : ''
         }
         confirmLabel="Yes, complete"
+        icon="check"
+        iconTone="success"
+        confirmTone="primary"
         onConfirm={() => {
           if (completeTarget) {
             setStatus(completeTarget.id, 'Completed');
@@ -459,17 +465,21 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
   },
   // Kept identical to HomeScreen's FAB — same size, radius, offset and shadow.
-  fab: {
+  fabTouchable: {
     position: 'absolute',
     right: theme.spacing.lg,
     bottom: theme.spacing.xxl,
     width: 56,
     height: 56,
     borderRadius: 18,
-    backgroundColor: theme.colors.primary,
+    ...theme.shadow.fab,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.shadow.fab,
   },
 });
 

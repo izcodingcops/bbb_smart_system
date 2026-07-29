@@ -139,7 +139,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    // Lighter than theme.colors.border — matches the design's row hairline.
+    borderBottomColor: '#EEF0F2',
   },
   label: {fontFamily: theme.fonts.bold, fontSize: 15, color: '#181B1F'},
   radio: {
