@@ -116,6 +116,63 @@ const checks: Check[] = [
     assert.equal(missing.data.maintenanceRequest, null);
   }],
 
+  // NB: the mock store is module-level and these checks share one process, so
+  // a mutation here is visible to every check that runs after it. #MT-40801 is
+  // used only by this check for that reason.
+  ['maintenance status flows set completedBy and completedOn', async () => {
+    const set = (id: string, status: string) => run(
+      'mutation S($id: ID!, $s: MaintenanceStatus!) { setMaintenanceStatus(id: $id, status: $s) { reference status completedBy completedOn } }',
+      {id, s: status},
+    );
+    // #MT-40801 starts Open with Alex Nguyen assigned.
+    const prog: any = await set('#MT-40801', 'IN_PROGRESS');
+    assert.equal(prog.errors, undefined);
+    assert.equal(prog.data.setMaintenanceStatus.status, 'IN_PROGRESS');
+    assert.equal(prog.data.setMaintenanceStatus.completedBy, null);
+    const done: any = await set('#MT-40801', 'COMPLETED');
+    assert.equal(done.data.setMaintenanceStatus.status, 'COMPLETED');
+    assert.equal(done.data.setMaintenanceStatus.completedBy, 'Alex Nguyen');
+    assert.ok(done.data.setMaintenanceStatus.completedOn);
+  }],
+
+  ['maintenance create, update and delete round-trip through the store', async () => {
+    const INPUT = {
+      type: 'Bench Repair', requestedAt: '2026-07-07T09:00:00',
+      assigneeKind: 'SUPERVISOR', department: null, priority: 'HIGH',
+      address: '16th St Mall, Denver, CO 80202', zone: 'Zone 2',
+      describeLocation: 'North entrance', businessName: '16th St Mall',
+      description: 'Loose slats', documents: [], fixture: 'Bench #B-204',
+      incidents: [], pois: [], equipment: ['Hammer'],
+    };
+    const created: any = await run(
+      'mutation C($p: ID!, $i: MaintenanceRequestInput!) { createMaintenanceRequest(programId: $p, input: $i) { reference status fixture equipment } }',
+      {p: 'p1', i: INPUT},
+    );
+    assert.equal(created.errors, undefined);
+    const ref = created.data.createMaintenanceRequest.reference;
+    assert.ok(ref.startsWith('#MT-'));
+    assert.equal(created.data.createMaintenanceRequest.status, 'OPEN');
+    assert.equal(created.data.createMaintenanceRequest.fixture, 'Bench #B-204');
+
+    const updated: any = await run(
+      'mutation U($id: ID!, $i: MaintenanceRequestInput!) { updateMaintenanceRequest(id: $id, input: $i) { reference priority zone } }',
+      {id: ref, i: {...INPUT, priority: 'LOW', zone: 'Zone 5'}},
+    );
+    assert.equal(updated.errors, undefined);
+    assert.equal(updated.data.updateMaintenanceRequest.priority, 'LOW');
+    assert.equal(updated.data.updateMaintenanceRequest.zone, 'Zone 5');
+
+    const deleted: any = await run(
+      'mutation D($id: ID!) { deleteMaintenanceRequest(id: $id) }', {id: ref},
+    );
+    assert.equal(deleted.errors, undefined);
+    assert.equal(deleted.data.deleteMaintenanceRequest, ref);
+    const gone: any = await run(
+      'query G($id: ID!) { maintenanceRequest(id: $id) { reference } }', {id: ref},
+    );
+    assert.equal(gone.data.maintenanceRequest, null);
+  }],
+
   ['a typo fails loudly', async () => {
     const r: any = await run('query Bad { me { enable_shift_entry } }');
     assert.ok(r.errors?.[0]?.message.includes('Cannot query field'));

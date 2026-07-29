@@ -1,6 +1,6 @@
 import {MaintenanceDetail} from '../../../types/maintenance';
 import {sleep} from '../../mockSession';
-import {findRecord, maintenanceStore} from './store';
+import {findRecord, maintenanceStore, nextReference} from './store';
 
 const STATUS: Record<string, string> = {
   Open: 'OPEN',
@@ -26,6 +26,57 @@ export const toWire = (record: MaintenanceDetail) => ({
   assigneeKind: ASSIGNEE_KIND[record.assigneeKind],
 });
 
+const STATUS_IN: Record<string, MaintenanceDetail['status']> = {
+  OPEN: 'Open',
+  IN_PROGRESS: 'In-progress',
+  COMPLETED: 'Completed',
+};
+const PRIORITY_IN: Record<string, MaintenanceDetail['priority']> = {
+  LOW: 'Low',
+  MEDIUM: 'Medium',
+  HIGH: 'High',
+};
+const ASSIGNEE_KIND_IN: Record<string, MaintenanceDetail['assigneeKind']> = {
+  SUPERVISOR: 'Supervisor',
+  DEPARTMENT: 'Department',
+};
+
+interface WireInput {
+  type: string;
+  requestedAt: string;
+  assigneeKind: string;
+  department?: string | null;
+  priority: string;
+  address: string;
+  zone?: string | null;
+  describeLocation?: string | null;
+  businessName?: string | null;
+  description?: string | null;
+  documents?: string[] | null;
+  fixture?: string | null;
+  incidents?: string[] | null;
+  pois?: string[] | null;
+  equipment?: string[] | null;
+}
+
+const applyInput = (record: MaintenanceDetail, input: WireInput): void => {
+  record.type = input.type;
+  record.requestedAt = input.requestedAt;
+  record.assigneeKind = ASSIGNEE_KIND_IN[input.assigneeKind];
+  record.department = input.department ?? null;
+  record.priority = PRIORITY_IN[input.priority];
+  record.address = input.address;
+  record.zone = input.zone ?? null;
+  record.describeLocation = input.describeLocation ?? null;
+  record.businessName = input.businessName ?? '';
+  record.description = input.description ?? null;
+  record.documents = input.documents ?? [];
+  record.fixture = input.fixture ?? null;
+  record.incidents = input.incidents ?? [];
+  record.pois = input.pois ?? [];
+  record.equipment = input.equipment ?? [];
+};
+
 export const maintenanceResolvers = {
   Query: {
     // `filter` is accepted and ignored: the screen still filters client-side.
@@ -39,6 +90,92 @@ export const maintenanceResolvers = {
       await sleep();
       const record = findRecord(args.id);
       return record ? toWire(record) : null;
+    },
+  },
+
+  Mutation: {
+    setMaintenanceStatus: async (
+      _: unknown,
+      args: {id: string; status: string},
+    ) => {
+      await sleep();
+      const record = findRecord(args.id);
+      if (!record) {
+        throw new Error(`Unknown maintenance request: ${args.id}`);
+      }
+      record.status = STATUS_IN[args.status];
+      if (record.status === 'Completed') {
+        record.completedBy = record.assignee?.name ?? record.completedBy;
+        record.completedOn = new Date().toISOString();
+      } else {
+        record.completedBy = null;
+        record.completedOn = null;
+      }
+      return toWire(record);
+    },
+
+    createMaintenanceRequest: async (
+      _: unknown,
+      args: {programId: string; input: WireInput},
+    ) => {
+      await sleep();
+      const record: MaintenanceDetail = {
+        id: nextReference(),
+        type: '',
+        status: 'Open',
+        requestedAt: '',
+        businessName: '',
+        priority: 'Low',
+        // Created by the Ambassador; a supervisor assigns it later.
+        assignee: null,
+        address: '',
+        routedToSupervisor: true,
+        queuedOffline: false,
+        completedBy: null,
+        ambassador: 'Tom Lee',
+        programName: 'Louisville KY Training',
+        programCode: 'BBB 0000',
+        createdBy: 'Tom Lee',
+        completedOn: null,
+        paid: false,
+        assigneeKind: 'Supervisor',
+        department: null,
+        zone: null,
+        describeLocation: null,
+        description: null,
+        documents: [],
+        fixture: null,
+        incidents: [],
+        pois: [],
+        equipment: [],
+        comments: [],
+      };
+      applyInput(record, args.input);
+      maintenanceStore.records.unshift(record);
+      return toWire(record);
+    },
+
+    updateMaintenanceRequest: async (
+      _: unknown,
+      args: {id: string; input: WireInput},
+    ) => {
+      await sleep();
+      const record = findRecord(args.id);
+      if (!record) {
+        throw new Error(`Unknown maintenance request: ${args.id}`);
+      }
+      applyInput(record, args.input);
+      return toWire(record);
+    },
+
+    deleteMaintenanceRequest: async (_: unknown, args: {id: string}) => {
+      await sleep();
+      const index = maintenanceStore.records.findIndex(r => r.id === args.id);
+      if (index < 0) {
+        throw new Error(`Unknown maintenance request: ${args.id}`);
+      }
+      maintenanceStore.records.splice(index, 1);
+      return args.id;
     },
   },
 };

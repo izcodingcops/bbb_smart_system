@@ -24,6 +24,7 @@ export const mockSchema = makeExecutableSchema({
     },
     Mutation: {
       ...authResolvers.Mutation,
+      ...maintenanceResolvers.Mutation,
     },
   },
 });
