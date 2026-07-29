@@ -13,7 +13,6 @@ import {ConfirmDialog, Toast, formatDateTime} from '../../components/ui';
 import {
   ChevronLeftIcon,
   EditIcon,
-  FileTextIcon,
   MessageSquareIcon,
   TrashIcon,
 } from '../../components/icons';
@@ -26,7 +25,11 @@ import {
   useUpdateMaintenanceCommentMutation,
   useUpdateMaintenanceRequestMutation,
 } from '../../graphql/features/maintenance/hooks';
-import {MaintenanceComment, MaintenanceStatus} from '../../types/maintenance';
+import {
+  MaintenanceComment,
+  MaintenancePriority,
+  MaintenanceStatus,
+} from '../../types/maintenance';
 import AddFixtureSheet from './components/AddFixtureSheet';
 import CommentList from './components/CommentList';
 import CommentSheet from './components/CommentSheet';
@@ -38,6 +41,23 @@ const STATUS_STYLE: Record<MaintenanceStatus, {bg: string; fg: string}> = {
   'In-progress': {bg: '#FEF3C7', fg: '#B45309'},
   Completed: {bg: '#DCFCE7', fg: '#16A34A'},
 };
+
+const PRIORITY_STYLE: Record<MaintenancePriority, {bg: string; fg: string}> = {
+  High: {bg: '#FFF2F0', fg: '#CF1322'},
+  Medium: {bg: '#FFFBE6', fg: '#AD8B00'},
+  Low: {bg: '#F6FFED', fg: '#389E0D'},
+};
+
+/** 'Tom Lee' → 'TL', for the small avatar next to a plain name field. */
+function initialsOf(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(word => word[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
 
 interface FieldProps {
   label: string;
@@ -184,7 +204,16 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Basic Details</Text>
           <View style={styles.grid}>
-            <DetailField label="Ambassador" value={detail.ambassador} />
+            <DetailField label="Ambassador">
+              <View style={styles.withAvatar}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {initialsOf(detail.ambassador)}
+                  </Text>
+                </View>
+                <Text style={styles.fieldValue}>{detail.ambassador}</Text>
+              </View>
+            </DetailField>
             <DetailField label="Type" value={detail.type} />
             <DetailField label="Program Name">
               <Text style={styles.fieldValue}>
@@ -193,7 +222,21 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
                 {detail.programCode}
               </Text>
             </DetailField>
-            <DetailField label="Priority" value={detail.priority} />
+            <DetailField label="Priority">
+              <View
+                style={[
+                  styles.priorityPill,
+                  {backgroundColor: PRIORITY_STYLE[detail.priority].bg},
+                ]}>
+                <Text
+                  style={[
+                    styles.priorityPillText,
+                    {color: PRIORITY_STYLE[detail.priority].fg},
+                  ]}>
+                  {detail.priority}
+                </Text>
+              </View>
+            </DetailField>
             <DetailField label="Business Name" value={detail.businessName} />
             <DetailField label="Status">
               <View style={[styles.pill, {backgroundColor: status.bg}]}>
@@ -214,14 +257,6 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
               label="Request Date & Time"
               value={formatDateTime(detail.requestedAt)}
             />
-            <DetailField label="Payment Status" full>
-              <View style={styles.payRow}>
-                <FileTextIcon size={17} color={theme.colors.textSecondary} />
-                <Text style={styles.fieldValue}>
-                  {detail.paid ? 'Paid' : 'Un-Paid'}
-                </Text>
-              </View>
-            </DetailField>
           </View>
         </View>
 
@@ -495,7 +530,29 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   pillText: {fontFamily: theme.fonts.black, fontSize: 12.5},
-  payRow: {flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm},
+  priorityPill: {
+    alignSelf: 'flex-start',
+    height: 24,
+    paddingHorizontal: 11,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  priorityPillText: {fontFamily: theme.fonts.bold, fontSize: 12.5},
+  withAvatar: {flexDirection: 'row', alignItems: 'center', gap: 8},
+  avatar: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontFamily: theme.fonts.black,
+    fontSize: 10,
+    color: theme.colors.white,
+  },
   thumbs: {flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginTop: 2},
   thumb: {
     width: 52,
