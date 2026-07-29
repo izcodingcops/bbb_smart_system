@@ -21,6 +21,27 @@ export const EMPTY_FILTERS: Filters = {
   assignedTo: [],
 };
 
+/** The design's chip order. */
+export const FILTER_FIELDS: FilterField[] = [
+  'type',
+  'businessName',
+  'priority',
+  'status',
+  'dateRange',
+  'completedBy',
+  'assignedTo',
+];
+
+export const FIELD_LABEL: Record<FilterField, string> = {
+  type: 'Type',
+  businessName: 'Business Name',
+  priority: 'Priority',
+  status: 'Status',
+  dateRange: 'Date Range',
+  completedBy: 'Completed By',
+  assignedTo: 'Assigned To',
+};
+
 export const SORT_OPTIONS: {value: SortKey; label: string}[] = [
   {value: 'latest', label: 'Latest first'},
   {value: 'oldest', label: 'Oldest first'},

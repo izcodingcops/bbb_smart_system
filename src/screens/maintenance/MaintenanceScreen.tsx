@@ -13,6 +13,9 @@ import LinearGradient from 'react-native-linear-gradient';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import {
   ConfirmDialog,
+  EmptyState,
+  FilterChips,
+  ListSummary,
   MultiSelectSheet,
   SingleSelectSheet,
   TextField,
@@ -23,6 +26,7 @@ import {
   PlusIcon,
   SearchIcon,
   SortIcon,
+  ToolsIcon,
 } from '../../components/icons';
 import {
   useGetMaintenanceRequestsQuery,
@@ -38,6 +42,8 @@ import {useAppDispatch} from '../../redux/store';
 import {setTabBarHidden} from '../../redux/ui/slice';
 import {
   EMPTY_FILTERS,
+  FIELD_LABEL,
+  FILTER_FIELDS,
   FilterField,
   Filters,
   SORT_LABEL,
@@ -47,14 +53,12 @@ import {
   applySearch,
   applySort,
   countByStatus,
+  formatFilterValue,
   hasAnyFilter,
   optionsForField,
 } from './filtering';
 import MaintenanceCard from './components/MaintenanceCard';
 import DateRangeSheet from './components/DateRangeSheet';
-import FilterChips, {FIELD_LABEL} from './components/FilterChips';
-import ListSummary from './components/ListSummary';
-import MaintenanceEmptyState from './components/MaintenanceEmptyState';
 import CreateMaintenanceScreen from './CreateMaintenanceScreen';
 import ViewMaintenanceScreen from './ViewMaintenanceScreen';
 import {theme} from '../../theme';
@@ -202,7 +206,10 @@ const MaintenanceScreen: React.FC = () => {
       </SafeAreaView>
 
       <FilterChips
+        fields={FILTER_FIELDS}
+        fieldLabel={FIELD_LABEL}
         filters={filters}
+        formatValue={formatFilterValue}
         onOpen={setOpenFilter}
         onClear={field => setFilters(current => ({...current, [field]: []}))}
       />
@@ -211,11 +218,14 @@ const MaintenanceScreen: React.FC = () => {
       {isLoading ? null : (
         <ListSummary
           total={requests.length}
-          open={counts.open}
-          inProgress={counts.inProgress}
           visible={visible.length}
           isNarrowed={isNarrowed}
           sortLabel={SORT_LABEL[sort]}
+          noun="requests"
+          breakdown={[
+            {label: 'Open', value: counts.open},
+            {label: 'In Progress', value: counts.inProgress},
+          ]}
         />
       )}
 
@@ -254,14 +264,16 @@ const MaintenanceScreen: React.FC = () => {
           )}
           ListEmptyComponent={
             isError ? (
-              <MaintenanceEmptyState
+              <EmptyState
+                icon={<ToolsIcon size={28} color={theme.colors.primary} />}
                 title="Couldn't load maintenance"
                 body="Something went wrong fetching your maintenance requests. Check your connection and try again."
                 actionLabel="Retry"
                 onAction={refetch}
               />
             ) : isNarrowed ? (
-              <MaintenanceEmptyState
+              <EmptyState
+                icon={<ToolsIcon size={28} color={theme.colors.primary} />}
                 title="No maintenance found"
                 body={
                   search.trim()
@@ -272,7 +284,8 @@ const MaintenanceScreen: React.FC = () => {
                 onAction={clearSearchAndFilters}
               />
             ) : (
-              <MaintenanceEmptyState
+              <EmptyState
+                icon={<ToolsIcon size={28} color={theme.colors.primary} />}
                 title="No maintenance to show yet"
                 body="Maintenance will appear when assigned by your supervisor, and you can also create it as needed."
               />

@@ -9,7 +9,14 @@ import {
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {ConfirmDialog, Toast, formatDateTime} from '../../components/ui';
+import {
+  ConfirmDialog,
+  DetailField,
+  PriorityPill,
+  StatusPill,
+  Toast,
+  formatDateTime,
+} from '../../components/ui';
 import {
   ChevronLeftIcon,
   EditIcon,
@@ -58,31 +65,6 @@ function initialsOf(name: string): string {
     .slice(0, 2)
     .toUpperCase();
 }
-
-interface FieldProps {
-  label: string;
-  value?: string | null;
-  /** Spans both grid columns. */
-  full?: boolean;
-  children?: React.ReactNode;
-}
-
-/** Label above value in a grid cell. Falls back to a muted "N/A". */
-export const DetailField: React.FC<FieldProps> = ({
-  label,
-  value,
-  full = false,
-  children,
-}) => (
-  <View style={[styles.field, full && styles.fieldFull]}>
-    <Text style={styles.fieldLabel}>{label}</Text>
-    {children ?? (
-      <Text style={[styles.fieldValue, !value && styles.fieldValueEmpty]}>
-        {value || 'N/A'}
-      </Text>
-    )}
-  </View>
-);
 
 interface Props {
   id: string;
@@ -223,27 +205,16 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
               </Text>
             </DetailField>
             <DetailField label="Priority">
-              <View
-                style={[
-                  styles.priorityPill,
-                  {backgroundColor: PRIORITY_STYLE[detail.priority].bg},
-                ]}>
-                <Text
-                  style={[
-                    styles.priorityPillText,
-                    {color: PRIORITY_STYLE[detail.priority].fg},
-                  ]}>
-                  {detail.priority}
-                </Text>
-              </View>
+              <PriorityPill
+                label={detail.priority}
+                bg={PRIORITY_STYLE[detail.priority].bg}
+                fg={PRIORITY_STYLE[detail.priority].fg}
+                size="md"
+              />
             </DetailField>
             <DetailField label="Business Name" value={detail.businessName} />
             <DetailField label="Status">
-              <View style={[styles.pill, {backgroundColor: status.bg}]}>
-                <Text style={[styles.pillText, {color: status.fg}]}>
-                  {detail.status}
-                </Text>
-              </View>
+              <StatusPill label={detail.status} bg={status.bg} fg={status.fg} size="md" />
             </DetailField>
             <DetailField label="Created By" value={detail.createdBy} />
             <DetailField label="Completed By" value={detail.completedBy} />
@@ -505,14 +476,9 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   grid: {flexDirection: 'row', flexWrap: 'wrap', rowGap: 18, columnGap: 14},
-  field: {width: '47%'},
-  fieldFull: {width: '100%'},
-  fieldLabel: {
-    fontFamily: theme.fonts.black,
-    fontSize: 12.5,
-    color: '#5B7290',
-    marginBottom: 6,
-  },
+  // Still used directly by the Ambassador/Program Name/Document-empty custom
+  // `children` nodes below — those aren't plain `value` props, so they can't
+  // go through DetailField's own internal text style.
   fieldValue: {
     fontFamily: theme.fonts.black,
     fontSize: 15,
@@ -523,22 +489,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.bold,
     color: theme.colors.textMuted,
   },
-  pill: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 999,
-  },
-  pillText: {fontFamily: theme.fonts.black, fontSize: 12.5},
-  priorityPill: {
-    alignSelf: 'flex-start',
-    height: 24,
-    paddingHorizontal: 11,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  priorityPillText: {fontFamily: theme.fonts.bold, fontSize: 12.5},
   withAvatar: {flexDirection: 'row', alignItems: 'center', gap: 8},
   avatar: {
     width: 26,
