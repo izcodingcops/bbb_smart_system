@@ -56,6 +56,7 @@ import FilterChips, {FIELD_LABEL} from './components/FilterChips';
 import ListSummary from './components/ListSummary';
 import MaintenanceEmptyState from './components/MaintenanceEmptyState';
 import CreateMaintenanceScreen from './CreateMaintenanceScreen';
+import ViewMaintenanceScreen from './ViewMaintenanceScreen';
 import {theme} from '../../theme';
 
 /** Create and View are full-screen pushes within the Maintenance tab. */
@@ -154,6 +155,15 @@ const MaintenanceScreen: React.FC = () => {
             reference,
           });
         }}
+      />
+    );
+  }
+
+  if (route.name === 'view') {
+    return (
+      <ViewMaintenanceScreen
+        id={route.id}
+        onClose={() => setRoute({name: 'list'})}
       />
     );
   }
