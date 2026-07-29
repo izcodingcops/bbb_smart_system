@@ -1,7 +1,14 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
 import BottomSheet from './BottomSheet';
 import CheckIcon from '../icons/CheckIcon';
+import SearchIcon from '../icons/SearchIcon';
 import {SelectOption} from './SingleSelectSheet';
 import {theme} from '../../theme';
 
@@ -12,6 +19,12 @@ interface Props {
   value: string[];
   onApply: (value: string[]) => void;
   onClose: () => void;
+  /** Filter box above the list — for dropdowns with more than a handful. */
+  searchable?: boolean;
+  /** Rendered above the first row (e.g. "+ Add Fixture"). */
+  headerAction?: React.ReactNode;
+  /** Fired once the native modal is really gone — see BottomSheet's onClosed. */
+  onClosed?: () => void;
 }
 
 /**
@@ -27,8 +40,12 @@ const MultiSelectSheet: React.FC<Props> = ({
   value,
   onApply,
   onClose,
+  searchable = false,
+  headerAction,
+  onClosed,
 }) => {
   const [draft, setDraft] = useState<string[]>(value);
+  const [query, setQuery] = useState('');
 
   // Deliberately keyed to `visible` alone: re-seeding whenever `value` changed
   // would discard edits the moment the parent re-rendered.
@@ -47,9 +64,43 @@ const MultiSelectSheet: React.FC<Props> = ({
     );
   };
 
+  const needle = query.trim().toLowerCase();
+  // Filtering only decides which rows render — the draft is never touched.
+  const shown = needle
+    ? options.filter(o => o.label.toLowerCase().includes(needle))
+    : options;
+
   return (
-    <BottomSheet visible={visible} title={title} onClose={onClose}>
-      {options.map(option => {
+    <BottomSheet
+      visible={visible}
+      title={title}
+      onClosed={onClosed}
+      onClose={() => {
+        setQuery('');
+        onClose();
+      }}>
+      {headerAction ? (
+        <View style={styles.headerRow}>{headerAction}</View>
+      ) : null}
+
+      {searchable ? (
+        <View style={styles.search}>
+          <SearchIcon size={17} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search…"
+            placeholderTextColor={theme.colors.textMuted}
+            value={query}
+            onChangeText={setQuery}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
+      ) : null}
+
+      {shown.length === 0 ? <Text style={styles.empty}>No matches.</Text> : null}
+
+      {shown.map(option => {
         const checked = draft.includes(option.value);
         return (
           <TouchableOpacity
@@ -77,6 +128,7 @@ const MultiSelectSheet: React.FC<Props> = ({
           activeOpacity={0.85}
           onPress={() => {
             onApply(draft);
+            setQuery('');
             onClose();
           }}>
           <Text style={styles.applyText}>Apply</Text>
@@ -87,6 +139,33 @@ const MultiSelectSheet: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
+  headerRow: {alignItems: 'flex-end', paddingBottom: theme.spacing.sm},
+  search: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    height: 42,
+    paddingHorizontal: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: '#F4F5F7',
+  },
+  searchInput: {
+    flex: 1,
+    padding: 0,
+    fontFamily: theme.fonts.bold,
+    fontSize: 14,
+    color: theme.colors.text,
+  },
+  empty: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 13.5,
+    color: theme.colors.textMuted,
+    paddingVertical: theme.spacing.lg,
+    textAlign: 'center',
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
