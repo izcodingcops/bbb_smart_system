@@ -5,9 +5,24 @@ export const maintenanceTypeDefs = /* GraphQL */ `
     COMPLETED
   }
 
+  enum MaintenanceAssigneeKind {
+    SUPERVISOR
+    DEPARTMENT
+  }
+
   type MaintenanceAssignee {
     name: String!
     initials: String!
+  }
+
+  type MaintenanceComment {
+    id: ID!
+    "ISO-8601."
+    createdAt: String!
+    text: String!
+    edited: Boolean!
+    "Local file URIs of attached images."
+    images: [String!]!
   }
 
   type MaintenanceRequest {
@@ -24,6 +39,39 @@ export const maintenanceTypeDefs = /* GraphQL */ `
     address: String!
     routedToSupervisor: Boolean!
     queuedOffline: Boolean!
+    completedBy: String
+
+    "Detail-only fields — null on list queries that don't select them."
+    ambassador: String
+    programName: String
+    programCode: String
+    createdBy: String
+    completedOn: String
+    paid: Boolean
+    assigneeKind: MaintenanceAssigneeKind
+    department: String
+    zone: String
+    describeLocation: String
+    description: String
+    documents: [String!]
+    fixture: String
+    incidents: [String!]
+    pois: [String!]
+    equipment: [String!]
+    comments: [MaintenanceComment!]
+  }
+
+  type MaintenanceFormOptions {
+    nextReference: String!
+    types: [String!]!
+    zones: [String!]!
+    departments: [String!]!
+    businessNames: [String!]!
+    fixtures: [String!]!
+    incidents: [String!]!
+    pois: [String!]!
+    equipment: [String!]!
+    fixtureTypes: [String!]!
   }
 
   input MaintenanceFilter {
@@ -35,10 +83,60 @@ export const maintenanceTypeDefs = /* GraphQL */ `
     search: String
   }
 
+  input MaintenanceRequestInput {
+    type: String!
+    "ISO-8601."
+    requestedAt: String!
+    assigneeKind: MaintenanceAssigneeKind!
+    department: String
+    priority: Priority!
+    address: String!
+    zone: String
+    describeLocation: String
+    businessName: String
+    description: String
+    documents: [String!]
+    fixture: String
+    incidents: [String!]
+    pois: [String!]
+    equipment: [String!]
+  }
+
   extend type Query {
     maintenanceRequests(
       programId: ID!
       filter: MaintenanceFilter
     ): [MaintenanceRequest!]!
+    maintenanceRequest(id: ID!): MaintenanceRequest
+    maintenanceFormOptions(programId: ID!): MaintenanceFormOptions!
+  }
+
+  extend type Mutation {
+    setMaintenanceStatus(
+      id: ID!
+      status: MaintenanceStatus!
+    ): MaintenanceRequest!
+    createMaintenanceRequest(
+      programId: ID!
+      input: MaintenanceRequestInput!
+    ): MaintenanceRequest!
+    updateMaintenanceRequest(
+      id: ID!
+      input: MaintenanceRequestInput!
+    ): MaintenanceRequest!
+    deleteMaintenanceRequest(id: ID!): ID!
+    addMaintenanceComment(
+      requestId: ID!
+      text: String!
+      images: [String!]
+    ): MaintenanceComment!
+    updateMaintenanceComment(
+      requestId: ID!
+      commentId: ID!
+      text: String!
+      images: [String!]
+    ): MaintenanceComment!
+    deleteMaintenanceComment(requestId: ID!, commentId: ID!): ID!
+    createMaintenanceFixture(name: String!, fixtureType: String!): String!
   }
 `;

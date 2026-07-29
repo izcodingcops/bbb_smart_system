@@ -79,6 +79,43 @@ const checks: Check[] = [
     assert.ok(r.data.maintenanceRequests.length > 0);
   }],
 
+  ['maintenance list records expose completedBy', async () => {
+    const r: any = await run(
+      'query L($p: ID!) { maintenanceRequests(programId: $p) { reference status completedBy } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const done = r.data.maintenanceRequests.find((m: any) => m.reference === '#MT-40840');
+    assert.equal(done.completedBy, 'Marcus Bell');
+    const open = r.data.maintenanceRequests.find((m: any) => m.reference === '#MT-40855');
+    assert.equal(open.completedBy, null);
+  }],
+
+  ['maintenance detail resolves every section', async () => {
+    const r: any = await run(
+      `query D($id: ID!) { maintenanceRequest(id: $id) {
+        reference type status priority completedBy completedOn
+        ambassador programName programCode createdBy paid assigneeKind department
+        address zone describeLocation description documents
+        fixture incidents pois equipment
+        comments { id createdAt text edited images }
+      } }`,
+      {id: '#MT-40840'},
+    );
+    assert.equal(r.errors, undefined);
+    const d = r.data.maintenanceRequest;
+    assert.equal(d.completedBy, 'Marcus Bell');
+    assert.equal(d.paid, true);
+    assert.equal(d.assigneeKind, 'SUPERVISOR');
+    assert.ok(Array.isArray(d.comments));
+    assert.ok(d.comments.length >= 1);
+    const missing: any = await run(
+      'query D($id: ID!) { maintenanceRequest(id: $id) { reference } }',
+      {id: '#MT-00000'},
+    );
+    assert.equal(missing.data.maintenanceRequest, null);
+  }],
+
   ['a typo fails loudly', async () => {
     const r: any = await run('query Bad { me { enable_shift_entry } }');
     assert.ok(r.errors?.[0]?.message.includes('Cannot query field'));

@@ -27,6 +27,7 @@ const ACTIVE: MaintenanceRequest[] = [
     address: ADDRESSES['16th St Mall'],
     routedToSupervisor: false,
     queuedOffline: false,
+    completedBy: null,
   },
   {
     id: '#MT-40855',
@@ -39,6 +40,7 @@ const ACTIVE: MaintenanceRequest[] = [
     address: ADDRESSES['Union Station'],
     routedToSupervisor: true,
     queuedOffline: true,
+    completedBy: null,
   },
   {
     id: '#MT-40822',
@@ -51,6 +53,7 @@ const ACTIVE: MaintenanceRequest[] = [
     address: ADDRESSES.BlockByBlock,
     routedToSupervisor: false,
     queuedOffline: false,
+    completedBy: null,
   },
   {
     id: '#MT-40810',
@@ -63,6 +66,7 @@ const ACTIVE: MaintenanceRequest[] = [
     address: ADDRESSES['Larimer Square'],
     routedToSupervisor: false,
     queuedOffline: false,
+    completedBy: null,
   },
   {
     id: '#MT-40801',
@@ -75,6 +79,7 @@ const ACTIVE: MaintenanceRequest[] = [
     address: ADDRESSES['Union Station'],
     routedToSupervisor: false,
     queuedOffline: false,
+    completedBy: null,
   },
   {
     id: '#MT-40790',
@@ -87,6 +92,7 @@ const ACTIVE: MaintenanceRequest[] = [
     address: ADDRESSES.BlockByBlock,
     routedToSupervisor: true,
     queuedOffline: false,
+    completedBy: null,
   },
   {
     id: '#MT-40777',
@@ -99,6 +105,7 @@ const ACTIVE: MaintenanceRequest[] = [
     address: ADDRESSES['16th St Mall'],
     routedToSupervisor: false,
     queuedOffline: false,
+    completedBy: null,
   },
   {
     id: '#MT-40762',
@@ -111,6 +118,7 @@ const ACTIVE: MaintenanceRequest[] = [
     address: ADDRESSES['Larimer Square'],
     routedToSupervisor: false,
     queuedOffline: true,
+    completedBy: null,
   },
   {
     id: '#MT-40744',
@@ -123,6 +131,7 @@ const ACTIVE: MaintenanceRequest[] = [
     address: ADDRESSES['Denver Pavilions'],
     routedToSupervisor: true,
     queuedOffline: false,
+    completedBy: null,
   },
 ];
 
@@ -159,6 +168,7 @@ const COMPLETED_BASE = new Date('2026-07-04T16:00:00').getTime();
  */
 const COMPLETED: MaintenanceRequest[] = Array.from({length: 24}, (_, i) => {
   const business = COMPLETED_BUSINESSES[i % COMPLETED_BUSINESSES.length];
+  const assignee = COMPLETED_ASSIGNEES[i % COMPLETED_ASSIGNEES.length];
   return {
     id: `#MT-${40700 - i * 3}`,
     type: COMPLETED_TYPES[i % COMPLETED_TYPES.length],
@@ -166,10 +176,11 @@ const COMPLETED: MaintenanceRequest[] = Array.from({length: 24}, (_, i) => {
     requestedAt: toLocalIso(new Date(COMPLETED_BASE - i * 7 * HOUR)),
     businessName: business,
     priority: COMPLETED_PRIORITIES[i % COMPLETED_PRIORITIES.length],
-    assignee: COMPLETED_ASSIGNEES[i % COMPLETED_ASSIGNEES.length],
+    assignee,
     address: ADDRESSES[business],
     routedToSupervisor: false,
     queuedOffline: false,
+    completedBy: assignee.name,
   };
 });
 
@@ -186,6 +197,7 @@ export const MOCK_MAINTENANCE_REQUESTS: MaintenanceRequest[] = [
     address: ADDRESSES['16th St Mall'],
     routedToSupervisor: false,
     queuedOffline: false,
+    completedBy: MARCUS.name,
   },
   ...COMPLETED,
 ];

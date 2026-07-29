@@ -17,6 +17,7 @@ export const GET_MAINTENANCE_REQUESTS = gql`
       address
       routedToSupervisor
       queuedOffline
+      completedBy
     }
   }
 `;

@@ -21,6 +21,7 @@ interface GqlMaintenanceRequest {
   address: string;
   routedToSupervisor: boolean;
   queuedOffline: boolean;
+  completedBy: string | null;
 }
 
 const STATUS: Record<GqlMaintenanceRequest['status'], MaintenanceStatus> = {
@@ -45,6 +46,7 @@ const toRequest = (r: GqlMaintenanceRequest): MaintenanceRequest => ({
   address: r.address,
   routedToSupervisor: r.routedToSupervisor,
   queuedOffline: r.queuedOffline,
+  completedBy: r.completedBy,
 });
 
 /**
