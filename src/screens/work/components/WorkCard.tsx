@@ -1,7 +1,6 @@
 import React from 'react';
-import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
-import {Card} from '../../../components/ui';
-import {ChevronDownIcon, MoreVerticalIcon} from '../../../components/icons';
+import {View, Text, StyleSheet} from 'react-native';
+import {KebabMenu, PriorityPill, RecordCard, StatusPill} from '../../../components/ui';
 import {WorkCategory, WorkItem, WorkPriority, WorkStatus} from '../../../types/work';
 import {theme} from '../../../theme';
 
@@ -105,95 +104,29 @@ const WorkCard: React.FC<Props> = ({
 }) => {
   const status = STATUS_STYLE[item.status];
   const actionable = canChangeStatus(item);
-  const menuOptions =
+  const menuOptions = (
     item.status === 'Open'
       ? STATUS_MENU_OPTIONS
-      : STATUS_MENU_OPTIONS.filter(option => option.status === 'Completed');
+      : STATUS_MENU_OPTIONS.filter(option => option.status === 'Completed')
+  ).map(option => ({value: option.status, label: option.label, dot: option.dot}));
 
-  return (
-    <TouchableOpacity activeOpacity={0.9} onPress={() => onPress(item)}>
-      <Card style={styles.card}>
-        <View style={styles.headerRow}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.id}>{item.id}</Text>
-            <Text style={styles.category} numberOfLines={1}>
-              {item.category}
-            </Text>
-          </View>
-          <View style={styles.headerRight}>
-            <TouchableOpacity
-              style={[styles.pill, {backgroundColor: status.bg}]}
-              activeOpacity={actionable ? 0.8 : 1}
-              disabled={!actionable}
-              onPress={onToggleMenu}>
-              <Text style={[styles.pillText, {color: status.fg}]}>
-                {item.status}
-              </Text>
-              {actionable ? (
-                <ChevronDownIcon size={12} color={status.fg} />
-              ) : null}
-            </TouchableOpacity>
-
-            {actionable ? (
-              <TouchableOpacity
-                style={styles.kebab}
-                activeOpacity={0.7}
-                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-                onPress={onToggleMenu}>
-                <MoreVerticalIcon size={17} />
-              </TouchableOpacity>
-            ) : null}
-
-            {menuOpen ? (
-              <View style={styles.menu}>
-                {menuOptions.map(option => (
-                  <TouchableOpacity
-                    key={option.status}
-                    style={styles.menuRow}
-                    activeOpacity={0.7}
-                    onPress={() => onSelectStatus(item, option.status)}>
-                    <View style={[styles.menuDot, {backgroundColor: option.dot}]} />
-                    <Text style={styles.menuLabel}>{option.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            ) : null}
-          </View>
-        </View>
-
-        <Text style={styles.dateLine}>
-          {item.bucket === 'assigned' ? 'Assigned ' : ''}
-          {formatDate(item.date)}
-        </Text>
-
-        <View style={styles.divider} />
-
-        {item.bucket === 'assigned' ? (
-          <View style={styles.grid}>
-            <View style={styles.gridCell}>
-              <Text style={styles.label}>{TYPE_LABEL[item.category]}</Text>
-              <Text style={styles.value} numberOfLines={1}>
-                {item.type}
-              </Text>
-            </View>
-            <View style={styles.gridCell}>
-              <Text style={styles.label}>Priority</Text>
-              <View
-                style={[
-                  styles.priorityPill,
-                  {backgroundColor: PRIORITY_STYLE[item.priority].bg},
-                ]}>
-                <Text
-                  style={[
-                    styles.priorityPillText,
-                    {color: PRIORITY_STYLE[item.priority].fg},
-                  ]}>
-                  {item.priority}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.gridCell}>
-              <Text style={styles.label}>Assigned By</Text>
+  const fields =
+    item.bucket === 'assigned'
+      ? [
+          {label: TYPE_LABEL[item.category], value: item.type},
+          {
+            label: 'Priority',
+            node: (
+              <PriorityPill
+                label={item.priority}
+                bg={PRIORITY_STYLE[item.priority].bg}
+                fg={PRIORITY_STYLE[item.priority].fg}
+              />
+            ),
+          },
+          {
+            label: 'Assigned By',
+            node: (
               <View style={styles.assignee}>
                 <View style={styles.avatar}>
                   <Text style={styles.avatarText}>{item.assigneeInitials}</Text>
@@ -202,135 +135,50 @@ const WorkCard: React.FC<Props> = ({
                   {item.assignee}
                 </Text>
               </View>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.grid}>
-            <View style={styles.gridCell}>
-              <Text style={styles.label}>{TYPE_LABEL[item.category]}</Text>
-              <Text style={styles.value} numberOfLines={1}>
-                {item.type}
-              </Text>
-            </View>
-            {completedFields(item).map(field => (
-              <View key={field.label} style={styles.gridCell}>
-                <Text style={styles.label}>{field.label}</Text>
-                <Text style={styles.value} numberOfLines={1}>
-                  {field.value}
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
+            ),
+          },
+        ]
+      : [
+          {label: TYPE_LABEL[item.category], value: item.type},
+          ...completedFields(item).map(field => ({
+            label: field.label,
+            value: field.value,
+          })),
+        ];
 
-        <View style={styles.addressBlock}>
-          <Text style={styles.label}>Address</Text>
-          <Text style={styles.value}>{item.address}</Text>
-        </View>
-      </Card>
-    </TouchableOpacity>
+  return (
+    <RecordCard
+      onPress={() => onPress(item)}
+      idLabel={item.id}
+      typeLabel={item.category}
+      statusPill={
+        <StatusPill
+          label={item.status}
+          bg={status.bg}
+          fg={status.fg}
+          onPress={actionable ? onToggleMenu : undefined}
+          trailingChevron={actionable}
+        />
+      }
+      kebab={
+        <KebabMenu
+          visible={actionable}
+          open={menuOpen}
+          onToggle={onToggleMenu}
+          options={menuOptions}
+          onSelect={value => onSelectStatus(item, value as WorkStatus)}
+        />
+      }
+      dateLine={`${item.bucket === 'assigned' ? 'Assigned ' : ''}${formatDate(item.date)}`}
+      fields={fields}
+      addressLabel="Address"
+      addressValue={item.address}
+    />
   );
 };
 
 const styles = StyleSheet.create({
-  card: {gap: theme.spacing.sm},
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: theme.spacing.sm,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flexShrink: 1,
-  },
-  id: {fontFamily: theme.fonts.black, fontSize: 15, color: '#181B1F'},
-  category: {
-    flexShrink: 1,
-    fontFamily: theme.fonts.bold,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-  },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  pillText: {fontFamily: theme.fonts.black, fontSize: 11},
-  // Anchors the popover — it positions absolute against this, not the card.
-  headerRight: {
-    position: 'relative',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  kebab: {
-    width: 26,
-    height: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menu: {
-    position: 'absolute',
-    top: 34,
-    right: 0,
-    zIndex: 20,
-    elevation: 20,
-    minWidth: 184,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.white,
-    padding: 6,
-    shadowColor: '#101828',
-    shadowOffset: {width: 0, height: 8},
-    shadowOpacity: 0.14,
-    shadowRadius: 20,
-  },
-  menuRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
-    paddingVertical: 11,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-  },
-  menuDot: {width: 9, height: 9, borderRadius: 5},
-  menuLabel: {
-    fontFamily: theme.fonts.bold,
-    fontSize: 14,
-    color: theme.colors.text,
-  },
-  dateLine: {
-    fontFamily: theme.fonts.bold,
-    fontSize: 12,
-    color: theme.colors.textMuted,
-  },
-  divider: {height: 1, backgroundColor: '#EEF0F2'},
-  grid: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
-  gridCell: {flex: 1, gap: 4},
-  priorityPill: {
-    alignSelf: 'flex-start',
-    height: 22,
-    paddingHorizontal: 10,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  priorityPillText: {fontFamily: theme.fonts.bold, fontSize: 12},
-  label: {
-    fontFamily: theme.fonts.bold,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-  },
+  // Matches RecordCard's own internal `value` style for a custom field node.
   value: {fontFamily: theme.fonts.black, fontSize: 13, color: '#181B1F'},
   assignee: {flexDirection: 'row', alignItems: 'center', gap: 6},
   avatar: {
@@ -346,7 +194,6 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: theme.colors.white,
   },
-  addressBlock: {gap: 4, marginTop: theme.spacing.xs},
 });
 
 export default WorkCard;

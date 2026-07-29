@@ -13,12 +13,21 @@ import LinearGradient from 'react-native-linear-gradient';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import {
   ConfirmDialog,
+  EmptyState,
+  FilterChips,
+  ListSummary,
   MultiSelectSheet,
   SingleSelectSheet,
   TextField,
   Toast,
 } from '../../components/ui';
-import {ArrowUpIcon, PlusIcon, SearchIcon, SortIcon} from '../../components/icons';
+import {
+  ArrowUpIcon,
+  ClipboardCheckIcon,
+  PlusIcon,
+  SearchIcon,
+  SortIcon,
+} from '../../components/icons';
 import {
   useGetWorkItemsQuery,
   useSetWorkItemStatusMutation,
@@ -28,6 +37,8 @@ import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import {
   EMPTY_FILTERS,
+  FIELD_LABEL,
+  FILTER_FIELDS,
   FilterField,
   Filters,
   SORT_LABEL,
@@ -37,14 +48,12 @@ import {
   applyFilters,
   applySearch,
   applySort,
+  formatFilterValue,
   hasAnyFilter,
   optionsForField,
 } from './filtering';
 import WorkCard from './components/WorkCard';
 import DateRangeSheet from './components/DateRangeSheet';
-import FilterChips, {FIELD_LABEL} from './components/FilterChips';
-import ListSummary from './components/ListSummary';
-import WorkEmptyState from './components/WorkEmptyState';
 import TabSwitcher from './components/TabSwitcher';
 import {theme} from '../../theme';
 
@@ -156,7 +165,10 @@ const WorkScreen: React.FC = () => {
       </SafeAreaView>
 
       <FilterChips
+        fields={FILTER_FIELDS}
+        fieldLabel={FIELD_LABEL}
         filters={filters}
+        formatValue={formatFilterValue}
         onOpen={setOpenFilter}
         onClear={field => setFilters(current => ({...current, [field]: []}))}
       />
@@ -207,14 +219,16 @@ const WorkScreen: React.FC = () => {
           )}
           ListEmptyComponent={
             isError ? (
-              <WorkEmptyState
+              <EmptyState
+                icon={<ClipboardCheckIcon size={28} color={theme.colors.primary} />}
                 title="Couldn't load work"
                 body="Something went wrong fetching your work items. Check your connection and try again."
                 actionLabel="Retry"
                 onAction={refetch}
               />
             ) : isNarrowed ? (
-              <WorkEmptyState
+              <EmptyState
+                icon={<ClipboardCheckIcon size={28} color={theme.colors.primary} />}
                 title="No results found"
                 body={
                   search.trim()
@@ -225,7 +239,8 @@ const WorkScreen: React.FC = () => {
                 onAction={clearSearchAndFilters}
               />
             ) : (
-              <WorkEmptyState
+              <EmptyState
+                icon={<ClipboardCheckIcon size={28} color={theme.colors.primary} />}
                 title={
                   bucket === 'assigned'
                     ? 'No assigned work yet'

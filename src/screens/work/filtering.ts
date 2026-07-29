@@ -21,6 +21,27 @@ export const EMPTY_FILTERS: Filters = {
   dateRange: [],
 };
 
+/** The design's chip order. */
+export const FILTER_FIELDS: FilterField[] = [
+  'category',
+  'type',
+  'status',
+  'priority',
+  'assignee',
+  'zone',
+  'dateRange',
+];
+
+export const FIELD_LABEL: Record<FilterField, string> = {
+  category: 'Module',
+  type: 'Type',
+  status: 'Status',
+  priority: 'Priority',
+  assignee: 'Assigned By',
+  zone: 'Zone',
+  dateRange: 'Date Range',
+};
+
 export const SORT_OPTIONS: {value: SortKey; label: string}[] = [
   {value: 'latest', label: 'Latest first'},
   {value: 'oldest', label: 'Oldest first'},
