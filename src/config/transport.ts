@@ -10,7 +10,8 @@ export type Feature =
   | 'navigation'
   | 'work'
   | 'equipment'
-  | 'maintenance';
+  | 'maintenance'
+  | 'fixture';
 
 export const API_TRANSPORT: Record<Feature, Transport> = {
   auth: 'mock',
@@ -18,6 +19,7 @@ export const API_TRANSPORT: Record<Feature, Transport> = {
   work: 'mock',
   equipment: 'mock',
   maintenance: 'mock',
+  fixture: 'mock',
 };
 
 export const GRAPHQL_ENDPOINT = 'https://REPLACE_ME/graphql';

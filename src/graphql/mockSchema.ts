@@ -1,6 +1,7 @@
 import {makeExecutableSchema} from '@graphql-tools/schema';
 import {authResolvers} from './features/auth/resolvers';
 import {equipmentResolvers} from './features/equipment/resolvers';
+import {fixtureResolvers} from './features/fixture/resolvers';
 import {maintenanceResolvers} from './features/maintenance/resolvers';
 import {navigationResolvers} from './features/navigation/resolvers';
 import {workResolvers} from './features/work/resolvers';
@@ -21,11 +22,13 @@ export const mockSchema = makeExecutableSchema({
       ...workResolvers.Query,
       ...equipmentResolvers.Query,
       ...maintenanceResolvers.Query,
+      ...fixtureResolvers.Query,
     },
     Mutation: {
       ...authResolvers.Mutation,
       ...workResolvers.Mutation,
       ...maintenanceResolvers.Mutation,
+      ...fixtureResolvers.Mutation,
     },
   },
 });

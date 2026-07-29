@@ -1,5 +1,6 @@
 import {authTypeDefs} from './features/auth/schema';
 import {equipmentTypeDefs} from './features/equipment/schema';
+import {fixtureTypeDefs} from './features/fixture/schema';
 import {maintenanceTypeDefs} from './features/maintenance/schema';
 import {navigationTypeDefs} from './features/navigation/schema';
 import {workTypeDefs} from './features/work/schema';
@@ -25,4 +26,5 @@ export const typeDefs = [
   workTypeDefs,
   equipmentTypeDefs,
   maintenanceTypeDefs,
+  fixtureTypeDefs,
 ].join('\n');
