@@ -314,6 +314,61 @@ const checks: Check[] = [
     assert.equal(opts.data.maintenanceFormOptions.fixtures[0], 'Bench #B-311');
   }],
 
+  ['dispatch list resolves with distinct ids and references', async () => {
+    const r: any = await run(
+      'query D($p: ID!) { dispatches(programId: $p) { id reference status priority typeOfActivity } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.dispatches.length, 31);
+    assert.equal(new Set(r.data.dispatches.map((d: any) => d.id)).size, 31);
+    assert.equal(new Set(r.data.dispatches.map((d: any) => d.reference)).size, 31);
+    // The id/reference seam: an opaque id is never the display reference.
+    assert.ok(r.data.dispatches.every((d: any) => d.id !== d.reference));
+    assert.ok(['OPEN', 'ESCALATED', 'CLOSED'].includes(r.data.dispatches[0].status));
+    assert.ok(['LOW', 'MEDIUM', 'HIGH'].includes(r.data.dispatches[0].priority));
+  }],
+
+  ['dispatch detail resolves its nested escalations and incidents', async () => {
+    const r: any = await run(
+      `query D($id: ID!) { dispatch(id: $id) {
+        reference createdBy tagSelected assignedIndividual initialOutcome outcomeNotes
+        escalations { id label type respondingPerson timeCalled status notes }
+        incidents {
+          id label priority incidentType outcome zone businessName documentCount
+          police { name timeCalled timeArrived }
+          ems { name responder }
+          parties { name }
+          vehicles { year }
+          connectedEquipment
+        }
+      } }`,
+      {id: 'dp_0000_06'},
+    );
+    assert.equal(r.errors, undefined);
+    const d = r.data.dispatch;
+    assert.equal(d.reference, '#BBB-D 0000-06');
+    assert.equal(d.tagSelected, 'Unsheltered');
+    assert.equal(d.escalations.length, 1);
+    assert.equal(d.escalations[0].label, 'EMS');
+    assert.equal(d.incidents.length, 1);
+    assert.equal(d.incidents[0].id, '1496371');
+    assert.equal(d.incidents[0].priority, 'HIGH');
+    assert.equal(d.incidents[0].police.name, 'Jack Son');
+    assert.equal(d.incidents[0].ems.name, null);
+    assert.deepEqual(d.incidents[0].parties, []);
+    assert.deepEqual(d.incidents[0].connectedEquipment, ['Equipment #4340']);
+  }],
+
+  ['an unknown dispatch id resolves to null rather than throwing', async () => {
+    const r: any = await run(
+      'query D($id: ID!) { dispatch(id: $id) { reference } }',
+      {id: 'dp_nope'},
+    );
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.dispatch, null);
+  }],
+
   ['a typo fails loudly', async () => {
     const r: any = await run('query Bad { me { enable_shift_entry } }');
     assert.ok(r.errors?.[0]?.message.includes('Cannot query field'));
