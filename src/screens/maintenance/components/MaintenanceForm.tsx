@@ -17,6 +17,8 @@ import {
   MultiDropdownField,
   SegmentedButtons,
   TextField,
+  Toast,
+  UploadField,
 } from '../../../components/ui';
 import {
   ChevronLeftIcon,
@@ -31,7 +33,6 @@ import {
   MaintenancePriority,
 } from '../../../types/maintenance';
 import AssigneeToggle from './AssigneeToggle';
-import UploadField from './UploadField';
 import {theme} from '../../../theme';
 
 /** Fallback address when a record has none — matches the design's auto-fill. */
@@ -94,7 +95,7 @@ interface Props {
   initialValues: MaintenanceFormValues;
   submitLabel: string;
   isSubmitting: boolean;
-  onSubmit: (values: MaintenanceFormValues) => void;
+  onSubmit: (values: MaintenanceFormValues) => Promise<void>;
   onClose: () => void;
   /** Fires once the Fixture sheet has closed, so a quick-create can open. */
   onAddFixture?: () => void;
@@ -114,6 +115,8 @@ const MaintenanceForm: React.FC<Props> = ({
   const [values, setValues] = useState<MaintenanceFormValues>(initialValues);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  /** Set when onSubmit rejects, so the form can report it without navigating away. */
+  const [submitFailed, setSubmitFailed] = useState(false);
 
   const set = <K extends keyof MaintenanceFormValues>(
     key: K,
@@ -124,6 +127,19 @@ const MaintenanceForm: React.FC<Props> = ({
   const canSubmit = values.type.length > 0 && !isSubmitting;
 
   const title = mode === 'create' ? 'Create Maintenance' : 'Edit Maintenance';
+
+  /**
+   * The parent's mutation rejects on failure. Catching here rather than in each
+   * parent means create and edit both report errors, and the form stays mounted
+   * with the user's input intact so they can retry.
+   */
+  const runSubmit = async () => {
+    try {
+      await onSubmit(values);
+    } catch {
+      setSubmitFailed(true);
+    }
+  };
 
   return (
     <View style={styles.root}>
@@ -327,7 +343,7 @@ const MaintenanceForm: React.FC<Props> = ({
           activeOpacity={0.9}
           disabled={!canSubmit}
           onPress={() =>
-            mode === 'create' ? setConfirmSubmit(true) : onSubmit(values)
+            mode === 'create' ? setConfirmSubmit(true) : runSubmit()
           }>
           <Text style={styles.submitText}>{submitLabel}</Text>
         </TouchableOpacity>
@@ -343,7 +359,7 @@ const MaintenanceForm: React.FC<Props> = ({
         confirmTone="primary"
         onConfirm={() => {
           setConfirmSubmit(false);
-          onSubmit(values);
+          runSubmit();
         }}
         onCancel={() => setConfirmSubmit(false)}
       />
@@ -362,6 +378,14 @@ const MaintenanceForm: React.FC<Props> = ({
           onClose();
         }}
         onCancel={() => setConfirmDiscard(false)}
+      />
+
+      <Toast
+        visible={submitFailed}
+        title="Couldn't save"
+        message="Something went wrong saving this request. Check your connection and try again."
+        variant="danger"
+        onDismiss={() => setSubmitFailed(false)}
       />
     </View>
   );

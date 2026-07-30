@@ -39,7 +39,8 @@ const ANA = {assignee: 'Ana Cruz', assigneeInitials: 'AC'};
 /** Assigned bucket: uniform Type / Priority / Assigned By card across categories. */
 const ASSIGNED: WorkItem[] = [
   {
-    id: '#96222110',
+    id: 'wk_96222110',
+    reference: '#96222110',
     category: 'Maintenance',
     status: 'Open',
     date: '2026-07-05T08:30:00',
@@ -51,7 +52,8 @@ const ASSIGNED: WorkItem[] = [
     bucket: 'assigned',
   },
   {
-    id: '#96219987',
+    id: 'wk_96219987',
+    reference: '#96219987',
     category: 'Incident',
     status: 'In-progress',
     date: '2026-07-05T07:45:00',
@@ -63,7 +65,8 @@ const ASSIGNED: WorkItem[] = [
     bucket: 'assigned',
   },
   {
-    id: '#96201233',
+    id: 'wk_96201233',
+    reference: '#96201233',
     category: 'Fixture',
     status: 'Open',
     date: '2026-07-04T18:10:00',
@@ -75,7 +78,8 @@ const ASSIGNED: WorkItem[] = [
     bucket: 'assigned',
   },
   {
-    id: '#96198744',
+    id: 'wk_96198744',
+    reference: '#96198744',
     category: 'Maintenance',
     status: 'In-progress',
     date: '2026-07-04T14:00:00',
@@ -87,7 +91,8 @@ const ASSIGNED: WorkItem[] = [
     bucket: 'assigned',
   },
   {
-    id: '#96177201',
+    id: 'wk_96177201',
+    reference: '#96177201',
     category: 'POI',
     status: 'Open',
     date: '2026-07-03T11:15:00',
@@ -99,7 +104,8 @@ const ASSIGNED: WorkItem[] = [
     bucket: 'assigned',
   },
   {
-    id: '#96155098',
+    id: 'wk_96155098',
+    reference: '#96155098',
     category: 'Activity',
     status: 'In-progress',
     date: '2026-07-02T09:40:00',
@@ -111,7 +117,8 @@ const ASSIGNED: WorkItem[] = [
     bucket: 'assigned',
   },
   {
-    id: '#96150011',
+    id: 'wk_96150011',
+    reference: '#96150011',
     category: 'Incident',
     status: 'Open',
     date: '2026-07-02T08:05:00',
@@ -123,7 +130,8 @@ const ASSIGNED: WorkItem[] = [
     bucket: 'assigned',
   },
   {
-    id: '#96140087',
+    id: 'wk_96140087',
+    reference: '#96140087',
     category: 'Fixture',
     status: 'In-progress',
     date: '2026-07-01T15:30:00',
@@ -139,7 +147,8 @@ const ASSIGNED: WorkItem[] = [
 /** Completed bucket: each category shows its own detail fields alongside Type. */
 const COMPLETED: WorkItem[] = [
   {
-    id: '#76231707',
+    id: 'wk_76231707',
+    reference: '#76231707',
     category: 'Activity',
     status: 'Completed',
     date: '2026-07-06T09:41:00',
@@ -153,7 +162,8 @@ const COMPLETED: WorkItem[] = [
     quantity: '01',
   },
   {
-    id: '#96215390',
+    id: 'wk_96215390',
+    reference: '#96215390',
     category: 'Activity',
     status: 'Completed',
     date: '2026-07-05T10:05:00',
@@ -167,7 +177,8 @@ const COMPLETED: WorkItem[] = [
     quantity: '03',
   },
   {
-    id: '#96211407',
+    id: 'wk_96211407',
+    reference: '#96211407',
     category: 'Maintenance',
     status: 'Completed',
     date: '2026-07-05T09:12:00',
@@ -179,7 +190,8 @@ const COMPLETED: WorkItem[] = [
     bucket: 'completed',
   },
   {
-    id: '#95873321',
+    id: 'wk_95873321',
+    reference: '#95873321',
     category: 'Fixture',
     status: 'Completed',
     date: '2026-07-04T16:40:00',
@@ -192,7 +204,8 @@ const COMPLETED: WorkItem[] = [
     outcome: 'Repaired',
   },
   {
-    id: '#95840012',
+    id: 'wk_95840012',
+    reference: '#95840012',
     category: 'Incident',
     status: 'Completed',
     date: '2026-07-04T14:15:00',
@@ -205,7 +218,8 @@ const COMPLETED: WorkItem[] = [
     outcome: 'Reported',
   },
   {
-    id: '#95811900',
+    id: 'wk_95811900',
+    reference: '#95811900',
     category: 'POI',
     status: 'Completed',
     date: '2026-07-04T11:30:00',
@@ -219,7 +233,8 @@ const COMPLETED: WorkItem[] = [
     disposition: 'Engaged',
   },
   {
-    id: '#95790233',
+    id: 'wk_95790233',
+    reference: '#95790233',
     category: 'Activity',
     status: 'Completed',
     date: '2026-07-03T17:20:00',
@@ -233,7 +248,8 @@ const COMPLETED: WorkItem[] = [
     quantity: '01',
   },
   {
-    id: '#95772140',
+    id: 'wk_95772140',
+    reference: '#95772140',
     category: 'Maintenance',
     status: 'Completed',
     date: '2026-07-03T13:05:00',
@@ -245,7 +261,8 @@ const COMPLETED: WorkItem[] = [
     bucket: 'completed',
   },
   {
-    id: '#95744098',
+    id: 'wk_95744098',
+    reference: '#95744098',
     category: 'Fixture',
     status: 'Completed',
     date: '2026-07-02T15:48:00',
@@ -258,7 +275,8 @@ const COMPLETED: WorkItem[] = [
     outcome: 'Replaced',
   },
   {
-    id: '#95733001',
+    id: 'wk_95733001',
+    reference: '#95733001',
     category: 'Incident',
     status: 'Completed',
     date: '2026-07-02T10:22:00',

@@ -1,4 +1,4 @@
-import {useMemo} from 'react';
+import {useCallback, useMemo} from 'react';
 import {useMutation, useQuery} from '@apollo/client/react';
 import {GetActiveProgramId} from '../../../redux/auth/selectors';
 import {
@@ -52,7 +52,8 @@ const STATUS_OUT: Record<WorkStatus, string> = {
 };
 
 const toWorkItem = (item: GqlWorkItem): WorkItem => ({
-  id: item.ticketNumber,
+  id: item.id,
+  reference: item.ticketNumber,
   category: item.category as WorkCategory,
   status: STATUS[item.status],
   date: item.occurredAt,
@@ -114,10 +115,13 @@ export function useSetWorkItemStatusMutation() {
     ...WORK_CONTEXT,
     refetchQueries: ['GetWorkItems'],
   });
-  return {
-    mutate: async (id: string, status: WorkStatus) => {
+  // Memoised because the list screens put this in a useCallback dependency
+  // array — a fresh arrow each render would defeat the cards' React.memo.
+  const mutate = useCallback(
+    async (id: string, status: WorkStatus) => {
       await run({variables: {id, status: STATUS_OUT[status]}});
     },
-    isLoading: loading,
-  };
+    [run],
+  );
+  return {mutate, isLoading: loading};
 }

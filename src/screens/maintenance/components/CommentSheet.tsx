@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import type {ImagePickerResponse} from 'react-native-image-picker';
-import {BottomSheet, FieldLabel, TextField} from '../../../components/ui';
+import {BottomSheet, FieldLabel, TextField, Toast} from '../../../components/ui';
 import {CameraIcon, ImageIcon, XIcon} from '../../../components/icons';
 import {MaintenanceComment} from '../../../types/maintenance';
 import {theme} from '../../../theme';
@@ -18,7 +18,7 @@ interface Props {
   visible: boolean;
   /** null adds a comment; a comment edits it in place. */
   comment: MaintenanceComment | null;
-  onSubmit: (text: string, images: string[]) => void;
+  onSubmit: (text: string, images: string[]) => Promise<void>;
   onClose: () => void;
 }
 
@@ -34,6 +34,8 @@ const CommentSheet: React.FC<Props> = ({
 }) => {
   const [text, setText] = useState('');
   const [images, setImages] = useState<string[]>([]);
+  /** Set when onSubmit rejects, so the sheet can report it without discarding the draft. */
+  const [submitFailed, setSubmitFailed] = useState(false);
 
   // Re-seed on open: add mode starts blank, edit mode starts from the comment.
   useEffect(() => {
@@ -59,6 +61,20 @@ const CommentSheet: React.FC<Props> = ({
   };
 
   const canPost = text.trim().length > 0;
+
+  /**
+   * The parent's mutation rejects on failure. Catching here rather than in the
+   * parent keeps the sheet mounted with the user's draft intact so they can
+   * retry, instead of closing and losing it.
+   */
+  const runSubmit = async () => {
+    try {
+      await onSubmit(text.trim(), images);
+      onClose();
+    } catch {
+      setSubmitFailed(true);
+    }
+  };
 
   return (
     <BottomSheet
@@ -139,15 +155,20 @@ const CommentSheet: React.FC<Props> = ({
           style={[styles.button, styles.post, !canPost && styles.postDisabled]}
           activeOpacity={0.85}
           disabled={!canPost}
-          onPress={() => {
-            onSubmit(text.trim(), images);
-            onClose();
-          }}>
+          onPress={runSubmit}>
           <Text style={styles.postText}>
             {comment ? 'Save Comment' : 'Post Comment'}
           </Text>
         </TouchableOpacity>
       </View>
+
+      <Toast
+        visible={submitFailed}
+        title="Couldn't save comment"
+        message="Your comment was not saved. Check your connection and try again."
+        variant="danger"
+        onDismiss={() => setSubmitFailed(false)}
+      />
     </BottomSheet>
   );
 };

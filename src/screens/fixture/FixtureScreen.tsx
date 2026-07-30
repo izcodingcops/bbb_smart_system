@@ -1,18 +1,16 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import LinearGradient from 'react-native-linear-gradient';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
-import {EmptyState, FilterChips, ListSummary, MultiSelectSheet, SingleSelectSheet, TextField, Toast} from '../../components/ui';
-import {ArrowUpIcon, BoxIcon, PlusIcon, SearchIcon, SortIcon} from '../../components/icons';
+import {BackToTopPill, DateRangeSheet, EmptyState, FilterChips, GradientFab, ListSearchRow, ListSummary, MultiSelectSheet, SingleSelectSheet, Toast} from '../../components/ui';
+import {BoxIcon} from '../../components/icons';
 import {useGetFixturesQuery, useSetFixtureStatusMutation} from '../../graphql/features/fixture/hooks';
 import {Fixture, FixtureStatus} from '../../types/fixture';
 import {GetShiftTypes} from '../../redux/auth/selectors';
@@ -36,7 +34,6 @@ import {
   optionsForField,
 } from './filtering';
 import FixtureCard from './components/FixtureCard';
-import DateRangeSheet from './components/DateRangeSheet';
 import CreateFixtureScreen from './CreateFixtureScreen';
 import ViewFixtureScreen from './ViewFixtureScreen';
 import {theme} from '../../theme';
@@ -47,7 +44,8 @@ type FixtureRoute = {name: 'list'} | {name: 'create'} | {name: 'view'; id: strin
 interface ToastState {
   title: string;
   message: string;
-  reference: string;
+  /** Record id used by the toast's View action. Empty when there is nowhere to go. */
+  routeId: string;
   variant?: 'success' | 'danger';
 }
 
@@ -78,10 +76,43 @@ const FixtureScreen: React.FC = () => {
     };
   }, [dispatch, route.name]);
 
-  const handleSelectStatus = (fixture: Fixture, status: FixtureStatus) => {
-    setMenuFixtureId(null);
-    setStatus(fixture.id, status);
-  };
+  const handleSelectStatus = useCallback(
+    async (fixture: Fixture, status: FixtureStatus) => {
+      setMenuFixtureId(null);
+      try {
+        await setStatus(fixture.id, status);
+      } catch {
+        setToast({
+          title: "Couldn't update status",
+          message: `${fixture.reference} is unchanged. Check your connection and try again.`,
+          routeId: '',
+          variant: 'danger',
+        });
+      }
+    },
+    [setStatus],
+  );
+
+  const handleToggleMenu = useCallback((cardId: string) => {
+    setMenuFixtureId(current => (current === cardId ? null : cardId));
+  }, []);
+
+  const handleOpenFixture = useCallback((record: Fixture) => {
+    setRoute({name: 'view', id: record.id});
+  }, []);
+
+  const renderItem = useCallback(
+    ({item}: {item: Fixture}) => (
+      <FixtureCard
+        fixture={item}
+        onPress={handleOpenFixture}
+        menuOpen={menuFixtureId === item.id}
+        onToggleMenu={handleToggleMenu}
+        onSelectStatus={handleSelectStatus}
+      />
+    ),
+    [menuFixtureId, handleOpenFixture, handleToggleMenu, handleSelectStatus],
+  );
 
   const shiftTypes = GetShiftTypes();
   const shiftTypeId = GetActiveShiftTypeId();
@@ -103,12 +134,12 @@ const FixtureScreen: React.FC = () => {
     return (
       <CreateFixtureScreen
         onClose={() => setRoute({name: 'list'})}
-        onCreated={reference => {
+        onCreated={created => {
           setRoute({name: 'list'});
           setToast({
             title: 'Fixture submitted',
-            message: `${reference} was added to your Work Log.`,
-            reference,
+            message: `${created.reference} was added to your Work Log.`,
+            routeId: created.id,
           });
         }}
       />
@@ -125,7 +156,7 @@ const FixtureScreen: React.FC = () => {
           setToast({
             title: 'Fixture deleted',
             message: `${reference} was removed from your Work Log.`,
-            reference,
+            routeId: '',
             variant: 'danger',
           });
         }}
@@ -138,25 +169,12 @@ const FixtureScreen: React.FC = () => {
       <SafeAreaView edges={['top']}>
         <Text style={styles.title}>Fixture</Text>
 
-        <View style={styles.searchRow}>
-          <TextField
-            containerStyle={styles.searchField}
-            placeholder="Search by ID or name"
-            value={search}
-            onChangeText={setSearch}
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="search"
-            leadingIcon={<SearchIcon size={20} />}
-          />
-
-          <TouchableOpacity
-            style={[styles.sortButton, sortOpen && styles.sortButtonActive]}
-            activeOpacity={0.8}
-            onPress={() => setSortOpen(true)}>
-            <SortIcon size={20} color={sortOpen ? theme.colors.primary : '#475467'} />
-          </TouchableOpacity>
-        </View>
+        <ListSearchRow
+          value={search}
+          onChangeText={setSearch}
+          sortOpen={sortOpen}
+          onOpenSort={() => setSortOpen(true)}
+        />
       </SafeAreaView>
 
       <FilterChips
@@ -199,17 +217,7 @@ const FixtureScreen: React.FC = () => {
               setMenuFixtureId(null);
             }
           }}
-          renderItem={({item}) => (
-            <FixtureCard
-              fixture={item}
-              onPress={record => setRoute({name: 'view', id: record.id})}
-              menuOpen={menuFixtureId === item.id}
-              onToggleMenu={() =>
-                setMenuFixtureId(current => (current === item.id ? null : item.id))
-              }
-              onSelectStatus={handleSelectStatus}
-            />
-          )}
+          renderItem={renderItem}
           ListEmptyComponent={
             isError ? (
               <EmptyState
@@ -242,28 +250,12 @@ const FixtureScreen: React.FC = () => {
         />
       )}
 
-      {showBackToTop ? (
-        <TouchableOpacity
-          style={styles.backToTop}
-          activeOpacity={0.85}
-          onPress={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}>
-          <ArrowUpIcon size={14} />
-          <Text style={styles.backToTopText}>Back to top</Text>
-        </TouchableOpacity>
-      ) : null}
+      <BackToTopPill
+        visible={showBackToTop}
+        onPress={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}
+      />
 
-      <TouchableOpacity
-        style={styles.fabTouchable}
-        activeOpacity={0.85}
-        onPress={() => setAddOpen(true)}>
-        <LinearGradient
-          colors={['#0092FF', theme.colors.primary]}
-          start={{x: 0.15, y: 0}}
-          end={{x: 0.85, y: 1}}
-          style={styles.fab}>
-          <PlusIcon size={26} color={theme.colors.white} />
-        </LinearGradient>
-      </TouchableOpacity>
+      <GradientFab onPress={() => setAddOpen(true)} />
 
       <SingleSelectSheet
         visible={sortOpen}
@@ -326,7 +318,7 @@ const FixtureScreen: React.FC = () => {
             ? undefined
             : () => {
                 if (toast) {
-                  setRoute({name: 'view', id: toast.reference});
+                  setRoute({name: 'view', id: toast.routeId});
                 }
                 setToast(null);
               }
@@ -348,27 +340,6 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.sm,
     paddingBottom: theme.spacing.md,
   },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.lg,
-  },
-  searchField: {flex: 1},
-  sortButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sortButtonActive: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primaryLight,
-  },
   loading: {flex: 1, alignItems: 'center', justifyContent: 'center'},
   listContent: {
     paddingHorizontal: theme.spacing.lg,
@@ -376,32 +347,6 @@ const styles = StyleSheet.create({
     paddingBottom: 96,
     gap: theme.spacing.md,
   },
-  backToTop: {
-    position: 'absolute',
-    alignSelf: 'center',
-    bottom: theme.spacing.xxl + 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#99D3FF',
-    backgroundColor: theme.colors.primaryLight,
-    ...theme.shadow.card,
-  },
-  backToTopText: {fontFamily: theme.fonts.black, fontSize: 13, color: theme.colors.primary},
-  fabTouchable: {
-    position: 'absolute',
-    right: theme.spacing.lg,
-    bottom: theme.spacing.xxl,
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    ...theme.shadow.fab,
-  },
-  fab: {width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center'},
 });
 
 export default FixtureScreen;

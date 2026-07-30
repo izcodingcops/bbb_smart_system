@@ -8,7 +8,10 @@ export interface MaintenanceAssignee {
 }
 
 export interface MaintenanceRequest {
+  /** Opaque server identifier. Never displayed — use `reference` for that. */
   id: string;
+  /** Display reference, carrying its own '#' prefix, e.g. '#MT-40877'. */
+  reference: string;
   type: string;
   status: MaintenanceStatus;
   requestedAt: string;

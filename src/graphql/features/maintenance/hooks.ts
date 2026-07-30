@@ -1,4 +1,4 @@
-import {useMemo} from 'react';
+import {useCallback, useMemo} from 'react';
 import {useMutation, useQuery} from '@apollo/client/react';
 import {GetActiveProgramId} from '../../../redux/auth/selectors';
 import {
@@ -53,7 +53,8 @@ const PRIORITY: Record<GqlMaintenanceRequest['priority'], MaintenancePriority> =
 };
 
 const toRequest = (r: GqlMaintenanceRequest): MaintenanceRequest => ({
-  id: r.reference,
+  id: r.id,
+  reference: r.reference,
   type: r.type,
   status: STATUS[r.status],
   requestedAt: r.requestedAt,
@@ -66,6 +67,8 @@ const toRequest = (r: GqlMaintenanceRequest): MaintenanceRequest => ({
   completedBy: r.completedBy,
 });
 
+const MAINTENANCE_CONTEXT = {context: {feature: 'maintenance'}};
+
 /**
  * `filter` is wired into the document but sent as null: the screen still
  * filters, sorts and searches client-side via src/screens/maintenance/filtering.ts.
@@ -77,7 +80,7 @@ export function useGetMaintenanceRequestsQuery() {
   const {data, loading, error, refetch} = useQuery<{
     maintenanceRequests: GqlMaintenanceRequest[];
   }>(GET_MAINTENANCE_REQUESTS, {
-    context: {feature: 'maintenance'},
+    ...MAINTENANCE_CONTEXT,
     variables: {programId: programId ?? '', filter: null},
     skip: !programId,
   });
@@ -171,8 +174,6 @@ const toWireInput = (values: MaintenanceFormValues) => ({
   equipment: values.equipment,
 });
 
-const MAINTENANCE_CONTEXT = {context: {feature: 'maintenance'}};
-
 /** The mock store mutates in place, so refetch rather than patch the cache. */
 const REFRESH_LIST = {
   ...MAINTENANCE_CONTEXT,
@@ -220,25 +221,31 @@ export function useMaintenanceFormOptionsQuery() {
 // naming it here would make Apollo warn about refetching an inactive query.
 export function useSetMaintenanceStatusMutation() {
   const [run, {loading}] = useMutation(SET_MAINTENANCE_STATUS, REFRESH_LIST);
-  return {
-    mutate: async (id: string, status: MaintenanceStatus) => {
+  // Memoised because the list screens put this in a useCallback dependency
+  // array — a fresh arrow each render would defeat the cards' React.memo.
+  const mutate = useCallback(
+    async (id: string, status: MaintenanceStatus) => {
       await run({variables: {id, status: STATUS_OUT[status]}});
     },
-    isLoading: loading,
-  };
+    [run],
+  );
+  return {mutate, isLoading: loading};
 }
 
 export function useCreateMaintenanceRequestMutation() {
   const programId = GetActiveProgramId();
   const [run, {loading}] = useMutation<{
-    createMaintenanceRequest: {reference: string};
+    createMaintenanceRequest: {id: string; reference: string};
   }>(CREATE_MAINTENANCE_REQUEST, REFRESH_LIST);
   return {
     mutate: async (values: MaintenanceFormValues) => {
       const result = await run({
         variables: {programId: programId ?? '', input: toWireInput(values)},
       });
-      return result.data?.createMaintenanceRequest.reference ?? '';
+      return {
+        id: result.data?.createMaintenanceRequest.id ?? '',
+        reference: result.data?.createMaintenanceRequest.reference ?? '',
+      };
     },
     isLoading: loading,
   };

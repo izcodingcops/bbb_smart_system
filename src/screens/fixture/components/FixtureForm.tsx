@@ -16,6 +16,8 @@ import {
   FieldLabel,
   SegmentedButtons,
   TextField,
+  Toast,
+  UploadField,
 } from '../../../components/ui';
 import {ChevronLeftIcon, MapPinIcon, RefreshIcon, XIcon} from '../../../components/icons';
 import {
@@ -24,7 +26,6 @@ import {
   FixtureFormValues,
   FixtureStatus,
 } from '../../../types/fixture';
-import UploadField from '../../maintenance/components/UploadField';
 import {theme} from '../../../theme';
 
 /** Fallback address when a record has none — matches the design's auto-fill. */
@@ -74,7 +75,7 @@ interface Props {
   initialValues: FixtureFormValues;
   submitLabel: string;
   isSubmitting: boolean;
-  onSubmit: (values: FixtureFormValues) => void;
+  onSubmit: (values: FixtureFormValues) => Promise<void>;
   onClose: () => void;
 }
 
@@ -91,6 +92,8 @@ const FixtureForm: React.FC<Props> = ({
   const [values, setValues] = useState<FixtureFormValues>(initialValues);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  /** Set when onSubmit rejects, so the form can report it without navigating away. */
+  const [submitFailed, setSubmitFailed] = useState(false);
 
   const set = <K extends keyof FixtureFormValues>(
     key: K,
@@ -103,6 +106,19 @@ const FixtureForm: React.FC<Props> = ({
     values.title.trim().length > 0 && values.fixtureType.length > 0 && !isSubmitting;
 
   const title = mode === 'create' ? 'Create Fixture' : 'Edit Fixture';
+
+  /**
+   * The parent's mutation rejects on failure. Catching here rather than in each
+   * parent means create and edit both report errors, and the form stays mounted
+   * with the user's input intact so they can retry.
+   */
+  const runSubmit = async () => {
+    try {
+      await onSubmit(values);
+    } catch {
+      setSubmitFailed(true);
+    }
+  };
 
   return (
     <View style={styles.root}>
@@ -248,7 +264,7 @@ const FixtureForm: React.FC<Props> = ({
           activeOpacity={0.9}
           disabled={!canSubmit}
           onPress={() =>
-            mode === 'create' ? setConfirmSubmit(true) : onSubmit(values)
+            mode === 'create' ? setConfirmSubmit(true) : runSubmit()
           }>
           <Text style={styles.submitText}>{submitLabel}</Text>
         </TouchableOpacity>
@@ -264,7 +280,7 @@ const FixtureForm: React.FC<Props> = ({
         confirmTone="primary"
         onConfirm={() => {
           setConfirmSubmit(false);
-          onSubmit(values);
+          runSubmit();
         }}
         onCancel={() => setConfirmSubmit(false)}
       />
@@ -283,6 +299,14 @@ const FixtureForm: React.FC<Props> = ({
           onClose();
         }}
         onCancel={() => setConfirmDiscard(false)}
+      />
+
+      <Toast
+        visible={submitFailed}
+        title="Couldn't save"
+        message="Something went wrong saving this fixture. Check your connection and try again."
+        variant="danger"
+        onDismiss={() => setSubmitFailed(false)}
       />
     </View>
   );

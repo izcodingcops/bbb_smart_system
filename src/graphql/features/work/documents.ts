@@ -1,8 +1,8 @@
 import {gql} from '@apollo/client';
 
 export const GET_WORK_ITEMS = gql`
-  query GetWorkItems($programId: ID!, $bucket: WorkBucket) {
-    workItems(programId: $programId, bucket: $bucket) {
+  query GetWorkItems($programId: ID!) {
+    workItems(programId: $programId) {
       id
       ticketNumber
       category

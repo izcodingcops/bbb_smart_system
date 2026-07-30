@@ -4,7 +4,10 @@ export type WorkBucket = 'assigned' | 'completed';
 export type WorkCategory = 'Maintenance' | 'Incident' | 'Fixture' | 'POI' | 'Activity';
 
 export interface WorkItem {
-  id: string; // ticket number, e.g. '#96211407'
+  /** Opaque server identifier. Never displayed — use `reference` for that. */
+  id: string;
+  /** Display ticket number, carrying its own '#' prefix, e.g. '#96222110'. */
+  reference: string;
   category: WorkCategory;
   status: WorkStatus;
   date: string; // ISO-8601

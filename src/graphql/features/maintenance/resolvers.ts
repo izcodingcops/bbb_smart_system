@@ -1,14 +1,17 @@
 import {MaintenanceDetail} from '../../../types/maintenance';
 import {sleep} from '../../mockSession';
 import {
+  fixtureStore,
+  nextReference as nextFixtureReference,
+} from '../fixture/store';
+import {FIXTURE_TYPES, ZONES} from '../shared/options';
+import {
   BUSINESS_NAMES,
   DEPARTMENTS,
   EQUIPMENT,
-  FIXTURE_TYPES,
   INCIDENTS,
   MAINT_TYPES,
   POIS,
-  ZONES,
   findRecord,
   maintenanceStore,
   nextReference,
@@ -29,10 +32,9 @@ const ASSIGNEE_KIND: Record<string, string> = {
   Department: 'DEPARTMENT',
 };
 
-/** Display-shape record → wire shape (enums uppercased, reference filled). */
+/** Display-shape record → wire shape (enums uppercased). */
 export const toWire = (record: MaintenanceDetail) => ({
   ...record,
-  reference: record.id,
   status: STATUS[record.status],
   priority: PRIORITY[record.priority],
   assigneeKind: ASSIGNEE_KIND[record.assigneeKind],
@@ -112,7 +114,7 @@ export const maintenanceResolvers = {
         zones: ZONES,
         departments: DEPARTMENTS,
         businessNames: BUSINESS_NAMES,
-        fixtures: maintenanceStore.fixtures,
+        fixtures: fixtureStore.records.map(record => record.title),
         incidents: INCIDENTS,
         pois: POIS,
         equipment: EQUIPMENT,
@@ -147,8 +149,10 @@ export const maintenanceResolvers = {
       args: {programId: string; input: WireInput},
     ) => {
       await sleep();
+      const reference = nextReference();
       const record: MaintenanceDetail = {
-        id: nextReference(),
+        id: `mt_${reference.replace('#MT-', '')}`,
+        reference,
         type: '',
         status: 'Open',
         requestedAt: '',
@@ -267,9 +271,24 @@ export const maintenanceResolvers = {
       args: {name: string; fixtureType: string},
     ) => {
       await sleep();
-      if (!maintenanceStore.fixtures.includes(args.name)) {
-        maintenanceStore.fixtures.unshift(args.name);
-      }
+      const reference = nextFixtureReference();
+      fixtureStore.records.unshift({
+        id: `fx_${reference.replace('#FX-', '')}`,
+        reference,
+        title: args.name,
+        fixtureType: args.fixtureType,
+        zone: '',
+        status: 'Active',
+        createdBy: {name: 'You', initials: 'YO'},
+        queuedOffline: false,
+        createdAt: new Date().toISOString(),
+        address: '',
+        describeLocation: null,
+        latitude: '30.673854',
+        longitude: '73.673854',
+        description: null,
+        documents: [],
+      });
       return args.name;
     },
   },

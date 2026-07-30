@@ -17,6 +17,7 @@ export const cache = new InMemoryCache({
     MaintenanceRequest: {keyFields: ['id']},
     // Assignee has no id; keep it embedded in its parent request.
     MaintenanceAssignee: {keyFields: false},
+    MaintenanceComment: {keyFields: ['id']},
     Fixture: {keyFields: ['id']},
     FixtureCreator: {keyFields: false},
   },

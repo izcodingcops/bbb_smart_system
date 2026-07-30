@@ -48,7 +48,7 @@ export const workTypeDefs = /* GraphQL */ `
   }
 
   extend type Query {
-    workItems(programId: ID!, bucket: WorkBucket): [WorkItem!]!
+    workItems(programId: ID!): [WorkItem!]!
     quickActions(programId: ID!): [QuickAction!]!
   }
 

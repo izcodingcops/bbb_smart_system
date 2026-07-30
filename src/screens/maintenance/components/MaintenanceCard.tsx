@@ -1,6 +1,7 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import {
+  formatCardDate,
   KebabMenu,
   PriorityPill,
   RecordCard,
@@ -35,28 +36,6 @@ const STATUS_MENU_OPTIONS: {
   {status: 'Completed', label: 'Mark Completed', dot: '#389E0D'},
 ];
 
-function pad(value: number): string {
-  return String(value).padStart(2, '0');
-}
-
-/**
- * 'Jul 6, 2026 · 08:40 AM'. The hour is padded by hand because en-US drops a
- * leading zero from 12-hour times even with `hour: '2-digit'`, which loses the
- * column alignment the design relies on.
- */
-function formatRequestedAt(iso: string): string {
-  const date = new Date(iso);
-  const day = date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-  const hours = date.getHours();
-  const suffix = hours >= 12 ? 'PM' : 'AM';
-  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
-  return `${day} · ${pad(hour12)}:${pad(date.getMinutes())} ${suffix}`;
-}
-
 /**
  * Completed is terminal, and an unassigned request is the supervisor's to
  * route — neither offers a status change.
@@ -71,7 +50,7 @@ interface Props {
   /** True while this card's own status menu is the open one. */
   menuOpen: boolean;
   /** Opens this card's menu, or closes it if already open. */
-  onToggleMenu: () => void;
+  onToggleMenu: (id: string) => void;
   onSelectStatus: (request: MaintenanceRequest, status: MaintenanceStatus) => void;
 }
 
@@ -93,14 +72,14 @@ const MaintenanceCard: React.FC<Props> = ({
   return (
     <RecordCard
       onPress={() => onPress(request)}
-      idLabel={request.id}
+      idLabel={request.reference}
       typeLabel={request.type}
       statusPill={
         <StatusPill
           label={request.status}
           bg={status.bg}
           fg={status.fg}
-          onPress={actionable ? onToggleMenu : undefined}
+          onPress={actionable ? () => onToggleMenu(request.id) : undefined}
           trailingChevron={actionable}
         />
       }
@@ -108,12 +87,12 @@ const MaintenanceCard: React.FC<Props> = ({
         <KebabMenu
           visible={actionable}
           open={menuOpen}
-          onToggle={onToggleMenu}
+          onToggle={() => onToggleMenu(request.id)}
           options={menuOptions}
           onSelect={value => onSelectStatus(request, value as MaintenanceStatus)}
         />
       }
-      dateLine={`${formatRequestedAt(request.requestedAt)}${
+      dateLine={`${formatCardDate(request.requestedAt)}${
         request.routedToSupervisor ? ' · Routed to supervisor' : ''
       }`}
       badge={

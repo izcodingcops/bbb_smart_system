@@ -8,21 +8,17 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {
   ConfirmDialog,
   DetailField,
+  DetailTopBar,
+  EmptyState,
   PriorityPill,
   StatusPill,
   Toast,
   formatDateTime,
 } from '../../components/ui';
-import {
-  ChevronLeftIcon,
-  EditIcon,
-  MessageSquareIcon,
-  TrashIcon,
-} from '../../components/icons';
+import {MessageSquareIcon, ToolsIcon} from '../../components/icons';
 import {
   useAddMaintenanceCommentMutation,
   useDeleteMaintenanceCommentMutation,
@@ -76,7 +72,7 @@ interface Props {
 const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   // Every hook runs before the early returns below — the loading, editing and
   // detail branches must not change hook order between renders.
-  const {data: detail, isLoading} = useGetMaintenanceRequestQuery(id);
+  const {data: detail, isLoading, isError, refetch} = useGetMaintenanceRequestQuery(id);
   const [commentSheetOpen, setCommentSheetOpen] = useState(false);
   const [editingComment, setEditingComment] =
     useState<MaintenanceComment | null>(null);
@@ -85,7 +81,11 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [addFixtureOpen, setAddFixtureOpen] = useState(false);
-  const [updatedToast, setUpdatedToast] = useState(false);
+  const [toast, setToast] = useState<{
+    title: string;
+    message: string;
+    variant?: 'success' | 'danger';
+  } | null>(null);
   const {mutate: addComment} = useAddMaintenanceCommentMutation();
   const {mutate: updateComment} = useUpdateMaintenanceCommentMutation();
   const {mutate: deleteComment} = useDeleteMaintenanceCommentMutation();
@@ -95,10 +95,32 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
     useUpdateMaintenanceRequestMutation();
   const {mutate: remove} = useDeleteMaintenanceRequestMutation();
 
-  if (isLoading || !detail) {
+  if (isLoading) {
     return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+      <View style={styles.root}>
+        <DetailTopBar title="Maintenance" onBack={onClose} />
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </View>
+    );
+  }
+
+  // The back button renders above this branch on purpose — the tab bar is
+  // hidden on this route, so a failed load with no way out would trap the user.
+  if (isError || !detail) {
+    return (
+      <View style={styles.root}>
+        <DetailTopBar title="Maintenance" onBack={onClose} />
+        <View style={styles.loading}>
+          <EmptyState
+            icon={<ToolsIcon size={28} color={theme.colors.primary} />}
+            title="Couldn't load this request"
+            body="Something went wrong fetching it. Check your connection and try again."
+            actionLabel="Retry"
+            onAction={refetch}
+          />
+        </View>
       </View>
     );
   }
@@ -110,7 +132,7 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
         <MaintenanceForm
           key={options.fixtures.length}
           mode="edit"
-          reference={detail.id}
+          reference={detail.reference}
           options={options}
           initialValues={buildInitialValues(options, detail)}
           submitLabel="Update"
@@ -118,7 +140,10 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
           onSubmit={async values => {
             await update(detail.id, values);
             setEditing(false);
-            setUpdatedToast(true);
+            setToast({
+              title: 'Maintenance updated',
+              message: `${detail.reference} was saved successfully.`,
+            });
           }}
           onClose={() => setEditing(false)}
           onAddFixture={() => setAddFixtureOpen(true)}
@@ -138,39 +163,17 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
 
   return (
     <View style={styles.root}>
-      <SafeAreaView edges={['top']} style={styles.topbar}>
-        <View style={styles.topbarRow}>
-          <TouchableOpacity
-            style={styles.topbarButton}
-            activeOpacity={0.8}
-            onPress={onClose}>
-            <ChevronLeftIcon size={19} color="#3A3F46" />
-          </TouchableOpacity>
-          <View style={styles.topbarText}>
-            <Text style={styles.topbarTitle}>Maintenance</Text>
-            <Text style={styles.topbarReference}>{detail.id}</Text>
-          </View>
-          <View style={styles.topbarActions}>
-            <TouchableOpacity
-              style={styles.editButton}
-              activeOpacity={0.85}
-              onPress={() => setEditing(true)}>
-              <EditIcon size={16} />
-              <Text style={styles.editText}>Edit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.deleteButton}
-              activeOpacity={0.85}
-              onPress={() => setConfirmDelete(true)}>
-              <TrashIcon size={18} color="#CF1322" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </SafeAreaView>
+      <DetailTopBar
+        title="Maintenance"
+        reference={detail.reference}
+        onBack={onClose}
+        onEdit={() => setEditing(true)}
+        onDelete={() => setConfirmDelete(true)}
+      />
 
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.idRow}>
-          <Text style={styles.idBig}>{detail.id}</Text>
+          <Text style={styles.idBig}>{detail.reference}</Text>
           <TouchableOpacity
             style={styles.commentButton}
             activeOpacity={0.85}
@@ -298,11 +301,11 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
       <CommentSheet
         visible={commentSheetOpen}
         comment={editingComment}
-        onSubmit={(text, images) => {
+        onSubmit={async (text, images) => {
           if (editingComment) {
-            updateComment(detail.id, editingComment.id, text, images);
+            await updateComment(detail.id, editingComment.id, text, images);
           } else {
-            addComment(detail.id, text, images);
+            await addComment(detail.id, text, images);
           }
         }}
         onClose={() => setCommentSheetOpen(false)}
@@ -316,11 +319,21 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
         icon="warning"
         iconTone="danger"
         confirmTone="danger"
-        onConfirm={() => {
-          if (deletingComment) {
-            deleteComment(detail.id, deletingComment.id);
-          }
+        onConfirm={async () => {
+          const target = deletingComment;
           setDeletingComment(null);
+          if (!target) {
+            return;
+          }
+          try {
+            await deleteComment(detail.id, target.id);
+          } catch {
+            setToast({
+              title: "Couldn't delete comment",
+              message: 'The comment is still there. Check your connection and try again.',
+              variant: 'danger',
+            });
+          }
         }}
         onCancel={() => setDeletingComment(null)}
       />
@@ -328,24 +341,34 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
       <ConfirmDialog
         visible={confirmDelete}
         title="Delete this maintenance?"
-        message={`Maintenance ${detail.id} will be permanently deleted. This action cannot be undone.`}
+        message={`Maintenance ${detail.reference} will be permanently deleted. This action cannot be undone.`}
         confirmLabel="Delete"
         icon="warning"
         iconTone="danger"
         confirmTone="danger"
         onConfirm={async () => {
-          setConfirmDelete(false);
-          await remove(detail.id);
-          onDeleted(detail.id);
+          try {
+            await remove(detail.id);
+            setConfirmDelete(false);
+            onDeleted(detail.reference);
+          } catch {
+            setConfirmDelete(false);
+            setToast({
+              title: "Couldn't delete",
+              message: `${detail.reference} is still there. Check your connection and try again.`,
+              variant: 'danger',
+            });
+          }
         }}
         onCancel={() => setConfirmDelete(false)}
       />
 
       <Toast
-        visible={updatedToast}
-        title="Maintenance updated"
-        message={`${detail.id} was saved successfully.`}
-        onDismiss={() => setUpdatedToast(false)}
+        visible={toast !== null}
+        title={toast?.title ?? ''}
+        message={toast?.message ?? ''}
+        variant={toast?.variant}
+        onDismiss={() => setToast(null)}
       />
     </View>
   );
@@ -358,73 +381,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.background,
-  },
-  topbar: {
-    backgroundColor: theme.colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  topbarRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.spacing.md,
-    paddingHorizontal: 18,
-    paddingBottom: 14,
-    paddingTop: theme.spacing.xs,
-  },
-  topbarButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F0F1F4',
-  },
-  topbarText: {flex: 1, minWidth: 0, paddingTop: 2},
-  topbarTitle: {
-    fontFamily: theme.fonts.bold,
-    fontSize: 20,
-    letterSpacing: -0.6,
-    color: theme.colors.text,
-  },
-  topbarReference: {
-    fontFamily: theme.fonts.black,
-    fontSize: 13.5,
-    color: theme.colors.textMuted,
-    marginTop: theme.spacing.xs,
-  },
-  topbarActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingTop: 2,
-  },
-  editButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    height: 40,
-    paddingHorizontal: 14,
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.white,
-    ...theme.shadow.card,
-  },
-  editText: {
-    fontFamily: theme.fonts.black,
-    fontSize: 14,
-    color: theme.colors.text,
-  },
-  deleteButton: {
-    width: 40,
-    height: 40,
-    borderRadius: theme.radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#FFCCC7',
-    backgroundColor: '#FFF2F0',
   },
   body: {paddingBottom: 40},
   idRow: {

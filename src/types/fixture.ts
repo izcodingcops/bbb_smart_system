@@ -7,8 +7,10 @@ export interface FixtureCreator {
 }
 
 export interface Fixture {
-  /** Carries its own '#' prefix so nothing re-adds it at render time. */
+  /** Opaque server identifier. Never displayed — use `reference` for that. */
   id: string;
+  /** Display reference, carrying its own '#' prefix, e.g. '#FX-42984'. */
+  reference: string;
   title: string;
   fixtureType: string;
   zone: string;

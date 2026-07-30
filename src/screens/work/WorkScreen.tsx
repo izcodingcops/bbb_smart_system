@@ -1,33 +1,28 @@
-import React, {useMemo, useRef, useState} from 'react';
+import React, {useCallback, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import LinearGradient from 'react-native-linear-gradient';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import {
+  BackToTopPill,
   ConfirmDialog,
+  DateRangeSheet,
   EmptyState,
   FilterChips,
+  GradientFab,
+  ListSearchRow,
   ListSummary,
   MultiSelectSheet,
   SingleSelectSheet,
-  TextField,
   Toast,
 } from '../../components/ui';
-import {
-  ArrowUpIcon,
-  ClipboardCheckIcon,
-  PlusIcon,
-  SearchIcon,
-  SortIcon,
-} from '../../components/icons';
+import {ClipboardCheckIcon} from '../../components/icons';
 import {
   useGetWorkItemsQuery,
   useSetWorkItemStatusMutation,
@@ -53,7 +48,6 @@ import {
   optionsForField,
 } from './filtering';
 import WorkCard from './components/WorkCard';
-import DateRangeSheet from './components/DateRangeSheet';
 import TabSwitcher from './components/TabSwitcher';
 import {theme} from '../../theme';
 
@@ -87,14 +81,46 @@ const WorkScreen: React.FC = () => {
   const listRef = useRef<FlatList<WorkItem>>(null);
   const {mutate: setStatus} = useSetWorkItemStatusMutation();
 
-  const handleSelectStatus = (item: WorkItem, status: WorkStatus) => {
-    setMenuItemId(null);
-    if (status === 'Completed') {
-      setCompleteTarget(item);
-    } else {
-      setStatus(item.id, status);
-    }
-  };
+  const handleSelectStatus = useCallback(
+    async (item: WorkItem, status: WorkStatus) => {
+      setMenuItemId(null);
+      if (status === 'Completed') {
+        setCompleteTarget(item);
+        return;
+      }
+      try {
+        await setStatus(item.id, status);
+      } catch {
+        setToast({
+          title: "Couldn't update status",
+          message: `${item.reference} is unchanged. Check your connection and try again.`,
+          variant: 'danger',
+        });
+      }
+    },
+    [setStatus],
+  );
+
+  const handleToggleMenu = useCallback((cardId: string) => {
+    setMenuItemId(current => (current === cardId ? null : cardId));
+  }, []);
+
+  const handleOpenItem = useCallback((record: WorkItem) => {
+    Alert.alert(record.reference, 'Full detail view is not wired up yet.');
+  }, []);
+
+  const renderItem = useCallback(
+    ({item}: {item: WorkItem}) => (
+      <WorkCard
+        item={item}
+        onPress={handleOpenItem}
+        menuOpen={menuItemId === item.id}
+        onToggleMenu={handleToggleMenu}
+        onSelectStatus={handleSelectStatus}
+      />
+    ),
+    [menuItemId, handleOpenItem, handleToggleMenu, handleSelectStatus],
+  );
 
   const shiftTypes = GetShiftTypes();
   const shiftTypeId = GetActiveShiftTypeId();
@@ -140,28 +166,13 @@ const WorkScreen: React.FC = () => {
           />
         </View>
 
-        <View style={styles.searchRow}>
-          <TextField
-            containerStyle={styles.searchField}
-            placeholder="Search by ID or name"
-            value={search}
-            onChangeText={setSearch}
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="search"
-            leadingIcon={<SearchIcon size={20} />}
-          />
-
-          <TouchableOpacity
-            style={[styles.sortButton, sortOpen && styles.sortButtonActive]}
-            activeOpacity={0.8}
-            onPress={() => setSortOpen(true)}>
-            <SortIcon
-              size={20}
-              color={sortOpen ? theme.colors.primary : '#475467'}
-            />
-          </TouchableOpacity>
-        </View>
+        <ListSearchRow
+          style={styles.searchRowSpacing}
+          value={search}
+          onChangeText={setSearch}
+          sortOpen={sortOpen}
+          onOpenSort={() => setSortOpen(true)}
+        />
       </SafeAreaView>
 
       <FilterChips
@@ -204,19 +215,7 @@ const WorkScreen: React.FC = () => {
               setMenuItemId(null);
             }
           }}
-          renderItem={({item}) => (
-            <WorkCard
-              item={item}
-              onPress={record =>
-                Alert.alert(record.id, 'Full detail view is not wired up yet.')
-              }
-              menuOpen={menuItemId === item.id}
-              onToggleMenu={() =>
-                setMenuItemId(current => (current === item.id ? null : item.id))
-              }
-              onSelectStatus={handleSelectStatus}
-            />
-          )}
+          renderItem={renderItem}
           ListEmptyComponent={
             isError ? (
               <EmptyState
@@ -257,52 +256,46 @@ const WorkScreen: React.FC = () => {
         />
       )}
 
-      {showBackToTop ? (
-        <TouchableOpacity
-          style={styles.backToTop}
-          activeOpacity={0.85}
-          onPress={() =>
-            listRef.current?.scrollToOffset({offset: 0, animated: true})
-          }>
-          <ArrowUpIcon size={14} />
-          <Text style={styles.backToTopText}>Back to top</Text>
-        </TouchableOpacity>
-      ) : null}
+      <BackToTopPill
+        visible={showBackToTop}
+        onPress={() =>
+          listRef.current?.scrollToOffset({offset: 0, animated: true})
+        }
+      />
 
-      <TouchableOpacity
-        style={styles.fabTouchable}
-        activeOpacity={0.85}
-        onPress={() => setAddOpen(true)}>
-        <LinearGradient
-          colors={['#0092FF', theme.colors.primary]}
-          start={{x: 0.15, y: 0}}
-          end={{x: 0.85, y: 1}}
-          style={styles.fab}>
-          <PlusIcon size={26} color={theme.colors.white} />
-        </LinearGradient>
-      </TouchableOpacity>
+      <GradientFab onPress={() => setAddOpen(true)} />
 
       <ConfirmDialog
         visible={completeTarget !== null}
         title="Mark as Completed?"
         message={
           completeTarget
-            ? `${completeTarget.id} · ${completeTarget.type} will be marked Completed and appear in your synced Work Log.`
+            ? `${completeTarget.reference} · ${completeTarget.type} will be marked Completed and appear in your synced Work Log.`
             : ''
         }
         confirmLabel="Yes, complete"
         icon="check"
         iconTone="success"
         confirmTone="primary"
-        onConfirm={() => {
-          if (completeTarget) {
-            setStatus(completeTarget.id, 'Completed');
-          }
+        onConfirm={async () => {
+          const target = completeTarget;
           setCompleteTarget(null);
-          setToast({
-            title: 'Saved to Work Log',
-            message: `You have successfully saved ${completeTarget?.type ?? 'this work item'}.`,
-          });
+          if (!target) {
+            return;
+          }
+          try {
+            await setStatus(target.id, 'Completed');
+            setToast({
+              title: 'Saved to Work Log',
+              message: `You have successfully saved ${target.type}.`,
+            });
+          } catch {
+            setToast({
+              title: "Couldn't complete",
+              message: `${target.reference} is unchanged. Check your connection and try again.`,
+              variant: 'danger',
+            });
+          }
         }}
         onCancel={() => setCompleteTarget(null)}
       />
@@ -312,11 +305,15 @@ const WorkScreen: React.FC = () => {
         title={toast?.title ?? ''}
         message={toast?.message ?? ''}
         variant={toast?.variant}
-        actionLabel="View"
-        onAction={() => {
-          setBucket('completed');
-          setToast(null);
-        }}
+        actionLabel={toast?.variant === 'danger' ? undefined : 'View'}
+        onAction={
+          toast?.variant === 'danger'
+            ? undefined
+            : () => {
+                setBucket('completed');
+                setToast(null);
+              }
+        }
         onDismiss={() => setToast(null)}
       />
 
@@ -385,70 +382,14 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.md,
   },
   tabsRow: {paddingHorizontal: theme.spacing.lg},
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.lg,
-    marginTop: theme.spacing.md,
-  },
-  searchField: {flex: 1},
-  sortButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sortButtonActive: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primaryLight,
-  },
+  /** Work adds a top margin because the tab switcher sits above the search row. */
+  searchRowSpacing: {marginTop: theme.spacing.md},
   loading: {flex: 1, alignItems: 'center', justifyContent: 'center'},
   listContent: {
     paddingHorizontal: theme.spacing.lg,
     // Clears the FAB so the last card isn't trapped under it.
     paddingBottom: 96,
     gap: theme.spacing.md,
-  },
-  backToTop: {
-    position: 'absolute',
-    alignSelf: 'center',
-    bottom: theme.spacing.xxl + 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#99D3FF',
-    backgroundColor: theme.colors.primaryLight,
-    ...theme.shadow.card,
-  },
-  backToTopText: {
-    fontFamily: theme.fonts.black,
-    fontSize: 13,
-    color: theme.colors.primary,
-  },
-  fabTouchable: {
-    position: 'absolute',
-    right: theme.spacing.lg,
-    bottom: theme.spacing.xxl,
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    ...theme.shadow.fab,
-  },
-  fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
 

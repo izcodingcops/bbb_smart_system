@@ -1,6 +1,6 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
-import {KebabMenu, RecordCard, StatusPill} from '../../../components/ui';
+import {formatCardDate, KebabMenu, RecordCard, StatusPill} from '../../../components/ui';
 import {CloudOffIcon} from '../../../components/icons';
 import {Fixture, FixtureStatus} from '../../../types/fixture';
 import {theme} from '../../../theme';
@@ -15,27 +15,13 @@ const TRANSITIONS: Record<FixtureStatus, {status: FixtureStatus; label: string; 
   Inactive: [{status: 'Active', label: 'Mark Active', dot: '#16A34A'}],
 };
 
-function pad(value: number): string {
-  return String(value).padStart(2, '0');
-}
-
-/** 'Feb 5, 2026 · 10:05 AM' — same hand-padded-hour convention as Maintenance/Work. */
-function formatCreatedAt(iso: string): string {
-  const date = new Date(iso);
-  const day = date.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
-  const hours = date.getHours();
-  const suffix = hours >= 12 ? 'PM' : 'AM';
-  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
-  return `${day} · ${pad(hour12)}:${pad(date.getMinutes())} ${suffix}`;
-}
-
 interface Props {
   fixture: Fixture;
   onPress: (fixture: Fixture) => void;
   /** True while this card's own status menu is the open one. */
   menuOpen: boolean;
   /** Opens this card's menu, or closes it if already open. */
-  onToggleMenu: () => void;
+  onToggleMenu: (id: string) => void;
   onSelectStatus: (fixture: Fixture, status: FixtureStatus) => void;
 }
 
@@ -50,14 +36,14 @@ const FixtureCard: React.FC<Props> = ({fixture, onPress, menuOpen, onToggleMenu,
   return (
     <RecordCard
       onPress={() => onPress(fixture)}
-      idLabel={fixture.id}
+      idLabel={fixture.reference}
       typeLabel={fixture.title}
       statusPill={
         <StatusPill
           label={fixture.status}
           bg={status.bg}
           fg={status.fg}
-          onPress={onToggleMenu}
+          onPress={() => onToggleMenu(fixture.id)}
           trailingChevron
         />
       }
@@ -65,12 +51,12 @@ const FixtureCard: React.FC<Props> = ({fixture, onPress, menuOpen, onToggleMenu,
         <KebabMenu
           visible
           open={menuOpen}
-          onToggle={onToggleMenu}
+          onToggle={() => onToggleMenu(fixture.id)}
           options={menuOptions}
           onSelect={value => onSelectStatus(fixture, value as FixtureStatus)}
         />
       }
-      dateLine={formatCreatedAt(fixture.createdAt)}
+      dateLine={formatCardDate(fixture.createdAt)}
       badge={
         fixture.queuedOffline ? (
           <View style={styles.queuedRow}>

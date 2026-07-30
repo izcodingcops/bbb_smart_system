@@ -31,6 +31,24 @@ export function formatDateTime(iso: string): string {
 }
 
 /**
+ * 'Jul 6, 2026 · 08:40 AM' — the list-card format. The hour is padded by hand
+ * because en-US drops the leading zero even with `hour: '2-digit'`, which loses
+ * the design's column alignment.
+ */
+export function formatCardDate(iso: string): string {
+  const date = new Date(iso);
+  const day = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const hours = date.getHours();
+  const suffix = hours >= 12 ? 'PM' : 'AM';
+  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+  return `${day} · ${pad(hour12)}:${pad(date.getMinutes())} ${suffix}`;
+}
+
+/**
  * Auto-filled from the device clock, tappable to adjust. Tapping runs the date
  * picker and then the time picker, so one field covers both halves.
  *

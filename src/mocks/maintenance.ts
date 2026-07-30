@@ -17,7 +17,8 @@ const ALEX = {name: 'Alex Nguyen', initials: 'AN'};
 /** The 9 records the design screenshots pin exact values for. */
 const ACTIVE: MaintenanceRequest[] = [
   {
-    id: '#MT-40877',
+    id: 'mt_40877',
+    reference: '#MT-40877',
     type: 'Graffiti Removal',
     status: 'In-progress',
     requestedAt: '2026-07-06T08:40:00',
@@ -30,7 +31,8 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
   },
   {
-    id: '#MT-40855',
+    id: 'mt_40855',
+    reference: '#MT-40855',
     type: 'Streetlight Repair',
     status: 'Open',
     requestedAt: '2026-07-06T07:15:00',
@@ -43,7 +45,8 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
   },
   {
-    id: '#MT-40822',
+    id: 'mt_40822',
+    reference: '#MT-40822',
     type: 'Alley Cleaning',
     status: 'In-progress',
     requestedAt: '2026-07-05T14:10:00',
@@ -56,7 +59,8 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
   },
   {
-    id: '#MT-40810',
+    id: 'mt_40810',
+    reference: '#MT-40810',
     type: 'Streetlight Repair',
     status: 'In-progress',
     requestedAt: '2026-07-05T10:25:00',
@@ -69,7 +73,8 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
   },
   {
-    id: '#MT-40801',
+    id: 'mt_40801',
+    reference: '#MT-40801',
     type: 'Debris Removal',
     status: 'Open',
     requestedAt: '2026-07-04T09:20:00',
@@ -82,7 +87,8 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
   },
   {
-    id: '#MT-40790',
+    id: 'mt_40790',
+    reference: '#MT-40790',
     type: 'Graffiti Removal',
     status: 'Open',
     requestedAt: '2026-07-04T11:05:00',
@@ -95,7 +101,8 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
   },
   {
-    id: '#MT-40777',
+    id: 'mt_40777',
+    reference: '#MT-40777',
     type: 'Power Washing',
     status: 'Open',
     requestedAt: '2026-07-03T08:00:00',
@@ -108,7 +115,8 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
   },
   {
-    id: '#MT-40762',
+    id: 'mt_40762',
+    reference: '#MT-40762',
     type: 'Alley Cleaning',
     status: 'Open',
     requestedAt: '2026-07-02T16:45:00',
@@ -121,7 +129,8 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
   },
   {
-    id: '#MT-40744',
+    id: 'mt_40744',
+    reference: '#MT-40744',
     type: 'Sidewalk Repair',
     status: 'Open',
     requestedAt: '2026-07-03T15:35:00',
@@ -170,7 +179,8 @@ const COMPLETED: MaintenanceRequest[] = Array.from({length: 24}, (_, i) => {
   const business = COMPLETED_BUSINESSES[i % COMPLETED_BUSINESSES.length];
   const assignee = COMPLETED_ASSIGNEES[i % COMPLETED_ASSIGNEES.length];
   return {
-    id: `#MT-${40700 - i * 3}`,
+    id: `mt_${40700 - i * 3}`,
+    reference: `#MT-${40700 - i * 3}`,
     type: COMPLETED_TYPES[i % COMPLETED_TYPES.length],
     status: 'Completed' as const,
     requestedAt: toLocalIso(new Date(COMPLETED_BASE - i * 7 * HOUR)),
@@ -187,7 +197,8 @@ const COMPLETED: MaintenanceRequest[] = Array.from({length: 24}, (_, i) => {
 export const MOCK_MAINTENANCE_REQUESTS: MaintenanceRequest[] = [
   ...ACTIVE,
   {
-    id: '#MT-40840',
+    id: 'mt_40840',
+    reference: '#MT-40840',
     type: 'Power Washing',
     status: 'Completed',
     requestedAt: '2026-07-05T17:30:00',

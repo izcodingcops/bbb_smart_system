@@ -1,4 +1,9 @@
 import {Fixture} from '../../types/fixture';
+import {
+  DATE_RANGE_OPTIONS,
+  formatDateRangeValue,
+  matchesDateRange,
+} from '../../utils/dateRange';
 
 export type SortKey = 'latest' | 'oldest' | 'az' | 'za';
 export type FilterField = 'fixtureType' | 'zone' | 'status' | 'dateRange';
@@ -43,75 +48,11 @@ export const SORT_LABEL: Record<SortKey, string> = {
  */
 export const QUEUED_OFFLINE_VALUE = '__queued_offline__';
 
-export const CUSTOM_RANGE_VALUE = 'custom';
-
 const STATUS_OPTIONS = [
   {value: 'Active', label: 'Active'},
   {value: 'Inactive', label: 'Inactive'},
   {value: QUEUED_OFFLINE_VALUE, label: 'Queued (offline)'},
 ];
-
-export const DATE_RANGE_OPTIONS = [
-  {value: 'today', label: 'Today'},
-  {value: 'yesterday', label: 'Yesterday'},
-  {value: 'last7', label: 'Last 7 days'},
-  {value: 'last30', label: 'Last 30 days'},
-  {value: 'thisMonth', label: 'This month'},
-  {value: CUSTOM_RANGE_VALUE, label: 'Custom range…'},
-];
-
-/**
- * A chosen custom range rides inside the same `string[]` as every other filter,
- * encoded as `custom:2026-07-01:2026-07-05`.
- */
-export function encodeCustomRange(from: string, to: string): string {
-  return `${CUSTOM_RANGE_VALUE}:${from}:${to}`;
-}
-
-export function parseCustomRange(value: string): {from: string; to: string} | null {
-  const parts = value.split(':');
-  if (parts.length !== 3 || parts[0] !== CUSTOM_RANGE_VALUE) {
-    return null;
-  }
-  return {from: parts[1], to: parts[2]};
-}
-
-/** Midnight today, in the device's own timezone. */
-function startOfToday(): Date {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  return now;
-}
-
-function matchesDateRange(fixture: Fixture, value: string): boolean {
-  const at = new Date(fixture.createdAt);
-  const custom = parseCustomRange(value);
-  if (custom) {
-    const from = new Date(`${custom.from}T00:00:00`);
-    const to = new Date(`${custom.to}T23:59:59`);
-    return at >= from && at <= to;
-  }
-
-  const today = startOfToday();
-  const dayMs = 24 * 60 * 60 * 1000;
-  switch (value) {
-    case 'today':
-      return at >= today;
-    case 'yesterday':
-      return at >= new Date(today.getTime() - dayMs) && at < today;
-    case 'last7':
-      return at >= new Date(today.getTime() - 7 * dayMs);
-    case 'last30':
-      return at >= new Date(today.getTime() - 30 * dayMs);
-    case 'thisMonth':
-      return (
-        at.getFullYear() === today.getFullYear() &&
-        at.getMonth() === today.getMonth()
-      );
-    default:
-      return true;
-  }
-}
 
 /**
  * Type and Zone come from the loaded records so they stay correct as data
@@ -143,7 +84,7 @@ function matchesField(fixture: Fixture, field: FilterField, selected: string[]):
     );
   }
   if (field === 'dateRange') {
-    return selected.some(value => matchesDateRange(fixture, value));
+    return selected.some(value => matchesDateRange(fixture.createdAt, value));
   }
   if (field === 'fixtureType') {
     return selected.includes(fixture.fixtureType);
@@ -160,7 +101,7 @@ export function applyFilters(fixtures: Fixture[], filters: Filters): Fixture[] {
   );
 }
 
-/** Matches id and title only, same convention as Maintenance and Work. */
+/** Matches reference and title only, same convention as Maintenance and Work. */
 export function applySearch(fixtures: Fixture[], search: string): Fixture[] {
   const query = search.trim().toLowerCase();
   if (!query) {
@@ -168,7 +109,7 @@ export function applySearch(fixtures: Fixture[], search: string): Fixture[] {
   }
   return fixtures.filter(
     fixture =>
-      fixture.id.toLowerCase().includes(query) ||
+      fixture.reference.toLowerCase().includes(query) ||
       fixture.title.toLowerCase().includes(query),
   );
 }
@@ -191,25 +132,13 @@ export function hasAnyFilter(filters: Filters): boolean {
   return (Object.keys(filters) as FilterField[]).some(field => filters[field].length > 0);
 }
 
-/** 'Jul 1' — short form used inside a custom-range chip. */
-function shortDate(isoDate: string): string {
-  return new Date(`${isoDate}T00:00:00`).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
 /** Turns a stored filter value into what the chip and sheet should show. */
 export function formatFilterValue(field: FilterField, value: string): string {
   if (value === QUEUED_OFFLINE_VALUE) {
     return 'Queued (offline)';
   }
   if (field === 'dateRange') {
-    const custom = parseCustomRange(value);
-    if (custom) {
-      return `${shortDate(custom.from)} – ${shortDate(custom.to)}`;
-    }
-    return DATE_RANGE_OPTIONS.find(option => option.value === value)?.label ?? value;
+    return formatDateRangeValue(value);
   }
   return value;
 }

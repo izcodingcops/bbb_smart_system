@@ -1,4 +1,4 @@
-import {useMemo} from 'react';
+import {useCallback, useMemo} from 'react';
 import {useMutation, useQuery} from '@apollo/client/react';
 import {GetActiveProgramId} from '../../../redux/auth/selectors';
 import {
@@ -38,7 +38,8 @@ const STATUS: Record<GqlFixture['status'], FixtureStatus> = {
 };
 
 const toFixture = (f: GqlFixture): Fixture => ({
-  id: f.reference,
+  id: f.id,
+  reference: f.reference,
   title: f.title,
   fixtureType: f.fixtureType,
   zone: f.zone,
@@ -48,6 +49,8 @@ const toFixture = (f: GqlFixture): Fixture => ({
   createdAt: f.createdAt,
   address: f.address,
 });
+
+const FIXTURE_CONTEXT = {context: {feature: 'fixture'}};
 
 /**
  * `filter` is wired into the document but sent as null: the screen filters,
@@ -59,7 +62,7 @@ export function useGetFixturesQuery() {
   const {data, loading, error, refetch} = useQuery<{fixtures: GqlFixture[]}>(
     GET_FIXTURES,
     {
-      context: {feature: 'fixture'},
+      ...FIXTURE_CONTEXT,
       variables: {programId: programId ?? '', filter: null},
       skip: !programId,
     },
@@ -109,8 +112,6 @@ const toWireInput = (values: FixtureFormValues) => ({
   documents: values.documents,
 });
 
-const FIXTURE_CONTEXT = {context: {feature: 'fixture'}};
-
 /** The mock store mutates in place, so refetch rather than patch the cache. */
 const REFRESH_LIST = {...FIXTURE_CONTEXT, refetchQueries: ['GetFixtures']};
 const REFRESH_DETAIL = {
@@ -155,26 +156,31 @@ export function useFixtureFormOptionsQuery() {
 // naming it here would make Apollo warn about refetching an inactive query.
 export function useSetFixtureStatusMutation() {
   const [run, {loading}] = useMutation(SET_FIXTURE_STATUS, REFRESH_LIST);
-  return {
-    mutate: async (id: string, status: FixtureStatus) => {
+  // Memoised because the list screens put this in a useCallback dependency
+  // array — a fresh arrow each render would defeat the cards' React.memo.
+  const mutate = useCallback(
+    async (id: string, status: FixtureStatus) => {
       await run({variables: {id, status: STATUS_OUT[status]}});
     },
-    isLoading: loading,
-  };
+    [run],
+  );
+  return {mutate, isLoading: loading};
 }
 
 export function useCreateFixtureMutation() {
   const programId = GetActiveProgramId();
-  const [run, {loading}] = useMutation<{createFixture: {reference: string}}>(
-    CREATE_FIXTURE,
-    REFRESH_LIST,
-  );
+  const [run, {loading}] = useMutation<{
+    createFixture: {id: string; reference: string};
+  }>(CREATE_FIXTURE, REFRESH_LIST);
   return {
     mutate: async (values: FixtureFormValues) => {
       const result = await run({
         variables: {programId: programId ?? '', input: toWireInput(values)},
       });
-      return result.data?.createFixture.reference ?? '';
+      return {
+        id: result.data?.createFixture.id ?? '',
+        reference: result.data?.createFixture.reference ?? '',
+      };
     },
     isLoading: loading,
   };

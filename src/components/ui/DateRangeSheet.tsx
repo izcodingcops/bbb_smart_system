@@ -1,15 +1,15 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
-import {BottomSheet} from '../../../components/ui';
-import TimePickerSheet from '../../../components/TimePickerSheet';
-import {CalendarIcon} from '../../../components/icons';
+import BottomSheet from './BottomSheet';
+import TimePickerSheet from '../TimePickerSheet';
+import {CalendarIcon} from '../icons';
 import {
   CUSTOM_RANGE_VALUE,
   DATE_RANGE_OPTIONS,
   encodeCustomRange,
   parseCustomRange,
-} from '../filtering';
-import {theme} from '../../../theme';
+} from '../../utils/dateRange';
+import {theme} from '../../theme';
 
 interface Props {
   visible: boolean;
@@ -40,8 +40,12 @@ function label(isoDate: string): string {
  */
 const DateRangeSheet: React.FC<Props> = ({visible, value, onApply, onClose}) => {
   const existing = value ? parseCustomRange(value) : null;
-  const [choice, setChoice] = useState<string | null>(existing ? CUSTOM_RANGE_VALUE : value);
-  const [from, setFrom] = useState<string>(existing?.from ?? toISODate(new Date()));
+  const [choice, setChoice] = useState<string | null>(
+    existing ? CUSTOM_RANGE_VALUE : value,
+  );
+  const [from, setFrom] = useState<string>(
+    existing?.from ?? toISODate(new Date()),
+  );
   const [to, setTo] = useState<string>(existing?.to ?? toISODate(new Date()));
   const [picking, setPicking] = useState<'from' | 'to' | null>(null);
 
@@ -60,7 +64,10 @@ const DateRangeSheet: React.FC<Props> = ({visible, value, onApply, onClose}) => 
     if (choice === null) {
       onApply(null);
     } else if (choice === CUSTOM_RANGE_VALUE) {
-      onApply(from <= to ? encodeCustomRange(from, to) : encodeCustomRange(to, from));
+      // Tolerate a backwards range rather than rejecting it.
+      onApply(
+        from <= to ? encodeCustomRange(from, to) : encodeCustomRange(to, from),
+      );
     } else {
       onApply(choice);
     }
@@ -93,9 +100,13 @@ const DateRangeSheet: React.FC<Props> = ({visible, value, onApply, onClose}) => 
               style={styles.rangeField}
               activeOpacity={0.85}
               onPress={() => setPicking(edge)}>
-              <Text style={styles.rangeLabel}>{edge === 'from' ? 'From' : 'To'}</Text>
+              <Text style={styles.rangeLabel}>
+                {edge === 'from' ? 'From' : 'To'}
+              </Text>
               <View style={styles.rangeValueRow}>
-                <Text style={styles.rangeValue}>{label(edge === 'from' ? from : to)}</Text>
+                <Text style={styles.rangeValue}>
+                  {label(edge === 'from' ? from : to)}
+                </Text>
                 <CalendarIcon size={17} />
               </View>
             </TouchableOpacity>
@@ -113,7 +124,10 @@ const DateRangeSheet: React.FC<Props> = ({visible, value, onApply, onClose}) => 
           }}>
           <Text style={styles.resetText}>Reset</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.apply]} activeOpacity={0.85} onPress={commit}>
+        <TouchableOpacity
+          style={[styles.button, styles.apply]}
+          activeOpacity={0.85}
+          onPress={commit}>
           <Text style={styles.applyText}>Apply</Text>
         </TouchableOpacity>
       </View>
@@ -157,8 +171,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   radioSelected: {borderColor: theme.colors.primary},
-  radioDot: {width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.primary},
-  range: {flexDirection: 'row', gap: theme.spacing.md, marginTop: theme.spacing.lg},
+  radioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: theme.colors.primary,
+  },
+  range: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.lg,
+  },
   rangeField: {
     flex: 1,
     gap: 6,
@@ -168,15 +191,43 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     backgroundColor: '#F4F5F7',
   },
-  rangeLabel: {fontFamily: theme.fonts.bold, fontSize: 12, color: theme.colors.textMuted},
-  rangeValueRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6},
-  rangeValue: {flexShrink: 1, fontFamily: theme.fonts.black, fontSize: 13.5, color: '#181B1F'},
-  footer: {flexDirection: 'row', gap: theme.spacing.md, marginTop: theme.spacing.xl},
-  button: {flex: 1, height: 48, borderRadius: theme.radius.md, alignItems: 'center', justifyContent: 'center'},
+  rangeLabel: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+  },
+  rangeValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  rangeValue: {
+    flexShrink: 1,
+    fontFamily: theme.fonts.black,
+    fontSize: 13.5,
+    color: '#181B1F',
+  },
+  footer: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.xl,
+  },
+  button: {
+    flex: 1,
+    height: 48,
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   reset: {backgroundColor: '#F1F3F5'},
   resetText: {fontFamily: theme.fonts.black, fontSize: 15, color: '#181B1F'},
   apply: {backgroundColor: theme.colors.primary},
-  applyText: {fontFamily: theme.fonts.black, fontSize: 15, color: theme.colors.white},
+  applyText: {
+    fontFamily: theme.fonts.black,
+    fontSize: 15,
+    color: theme.colors.white,
+  },
 });
 
 export default DateRangeSheet;

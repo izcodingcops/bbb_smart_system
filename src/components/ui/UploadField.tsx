@@ -8,9 +8,9 @@ import {
   StyleSheet,
 } from 'react-native';
 import {launchImageLibrary} from 'react-native-image-picker';
-import {FieldLabel} from '../../../components/ui/DropdownField';
-import {UploadIcon, XIcon} from '../../../components/icons';
-import {theme} from '../../../theme';
+import {FieldLabel} from './DropdownField';
+import {UploadIcon, XIcon} from '../icons';
+import {theme} from '../../theme';
 
 interface Props {
   label: string;

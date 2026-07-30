@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {View, ActivityIndicator, StyleSheet} from 'react-native';
+import {View, Text, TouchableOpacity, ActivityIndicator, StyleSheet} from 'react-native';
 import {
   useCreateMaintenanceRequestMutation,
   useMaintenanceFormOptionsQuery,
@@ -7,31 +7,53 @@ import {
 import {MaintenanceFormValues} from '../../types/maintenance';
 import MaintenanceForm, {buildInitialValues} from './components/MaintenanceForm';
 import AddFixtureSheet from './components/AddFixtureSheet';
+import {EmptyState} from '../../components/ui';
+import {ToolsIcon} from '../../components/icons';
 import {theme} from '../../theme';
 
 interface Props {
   onClose: () => void;
-  /** Fires with the new record's reference once it's been created. */
-  onCreated: (reference: string) => void;
+  /** Fires with the new record's id and reference once it's been created. */
+  onCreated: (created: {id: string; reference: string}) => void;
 }
 
 const CreateMaintenanceScreen: React.FC<Props> = ({onClose, onCreated}) => {
-  const {data: options, isLoading, refetch} = useMaintenanceFormOptionsQuery();
+  const {data: options, isLoading, isError, refetch} = useMaintenanceFormOptionsQuery();
   const {mutate: create, isLoading: isSubmitting} =
     useCreateMaintenanceRequestMutation();
   const [addFixtureOpen, setAddFixtureOpen] = useState(false);
+
+  if (isError || (!isLoading && !options)) {
+    return (
+      <View style={styles.loading}>
+        <EmptyState
+          icon={<ToolsIcon size={28} color={theme.colors.primary} />}
+          title="Couldn't start a new request"
+          body="Something went wrong loading the form. Check your connection and try again."
+          actionLabel="Retry"
+          onAction={refetch}
+        />
+        <TouchableOpacity style={styles.backLink} activeOpacity={0.8} onPress={onClose}>
+          <Text style={styles.backLinkText}>Go back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   if (isLoading || !options) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
+        <TouchableOpacity style={styles.backLink} activeOpacity={0.8} onPress={onClose}>
+          <Text style={styles.backLinkText}>Go back</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   const submit = async (values: MaintenanceFormValues) => {
-    const reference = await create(values);
-    onCreated(reference);
+    const created = await create(values);
+    onCreated(created);
   };
 
   return (
@@ -68,6 +90,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.background,
+  },
+  backLink: {marginTop: theme.spacing.lg, padding: theme.spacing.sm},
+  backLinkText: {
+    fontFamily: theme.fonts.black,
+    fontSize: 14,
+    color: theme.colors.primary,
   },
 });
 

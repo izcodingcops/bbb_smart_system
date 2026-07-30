@@ -26,7 +26,7 @@ const BUCKET: Record<string, string> = {
 const toWire = (item: ReturnType<typeof findWorkItem>) =>
   item && {
     id: item.id,
-    ticketNumber: item.id,
+    ticketNumber: item.reference,
     category: item.category,
     status: STATUS[item.status],
     occurredAt: item.date,
@@ -46,11 +46,11 @@ const toWire = (item: ReturnType<typeof findWorkItem>) =>
 
 export const workResolvers = {
   Query: {
-    workItems: async (_p: unknown, {bucket}: {bucket?: string | null}) => {
+    // The screen buckets client-side via applyBucket, same convention as the
+    // `filter: null` Fixture and Maintenance queries use.
+    workItems: async () => {
       await sleep();
-      return workStore.items
-        .filter(item => !bucket || BUCKET[item.bucket] === bucket)
-        .map(item => toWire(item));
+      return workStore.items.map(item => toWire(item));
     },
 
     quickActions: async () => {

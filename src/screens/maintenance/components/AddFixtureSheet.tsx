@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
+import {Alert, View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {
   AccordionSection,
   BottomSheet,
@@ -8,10 +8,10 @@ import {
   FieldLabel,
   SegmentedButtons,
   TextField,
+  UploadField,
 } from '../../../components/ui';
 import {useCreateMaintenanceFixtureMutation} from '../../../graphql/features/maintenance/hooks';
 import {MaintenanceFormOptions} from '../../../types/maintenance';
-import UploadField from './UploadField';
 import {theme} from '../../../theme';
 
 const STATUS_OPTIONS = [
@@ -69,9 +69,16 @@ const AddFixtureSheet: React.FC<Props> = ({
     if (!canSave || !fixtureType) {
       return;
     }
-    const name = await createFixture(title.trim(), fixtureType);
-    onCreated(name);
-    onClose();
+    try {
+      const name = await createFixture(title.trim(), fixtureType);
+      onCreated(name);
+      onClose();
+    } catch {
+      Alert.alert(
+        "Couldn't add fixture",
+        'Something went wrong. Check your connection and try again.',
+      );
+    }
   };
 
   return (

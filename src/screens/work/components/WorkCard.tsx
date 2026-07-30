@@ -1,6 +1,12 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
-import {KebabMenu, PriorityPill, RecordCard, StatusPill} from '../../../components/ui';
+import {
+  formatCardDate,
+  KebabMenu,
+  PriorityPill,
+  RecordCard,
+  StatusPill,
+} from '../../../components/ui';
 import {WorkCategory, WorkItem, WorkPriority, WorkStatus} from '../../../types/work';
 import {theme} from '../../../theme';
 
@@ -61,25 +67,6 @@ function completedFields(item: WorkItem): {label: string; value: string}[] {
   }
 }
 
-function pad(value: number): string {
-  return String(value).padStart(2, '0');
-}
-
-/** 'Jul 6, 2026 · 08:40 AM' — hour is padded by hand, en-US drops the leading
- * zero even with `hour: '2-digit'`, which loses the design's column alignment. */
-function formatDate(iso: string): string {
-  const date = new Date(iso);
-  const day = date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-  const hours = date.getHours();
-  const suffix = hours >= 12 ? 'PM' : 'AM';
-  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
-  return `${day} · ${pad(hour12)}:${pad(date.getMinutes())} ${suffix}`;
-}
-
 /** Completed is terminal — only an open or in-progress item can change status. */
 export function canChangeStatus(item: WorkItem): boolean {
   return item.status !== 'Completed';
@@ -91,7 +78,7 @@ interface Props {
   /** True while this card's own status menu is the open one. */
   menuOpen: boolean;
   /** Opens this card's menu, or closes it if already open. */
-  onToggleMenu: () => void;
+  onToggleMenu: (id: string) => void;
   onSelectStatus: (item: WorkItem, status: WorkStatus) => void;
 }
 
@@ -149,14 +136,14 @@ const WorkCard: React.FC<Props> = ({
   return (
     <RecordCard
       onPress={() => onPress(item)}
-      idLabel={item.id}
+      idLabel={item.reference}
       typeLabel={item.category}
       statusPill={
         <StatusPill
           label={item.status}
           bg={status.bg}
           fg={status.fg}
-          onPress={actionable ? onToggleMenu : undefined}
+          onPress={actionable ? () => onToggleMenu(item.id) : undefined}
           trailingChevron={actionable}
         />
       }
@@ -164,12 +151,12 @@ const WorkCard: React.FC<Props> = ({
         <KebabMenu
           visible={actionable}
           open={menuOpen}
-          onToggle={onToggleMenu}
+          onToggle={() => onToggleMenu(item.id)}
           options={menuOptions}
           onSelect={value => onSelectStatus(item, value as WorkStatus)}
         />
       }
-      dateLine={`${item.bucket === 'assigned' ? 'Assigned ' : ''}${formatDate(item.date)}`}
+      dateLine={`${item.bucket === 'assigned' ? 'Assigned ' : ''}${formatCardDate(item.date)}`}
       fields={fields}
       addressLabel="Address"
       addressValue={item.address}

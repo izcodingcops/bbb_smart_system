@@ -1,6 +1,7 @@
 import {FixtureDetail} from '../../../types/fixture';
 import {sleep} from '../../mockSession';
-import {FIXTURE_TYPES, ZONES, findRecord, fixtureStore, nextReference} from './store';
+import {FIXTURE_TYPES, ZONES} from '../shared/options';
+import {findRecord, fixtureStore, nextReference} from './store';
 
 const STATUS: Record<string, string> = {Active: 'ACTIVE', Inactive: 'INACTIVE'};
 const STATUS_IN: Record<string, FixtureDetail['status']> = {
@@ -8,10 +9,9 @@ const STATUS_IN: Record<string, FixtureDetail['status']> = {
   INACTIVE: 'Inactive',
 };
 
-/** Display-shape record → wire shape (status uppercased, reference filled). */
+/** Display-shape record → wire shape (status uppercased). */
 export const toWire = (record: FixtureDetail) => ({
   ...record,
-  reference: record.id,
   status: STATUS[record.status],
 });
 
@@ -80,8 +80,10 @@ export const fixtureResolvers = {
       args: {programId: string; input: WireInput},
     ) => {
       await sleep();
+      const reference = nextReference();
       const record: FixtureDetail = {
-        id: nextReference(),
+        id: `fx_${reference.replace('#FX-', '')}`,
+        reference,
         title: '',
         fixtureType: '',
         zone: '',

@@ -14,7 +14,6 @@ export const MAINT_TYPES = [
   'Planter Maintenance',
   'Snow / Ice Removal',
 ];
-export const ZONES = ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'Zone 5'];
 export const DEPARTMENTS = [
   'Tom Lee department',
   'Facilities Team',
@@ -29,13 +28,6 @@ export const BUSINESS_NAMES = [
   'BlockByBlock',
   'LoDo District',
 ];
-export const FIXTURES = [
-  'Bench #B-204',
-  'Trash Bin #T-88',
-  'Planter #P-12',
-  'Bike Rack #BR-5',
-  'Light Pole #LP-19',
-];
 export const INCIDENTS = [
   'Graffiti — 07/04/2026',
   'Vandalism — 07/03/2026',
@@ -49,18 +41,6 @@ export const EQUIPMENT = [
   'Pressure Washer',
   'Ladder',
   'Paint Kit',
-];
-export const FIXTURE_TYPES = [
-  'Floor Fixture',
-  'Bench',
-  'Bike Rack',
-  'Planter',
-  'Trash Receptacle',
-  'Light Pole',
-  'Bollard',
-  'Sign Post',
-  'Kiosk',
-  'Drinking Fountain',
 ];
 
 const DETAIL_DEFAULTS = {
@@ -86,7 +66,6 @@ const DETAIL_DEFAULTS = {
 /** Seeded once per app session; mutations edit these arrays in place. */
 export const maintenanceStore: {
   records: MaintenanceDetail[];
-  fixtures: string[];
 } = {
   records: MOCK_MAINTENANCE_REQUESTS.map(request => ({
     ...DETAIL_DEFAULTS,
@@ -94,7 +73,7 @@ export const maintenanceStore: {
     completedOn: request.status === 'Completed' ? request.requestedAt : null,
     paid: request.status === 'Completed',
     comments:
-      request.id === '#MT-40840'
+      request.reference === '#MT-40840'
         ? [
             {
               id: 'c1',
@@ -106,7 +85,6 @@ export const maintenanceStore: {
           ]
         : [],
   })),
-  fixtures: [...FIXTURES],
 };
 
 export function findRecord(id: string): MaintenanceDetail | undefined {
@@ -116,7 +94,7 @@ export function findRecord(id: string): MaintenanceDetail | undefined {
 /** One past the highest existing number, so created records sort to the top. */
 export function nextReference(): string {
   const max = maintenanceStore.records.reduce((acc, r) => {
-    const n = Number(r.id.replace('#MT-', ''));
+    const n = Number(r.reference.replace('#MT-', ''));
     return Number.isFinite(n) && n > acc ? n : acc;
   }, 0);
   return `#MT-${max + 1}`;

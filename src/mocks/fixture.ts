@@ -19,7 +19,8 @@ const AVA: FixtureCreator = {name: 'Ava Nguyen', initials: 'AN'};
 /** The 10 records the design's mockup pins exact values for. */
 const EXPLICIT: Fixture[] = [
   {
-    id: '#FX-42984',
+    id: 'fx_42984',
+    reference: '#FX-42984',
     title: '16th St Floor Fixture',
     fixtureType: 'Floor Fixture',
     zone: 'Zone 4',
@@ -30,7 +31,8 @@ const EXPLICIT: Fixture[] = [
     address: ADDRESSES['16th St Mall'],
   },
   {
-    id: '#FX-42960',
+    id: 'fx_42960',
+    reference: '#FX-42960',
     title: 'LoDo Bike Rack 12',
     fixtureType: 'Bike Rack',
     zone: 'Zone 5',
@@ -41,7 +43,8 @@ const EXPLICIT: Fixture[] = [
     address: ADDRESSES.LoDo,
   },
   {
-    id: '#FX-42931',
+    id: 'fx_42931',
+    reference: '#FX-42931',
     title: 'Union Station Bench A',
     fixtureType: 'Bench',
     zone: 'Zone 2',
@@ -52,7 +55,8 @@ const EXPLICIT: Fixture[] = [
     address: ADDRESSES['Union Station'],
   },
   {
-    id: '#FX-42905',
+    id: 'fx_42905',
+    reference: '#FX-42905',
     title: 'Larimer Planter 07',
     fixtureType: 'Planter',
     zone: 'Zone 1',
@@ -63,7 +67,8 @@ const EXPLICIT: Fixture[] = [
     address: ADDRESSES.Larimer,
   },
   {
-    id: '#FX-42888',
+    id: 'fx_42888',
+    reference: '#FX-42888',
     title: 'Civic Center Trash Bin 3',
     fixtureType: 'Trash Receptacle',
     zone: 'Zone 3',
@@ -74,7 +79,8 @@ const EXPLICIT: Fixture[] = [
     address: ADDRESSES['Civic Center'],
   },
   {
-    id: '#FX-42860',
+    id: 'fx_42860',
+    reference: '#FX-42860',
     title: 'Blake St Light Pole 22',
     fixtureType: 'Light Pole',
     zone: 'Zone 3',
@@ -85,7 +91,8 @@ const EXPLICIT: Fixture[] = [
     address: ADDRESSES.Blake,
   },
   {
-    id: '#FX-42834',
+    id: 'fx_42834',
+    reference: '#FX-42834',
     title: 'Wynkoop Bollard 5',
     fixtureType: 'Bollard',
     zone: 'Zone 2',
@@ -96,7 +103,8 @@ const EXPLICIT: Fixture[] = [
     address: ADDRESSES['Union Station'],
   },
   {
-    id: '#FX-42810',
+    id: 'fx_42810',
+    reference: '#FX-42810',
     title: '16th St Sign Post B',
     fixtureType: 'Sign Post',
     zone: 'Zone 4',
@@ -107,7 +115,8 @@ const EXPLICIT: Fixture[] = [
     address: ADDRESSES.Curtis,
   },
   {
-    id: '#FX-42788',
+    id: 'fx_42788',
+    reference: '#FX-42788',
     title: 'Larimer Bench 09',
     fixtureType: 'Bench',
     zone: 'Zone 1',
@@ -118,7 +127,8 @@ const EXPLICIT: Fixture[] = [
     address: ADDRESSES.Larimer,
   },
   {
-    id: '#FX-42760',
+    id: 'fx_42760',
+    reference: '#FX-42760',
     title: 'Curtis St Kiosk',
     fixtureType: 'Kiosk',
     zone: 'Zone 2',
@@ -178,7 +188,8 @@ const GENERATED: Fixture[] = Array.from({length: 15}, (_, i) => {
   const addressKey = GEN_ADDRESS_KEYS[i % GEN_ADDRESS_KEYS.length];
   const status: FixtureStatus = i % 2 === 0 ? 'Active' : 'Inactive';
   return {
-    id: `#FX-${42730 - i * 3}`,
+    id: `fx_${42730 - i * 3}`,
+    reference: `#FX-${42730 - i * 3}`,
     title: `${GEN_TITLE_PREFIX[i % GEN_TITLE_PREFIX.length]} ${type} ${i + 1}`,
     fixtureType: type,
     zone,

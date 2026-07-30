@@ -1,6 +1,6 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
-import {Card} from '../../../components/ui';
+import {Card, formatCardDate} from '../../../components/ui';
 import {WorkItem, WorkPriority, WorkStatus} from '../../../types/work';
 import {theme} from '../../../theme';
 
@@ -16,24 +16,6 @@ const PRIORITY_COLOR: Record<WorkPriority, string> = {
   Low: '#16A34A',
 };
 
-function pad(value: number): string {
-  return String(value).padStart(2, '0');
-}
-
-/** 'Jul 6, 2026 · 08:40 AM' — hour is padded by hand, see MaintenanceCard. */
-function formatOccurredAt(iso: string): string {
-  const date = new Date(iso);
-  const day = date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-  const hours = date.getHours();
-  const suffix = hours >= 12 ? 'PM' : 'AM';
-  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
-  return `${day} · ${pad(hour12)}:${pad(date.getMinutes())} ${suffix}`;
-}
-
 interface Props {
   item: WorkItem;
 }
@@ -44,7 +26,7 @@ const WorkCard: React.FC<Props> = ({item}) => {
     <Card style={styles.card}>
       <View style={styles.topRow}>
         <View style={styles.idRow}>
-          <Text style={styles.id}>{item.id}</Text>
+          <Text style={styles.id}>{item.reference}</Text>
           <Text style={styles.category}>{item.category}</Text>
         </View>
         <View style={[styles.badge, {backgroundColor: status.bg}]}>
@@ -53,7 +35,7 @@ const WorkCard: React.FC<Props> = ({item}) => {
           </Text>
         </View>
       </View>
-      <Text style={styles.date}>{formatOccurredAt(item.date)}</Text>
+      <Text style={styles.date}>{formatCardDate(item.date)}</Text>
 
       <View style={styles.divider} />
 
