@@ -10,6 +10,7 @@ import {
 import {
   ConfirmDialog,
   DetailField,
+  DetailSection,
   DetailTopBar,
   EmptyState,
   StatusPill,
@@ -126,45 +127,36 @@ const ViewFixtureScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
           <Text style={styles.idBig}>{detail.reference}</Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Basic Details</Text>
-          <View style={styles.grid}>
-            <DetailField label="Title" value={detail.title} />
-            <DetailField label="Type" value={detail.fixtureType} />
-            <DetailField label="Service Date & Time" value={formatDateTime(detail.createdAt)} />
-            <DetailField label="Created By" value={detail.createdBy.name} />
-            <DetailField label="Status" full>
-              <StatusPill label={detail.status} bg={status.bg} fg={status.fg} size="md" />
-            </DetailField>
-          </View>
-        </View>
+        <DetailSection title="Basic Details">
+          <DetailField label="Title" value={detail.title} />
+          <DetailField label="Type" value={detail.fixtureType} />
+          <DetailField label="Service Date & Time" value={formatDateTime(detail.createdAt)} />
+          <DetailField label="Created By" value={detail.createdBy.name} />
+          <DetailField label="Status" full>
+            <StatusPill label={detail.status} bg={status.bg} fg={status.fg} size="md" />
+          </DetailField>
+        </DetailSection>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Location Details</Text>
-          <View style={styles.grid}>
-            <DetailField label="Address" value={detail.address} />
-            <DetailField label="Describe Location" value={detail.describeLocation} />
-            <DetailField label="Latitude" value={detail.latitude} />
-            <DetailField label="Longitude" value={detail.longitude} />
-            <DetailField label="Zone" value={detail.zone} full />
-          </View>
-        </View>
+        <DetailSection title="Location Details">
+          <DetailField label="Address" value={detail.address} />
+          <DetailField label="Describe Location" value={detail.describeLocation} />
+          <DetailField label="Latitude" value={detail.latitude} />
+          <DetailField label="Longitude" value={detail.longitude} />
+          <DetailField label="Zone" value={detail.zone} full />
+        </DetailSection>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Other Details</Text>
-          <View style={styles.grid}>
-            <DetailField label="Description" value={detail.description} full />
-            <DetailField label="Document" full>
-              {detail.documents.length > 0 ? (
-                <View style={styles.thumbs}>
-                  {detail.documents.map(uri => (
-                    <Image key={uri} source={{uri}} style={styles.thumb} />
-                  ))}
-                </View>
-              ) : undefined}
-            </DetailField>
-          </View>
-        </View>
+        <DetailSection title="Other Details">
+          <DetailField label="Description" value={detail.description} full />
+          <DetailField label="Document" full>
+            {detail.documents.length > 0 ? (
+              <View style={styles.thumbs}>
+                {detail.documents.map(uri => (
+                  <Image key={uri} source={{uri}} style={styles.thumb} />
+                ))}
+              </View>
+            ) : undefined}
+          </DetailField>
+        </DetailSection>
       </ScrollView>
 
       <ConfirmDialog
@@ -230,20 +222,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     color: theme.colors.text,
   },
-  section: {
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEF0F2',
-  },
-  sectionTitle: {
-    fontFamily: theme.fonts.black,
-    fontSize: 17.5,
-    letterSpacing: -0.2,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.lg,
-  },
-  grid: {flexDirection: 'row', flexWrap: 'wrap', rowGap: 18, columnGap: 14},
   thumbs: {flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginTop: 2},
   thumb: {
     width: 52,

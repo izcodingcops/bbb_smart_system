@@ -11,6 +11,7 @@ import {
 import {
   ConfirmDialog,
   DetailField,
+  DetailSection,
   DetailTopBar,
   EmptyState,
   PriorityPill,
@@ -186,107 +187,94 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Basic Details</Text>
-          <View style={styles.grid}>
-            <DetailField label="Ambassador">
-              <View style={styles.withAvatar}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {initialsOf(detail.ambassador)}
-                  </Text>
-                </View>
-                <Text style={styles.fieldValue}>{detail.ambassador}</Text>
-              </View>
-            </DetailField>
-            <DetailField label="Type" value={detail.type} />
-            <DetailField label="Program Name">
-              <Text style={styles.fieldValue}>
-                {detail.programName}
-                {'\n'}
-                {detail.programCode}
-              </Text>
-            </DetailField>
-            <DetailField label="Priority">
-              <PriorityPill
-                label={detail.priority}
-                bg={PRIORITY_STYLE[detail.priority].bg}
-                fg={PRIORITY_STYLE[detail.priority].fg}
-                size="md"
-              />
-            </DetailField>
-            <DetailField label="Business Name" value={detail.businessName} />
-            <DetailField label="Status">
-              <StatusPill label={detail.status} bg={status.bg} fg={status.fg} size="md" />
-            </DetailField>
-            <DetailField label="Created By" value={detail.createdBy} />
-            <DetailField label="Completed By" value={detail.completedBy} />
-            <DetailField
-              label="Completed On"
-              value={
-                detail.completedOn ? formatDateTime(detail.completedOn) : null
-              }
-            />
-            <DetailField
-              label="Request Date & Time"
-              value={formatDateTime(detail.requestedAt)}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Other Details</Text>
-          <View style={styles.grid}>
-            <DetailField label="Description" value={detail.description} full />
-            <DetailField label="Document" full>
-              {detail.documents.length > 0 ? (
-                <View style={styles.thumbs}>
-                  {detail.documents.map(uri => (
-                    <Image key={uri} source={{uri}} style={styles.thumb} />
-                  ))}
-                </View>
-              ) : (
-                <Text style={[styles.fieldValue, styles.fieldValueEmpty]}>
-                  N/A
+        <DetailSection title="Basic Details">
+          <DetailField label="Ambassador">
+            <View style={styles.withAvatar}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {initialsOf(detail.ambassador)}
                 </Text>
-              )}
-            </DetailField>
-          </View>
-        </View>
+              </View>
+              <Text style={styles.fieldValue}>{detail.ambassador}</Text>
+            </View>
+          </DetailField>
+          <DetailField label="Type" value={detail.type} />
+          <DetailField label="Program Name">
+            <Text style={styles.fieldValue}>
+              {detail.programName}
+              {'\n'}
+              {detail.programCode}
+            </Text>
+          </DetailField>
+          <DetailField label="Priority">
+            <PriorityPill
+              label={detail.priority}
+              bg={PRIORITY_STYLE[detail.priority].bg}
+              fg={PRIORITY_STYLE[detail.priority].fg}
+              size="md"
+            />
+          </DetailField>
+          <DetailField label="Business Name" value={detail.businessName} />
+          <DetailField label="Status">
+            <StatusPill label={detail.status} bg={status.bg} fg={status.fg} size="md" />
+          </DetailField>
+          <DetailField label="Created By" value={detail.createdBy} />
+          <DetailField label="Completed By" value={detail.completedBy} />
+          <DetailField
+            label="Completed On"
+            value={
+              detail.completedOn ? formatDateTime(detail.completedOn) : null
+            }
+          />
+          <DetailField
+            label="Request Date & Time"
+            value={formatDateTime(detail.requestedAt)}
+          />
+        </DetailSection>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Location Details</Text>
-          <View style={styles.grid}>
-            <DetailField label="Address" value={detail.address} full />
-            <DetailField label="Zone" value={detail.zone} />
-            <DetailField
-              label="Describe Location"
-              value={detail.describeLocation}
-            />
-          </View>
-        </View>
+        <DetailSection title="Other Details">
+          <DetailField label="Description" value={detail.description} full />
+          <DetailField label="Document" full>
+            {detail.documents.length > 0 ? (
+              <View style={styles.thumbs}>
+                {detail.documents.map(uri => (
+                  <Image key={uri} source={{uri}} style={styles.thumb} />
+                ))}
+              </View>
+            ) : (
+              <Text style={[styles.fieldValue, styles.fieldValueEmpty]}>
+                N/A
+              </Text>
+            )}
+          </DetailField>
+        </DetailSection>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Connected Elements</Text>
-          <View style={styles.grid}>
-            <DetailField label="Fixture" value={detail.fixture} />
-            <DetailField
-              label="Incident"
-              value={detail.incidents.join(', ') || null}
-            />
-            <DetailField
-              label="Person of Interest"
-              value={detail.pois.join(', ') || null}
-            />
-            <DetailField
-              label="Equipment"
-              value={detail.equipment.join(', ') || null}
-            />
-          </View>
-        </View>
+        <DetailSection title="Location Details">
+          <DetailField label="Address" value={detail.address} full />
+          <DetailField label="Zone" value={detail.zone} />
+          <DetailField
+            label="Describe Location"
+            value={detail.describeLocation}
+          />
+        </DetailSection>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Comment</Text>
+        <DetailSection title="Connected Elements">
+          <DetailField label="Fixture" value={detail.fixture} />
+          <DetailField
+            label="Incident"
+            value={detail.incidents.join(', ') || null}
+          />
+          <DetailField
+            label="Person of Interest"
+            value={detail.pois.join(', ') || null}
+          />
+          <DetailField
+            label="Equipment"
+            value={detail.equipment.join(', ') || null}
+          />
+        </DetailSection>
+
+        <DetailSection title="Comment" grid={false}>
           <CommentList
             comments={detail.comments}
             onEdit={comment => {
@@ -295,7 +283,7 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
             }}
             onDelete={setDeletingComment}
           />
-        </View>
+        </DetailSection>
       </ScrollView>
 
       <CommentSheet
@@ -418,20 +406,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.text,
   },
-  section: {
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEF0F2',
-  },
-  sectionTitle: {
-    fontFamily: theme.fonts.black,
-    fontSize: 17.5,
-    letterSpacing: -0.2,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.lg,
-  },
-  grid: {flexDirection: 'row', flexWrap: 'wrap', rowGap: 18, columnGap: 14},
   // Still used directly by the Ambassador/Program Name/Document-empty custom
   // `children` nodes below — those aren't plain `value` props, so they can't
   // go through DetailField's own internal text style.
