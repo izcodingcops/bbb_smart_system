@@ -38,6 +38,7 @@ import {
 import FixtureCard from './components/FixtureCard';
 import DateRangeSheet from './components/DateRangeSheet';
 import CreateFixtureScreen from './CreateFixtureScreen';
+import ViewFixtureScreen from './ViewFixtureScreen';
 import {theme} from '../../theme';
 
 /** Create and View are full-screen pushes within the Fixture tab. */
@@ -114,6 +115,24 @@ const FixtureScreen: React.FC = () => {
     );
   }
 
+  if (route.name === 'view') {
+    return (
+      <ViewFixtureScreen
+        id={route.id}
+        onClose={() => setRoute({name: 'list'})}
+        onDeleted={reference => {
+          setRoute({name: 'list'});
+          setToast({
+            title: 'Fixture deleted',
+            message: `${reference} was removed from your Work Log.`,
+            reference,
+            variant: 'danger',
+          });
+        }}
+      />
+    );
+  }
+
   return (
     <View style={styles.root}>
       <SafeAreaView edges={['top']}>
@@ -183,9 +202,7 @@ const FixtureScreen: React.FC = () => {
           renderItem={({item}) => (
             <FixtureCard
               fixture={item}
-              onPress={record =>
-                Alert.alert(record.id, 'Full detail view is not wired up yet.')
-              }
+              onPress={record => setRoute({name: 'view', id: record.id})}
               menuOpen={menuFixtureId === item.id}
               onToggleMenu={() =>
                 setMenuFixtureId(current => (current === item.id ? null : item.id))
