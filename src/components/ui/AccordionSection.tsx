@@ -5,6 +5,8 @@ import {theme} from '../../theme';
 
 interface Props {
   title: string;
+  /** Second line under the title — e.g. an incident's 'Incident 1' label. */
+  subtitle?: string;
   initiallyOpen?: boolean;
   children: React.ReactNode;
 }
@@ -16,6 +18,7 @@ interface Props {
  */
 const AccordionSection: React.FC<Props> = ({
   title,
+  subtitle,
   initiallyOpen = false,
   children,
 }) => {
@@ -27,7 +30,10 @@ const AccordionSection: React.FC<Props> = ({
         style={styles.header}
         activeOpacity={0.8}
         onPress={() => setOpen(current => !current)}>
-        <Text style={styles.title}>{title}</Text>
+        <View style={styles.headerText}>
+          <Text style={styles.title}>{title}</Text>
+          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        </View>
         <View style={open ? undefined : styles.chevronClosed}>
           <ChevronDownIcon size={22} color={theme.colors.textSecondary} />
         </View>
@@ -59,6 +65,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     letterSpacing: -0.2,
     color: theme.colors.text,
+  },
+  headerText: {flex: 1, minWidth: 0},
+  subtitle: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    marginTop: 3,
   },
   chevronClosed: {transform: [{rotate: '-90deg'}]},
   body: {paddingHorizontal: theme.spacing.lg, paddingBottom: theme.spacing.xs},

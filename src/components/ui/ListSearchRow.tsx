@@ -10,6 +10,8 @@ interface Props {
   /** Tints the sort button while the sort sheet is up. */
   sortOpen: boolean;
   onOpenSort: () => void;
+  /** Dispatch searches by case number; the default suits ID-or-name lists. */
+  placeholder?: string;
   /** Work adds a top margin because the tab switcher sits above it. */
   style?: StyleProp<ViewStyle>;
 }
@@ -19,12 +21,13 @@ const ListSearchRow: React.FC<Props> = ({
   onChangeText,
   sortOpen,
   onOpenSort,
+  placeholder = 'Search by ID or name',
   style,
 }) => (
   <View style={[styles.row, style]}>
     <TextField
       containerStyle={styles.field}
-      placeholder="Search by ID or name"
+      placeholder={placeholder}
       value={value}
       onChangeText={onChangeText}
       autoCapitalize="none"

@@ -10,6 +10,7 @@ export {
   formatDateTime,
 } from './DateTimeField';
 export {default as DetailField} from './DetailField';
+export {default as DetailSection, detailGrid} from './DetailSection';
 export {default as DetailTopBar} from './DetailTopBar';
 export {
   default as DropdownField,
