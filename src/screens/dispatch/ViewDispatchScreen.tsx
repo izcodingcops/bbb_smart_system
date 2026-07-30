@@ -14,11 +14,15 @@ import {
   DetailTopBar,
   EmptyState,
   formatDateTime,
+  formatDateTimeOrNull,
 } from '../../components/ui';
 import {PlusIcon, SendIcon} from '../../components/icons';
 import {useGetDispatchQuery} from '../../graphql/features/dispatch/hooks';
 import DispatchTabs, {DispatchTab} from './components/DispatchTabs';
 import EscalationAccordion from './components/EscalationAccordion';
+import IncidentAccordion from './components/IncidentAccordion';
+import IncidentDetailSheet from './components/IncidentDetailSheet';
+import {DispatchIncident} from '../../types/dispatch';
 import {theme} from '../../theme';
 
 const TABS: DispatchTab[] = [
@@ -32,14 +36,12 @@ interface Props {
   onClose: () => void;
 }
 
-/** Null-safe date: DetailField renders its own 'N/A' for a null value. */
-const at = (iso: string | null): string | null => (iso ? formatDateTime(iso) : null);
-
 const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
   // Every hook runs before the early returns below — the loading, error and
   // loaded branches must not change hook order between renders.
   const {data: detail, isLoading, isError, refetch} = useGetDispatchQuery(id);
   const [tab, setTab] = useState('dispatch');
+  const [openIncident, setOpenIncident] = useState<DispatchIncident | null>(null);
 
   if (isLoading) {
     return (
@@ -127,9 +129,12 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
             <DetailSection title="Assignment & Outcome">
               <DetailField label="Assigned Role" value={detail.assignedRole} />
               <DetailField label="Assigned Individual" value={detail.assignedIndividual} />
-              <DetailField label="Time Dispatched" value={at(detail.timeDispatched)} />
-              <DetailField label="Time Arrived" value={at(detail.timeArrived)} />
-              <DetailField label="Time Cleared" value={at(detail.timeCleared)} />
+              <DetailField
+                label="Time Dispatched"
+                value={formatDateTimeOrNull(detail.timeDispatched)}
+              />
+              <DetailField label="Time Arrived" value={formatDateTimeOrNull(detail.timeArrived)} />
+              <DetailField label="Time Cleared" value={formatDateTimeOrNull(detail.timeCleared)} />
               <DetailField label="Initial Outcome" value={detail.initialOutcome} />
               <DetailField label="Full Squad Response" value={detail.fullSquadResponse} />
               <DetailField label="Source Notes" value={detail.outcomeNotes} full />
@@ -153,9 +158,29 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
           )
         ) : null}
 
-        {/* Filled in by Task 7. */}
-        {tab === 'incident' ? <Text style={styles.empty}>No Incidents</Text> : null}
+        {tab === 'incident' ? (
+          detail.incidents.length > 0 ? (
+            <View style={styles.accordions}>
+              {detail.incidents.map((incident, index) => (
+                <IncidentAccordion
+                  key={incident.id}
+                  incident={incident}
+                  initiallyOpen={index === 0}
+                  onViewMore={setOpenIncident}
+                />
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.empty}>No Incidents</Text>
+          )
+        ) : null}
       </ScrollView>
+
+      <IncidentDetailSheet
+        visible={openIncident !== null}
+        incident={openIncident}
+        onClose={() => setOpenIncident(null)}
+      />
     </View>
   );
 };

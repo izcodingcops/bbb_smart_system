@@ -30,6 +30,11 @@ export function formatDateTime(iso: string): string {
   );
 }
 
+/** Null-safe formatDateTime — detail screens render their own 'N/A' for null. */
+export function formatDateTimeOrNull(iso: string | null): string | null {
+  return iso ? formatDateTime(iso) : null;
+}
+
 /**
  * 'Jul 6, 2026 · 08:40 AM' — the list-card format. The hour is padded by hand
  * because en-US drops the leading zero even with `hour: '2-digit'`, which loses

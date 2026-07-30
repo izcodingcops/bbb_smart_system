@@ -8,6 +8,7 @@ export {
   default as DateTimeField,
   formatCardDate,
   formatDateTime,
+  formatDateTimeOrNull,
 } from './DateTimeField';
 export {default as DetailField} from './DetailField';
 export {default as DetailSection, detailGrid} from './DetailSection';
