@@ -1,4 +1,4 @@
-import React, {useMemo, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -11,12 +11,14 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
-import {EmptyState, FilterChips, ListSummary, MultiSelectSheet, SingleSelectSheet, TextField} from '../../components/ui';
+import {EmptyState, FilterChips, ListSummary, MultiSelectSheet, SingleSelectSheet, TextField, Toast} from '../../components/ui';
 import {ArrowUpIcon, BoxIcon, PlusIcon, SearchIcon, SortIcon} from '../../components/icons';
 import {useGetFixturesQuery, useSetFixtureStatusMutation} from '../../graphql/features/fixture/hooks';
 import {Fixture, FixtureStatus} from '../../types/fixture';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
+import {useAppDispatch} from '../../redux/store';
+import {setTabBarHidden} from '../../redux/ui/slice';
 import {
   EMPTY_FILTERS,
   FIELD_LABEL,
@@ -35,7 +37,18 @@ import {
 } from './filtering';
 import FixtureCard from './components/FixtureCard';
 import DateRangeSheet from './components/DateRangeSheet';
+import CreateFixtureScreen from './CreateFixtureScreen';
 import {theme} from '../../theme';
+
+/** Create and View are full-screen pushes within the Fixture tab. */
+type FixtureRoute = {name: 'list'} | {name: 'create'} | {name: 'view'; id: string};
+
+interface ToastState {
+  title: string;
+  message: string;
+  reference: string;
+  variant?: 'success' | 'danger';
+}
 
 const FixtureScreen: React.FC = () => {
   const {data: fixtures = [], isLoading, isError, refetch} = useGetFixturesQuery();
@@ -50,8 +63,19 @@ const FixtureScreen: React.FC = () => {
   /** Which card's inline status menu is open, if any — only one at a time. */
   const [menuFixtureId, setMenuFixtureId] = useState<string | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [route, setRoute] = useState<FixtureRoute>({name: 'list'});
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const dispatch = useAppDispatch();
   const listRef = useRef<FlatList<Fixture>>(null);
   const {mutate: setStatus} = useSetFixtureStatusMutation();
+
+  // Create and View are full-screen pushes — the tab bar has no place there.
+  useEffect(() => {
+    dispatch(setTabBarHidden(route.name !== 'list'));
+    return () => {
+      dispatch(setTabBarHidden(false));
+    };
+  }, [dispatch, route.name]);
 
   const handleSelectStatus = (fixture: Fixture, status: FixtureStatus) => {
     setMenuFixtureId(null);
@@ -73,6 +97,22 @@ const FixtureScreen: React.FC = () => {
     setSearch('');
     setFilters(EMPTY_FILTERS);
   };
+
+  if (route.name === 'create') {
+    return (
+      <CreateFixtureScreen
+        onClose={() => setRoute({name: 'list'})}
+        onCreated={reference => {
+          setRoute({name: 'list'});
+          setToast({
+            title: 'Fixture submitted',
+            message: `${reference} was added to your Work Log.`,
+            reference,
+          });
+        }}
+      />
+    );
+  }
 
   return (
     <View style={styles.root}>
@@ -243,9 +283,10 @@ const FixtureScreen: React.FC = () => {
         shiftName={shiftName}
         onSelect={tileId => {
           setAddOpen(false);
-          // Held until the sheet's modal is gone — iOS drops an alert
-          // presented while another modal is still up. Task 8 special-cases
-          // 'fixture' here the same way Maintenance special-cases 'maintenance'.
+          if (tileId === 'fixture') {
+            setRoute({name: 'create'});
+            return;
+          }
           setQueuedTile(tileId);
         }}
         onClose={() => setAddOpen(false)}
@@ -255,6 +296,25 @@ const FixtureScreen: React.FC = () => {
             setQueuedTile(null);
           }
         }}
+      />
+
+      <Toast
+        visible={toast !== null}
+        title={toast?.title ?? ''}
+        message={toast?.message ?? ''}
+        variant={toast?.variant}
+        actionLabel={toast?.variant === 'danger' ? undefined : 'View'}
+        onAction={
+          toast?.variant === 'danger'
+            ? undefined
+            : () => {
+                if (toast) {
+                  setRoute({name: 'view', id: toast.reference});
+                }
+                setToast(null);
+              }
+        }
+        onDismiss={() => setToast(null)}
       />
     </View>
   );
