@@ -196,4 +196,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default WorkCard;
+export default React.memo(WorkCard);

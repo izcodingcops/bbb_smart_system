@@ -97,7 +97,8 @@ const FixtureForm: React.FC<Props> = ({
     value: FixtureFormValues[K],
   ) => setValues(current => ({...current, [key]: value}));
 
-  // Title + Type + Status gate submit; Zone/Service Date/Address are pre-seeded.
+  // Title + Fixture Type gate submit; Status/Zone/Service Date/Address are
+  // pre-seeded, and !isSubmitting guards against double-submit.
   const canSubmit =
     values.title.trim().length > 0 && values.fixtureType.length > 0 && !isSubmitting;
 

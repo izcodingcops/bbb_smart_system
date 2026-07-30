@@ -119,4 +119,4 @@ const styles = StyleSheet.create({
   avatarText: {fontFamily: theme.fonts.black, fontSize: 9, color: theme.colors.white},
 });
 
-export default FixtureCard;
+export default React.memo(FixtureCard);

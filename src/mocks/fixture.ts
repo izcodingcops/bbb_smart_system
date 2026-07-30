@@ -26,7 +26,7 @@ const EXPLICIT: Fixture[] = [
     status: 'Active',
     createdBy: YOU,
     queuedOffline: false,
-    createdAt: '2026-02-05T10:05:00',
+    createdAt: '2026-07-29T10:05:00',
     address: ADDRESSES['16th St Mall'],
   },
   {
@@ -37,7 +37,7 @@ const EXPLICIT: Fixture[] = [
     status: 'Inactive',
     createdBy: MARCUS,
     queuedOffline: false,
-    createdAt: '2026-02-05T08:40:00',
+    createdAt: '2026-07-29T08:40:00',
     address: ADDRESSES.LoDo,
   },
   {
@@ -48,7 +48,7 @@ const EXPLICIT: Fixture[] = [
     status: 'Active',
     createdBy: YOU,
     queuedOffline: false,
-    createdAt: '2026-02-04T16:20:00',
+    createdAt: '2026-07-28T16:20:00',
     address: ADDRESSES['Union Station'],
   },
   {
@@ -59,7 +59,7 @@ const EXPLICIT: Fixture[] = [
     status: 'Inactive',
     createdBy: SARA,
     queuedOffline: false,
-    createdAt: '2026-02-04T11:15:00',
+    createdAt: '2026-07-28T11:15:00',
     address: ADDRESSES.Larimer,
   },
   {
@@ -70,7 +70,7 @@ const EXPLICIT: Fixture[] = [
     status: 'Active',
     createdBy: YOU,
     queuedOffline: true,
-    createdAt: '2026-02-03T17:30:00',
+    createdAt: '2026-07-27T17:30:00',
     address: ADDRESSES['Civic Center'],
   },
   {
@@ -81,7 +81,7 @@ const EXPLICIT: Fixture[] = [
     status: 'Inactive',
     createdBy: AVA,
     queuedOffline: false,
-    createdAt: '2026-02-03T09:50:00',
+    createdAt: '2026-07-27T09:50:00',
     address: ADDRESSES.Blake,
   },
   {
@@ -92,7 +92,7 @@ const EXPLICIT: Fixture[] = [
     status: 'Active',
     createdBy: YOU,
     queuedOffline: false,
-    createdAt: '2026-02-02T14:10:00',
+    createdAt: '2026-07-26T14:10:00',
     address: ADDRESSES['Union Station'],
   },
   {
@@ -103,7 +103,7 @@ const EXPLICIT: Fixture[] = [
     status: 'Inactive',
     createdBy: MARCUS,
     queuedOffline: false,
-    createdAt: '2026-02-02T10:50:00',
+    createdAt: '2026-07-26T10:50:00',
     address: ADDRESSES.Curtis,
   },
   {
@@ -114,7 +114,7 @@ const EXPLICIT: Fixture[] = [
     status: 'Active',
     createdBy: YOU,
     queuedOffline: false,
-    createdAt: '2026-02-01T15:35:00',
+    createdAt: '2026-07-25T15:35:00',
     address: ADDRESSES.Larimer,
   },
   {
@@ -125,7 +125,7 @@ const EXPLICIT: Fixture[] = [
     status: 'Inactive',
     createdBy: SARA,
     queuedOffline: false,
-    createdAt: '2026-01-01T07:40:00',
+    createdAt: '2026-06-24T07:40:00',
     address: ADDRESSES['Curtis Kiosk'],
   },
 ];
@@ -166,7 +166,7 @@ function toLocalIso(date: Date): string {
 }
 
 const HOUR = 60 * 60 * 1000;
-const GEN_BASE = new Date('2026-01-31T18:00:00').getTime();
+const GEN_BASE = new Date('2026-07-24T18:00:00').getTime();
 
 /**
  * Ids count down from 42730, staying clear of every explicit id above (the

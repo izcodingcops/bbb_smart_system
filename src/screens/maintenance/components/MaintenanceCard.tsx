@@ -183,4 +183,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MaintenanceCard;
+export default React.memo(MaintenanceCard);
