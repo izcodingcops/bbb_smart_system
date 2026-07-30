@@ -44,6 +44,7 @@ import {
   optionsForField,
 } from './filtering';
 import DispatchCard from './components/DispatchCard';
+import ViewDispatchScreen from './ViewDispatchScreen';
 import {theme} from '../../theme';
 
 /** View is a full-screen push within the Dispatch screen. */
@@ -100,8 +101,12 @@ const DispatchScreen: React.FC = () => {
   };
 
   if (route.name === 'view') {
-    // Filled in by Task 6.
-    return null;
+    return (
+      <ViewDispatchScreen
+        id={route.id}
+        onClose={() => setRoute({name: 'list'})}
+      />
+    );
   }
 
   return (
