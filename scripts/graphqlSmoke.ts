@@ -210,6 +210,94 @@ const checks: Check[] = [
     assert.equal(removed.data.deleteMaintenanceComment, cid);
   }],
 
+  ['fixture list resolves', async () => {
+    const r: any = await run(
+      'query F($p: ID!) { fixtures(programId: $p) { reference status queuedOffline } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    assert.ok(r.data.fixtures.length > 0);
+  }],
+
+  ['fixture detail resolves every section', async () => {
+    const r: any = await run(
+      `query D($id: ID!) { fixture(id: $id) {
+        reference title fixtureType zone status createdBy { name initials }
+        queuedOffline createdAt address
+        describeLocation latitude longitude description documents
+      } }`,
+      {id: '#FX-42984'},
+    );
+    assert.equal(r.errors, undefined);
+    const d = r.data.fixture;
+    assert.equal(d.title, '16th St Floor Fixture');
+    assert.equal(d.createdBy.name, 'You');
+    assert.ok(d.latitude);
+    const missing: any = await run(
+      'query D($id: ID!) { fixture(id: $id) { reference } }',
+      {id: '#FX-00000'},
+    );
+    assert.equal(missing.data.fixture, null);
+  }],
+
+  // NB: shares the module-level store with every other check — #FX-42984 is
+  // restored to ACTIVE at the end so later checks see its original state.
+  ['fixture status toggles both directions', async () => {
+    const set = (status: string) => run(
+      'mutation S($id: ID!, $s: FixtureStatus!) { setFixtureStatus(id: $id, status: $s) { reference status } }',
+      {id: '#FX-42984', s: status},
+    );
+    const off: any = await set('INACTIVE');
+    assert.equal(off.errors, undefined);
+    assert.equal(off.data.setFixtureStatus.status, 'INACTIVE');
+    const on: any = await set('ACTIVE');
+    assert.equal(on.data.setFixtureStatus.status, 'ACTIVE');
+  }],
+
+  ['fixture create, update and delete round-trip through the store', async () => {
+    const INPUT = {
+      title: 'Test Bench', serviceDateTime: '2026-07-07T09:00:00', fixtureType: 'Bench',
+      status: 'ACTIVE', address: '16th St Mall, Denver, CO 80202', zone: 'Zone 2',
+      describeLocation: 'North entrance', description: 'Brand new', documents: [],
+    };
+    const created: any = await run(
+      'mutation C($p: ID!, $i: FixtureInput!) { createFixture(programId: $p, input: $i) { reference status } }',
+      {p: 'p1', i: INPUT},
+    );
+    assert.equal(created.errors, undefined);
+    const ref = created.data.createFixture.reference;
+    assert.ok(ref.startsWith('#FX-'));
+    assert.equal(created.data.createFixture.status, 'ACTIVE');
+
+    const updated: any = await run(
+      'mutation U($id: ID!, $i: FixtureInput!) { updateFixture(id: $id, input: $i) { reference zone } }',
+      {id: ref, i: {...INPUT, zone: 'Zone 6'}},
+    );
+    assert.equal(updated.errors, undefined);
+    assert.equal(updated.data.updateFixture.zone, 'Zone 6');
+
+    const deleted: any = await run(
+      'mutation D($id: ID!) { deleteFixture(id: $id) }', {id: ref},
+    );
+    assert.equal(deleted.data.deleteFixture, ref);
+    const gone: any = await run(
+      'query G($id: ID!) { fixture(id: $id) { reference } }', {id: ref},
+    );
+    assert.equal(gone.data.fixture, null);
+  }],
+
+  ['fixture form options serve every dropdown', async () => {
+    const r: any = await run(
+      'query O($p: ID!) { fixtureFormOptions(programId: $p) { nextReference fixtureTypes zones } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.fixtureFormOptions;
+    assert.ok(o.nextReference.startsWith('#FX-'));
+    assert.equal(o.fixtureTypes.length, 10);
+    assert.equal(o.zones.length, 6);
+  }],
+
   ['fixture quick-create injects a new dropdown option', async () => {
     const r: any = await run(
       'mutation F($n: String!, $t: String!) { createMaintenanceFixture(name: $n, fixtureType: $t) }',
