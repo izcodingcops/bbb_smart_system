@@ -100,7 +100,7 @@ const checks: Check[] = [
         fixture incidents pois equipment
         comments { id createdAt text edited images }
       } }`,
-      {id: '#MT-40840'},
+      {id: 'mt_40840'},
     );
     assert.equal(r.errors, undefined);
     const d = r.data.maintenanceRequest;
@@ -111,7 +111,7 @@ const checks: Check[] = [
     assert.ok(d.comments.length >= 1);
     const missing: any = await run(
       'query D($id: ID!) { maintenanceRequest(id: $id) { reference } }',
-      {id: '#MT-00000'},
+      {id: 'mt_00000'},
     );
     assert.equal(missing.data.maintenanceRequest, null);
   }],
@@ -125,11 +125,11 @@ const checks: Check[] = [
       {id, s: status},
     );
     // #MT-40801 starts Open with Alex Nguyen assigned.
-    const prog: any = await set('#MT-40801', 'IN_PROGRESS');
+    const prog: any = await set('mt_40801', 'IN_PROGRESS');
     assert.equal(prog.errors, undefined);
     assert.equal(prog.data.setMaintenanceStatus.status, 'IN_PROGRESS');
     assert.equal(prog.data.setMaintenanceStatus.completedBy, null);
-    const done: any = await set('#MT-40801', 'COMPLETED');
+    const done: any = await set('mt_40801', 'COMPLETED');
     assert.equal(done.data.setMaintenanceStatus.status, 'COMPLETED');
     assert.equal(done.data.setMaintenanceStatus.completedBy, 'Alex Nguyen');
     assert.ok(done.data.setMaintenanceStatus.completedOn);
@@ -145,10 +145,11 @@ const checks: Check[] = [
       incidents: [], pois: [], equipment: ['Hammer'],
     };
     const created: any = await run(
-      'mutation C($p: ID!, $i: MaintenanceRequestInput!) { createMaintenanceRequest(programId: $p, input: $i) { reference status fixture equipment } }',
+      'mutation C($p: ID!, $i: MaintenanceRequestInput!) { createMaintenanceRequest(programId: $p, input: $i) { id reference status fixture equipment } }',
       {p: 'p1', i: INPUT},
     );
     assert.equal(created.errors, undefined);
+    const id = created.data.createMaintenanceRequest.id;
     const ref = created.data.createMaintenanceRequest.reference;
     assert.ok(ref.startsWith('#MT-'));
     assert.equal(created.data.createMaintenanceRequest.status, 'OPEN');
@@ -156,19 +157,19 @@ const checks: Check[] = [
 
     const updated: any = await run(
       'mutation U($id: ID!, $i: MaintenanceRequestInput!) { updateMaintenanceRequest(id: $id, input: $i) { reference priority zone } }',
-      {id: ref, i: {...INPUT, priority: 'LOW', zone: 'Zone 5'}},
+      {id, i: {...INPUT, priority: 'LOW', zone: 'Zone 5'}},
     );
     assert.equal(updated.errors, undefined);
     assert.equal(updated.data.updateMaintenanceRequest.priority, 'LOW');
     assert.equal(updated.data.updateMaintenanceRequest.zone, 'Zone 5');
 
     const deleted: any = await run(
-      'mutation D($id: ID!) { deleteMaintenanceRequest(id: $id) }', {id: ref},
+      'mutation D($id: ID!) { deleteMaintenanceRequest(id: $id) }', {id},
     );
     assert.equal(deleted.errors, undefined);
-    assert.equal(deleted.data.deleteMaintenanceRequest, ref);
+    assert.equal(deleted.data.deleteMaintenanceRequest, id);
     const gone: any = await run(
-      'query G($id: ID!) { maintenanceRequest(id: $id) { reference } }', {id: ref},
+      'query G($id: ID!) { maintenanceRequest(id: $id) { reference } }', {id},
     );
     assert.equal(gone.data.maintenanceRequest, null);
   }],
@@ -182,15 +183,16 @@ const checks: Check[] = [
     const o = r.data.maintenanceFormOptions;
     assert.ok(o.nextReference.startsWith('#MT-'));
     assert.equal(o.types.length, 10);
-    assert.equal(o.zones.length, 5);
-    assert.ok(o.fixtures.includes('Bench #B-204'));
+    assert.equal(o.zones.length, 6);
+    // fixtures is served from fixtureStore titles alone — one source of truth.
+    assert.ok(o.fixtures.includes('16th St Floor Fixture'));
     assert.equal(o.fixtureTypes.length, 10);
   }],
 
   ['maintenance comments add, edit and delete', async () => {
     const added: any = await run(
       'mutation A($id: ID!, $t: String!, $img: [String!]) { addMaintenanceComment(requestId: $id, text: $t, images: $img) { id text edited images } }',
-      {id: '#MT-40877', t: 'Fixed the loose panel', img: ['file:///tmp/a.jpg']},
+      {id: 'mt_40877', t: 'Fixed the loose panel', img: ['file:///tmp/a.jpg']},
     );
     assert.equal(added.errors, undefined);
     assert.equal(added.data.addMaintenanceComment.edited, false);
@@ -199,13 +201,13 @@ const checks: Check[] = [
 
     const edited: any = await run(
       'mutation E($id: ID!, $cid: ID!, $t: String!) { updateMaintenanceComment(requestId: $id, commentId: $cid, text: $t) { text edited } }',
-      {id: '#MT-40877', cid, t: 'Fixed and photographed'},
+      {id: 'mt_40877', cid, t: 'Fixed and photographed'},
     );
     assert.equal(edited.data.updateMaintenanceComment.edited, true);
 
     const removed: any = await run(
       'mutation R($id: ID!, $cid: ID!) { deleteMaintenanceComment(requestId: $id, commentId: $cid) }',
-      {id: '#MT-40877', cid},
+      {id: 'mt_40877', cid},
     );
     assert.equal(removed.data.deleteMaintenanceComment, cid);
   }],
@@ -226,7 +228,7 @@ const checks: Check[] = [
         queuedOffline createdAt address
         describeLocation latitude longitude description documents
       } }`,
-      {id: '#FX-42984'},
+      {id: 'fx_42984'},
     );
     assert.equal(r.errors, undefined);
     const d = r.data.fixture;
@@ -235,7 +237,7 @@ const checks: Check[] = [
     assert.ok(d.latitude);
     const missing: any = await run(
       'query D($id: ID!) { fixture(id: $id) { reference } }',
-      {id: '#FX-00000'},
+      {id: 'fx_00000'},
     );
     assert.equal(missing.data.fixture, null);
   }],
@@ -245,7 +247,7 @@ const checks: Check[] = [
   ['fixture status toggles both directions', async () => {
     const set = (status: string) => run(
       'mutation S($id: ID!, $s: FixtureStatus!) { setFixtureStatus(id: $id, status: $s) { reference status } }',
-      {id: '#FX-42984', s: status},
+      {id: 'fx_42984', s: status},
     );
     const off: any = await set('INACTIVE');
     assert.equal(off.errors, undefined);
@@ -261,27 +263,28 @@ const checks: Check[] = [
       describeLocation: 'North entrance', description: 'Brand new', documents: [],
     };
     const created: any = await run(
-      'mutation C($p: ID!, $i: FixtureInput!) { createFixture(programId: $p, input: $i) { reference status } }',
+      'mutation C($p: ID!, $i: FixtureInput!) { createFixture(programId: $p, input: $i) { id reference status } }',
       {p: 'p1', i: INPUT},
     );
     assert.equal(created.errors, undefined);
+    const id = created.data.createFixture.id;
     const ref = created.data.createFixture.reference;
     assert.ok(ref.startsWith('#FX-'));
     assert.equal(created.data.createFixture.status, 'ACTIVE');
 
     const updated: any = await run(
       'mutation U($id: ID!, $i: FixtureInput!) { updateFixture(id: $id, input: $i) { reference zone } }',
-      {id: ref, i: {...INPUT, zone: 'Zone 6'}},
+      {id, i: {...INPUT, zone: 'Zone 6'}},
     );
     assert.equal(updated.errors, undefined);
     assert.equal(updated.data.updateFixture.zone, 'Zone 6');
 
     const deleted: any = await run(
-      'mutation D($id: ID!) { deleteFixture(id: $id) }', {id: ref},
+      'mutation D($id: ID!) { deleteFixture(id: $id) }', {id},
     );
-    assert.equal(deleted.data.deleteFixture, ref);
+    assert.equal(deleted.data.deleteFixture, id);
     const gone: any = await run(
-      'query G($id: ID!) { fixture(id: $id) { reference } }', {id: ref},
+      'query G($id: ID!) { fixture(id: $id) { reference } }', {id},
     );
     assert.equal(gone.data.fixture, null);
   }],
