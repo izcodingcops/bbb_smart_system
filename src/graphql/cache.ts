@@ -20,5 +20,12 @@ export const cache = new InMemoryCache({
     MaintenanceComment: {keyFields: ['id']},
     Fixture: {keyFields: ['id']},
     FixtureCreator: {keyFields: false},
+    Dispatch: {keyFields: ['id']},
+    DispatchEscalation: {keyFields: ['id']},
+    DispatchIncident: {keyFields: ['id']},
+    // No id of their own; keep them embedded in the incident they belong to.
+    DispatchResponderInfo: {keyFields: false},
+    DispatchParty: {keyFields: false},
+    DispatchVehicle: {keyFields: false},
   },
 });
