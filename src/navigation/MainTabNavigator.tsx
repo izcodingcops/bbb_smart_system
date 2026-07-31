@@ -5,13 +5,18 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Image,
 } from 'react-native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import ScreenBackground from '../components/ScreenBackground';
 import {useGetMenuItemsQuery} from '../graphql/features/navigation/hooks';
 import {useAppDispatch, useAppSelector} from '../redux/store';
-import {SetupIntent, setSetupIntent} from '../redux/ui/slice';
+import {
+  SetupIntent,
+  clearPendingCreate,
+  clearPendingScreen,
+  setSetupIntent,
+} from '../redux/ui/slice';
+import {SCREEN} from './screens';
 import {endShift} from '../redux/shift/slice';
 import {GetActiveProgram} from '../redux/auth/selectors';
 import {fontFamilies} from '../constants/fonts';
@@ -19,6 +24,14 @@ import {theme} from '../theme';
 import HomeScreen from '../screens/home/HomeScreen';
 import MoreSheet from '../components/MoreSheet';
 import {ConfirmDialog} from '../components/ui';
+import {
+  AlertTriangleIcon,
+  CubeIcon,
+  GridIcon,
+  HandymanIcon,
+  HomeIcon,
+  WorkIcon,
+} from '../components/icons';
 import ComingSoonScreen from '../screens/ComingSoonScreen';
 import MaintenanceScreen from '../screens/maintenance/MaintenanceScreen';
 import WorkScreen from '../screens/work/WorkScreen';
@@ -28,11 +41,11 @@ import DispatchScreen from '../screens/dispatch/DispatchScreen';
 const {LATO} = fontFamilies;
 
 const SCREEN_MAP: Record<string, React.ComponentType<any>> = {
-  Home: HomeScreen,
-  Work: WorkScreen,
-  Maintenance: MaintenanceScreen,
-  Fixture: FixtureScreen,
-  Dispatch: DispatchScreen,
+  [SCREEN.home]: HomeScreen,
+  [SCREEN.work]: WorkScreen,
+  [SCREEN.maintenance]: MaintenanceScreen,
+  [SCREEN.fixture]: FixtureScreen,
+  [SCREEN.dispatch]: DispatchScreen,
 };
 
 /**
@@ -49,12 +62,15 @@ const INTENT_COPY: Record<SetupIntent, string> = {
   shift_type: 'Changing shift type',
 };
 
-const ICON_MAP: Record<string, any> = {
-  home: require('../assets/icons/tab_home.png'),
-  maintenance: require('../assets/icons/tab_maintenance.png'),
-  fixture: require('../assets/icons/tab_fixture.png'),
-  incident: require('../assets/icons/tab_incident.png'),
-  profile: require('../assets/icons/tab_profile.png'),
+type IconComponent = React.FC<{size?: number; color?: string}>;
+
+/** Exact paths pulled from the Ambassador mockups' inline SVG symbols. */
+const ICON_MAP: Record<string, IconComponent> = {
+  home: HomeIcon,
+  work: WorkIcon,
+  maintenance: HandymanIcon,
+  fixture: CubeIcon,
+  incident: AlertTriangleIcon,
 };
 
 const MainTabNavigator: React.FC = () => {
@@ -62,6 +78,7 @@ const MainTabNavigator: React.FC = () => {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const tabBarHidden = useAppSelector(state => state.ui.tabBarHidden);
+  const pendingScreen = useAppSelector(state => state.ui.pendingScreen);
   const program = GetActiveProgram();
   const [activeScreen, setActiveScreen] = useState<string>('');
   const [moreOpen, setMoreOpen] = useState(false);
@@ -97,6 +114,20 @@ const MainTabNavigator: React.FC = () => {
       setPendingIntent(null);
     }
   };
+
+  // Tab switches asked for from a screen rather than the tab bar: the trip out
+  // to a module's create flow, and the trip back when that form is closed
+  // unsaved. Opening create is left to the module — it owns that route — but a
+  // request naming a module this build has no screen for is dropped whole.
+  useEffect(() => {
+    if (!pendingScreen) return;
+    if (SCREEN_MAP[pendingScreen]) {
+      setActiveScreen(pendingScreen);
+    } else {
+      dispatch(clearPendingCreate());
+    }
+    dispatch(clearPendingScreen());
+  }, [dispatch, pendingScreen]);
 
   useEffect(() => {
     if (menuItems.length > 0 && !activeScreen) {
@@ -159,6 +190,7 @@ const MainTabNavigator: React.FC = () => {
         <View style={{flexDirection: 'row'}}>
         {bottomItems.map(item => {
           const focused = activeScreen === item.screen_name;
+          const Icon = ICON_MAP[item.menu_icon];
           return (
             <TouchableOpacity
               key={item.id}
@@ -171,18 +203,23 @@ const MainTabNavigator: React.FC = () => {
                 paddingBottom: 7,
                 paddingHorizontal: 4,
               }}>
-              {ICON_MAP[item.menu_icon] ? (
-                <Image
-                  source={ICON_MAP[item.menu_icon]}
-                  style={{
-                    width: 22,
-                    height: 22,
-                    tintColor: focused ? '#0066B2' : '#696969',
-                  }}
-                />
-              ) : (
-                <View style={{width: 22, height: 22}} />
-              )}
+              <View
+                style={{
+                  width: 50,
+                  height: 34,
+                  borderRadius: 16,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: focused
+                    ? theme.colors.primaryLight
+                    : 'transparent',
+                }}>
+                {Icon ? (
+                  <Icon size={22} color={focused ? '#0066B2' : '#696969'} />
+                ) : (
+                  <View style={{width: 22, height: 22}} />
+                )}
+              </View>
               <Text
                 numberOfLines={1}
                 adjustsFontSizeToFit
@@ -211,21 +248,16 @@ const MainTabNavigator: React.FC = () => {
             }}>
             <View
               style={{
-                width: 22,
-                height: 22,
+                width: 50,
+                height: 34,
+                borderRadius: 16,
+                alignItems: 'center',
                 justifyContent: 'center',
-                gap: 3,
+                backgroundColor: isMoreActive
+                  ? theme.colors.primaryLight
+                  : 'transparent',
               }}>
-              {[0, 1, 2].map(i => (
-                <View
-                  key={i}
-                  style={{
-                    height: 2,
-                    borderRadius: 1,
-                    backgroundColor: isMoreActive ? '#0066B2' : '#696969',
-                  }}
-                />
-              ))}
+              <GridIcon size={22} color={isMoreActive ? '#0066B2' : '#696969'} />
             </View>
             <Text
               style={{

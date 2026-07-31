@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   ActivityIndicator,
-  Alert,
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -27,6 +26,8 @@ import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import {useAppDispatch} from '../../redux/store';
 import {setTabBarHidden} from '../../redux/ui/slice';
+import {SCREEN} from '../../navigation/screens';
+import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {
   EMPTY_FILTERS,
   FIELD_LABEL,
@@ -59,7 +60,7 @@ const DispatchScreen: React.FC = () => {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [openFilter, setOpenFilter] = useState<FilterField | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  const [queuedTile, setQueuedTile] = useState<string | null>(null);
+  const {queueTile, flushTile} = useAddRequestTiles(SCREEN.dispatch);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [route, setRoute] = useState<DispatchRoute>({name: 'list'});
   const dispatch = useAppDispatch();
@@ -226,22 +227,17 @@ const DispatchScreen: React.FC = () => {
         onClose={() => setOpenFilter(null)}
       />
 
-      {/* Every tile is "Coming soon": there is no dispatch create flow, and a
-          module's real create flow lives only behind its own tab. */}
+      {/* Dispatch has no create flow of its own, but the tiles that do own one
+          hand off to their module through the ui slice. */}
       <AddRequestsSheet
         visible={addOpen}
         shiftName={shiftName}
         onSelect={tileId => {
           setAddOpen(false);
-          setQueuedTile(tileId);
+          queueTile(tileId);
         }}
         onClose={() => setAddOpen(false)}
-        onClosed={() => {
-          if (queuedTile) {
-            Alert.alert('Coming soon', `"${queuedTile}" is not wired up yet.`);
-            setQueuedTile(null);
-          }
-        }}
+        onClosed={flushTile}
       />
     </View>
   );

@@ -30,6 +30,8 @@ import {
 import {WorkBucket, WorkItem, WorkStatus} from '../../types/work';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
+import {SCREEN} from '../../navigation/screens';
+import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {
   EMPTY_FILTERS,
   FIELD_LABEL,
@@ -72,7 +74,6 @@ const WorkScreen: React.FC = () => {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [openFilter, setOpenFilter] = useState<FilterField | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  const [queuedTile, setQueuedTile] = useState<string | null>(null);
   const [completeTarget, setCompleteTarget] = useState<WorkItem | null>(null);
   /** Which card's inline status menu is open, if any — only one at a time. */
   const [menuItemId, setMenuItemId] = useState<string | null>(null);
@@ -80,6 +81,7 @@ const WorkScreen: React.FC = () => {
   const [toast, setToast] = useState<ToastState | null>(null);
   const listRef = useRef<FlatList<WorkItem>>(null);
   const {mutate: setStatus} = useSetWorkItemStatusMutation();
+  const {queueTile, flushTile} = useAddRequestTiles(SCREEN.work);
 
   const handleSelectStatus = useCallback(
     async (item: WorkItem, status: WorkStatus) => {
@@ -354,17 +356,10 @@ const WorkScreen: React.FC = () => {
         shiftName={shiftName}
         onSelect={tileId => {
           setAddOpen(false);
-          // Held until the sheet's modal is gone — iOS drops an alert
-          // presented while another modal is still up.
-          setQueuedTile(tileId);
+          queueTile(tileId);
         }}
         onClose={() => setAddOpen(false)}
-        onClosed={() => {
-          if (queuedTile) {
-            Alert.alert('Coming soon', `"${queuedTile}" is not wired up yet.`);
-            setQueuedTile(null);
-          }
-        }}
+        onClosed={flushTile}
       />
     </View>
   );

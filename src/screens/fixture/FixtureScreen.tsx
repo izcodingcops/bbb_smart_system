@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   ActivityIndicator,
-  Alert,
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -15,8 +14,14 @@ import {useGetFixturesQuery, useSetFixtureStatusMutation} from '../../graphql/fe
 import {Fixture, FixtureStatus} from '../../types/fixture';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
-import {useAppDispatch} from '../../redux/store';
-import {setTabBarHidden} from '../../redux/ui/slice';
+import {useAppDispatch, useAppSelector} from '../../redux/store';
+import {
+  clearPendingCreate,
+  requestScreen,
+  setTabBarHidden,
+} from '../../redux/ui/slice';
+import {SCREEN} from '../../navigation/screens';
+import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {
   EMPTY_FILTERS,
   FIELD_LABEL,
@@ -58,7 +63,8 @@ const FixtureScreen: React.FC = () => {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [openFilter, setOpenFilter] = useState<FilterField | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  const [queuedTile, setQueuedTile] = useState<string | null>(null);
+  /** Tab to go back to when create was opened from elsewhere and then closed. */
+  const [returnTo, setReturnTo] = useState<string | null>(null);
   /** Which card's inline status menu is open, if any — only one at a time. */
   const [menuFixtureId, setMenuFixtureId] = useState<string | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -67,6 +73,20 @@ const FixtureScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const listRef = useRef<FlatList<Fixture>>(null);
   const {mutate: setStatus} = useSetFixtureStatusMutation();
+  const pendingCreate = useAppSelector(state => state.ui.pendingCreate);
+  const {queueTile, flushTile} = useAddRequestTiles(SCREEN.fixture);
+
+  // Someone asked for a fixture create from another tab — the navigator has
+  // since brought this screen on, so open create and spend the request,
+  // holding on to where they came from for an unsaved close.
+  useEffect(() => {
+    if (pendingCreate?.target !== SCREEN.fixture) return;
+    setReturnTo(
+      pendingCreate.origin === SCREEN.fixture ? null : pendingCreate.origin,
+    );
+    setRoute({name: 'create'});
+    dispatch(clearPendingCreate());
+  }, [dispatch, pendingCreate]);
 
   // Create and View are full-screen pushes — the tab bar has no place there.
   useEffect(() => {
@@ -133,9 +153,20 @@ const FixtureScreen: React.FC = () => {
   if (route.name === 'create') {
     return (
       <CreateFixtureScreen
-        onClose={() => setRoute({name: 'list'})}
+        onClose={() => {
+          setRoute({name: 'list'});
+          // Closed unsaved, so the trip into this module never really
+          // happened — go back where it started from.
+          if (returnTo) {
+            dispatch(requestScreen(returnTo));
+            setReturnTo(null);
+          }
+        }}
         onCreated={created => {
           setRoute({name: 'list'});
+          // Submitting keeps them here: the toast's View action opens the new
+          // record, which only exists on this tab.
+          setReturnTo(null);
           setToast({
             title: 'Fixture submitted',
             message: `${created.reference} was added to your Work Log.`,
@@ -292,19 +323,10 @@ const FixtureScreen: React.FC = () => {
         shiftName={shiftName}
         onSelect={tileId => {
           setAddOpen(false);
-          if (tileId === 'fixture') {
-            setRoute({name: 'create'});
-            return;
-          }
-          setQueuedTile(tileId);
+          queueTile(tileId);
         }}
         onClose={() => setAddOpen(false)}
-        onClosed={() => {
-          if (queuedTile) {
-            Alert.alert('Coming soon', `"${queuedTile}" is not wired up yet.`);
-            setQueuedTile(null);
-          }
-        }}
+        onClosed={flushTile}
       />
 
       <Toast

@@ -19,6 +19,8 @@ import CheckedInEquipment from './components/CheckedInEquipment';
 import {locationTracker} from '../../utils/locationTracker';
 import {useAuth} from '../../hooks/useAuth';
 import {useAppDispatch} from '../../redux/store';
+import {SCREEN} from '../../navigation/screens';
+import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {endShift} from '../../redux/shift/slice';
 import {GetActiveProgram, GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
@@ -49,7 +51,7 @@ const HomeScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
-  const [queuedTile, setQueuedTile] = useState<string | null>(null);
+  const {queueTile, flushTile} = useAddRequestTiles(SCREEN.home);
 
   const firstName = user?.name?.split(' ')[0] ?? 'there';
   const shiftName = shiftTypes.find(t => t.id === shiftTypeId)?.name ?? 'Shift';
@@ -93,25 +95,18 @@ const HomeScreen: React.FC = () => {
     ]);
   }, [logout]);
 
-  const handleAddRequest = useCallback((tileId: string) => {
-    setAddOpen(false);
-    setQueuedTile(tileId);
-  }, []);
+  const handleAddRequest = useCallback(
+    (tileId: string) => {
+      setAddOpen(false);
+      queueTile(tileId);
+    },
+    [queueTile],
+  );
 
   // Placeholder — the checkout flow has no screen yet.
   const handleCheckout = useCallback((item: EquipmentItem) => {
     Alert.alert('Coming soon', `Checking out ${item.name} is not wired up yet.`);
   }, []);
-
-  // Placeholder — none of the create/check-in flows have screens yet. Held
-  // until the sheet's modal is gone, since iOS drops an alert presented while
-  // another modal is still up.
-  const handleAddClosed = useCallback(() => {
-    if (queuedTile) {
-      Alert.alert('Coming soon', `"${queuedTile}" is not wired up yet.`);
-      setQueuedTile(null);
-    }
-  }, [queuedTile]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -162,7 +157,7 @@ const HomeScreen: React.FC = () => {
           shiftName={shiftName}
           onSelect={handleAddRequest}
           onClose={() => setAddOpen(false)}
-          onClosed={handleAddClosed}
+          onClosed={flushTile}
         />
       </SafeAreaView>
     </ScreenBackground>

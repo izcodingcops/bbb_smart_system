@@ -2,7 +2,7 @@ import {MenuItem} from '../types/navigation';
 
 export const MOCK_MENU_ITEMS = [
   {id: 'home', menu_name: 'Home', screen_name: 'Home', menu_icon: 'home', position: 'bottom'},
-  {id: 'work', menu_name: 'Work', screen_name: 'Work', menu_icon: 'incident', position: 'bottom'},
+  {id: 'work', menu_name: 'Work', screen_name: 'Work', menu_icon: 'work', position: 'bottom'},
   {
     id: 'maintenance',
     menu_name: 'Maintenance',

@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   ActivityIndicator,
-  Alert,
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -33,8 +32,14 @@ import {
 } from '../../types/maintenance';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
-import {useAppDispatch} from '../../redux/store';
-import {setTabBarHidden} from '../../redux/ui/slice';
+import {useAppDispatch, useAppSelector} from '../../redux/store';
+import {
+  clearPendingCreate,
+  requestScreen,
+  setTabBarHidden,
+} from '../../redux/ui/slice';
+import {SCREEN} from '../../navigation/screens';
+import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {
   EMPTY_FILTERS,
   FIELD_LABEL,
@@ -85,7 +90,8 @@ const MaintenanceScreen: React.FC = () => {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [openFilter, setOpenFilter] = useState<FilterField | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  const [queuedTile, setQueuedTile] = useState<string | null>(null);
+  /** Tab to go back to when create was opened from elsewhere and then closed. */
+  const [returnTo, setReturnTo] = useState<string | null>(null);
   const [completeTarget, setCompleteTarget] =
     useState<MaintenanceRequest | null>(null);
   /** Which card's inline status menu is open, if any — only one at a time. */
@@ -96,6 +102,20 @@ const MaintenanceScreen: React.FC = () => {
   const listRef = useRef<FlatList<MaintenanceRequest>>(null);
   const {mutate: setStatus} = useSetMaintenanceStatusMutation();
   const dispatch = useAppDispatch();
+  const pendingCreate = useAppSelector(state => state.ui.pendingCreate);
+  const {queueTile, flushTile} = useAddRequestTiles(SCREEN.maintenance);
+
+  // Someone asked for a maintenance create from another tab — the navigator
+  // has since brought this screen on, so open create and spend the request,
+  // holding on to where they came from for an unsaved close.
+  useEffect(() => {
+    if (pendingCreate?.target !== SCREEN.maintenance) return;
+    setReturnTo(
+      pendingCreate.origin === SCREEN.maintenance ? null : pendingCreate.origin,
+    );
+    setRoute({name: 'create'});
+    dispatch(clearPendingCreate());
+  }, [dispatch, pendingCreate]);
 
   // Create and View are full-screen pushes — the tab bar has no place there.
   useEffect(() => {
@@ -170,9 +190,20 @@ const MaintenanceScreen: React.FC = () => {
   if (route.name === 'create') {
     return (
       <CreateMaintenanceScreen
-        onClose={() => setRoute({name: 'list'})}
+        onClose={() => {
+          setRoute({name: 'list'});
+          // Closed unsaved, so the trip into this module never really
+          // happened — go back where it started from.
+          if (returnTo) {
+            dispatch(requestScreen(returnTo));
+            setReturnTo(null);
+          }
+        }}
         onCreated={created => {
           setRoute({name: 'list'});
+          // Submitting keeps them here: the toast's View action opens the new
+          // record, which only exists on this tab.
+          setReturnTo(null);
           setToast({
             title: 'Maintenance submitted',
             message: `${created.reference} was added to your Work Log.`,
@@ -389,21 +420,10 @@ const MaintenanceScreen: React.FC = () => {
         shiftName={shiftName}
         onSelect={tileId => {
           setAddOpen(false);
-          if (tileId === 'maintenance') {
-            setRoute({name: 'create'});
-            return;
-          }
-          // Held until the sheet's modal is gone — iOS drops an alert
-          // presented while another modal is still up.
-          setQueuedTile(tileId);
+          queueTile(tileId);
         }}
         onClose={() => setAddOpen(false)}
-        onClosed={() => {
-          if (queuedTile) {
-            Alert.alert('Coming soon', `"${queuedTile}" is not wired up yet.`);
-            setQueuedTile(null);
-          }
-        }}
+        onClosed={flushTile}
       />
     </View>
   );
