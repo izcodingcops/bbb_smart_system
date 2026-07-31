@@ -58,4 +58,13 @@ const transportLink = ApolloLink.split(
 export const apolloClient = new ApolloClient({
   link: ApolloLink.from([errorLink, authLink, transportLink]),
   cache,
+  defaultOptions: {
+    watchQuery: {
+      // Apollo Client 4 defaults this to true, so every refetchQueries-driven
+      // refetch (e.g. a status change) flips a screen's `loading` back to true
+      // and its `isLoading` gate swaps the whole list for a spinner and back —
+      // a full-screen flash for what should be a silent background update.
+      notifyOnNetworkStatusChange: false,
+    },
+  },
 });
