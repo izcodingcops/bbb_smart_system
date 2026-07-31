@@ -1,5 +1,11 @@
-import React, {useState} from 'react';
-import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
+import React, {forwardRef, useImperativeHandle, useState} from 'react';
+import {
+  LayoutChangeEvent,
+  Text,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+} from 'react-native';
 import ChevronDownIcon from '../icons/ChevronDownIcon';
 import {theme} from '../../theme';
 
@@ -9,6 +15,13 @@ interface Props {
   subtitle?: string;
   initiallyOpen?: boolean;
   children: React.ReactNode;
+  /** Forwarded to the root card — lets a parent measure its scroll offset. */
+  onLayout?: (event: LayoutChangeEvent) => void;
+}
+
+/** Imperative handle for parents that need to force a section open, e.g. jumping here from a section tab. */
+export interface AccordionSectionHandle {
+  open: () => void;
 }
 
 /**
@@ -16,32 +29,35 @@ interface Props {
  * than height-animated: the bodies hold dropdowns and text inputs, and keeping
  * them mounted-but-clipped leaves their sheets reachable while collapsed.
  */
-const AccordionSection: React.FC<Props> = ({
-  title,
-  subtitle,
-  initiallyOpen = false,
-  children,
-}) => {
-  const [open, setOpen] = useState(initiallyOpen);
+const AccordionSection = forwardRef<AccordionSectionHandle, Props>(
+  ({title, subtitle, initiallyOpen = false, children, onLayout}, ref) => {
+    const [open, setOpen] = useState(initiallyOpen);
 
-  return (
-    <View style={styles.card}>
-      <TouchableOpacity
-        style={styles.header}
-        activeOpacity={0.8}
-        onPress={() => setOpen(current => !current)}>
-        <View style={styles.headerText}>
-          <Text style={styles.title}>{title}</Text>
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-        </View>
-        <View style={open ? undefined : styles.chevronClosed}>
-          <ChevronDownIcon size={22} color={theme.colors.textSecondary} />
-        </View>
-      </TouchableOpacity>
-      {open ? <View style={styles.body}>{children}</View> : null}
-    </View>
-  );
-};
+    useImperativeHandle(ref, () => ({
+      open: () => setOpen(true),
+    }));
+
+    return (
+      <View style={styles.card} onLayout={onLayout}>
+        <TouchableOpacity
+          style={styles.header}
+          activeOpacity={0.8}
+          onPress={() => setOpen(current => !current)}>
+          <View style={styles.headerText}>
+            <Text style={styles.title}>{title}</Text>
+            {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+          </View>
+          <View style={open ? undefined : styles.chevronClosed}>
+            <ChevronDownIcon size={22} color={theme.colors.textSecondary} />
+          </View>
+        </TouchableOpacity>
+        {open ? <View style={styles.body}>{children}</View> : null}
+      </View>
+    );
+  },
+);
+
+AccordionSection.displayName = 'AccordionSection';
 
 const styles = StyleSheet.create({
   card: {

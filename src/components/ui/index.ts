@@ -1,4 +1,5 @@
 export {default as AccordionSection} from './AccordionSection';
+export type {AccordionSectionHandle} from './AccordionSection';
 export {default as BackToTopPill} from './BackToTopPill';
 export {default as BottomSheet} from './BottomSheet';
 export {default as Card} from './Card';
@@ -31,6 +32,8 @@ export {default as PriorityPill} from './PriorityPill';
 export {default as RecordCard} from './RecordCard';
 export type {RecordCardField} from './RecordCard';
 export {default as ScreenScaffold} from './ScreenScaffold';
+export {default as SectionTabs} from './SectionTabs';
+export type {SectionTabItem} from './SectionTabs';
 export {default as SectionTitle} from './SectionTitle';
 export {default as SegmentedButtons} from './SegmentedButtons';
 export type {SegmentOption} from './SegmentedButtons';
