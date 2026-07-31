@@ -2,15 +2,17 @@ import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {theme} from '../../../theme';
 
+export type DispatchTabKey = 'dispatch' | 'escalation' | 'incident';
+
 export interface DispatchTab {
-  value: string;
+  value: DispatchTabKey;
   label: string;
 }
 
 interface Props {
   tabs: DispatchTab[];
-  value: string;
-  onChange: (value: string) => void;
+  value: DispatchTabKey;
+  onChange: (value: DispatchTabKey) => void;
 }
 
 /** Chip-style tab strip above the detail panels. */

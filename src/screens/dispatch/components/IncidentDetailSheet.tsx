@@ -56,6 +56,9 @@ const IncidentDetailSheet: React.FC<Props> = ({visible, incident, onClose}) => (
     {incident ? (
       <View style={styles.body}>
         <View style={styles.idRow}>
+          {/* DispatchIncident has no separate display reference — this is
+              its one opaque id, prefixed for visual weight only. Revisit
+              this site when the Incident module lands with a real reference. */}
           <Text style={styles.idBig}>#{incident.id}</Text>
           <PriorityPill
             label={`${incident.priority} Priority`}

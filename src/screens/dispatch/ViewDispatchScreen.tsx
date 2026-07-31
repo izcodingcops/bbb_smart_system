@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useCallback, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,7 @@ import {
 } from '../../components/ui';
 import {PlusIcon, SendIcon} from '../../components/icons';
 import {useGetDispatchQuery} from '../../graphql/features/dispatch/hooks';
-import DispatchTabs, {DispatchTab} from './components/DispatchTabs';
+import DispatchTabs, {DispatchTab, DispatchTabKey} from './components/DispatchTabs';
 import EscalationAccordion from './components/EscalationAccordion';
 import IncidentAccordion from './components/IncidentAccordion';
 import IncidentDetailSheet from './components/IncidentDetailSheet';
@@ -40,8 +40,16 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
   // Every hook runs before the early returns below — the loading, error and
   // loaded branches must not change hook order between renders.
   const {data: detail, isLoading, isError, refetch} = useGetDispatchQuery(id);
-  const [tab, setTab] = useState('dispatch');
+  const [tab, setTab] = useState<DispatchTabKey>('dispatch');
   const [openIncident, setOpenIncident] = useState<DispatchIncident | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Wrapped in useCallback: DispatchTabs is React.memo'd, so a fresh inline
+  // arrow passed as onChange on every render would defeat that memo.
+  const handleTabChange = useCallback((next: DispatchTabKey) => {
+    setTab(next);
+    scrollRef.current?.scrollTo({y: 0, animated: false});
+  }, []);
 
   if (isLoading) {
     return (
@@ -101,9 +109,9 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
         </TouchableOpacity>
       </View>
 
-      <DispatchTabs tabs={TABS} value={tab} onChange={setTab} />
+      <DispatchTabs tabs={TABS} value={tab} onChange={handleTabChange} />
 
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.body}>
         {tab === 'dispatch' ? (
           <>
             <DetailSection title="Basic Details">

@@ -7,7 +7,7 @@ import {MOCK_DISPATCHES} from '../../../mocks/dispatch';
  * transport later touches one file, exactly like the other features.
  */
 export const dispatchStore: {records: DispatchDetail[]} = {
-  records: MOCK_DISPATCHES,
+  records: [...MOCK_DISPATCHES],
 };
 
 export function findRecord(id: string): DispatchDetail | undefined {

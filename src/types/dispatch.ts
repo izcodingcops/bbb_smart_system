@@ -110,10 +110,12 @@ export interface DispatchIncident {
 
 /** Everything the detail screen shows beyond the list card. */
 export interface DispatchDetail extends Dispatch {
-  createdBy: string;
+  /** Nullable: detail-only field, absent from the SDL's list selection set. */
+  createdBy: string | null;
   sourceNotes: string | null;
 
-  location: string;
+  /** Nullable: detail-only field, absent from the SDL's list selection set. */
+  location: string | null;
   locationNotes: string | null;
 
   tagSelected: string | null;

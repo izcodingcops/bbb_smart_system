@@ -369,6 +369,18 @@ const checks: Check[] = [
     assert.equal(r.data.dispatch, null);
   }],
 
+  ['a dispatch with no escalations and no incidents resolves and maps cleanly', async () => {
+    const r: any = await run(
+      'query D($id: ID!) { dispatch(id: $id) { reference escalations { id } incidents { id } } }',
+      {id: 'dp_0000_07'},
+    );
+    assert.equal(r.errors, undefined);
+    const d = r.data.dispatch;
+    assert.equal(d.reference, '#BBB-D 0000-07');
+    assert.deepEqual(d.escalations, []);
+    assert.deepEqual(d.incidents, []);
+  }],
+
   ['a typo fails loudly', async () => {
     const r: any = await run('query Bad { me { enable_shift_entry } }');
     assert.ok(r.errors?.[0]?.message.includes('Cannot query field'));

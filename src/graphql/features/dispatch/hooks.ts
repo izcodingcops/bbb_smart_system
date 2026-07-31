@@ -55,9 +55,9 @@ interface GqlDispatchIncident extends Omit<DispatchIncident, 'priority'> {
 }
 
 interface GqlDispatchDetail extends GqlDispatch {
-  createdBy: string;
+  createdBy: string | null;
   sourceNotes: string | null;
-  location: string;
+  location: string | null;
   locationNotes: string | null;
   tagSelected: string | null;
   classificationNotes: string | null;
@@ -69,8 +69,11 @@ interface GqlDispatchDetail extends GqlDispatch {
   initialOutcome: string | null;
   fullSquadResponse: string | null;
   outcomeNotes: string | null;
-  escalations: DispatchEscalation[];
-  incidents: GqlDispatchIncident[];
+  // Detail-only fields — nullable in the SDL because list queries don't
+  // select them. Coalesced in toDetail below so DispatchDetail's arrays stay
+  // guaranteed non-null for the rest of the app.
+  escalations: DispatchEscalation[] | null;
+  incidents: GqlDispatchIncident[] | null;
 }
 
 const toDetail = (d: GqlDispatchDetail): DispatchDetail => ({
@@ -89,8 +92,8 @@ const toDetail = (d: GqlDispatchDetail): DispatchDetail => ({
   initialOutcome: d.initialOutcome,
   fullSquadResponse: d.fullSquadResponse,
   outcomeNotes: d.outcomeNotes,
-  escalations: d.escalations,
-  incidents: d.incidents.map(incident => ({
+  escalations: d.escalations ?? [],
+  incidents: (d.incidents ?? []).map(incident => ({
     ...incident,
     priority: PRIORITY[incident.priority],
   })),

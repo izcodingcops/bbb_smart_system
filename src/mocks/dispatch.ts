@@ -33,14 +33,23 @@ const DETAIL_DEFAULTS = {
   incidents: [] as DispatchIncident[],
 };
 
-/** The mockup's single fully-populated incident, on dispatch #BBB-D 0000-06. */
+/**
+ * The mockup's single fully-populated incident, on dispatch #BBB-D 0000-06.
+ *
+ * The source mockup dates this incident 8 days after its parent dispatch
+ * (07/10/2026 vs. the dispatch's 07/02/2026) — a mockup artifact, not a
+ * domain rule, since it only made sense while every date was frozen in the
+ * past. Pinned to the parent's own day instead, so no seeded record lands
+ * in the future against a live clock. The police-before-incident ordering
+ * within the same day is left as-is; that oddity is harmless.
+ */
 const INCIDENT_1: DispatchIncident = {
   id: '1496371',
   label: 'Incident 1',
   createdBy: 'test user 99',
   priority: 'High',
   incidentType: 'Narcan',
-  occurredAt: '2026-07-10T07:49:00',
+  occurredAt: '2026-07-31T07:49:00',
   outcome: '911 CALLED',
   notes: 'Again',
   ambassador: 'test user 99',
@@ -55,12 +64,12 @@ const INCIDENT_1: DispatchIncident = {
   fixture: null,
   documentCount: 0,
   lastModifiedBy: 'test user 99',
-  lastModifiedAt: '2026-07-10T07:49:00',
+  lastModifiedAt: '2026-07-31T07:49:00',
   police: {
     name: 'Jack Son',
     responder: null,
-    timeCalled: '2026-07-10T07:40:00',
-    timeArrived: '2026-07-10T07:45:00',
+    timeCalled: '2026-07-31T07:40:00',
+    timeArrived: '2026-07-31T07:45:00',
   },
   fire: {...NO_RESPONDER},
   ems: {...NO_RESPONDER},
@@ -78,8 +87,8 @@ const ESCALATION_EMS: DispatchEscalation = {
   label: 'EMS',
   type: 'EMS',
   respondingPerson: 'test',
-  timeCalled: '2026-07-02T04:18:00',
-  timeArrived: '2026-07-02T04:18:00',
+  timeCalled: '2026-07-31T04:18:00',
+  timeArrived: '2026-07-31T04:18:00',
   timeCleared: null,
   status: 'Open',
   notes: 'test',
@@ -91,9 +100,9 @@ const ESCALATION_POLICE: DispatchEscalation = {
   label: 'Police',
   type: 'Police',
   respondingPerson: 'Officer D. Reyes',
-  timeCalled: '2026-07-01T21:20:00',
-  timeArrived: '2026-07-01T21:31:00',
-  timeCleared: '2026-07-01T22:05:00',
+  timeCalled: '2026-07-30T21:20:00',
+  timeArrived: '2026-07-30T21:31:00',
+  timeCleared: '2026-07-30T22:05:00',
   status: 'Open',
   notes: 'Subject transported for evaluation.',
 };
@@ -103,8 +112,8 @@ const ESCALATION_FIRE: DispatchEscalation = {
   label: 'Fire',
   type: 'Fire',
   respondingPerson: 'Engine 12',
-  timeCalled: '2026-07-01T15:52:00',
-  timeArrived: '2026-07-01T16:04:00',
+  timeCalled: '2026-07-30T15:52:00',
+  timeArrived: '2026-07-30T16:04:00',
   timeCleared: null,
   status: 'Open',
   notes: null,
@@ -120,7 +129,7 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'New Referred Type For Testing',
     status: 'Closed',
     priority: 'Low',
-    createdAt: '2026-07-02T07:34:00',
+    createdAt: '2026-07-31T07:34:00',
     address: '6215 Kamer Ct, Charlestown, IN 47111, USA',
     location: '6215 Kamer Ct, Charlestown, IN 47111, USA',
     initialOutcome: 'Resolved',
@@ -133,15 +142,15 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'Stakeholder/User Contact',
     status: 'Closed',
     priority: 'Low',
-    createdAt: '2026-07-02T04:29:00',
+    createdAt: '2026-07-31T04:29:00',
     address: 'Lahore, Virginia, United States',
     location: 'Lahore, Virginia, United States',
     sourceNotes: 'test',
     locationNotes: 'test',
     tagSelected: 'Unsheltered',
     assignedIndividual: 'Waqas Taz',
-    timeDispatched: '2026-07-02T04:28:00',
-    timeArrived: '2026-07-02T04:28:00',
+    timeDispatched: '2026-07-31T04:28:00',
+    timeArrived: '2026-07-31T04:28:00',
     initialOutcome: 'Resolved',
     outcomeNotes: 'Resolved in Dispatch initial review',
     escalations: [ESCALATION_EMS],
@@ -155,7 +164,7 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'Identified On Camera',
     status: 'Closed',
     priority: 'Low',
-    createdAt: '2026-07-02T04:24:00',
+    createdAt: '2026-07-31T04:24:00',
     address: 'Junipero Serra Freeway, Belmont, California 94002, USA',
     location: 'Junipero Serra Freeway, Belmont, California 94002, USA',
     initialOutcome: 'Resolved',
@@ -168,7 +177,7 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'New Referred Type For Testing',
     status: 'Escalated',
     priority: 'Low',
-    createdAt: '2026-07-02T04:17:00',
+    createdAt: '2026-07-31T04:17:00',
     address: 'Lahore, Virginia, United States',
     location: 'Lahore, Virginia, United States',
     tagSelected: 'Unsheltered',
@@ -182,14 +191,14 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'Cro Initiated',
     status: 'Open',
     priority: 'High',
-    createdAt: '2026-07-01T21:12:00',
+    createdAt: '2026-07-30T21:12:00',
     address: '900 16th St Mall, Denver, CO 80202',
     location: '900 16th St Mall, Denver, CO 80202',
     sourceNotes: 'Caller reported a person in distress near the kiosk.',
     tagSelected: 'Unsheltered',
     assignedIndividual: 'Marcus Bell',
-    timeDispatched: '2026-07-01T21:15:00',
-    timeArrived: '2026-07-01T21:27:00',
+    timeDispatched: '2026-07-30T21:15:00',
+    timeArrived: '2026-07-30T21:27:00',
     initialOutcome: 'Referred to Outreach',
     escalations: [ESCALATION_POLICE],
   },
@@ -201,11 +210,11 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'Citizen App',
     status: 'Escalated',
     priority: 'Medium',
-    createdAt: '2026-07-01T15:40:00',
+    createdAt: '2026-07-30T15:40:00',
     address: '1701 Wynkoop St, Denver, CO 80202',
     location: '1701 Wynkoop St, Denver, CO 80202',
     assignedIndividual: 'Sara Diaz',
-    timeDispatched: '2026-07-01T15:46:00',
+    timeDispatched: '2026-07-30T15:46:00',
     escalations: [ESCALATION_FIRE],
   },
   {
@@ -216,13 +225,13 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'Supervisor/Management Initiated',
     status: 'Closed',
     priority: 'High',
-    createdAt: '2026-07-01T11:20:00',
+    createdAt: '2026-07-30T11:20:00',
     address: 'Civic Center Park, Denver, CO 80204',
     location: 'Civic Center Park, Denver, CO 80204',
     assignedIndividual: 'Ava Nguyen',
-    timeDispatched: '2026-07-01T11:24:00',
-    timeArrived: '2026-07-01T11:36:00',
-    timeCleared: '2026-07-01T12:02:00',
+    timeDispatched: '2026-07-30T11:24:00',
+    timeArrived: '2026-07-30T11:36:00',
+    timeCleared: '2026-07-30T12:02:00',
     initialOutcome: 'Resolved',
     fullSquadResponse: 'Yes',
   },
@@ -234,7 +243,7 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'Webform',
     status: 'Closed',
     priority: 'Low',
-    createdAt: '2026-06-30T18:55:00',
+    createdAt: '2026-07-29T18:55:00',
     address: '1430 Larimer St, Denver, CO 80202',
     location: '1430 Larimer St, Denver, CO 80202',
     initialOutcome: 'Resolved',
@@ -247,7 +256,7 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'Stakeholder/User Contact',
     status: 'Open',
     priority: 'Medium',
-    createdAt: '2026-06-30T13:05:00',
+    createdAt: '2026-07-29T13:05:00',
     address: '1601 Wewatta St, Denver, CO 80202',
     location: '1601 Wewatta St, Denver, CO 80202',
     assignedIndividual: 'Marcus Bell',
@@ -260,7 +269,7 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'Identified On Camera',
     status: 'Closed',
     priority: 'Low',
-    createdAt: '2026-06-30T08:30:00',
+    createdAt: '2026-07-29T08:30:00',
     address: '16th & Curtis St, Denver, CO 80202',
     location: '16th & Curtis St, Denver, CO 80202',
     initialOutcome: 'Documented',
@@ -314,7 +323,7 @@ function toLocalIso(date: Date): string {
 
 const HOUR = 60 * 60 * 1000;
 /** Just under the oldest explicit record, so generated rows sort below them. */
-const GEN_BASE = new Date('2026-06-30T06:00:00').getTime();
+const GEN_BASE = new Date('2026-07-29T06:00:00').getTime();
 
 /**
  * Reference numbers count up from 0000-15, clear of every explicit reference
