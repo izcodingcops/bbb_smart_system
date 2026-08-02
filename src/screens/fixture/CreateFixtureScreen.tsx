@@ -1,12 +1,12 @@
 import React from 'react';
-import {View, Text, TouchableOpacity, ActivityIndicator, StyleSheet} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {
   useCreateFixtureMutation,
   useFixtureFormOptionsQuery,
 } from '../../graphql/features/fixture/hooks';
 import {FixtureFormValues} from '../../types/fixture';
 import FixtureForm, {buildInitialValues} from './components/FixtureForm';
-import {EmptyState} from '../../components/ui';
+import {EmptyState, FormScreenSkeleton} from '../../components/ui';
 import {BoxIcon} from '../../components/icons';
 import {theme} from '../../theme';
 
@@ -38,13 +38,14 @@ const CreateFixtureScreen: React.FC<Props> = ({onClose, onCreated}) => {
   }
 
   if (isLoading || !options) {
+    // Matches FixtureForm's own section layout: Basic (4 rows), Location (3),
+    // Other (2).
     return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <TouchableOpacity style={styles.backLink} activeOpacity={0.8} onPress={onClose}>
-          <Text style={styles.backLinkText}>Go back</Text>
-        </TouchableOpacity>
-      </View>
+      <FormScreenSkeleton
+        title="Create Fixture"
+        onClose={onClose}
+        sectionRowCounts={[4, 3, 2]}
+      />
     );
   }
 

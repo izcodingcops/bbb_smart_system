@@ -1,15 +1,9 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {
-  TouchableOpacity,
-  ScrollView,
-  RefreshControl,
-  Alert,
-  StyleSheet,
-} from 'react-native';
+import {ScrollView, RefreshControl, Alert, StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import ScreenBackground from '../../components/ScreenBackground';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
-import {PlusIcon} from '../../components/icons';
+import GradientFab from '../../components/ui/GradientFab';
 import HomeHeader from './components/HomeHeader';
 import ShiftTimerCard from './components/ShiftTimerCard';
 import OfflineNotice from './components/OfflineNotice';
@@ -22,6 +16,7 @@ import {useAppDispatch} from '../../redux/store';
 import {SCREEN} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {endShift} from '../../redux/shift/slice';
+import {requestScreen} from '../../redux/ui/slice';
 import {GetActiveProgram, GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import {
@@ -43,10 +38,18 @@ const HomeScreen: React.FC = () => {
   const shiftTypes = GetShiftTypes();
   const shiftTypeId = GetActiveShiftTypeId();
 
-  const {data: workItems = [], refetch: refetchWork} = useGetWorkItemsQuery();
-  const {data: quickActions = []} = useGetQuickActionsQuery();
-  const {data: equipment = [], refetch: refetchEquipment} =
-    useGetCheckedInEquipmentQuery();
+  const {
+    data: workItems = [],
+    isLoading: isWorkLoading,
+    refetch: refetchWork,
+  } = useGetWorkItemsQuery();
+  const {data: quickActions = [], isLoading: isQuickActionsLoading} =
+    useGetQuickActionsQuery();
+  const {
+    data: equipment = [],
+    isLoading: isEquipmentLoading,
+    refetch: refetchEquipment,
+  } = useGetCheckedInEquipmentQuery();
 
   const [refreshing, setRefreshing] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
@@ -108,6 +111,10 @@ const HomeScreen: React.FC = () => {
     Alert.alert('Coming soon', `Checking out ${item.name} is not wired up yet.`);
   }, []);
 
+  const handleViewAllWork = useCallback(() => {
+    dispatch(requestScreen(SCREEN.work));
+  }, [dispatch]);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     refetchWork();
@@ -138,19 +145,22 @@ const HomeScreen: React.FC = () => {
 
           {!isOnline ? <OfflineNotice pendingCount={PENDING_COUNT} /> : null}
 
-          <QuickActions actions={quickActions} />
+          <QuickActions actions={quickActions} isLoading={isQuickActionsLoading} />
 
-          <RecentWork items={workItems} />
+          <RecentWork
+            items={workItems}
+            isLoading={isWorkLoading}
+            onViewAll={handleViewAllWork}
+          />
 
-          <CheckedInEquipment items={equipment} onCheckout={handleCheckout} />
+          <CheckedInEquipment
+            items={equipment}
+            isLoading={isEquipmentLoading}
+            onCheckout={handleCheckout}
+          />
         </ScrollView>
 
-        <TouchableOpacity
-          style={styles.fab}
-          activeOpacity={0.85}
-          onPress={() => setAddOpen(true)}>
-          <PlusIcon size={26} color={theme.colors.white} />
-        </TouchableOpacity>
+        <GradientFab onPress={() => setAddOpen(true)} />
 
         <AddRequestsSheet
           visible={addOpen}
@@ -171,18 +181,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.md,
     paddingBottom: 120,
-  },
-  fab: {
-    position: 'absolute',
-    right: theme.spacing.lg,
-    bottom: theme.spacing.xxl,
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    backgroundColor: theme.colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...theme.shadow.fab,
   },
 });
 

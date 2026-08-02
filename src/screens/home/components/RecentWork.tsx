@@ -1,21 +1,26 @@
 import React, {useState} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
-import {SectionTitle} from '../../../components/ui';
+import {RecordCardSkeleton, SectionTitle} from '../../../components/ui';
 import WorkCard from './WorkCard';
 import {WorkBucket, WorkItem} from '../../../types/work';
 import {theme} from '../../../theme';
 
+const SKELETON_CARDS = [0, 1];
+/** Home is a preview — the full list lives on the Work tab via "View All". */
+const MAX_VISIBLE = 5;
+
 interface Props {
   items: WorkItem[];
+  isLoading?: boolean;
   onViewAll?: () => void;
 }
 
-const RecentWork: React.FC<Props> = ({items, onViewAll}) => {
+const RecentWork: React.FC<Props> = ({items, isLoading, onViewAll}) => {
   const [tab, setTab] = useState<WorkBucket>('assigned');
 
   const assignedCount = items.filter(w => w.bucket === 'assigned').length;
   const completedCount = items.filter(w => w.bucket === 'completed').length;
-  const visible = items.filter(w => w.bucket === tab);
+  const visible = items.filter(w => w.bucket === tab).slice(0, MAX_VISIBLE);
 
   const renderTab = (bucket: WorkBucket, label: string, count: number) => {
     const active = tab === bucket;
@@ -48,14 +53,19 @@ const RecentWork: React.FC<Props> = ({items, onViewAll}) => {
         }
       />
 
-      <View style={styles.tabs}>
-        {renderTab('assigned', 'Assigned Work', assignedCount)}
-        {renderTab('completed', 'Completed Work', completedCount)}
-      </View>
+      {/* Held back while loading, otherwise it flashes "Assigned Work 0". */}
+      {isLoading ? null : (
+        <View style={styles.tabs}>
+          {renderTab('assigned', 'Assigned Work', assignedCount)}
+          {renderTab('completed', 'Completed Work', completedCount)}
+        </View>
+      )}
 
-      {visible.map(item => (
-        <WorkCard key={item.id} item={item} />
-      ))}
+      {isLoading
+        ? SKELETON_CARDS.map(index => (
+            <RecordCardSkeleton key={index} fieldCount={3} style={styles.cardSpacing} />
+          ))
+        : visible.map(item => <WorkCard key={item.id} item={item} />)}
     </>
   );
 };
@@ -81,6 +91,9 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: theme.colors.white,
   },
+  // Matches WorkCard's own marginBottom, so trailing space before the next
+  // section is identical in the loading and loaded states.
+  cardSpacing: {marginBottom: theme.spacing.md},
   tabActive: {backgroundColor: '#E6F4FF'},
   tabText: {
     fontFamily: theme.fonts.bold,

@@ -5,12 +5,12 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  ActivityIndicator,
   StyleSheet,
 } from 'react-native';
 import {
   ConfirmDialog,
   DetailField,
+  DetailScreenSkeleton,
   DetailSection,
   DetailTopBar,
   EmptyState,
@@ -97,13 +97,21 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   const {mutate: remove} = useDeleteMaintenanceRequestMutation();
 
   if (isLoading) {
+    // Matches the loaded screen's own sections: Basic Details (10 fields),
+    // Other Details (2, both full-width), Location Details (3), Connected
+    // Elements (4) — plus the id row's "Add comment" button.
     return (
-      <View style={styles.root}>
-        <DetailTopBar title="Maintenance" onBack={onClose} />
-        <View style={styles.loading}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
-      </View>
+      <DetailScreenSkeleton
+        title="Maintenance"
+        onBack={onClose}
+        showCommentButton
+        sections={[
+          Array(10).fill('half'),
+          ['full', 'full'],
+          ['full', 'half', 'half'],
+          Array(4).fill('half'),
+        ]}
+      />
     );
   }
 

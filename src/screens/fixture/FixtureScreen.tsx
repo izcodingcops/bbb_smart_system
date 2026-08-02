@@ -1,14 +1,8 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  ActivityIndicator,
-  StyleSheet,
-} from 'react-native';
+import {View, Text, FlatList, ScrollView, StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
-import {BackToTopPill, DateRangeSheet, EmptyState, FilterChips, GradientFab, ListSearchRow, ListSummary, MultiSelectSheet, SingleSelectSheet, Toast} from '../../components/ui';
+import {BackToTopPill, DateRangeSheet, EmptyState, FilterChips, GradientFab, ListSearchRow, ListSummary, MultiSelectSheet, RecordCardSkeleton, SingleSelectSheet, Toast} from '../../components/ui';
 import {BoxIcon} from '../../components/icons';
 import {useGetFixturesQuery, useSetFixtureStatusMutation} from '../../graphql/features/fixture/hooks';
 import {Fixture, FixtureStatus} from '../../types/fixture';
@@ -229,9 +223,13 @@ const FixtureScreen: React.FC = () => {
       )}
 
       {isLoading ? (
-        <View style={styles.loading}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
+        <ScrollView
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}>
+          {Array.from({length: 5}).map((_, index) => (
+            <RecordCardSkeleton key={index} fieldCount={3} />
+          ))}
+        </ScrollView>
       ) : (
         <FlatList
           ref={listRef}
@@ -362,7 +360,6 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.sm,
     paddingBottom: theme.spacing.md,
   },
-  loading: {flex: 1, alignItems: 'center', justifyContent: 'center'},
   listContent: {
     paddingHorizontal: theme.spacing.lg,
     // Clears the FAB so the last card isn't trapped under it.

@@ -3,19 +3,24 @@ import {Text, TouchableOpacity, View, StyleSheet} from 'react-native';
 import {SectionTitle} from '../../../components/ui';
 import {ArrowRightIcon} from '../../../components/icons';
 import EquipmentCard from './EquipmentCard';
+import EquipmentCardSkeleton from './EquipmentCardSkeleton';
 import {EquipmentItem} from '../../../types/equipment';
 import {theme} from '../../../theme';
 
+const SKELETON_CARDS = [0, 1];
+
 interface Props {
   items: EquipmentItem[];
+  isLoading?: boolean;
   onViewAll?: () => void;
   onCheckout?: (item: EquipmentItem) => void;
 }
 
-const CheckedInEquipment: React.FC<Props> = ({items, onViewAll, onCheckout}) => {
+const CheckedInEquipment: React.FC<Props> = ({items, isLoading, onViewAll, onCheckout}) => {
   // Nothing checked in is the common case off-shift — drop the whole section
-  // rather than leave a heading over empty space.
-  if (items.length === 0) {
+  // rather than leave a heading over empty space. Loading is exempt: the
+  // empty array is just "no data yet", not "confirmed nothing checked in".
+  if (!isLoading && items.length === 0) {
     return null;
   }
 
@@ -36,9 +41,11 @@ const CheckedInEquipment: React.FC<Props> = ({items, onViewAll, onCheckout}) => 
       />
 
       <View>
-        {items.map(item => (
-          <EquipmentCard key={item.id} item={item} onCheckout={onCheckout} />
-        ))}
+        {isLoading
+          ? SKELETON_CARDS.map(index => <EquipmentCardSkeleton key={index} />)
+          : items.map(item => (
+              <EquipmentCard key={item.id} item={item} onCheckout={onCheckout} />
+            ))}
       </View>
     </>
   );

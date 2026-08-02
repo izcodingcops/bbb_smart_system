@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
+import ViewMaintenanceScreen from '../maintenance/ViewMaintenanceScreen';
+import ViewFixtureScreen from '../fixture/ViewFixtureScreen';
 import {
   BackToTopPill,
   ConfirmDialog,
@@ -30,6 +32,8 @@ import {
 import {WorkBucket, WorkItem, WorkStatus} from '../../types/work';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
+import {useAppDispatch} from '../../redux/store';
+import {setTabBarHidden} from '../../redux/ui/slice';
 import {SCREEN} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {
@@ -59,6 +63,9 @@ interface ToastState {
   variant?: 'success' | 'danger';
 }
 
+/** Only these categories have a detail screen built; others fall back to a "coming soon" alert. */
+type DetailTarget = {category: 'Maintenance' | 'Fixture'; id: string};
+
 const WorkScreen: React.FC = () => {
   const {
     data: items = [],
@@ -79,9 +86,19 @@ const WorkScreen: React.FC = () => {
   const [menuItemId, setMenuItemId] = useState<string | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [detail, setDetail] = useState<DetailTarget | null>(null);
   const listRef = useRef<FlatList<WorkItem>>(null);
   const {mutate: setStatus} = useSetWorkItemStatusMutation();
   const {queueTile, flushTile} = useAddRequestTiles(SCREEN.work);
+  const dispatch = useAppDispatch();
+
+  // View is a full-screen push within the Work tab — the tab bar has no place there.
+  useEffect(() => {
+    dispatch(setTabBarHidden(detail !== null));
+    return () => {
+      dispatch(setTabBarHidden(false));
+    };
+  }, [dispatch, detail]);
 
   const handleSelectStatus = useCallback(
     async (item: WorkItem, status: WorkStatus) => {
@@ -108,7 +125,11 @@ const WorkScreen: React.FC = () => {
   }, []);
 
   const handleOpenItem = useCallback((record: WorkItem) => {
-    Alert.alert(record.reference, 'Full detail view is not wired up yet.');
+    if (record.category === 'Maintenance' || record.category === 'Fixture') {
+      setDetail({category: record.category, id: record.id});
+      return;
+    }
+    Alert.alert(record.reference, `${record.category} detail view is coming soon.`);
   }, []);
 
   const renderItem = useCallback(
@@ -150,6 +171,42 @@ const WorkScreen: React.FC = () => {
     setSearch('');
     setFilters(EMPTY_FILTERS);
   };
+
+  if (detail?.category === 'Maintenance') {
+    return (
+      <ViewMaintenanceScreen
+        id={detail.id}
+        onClose={() => setDetail(null)}
+        onDeleted={reference => {
+          setDetail(null);
+          refetch();
+          setToast({
+            title: 'Maintenance deleted',
+            message: `${reference} was removed from your Work Log.`,
+            variant: 'danger',
+          });
+        }}
+      />
+    );
+  }
+
+  if (detail?.category === 'Fixture') {
+    return (
+      <ViewFixtureScreen
+        id={detail.id}
+        onClose={() => setDetail(null)}
+        onDeleted={reference => {
+          setDetail(null);
+          refetch();
+          setToast({
+            title: 'Fixture deleted',
+            message: `${reference} was removed from your Work Log.`,
+            variant: 'danger',
+          });
+        }}
+      />
+    );
+  }
 
   return (
     <View style={styles.root}>

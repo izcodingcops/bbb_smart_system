@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {View, Text, TouchableOpacity, ActivityIndicator, StyleSheet} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {
   useCreateMaintenanceRequestMutation,
   useMaintenanceFormOptionsQuery,
@@ -7,7 +7,7 @@ import {
 import {MaintenanceFormValues} from '../../types/maintenance';
 import MaintenanceForm, {buildInitialValues} from './components/MaintenanceForm';
 import AddFixtureSheet from './components/AddFixtureSheet';
-import {EmptyState} from '../../components/ui';
+import {EmptyState, FormScreenSkeleton} from '../../components/ui';
 import {ToolsIcon} from '../../components/icons';
 import {theme} from '../../theme';
 
@@ -41,13 +41,14 @@ const CreateMaintenanceScreen: React.FC<Props> = ({onClose, onCreated}) => {
   }
 
   if (isLoading || !options) {
+    // Matches MaintenanceForm's own section layout: Basic (4 rows), Other (2),
+    // Location (4), Connected Elements (4).
     return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <TouchableOpacity style={styles.backLink} activeOpacity={0.8} onPress={onClose}>
-          <Text style={styles.backLinkText}>Go back</Text>
-        </TouchableOpacity>
-      </View>
+      <FormScreenSkeleton
+        title="Create Maintenance"
+        onClose={onClose}
+        sectionRowCounts={[4, 2, 4, 4]}
+      />
     );
   }
 

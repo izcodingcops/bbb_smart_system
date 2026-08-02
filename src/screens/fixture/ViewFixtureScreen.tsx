@@ -1,15 +1,9 @@
 import React, {useState} from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Image,
-  ActivityIndicator,
-  StyleSheet,
-} from 'react-native';
+import {View, Text, ScrollView, Image, StyleSheet} from 'react-native';
 import {
   ConfirmDialog,
   DetailField,
+  DetailScreenSkeleton,
   DetailSection,
   DetailTopBar,
   EmptyState,
@@ -56,13 +50,19 @@ const ViewFixtureScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   const {mutate: remove} = useDeleteFixtureMutation();
 
   if (isLoading) {
+    // Matches the loaded screen's own sections: Basic Details (4 half fields
+    // + Status full-width), Location Details (4 half + Zone full-width),
+    // Other Details (2, both full-width).
     return (
-      <View style={styles.root}>
-        <DetailTopBar title="Fixture" onBack={onClose} />
-        <View style={styles.loading}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
-      </View>
+      <DetailScreenSkeleton
+        title="Fixture"
+        onBack={onClose}
+        sections={[
+          ['half', 'half', 'half', 'half', 'full'],
+          ['half', 'half', 'half', 'half', 'full'],
+          ['full', 'full'],
+        ]}
+      />
     );
   }
 

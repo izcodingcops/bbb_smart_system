@@ -289,6 +289,7 @@ const MaintenanceForm: React.FC<Props> = ({
           <AccordionSection
             ref={otherRef}
             title="Other Details"
+            initiallyOpen
             onLayout={recordSectionY('other')}>
             <View style={styles.field}>
               <FieldLabel label="Description" />
@@ -370,6 +371,7 @@ const MaintenanceForm: React.FC<Props> = ({
           <AccordionSection
             ref={connectedRef}
             title="Connected Elements"
+            initiallyOpen
             onLayout={recordSectionY('connected')}>
             <DropdownField
               label="Fixture Name"

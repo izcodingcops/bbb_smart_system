@@ -140,7 +140,7 @@ const AddFixtureSheet: React.FC<Props> = ({
         </View>
       </View>
 
-      <AccordionSection title="Other Details">
+      <AccordionSection title="Other Details" initiallyOpen>
         <View style={styles.field}>
           <FieldLabel label="Description" />
           <TextField

@@ -298,6 +298,7 @@ const FixtureForm: React.FC<Props> = ({
           <AccordionSection
             ref={otherRef}
             title="Other Details"
+            initiallyOpen
             onLayout={recordSectionY('other')}>
             <View style={styles.field}>
               <FieldLabel label="Description" />

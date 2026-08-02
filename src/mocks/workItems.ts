@@ -1,4 +1,6 @@
-import {QuickAction, WorkItem} from '../types/work';
+import {QuickAction, WorkItem, WorkPriority} from '../types/work';
+import {MOCK_MAINTENANCE_REQUESTS} from './maintenance';
+import {MOCK_FIXTURES} from './fixture';
 
 export const MOCK_QUICK_ACTIONS = [
   {
@@ -31,263 +33,61 @@ export const MOCK_QUICK_ACTIONS = [
   },
 ] satisfies QuickAction[];
 
-const TOM = {assignee: 'Tom Lee', assigneeInitials: 'TL'};
-const SARA = {assignee: 'Sara Diaz', assigneeInitials: 'SD'};
-const CHEN = {assignee: 'M. Chen', assigneeInitials: 'MC'};
-const ANA = {assignee: 'Ana Cruz', assigneeInitials: 'AC'};
+/** Maintenance records carry a business name, not a zone — this fills the gap. */
+const BUSINESS_ZONE: Record<string, string> = {
+  '16th St Mall': 'Zone 1',
+  'Union Station': 'Zone 2',
+  BlockByBlock: 'Zone 4',
+  'Larimer Square': 'Zone 5',
+  'Denver Pavilions': 'Zone 3',
+};
 
-/** Assigned bucket: uniform Type / Priority / Assigned By card across categories. */
-const ASSIGNED: WorkItem[] = [
-  {
-    id: 'wk_96222110',
-    reference: '#96222110',
+/** Fixtures don't carry a priority — cycled deterministically for card display. */
+const FIXTURE_PRIORITIES: WorkPriority[] = ['Low', 'Medium', 'High'];
+
+/**
+ * Work items are the same records shown on the Maintenance and Fixture tabs,
+ * reshaped for the shared card. Sharing the id keeps a tap on a Work card
+ * routable to the real ViewMaintenanceScreen/ViewFixtureScreen.
+ */
+const MAINTENANCE_WORK_ITEMS: WorkItem[] = MOCK_MAINTENANCE_REQUESTS.map(
+  (request, index) => ({
+    id: request.id,
+    reference: request.reference,
     category: 'Maintenance',
-    status: 'Open',
-    date: '2026-07-05T08:30:00',
-    type: 'Alley Cleaning',
-    priority: 'High',
-    zone: 'Zone 4',
-    ...TOM,
-    address: '1601 Wewatta St, Denver, CO 80202',
-    bucket: 'assigned',
-  },
-  {
-    id: 'wk_96219987',
-    reference: '#96219987',
-    category: 'Incident',
-    status: 'In-progress',
-    date: '2026-07-05T07:45:00',
-    type: 'Vandalism Follow-up',
-    priority: 'Medium',
-    zone: 'Zone 2',
-    ...SARA,
-    address: '2001 Blake St, Denver, CO 80205',
-    bucket: 'assigned',
-  },
-  {
-    id: 'wk_96201233',
-    reference: '#96201233',
-    category: 'Fixture',
-    status: 'Open',
-    date: '2026-07-04T18:10:00',
-    type: 'Bench Repair',
-    priority: 'Low',
-    zone: 'Zone 2',
-    ...TOM,
-    address: 'Union Station, 1701 Wynkoop St, Denver, CO',
-    bucket: 'assigned',
-  },
-  {
-    id: 'wk_96198744',
-    reference: '#96198744',
-    category: 'Maintenance',
-    status: 'In-progress',
-    date: '2026-07-04T14:00:00',
-    type: 'Power Washing',
-    priority: 'Medium',
-    zone: 'Zone 1',
-    ...CHEN,
-    address: '900 16th St Mall, Denver, CO',
-    bucket: 'assigned',
-  },
-  {
-    id: 'wk_96177201',
-    reference: '#96177201',
-    category: 'POI',
-    status: 'Open',
-    date: '2026-07-03T11:15:00',
-    type: 'Outreach Visit',
-    priority: 'High',
-    zone: 'Zone 3',
-    ...SARA,
-    address: 'Civic Center Park, Denver, CO',
-    bucket: 'assigned',
-  },
-  {
-    id: 'wk_96155098',
-    reference: '#96155098',
-    category: 'Activity',
-    status: 'In-progress',
-    date: '2026-07-02T09:40:00',
-    type: 'Safety Patrol',
-    priority: 'Medium',
-    zone: 'Zone 1',
-    ...TOM,
-    address: '1701 Wynkoop St, Denver, CO',
-    bucket: 'assigned',
-  },
-  {
-    id: 'wk_96150011',
-    reference: '#96150011',
-    category: 'Incident',
-    status: 'Open',
-    date: '2026-07-02T08:05:00',
-    type: 'Medical Assist',
-    priority: 'High',
-    zone: 'Zone 5',
-    ...CHEN,
-    address: '16th & Curtis St, Denver, CO',
-    bucket: 'assigned',
-  },
-  {
-    id: 'wk_96140087',
-    reference: '#96140087',
-    category: 'Fixture',
-    status: 'In-progress',
-    date: '2026-07-01T15:30:00',
-    type: 'Trash Can Repair',
-    priority: 'Low',
-    zone: 'Zone 5',
-    ...ANA,
-    address: '900 Larimer St, Denver, CO 80202',
-    bucket: 'assigned',
-  },
+    status: request.status,
+    date: request.requestedAt,
+    type: request.type,
+    priority: request.priority,
+    zone: BUSINESS_ZONE[request.businessName] ?? `Zone ${(index % 5) + 1}`,
+    assignee: request.assignee ? request.assignee.name : 'Pending',
+    assigneeInitials: request.assignee ? request.assignee.initials : '—',
+    address: request.address,
+    bucket: request.status === 'Completed' ? 'completed' : 'assigned',
+  }),
+);
+
+/**
+ * Fixture records have no workflow status of their own — an Active fixture
+ * reads as logged/completed work, an Inactive one as still needing attention.
+ */
+const FIXTURE_WORK_ITEMS: WorkItem[] = MOCK_FIXTURES.map((fixture, index) => ({
+  id: fixture.id,
+  reference: fixture.reference,
+  category: 'Fixture',
+  status: fixture.status === 'Active' ? 'Completed' : 'Open',
+  date: fixture.createdAt,
+  type: fixture.fixtureType,
+  priority: FIXTURE_PRIORITIES[index % FIXTURE_PRIORITIES.length],
+  zone: fixture.zone,
+  assignee: fixture.createdBy.name,
+  assigneeInitials: fixture.createdBy.initials,
+  address: fixture.address,
+  bucket: fixture.status === 'Active' ? 'completed' : 'assigned',
+  outcome: fixture.status,
+}));
+
+export const MOCK_WORK_ITEMS: WorkItem[] = [
+  ...MAINTENANCE_WORK_ITEMS,
+  ...FIXTURE_WORK_ITEMS,
 ];
-
-/** Completed bucket: each category shows its own detail fields alongside Type. */
-const COMPLETED: WorkItem[] = [
-  {
-    id: 'wk_76231707',
-    reference: '#76231707',
-    category: 'Activity',
-    status: 'Completed',
-    date: '2026-07-06T09:41:00',
-    type: 'Elevator Check',
-    priority: 'Low',
-    zone: 'Zone 1',
-    ...TOM,
-    address: 'Rue Des Hauteurs, Val-David, Quebec J0T 2N0, Canada',
-    bucket: 'completed',
-    businessName: 'Downtown Denver BID',
-    quantity: '01',
-  },
-  {
-    id: 'wk_96215390',
-    reference: '#96215390',
-    category: 'Activity',
-    status: 'Completed',
-    date: '2026-07-05T10:05:00',
-    type: 'Graffiti Removal',
-    priority: 'Medium',
-    zone: 'Zone 4',
-    ...SARA,
-    address: '16th St Mall, Denver, CO 80202',
-    bucket: 'completed',
-    businessName: 'BlockByBlock',
-    quantity: '03',
-  },
-  {
-    id: 'wk_96211407',
-    reference: '#96211407',
-    category: 'Maintenance',
-    status: 'Completed',
-    date: '2026-07-05T09:12:00',
-    type: 'Alley Cleaning',
-    priority: 'High',
-    zone: 'Zone 4',
-    ...TOM,
-    address: '1601 Wewatta St, Denver, CO 80202',
-    bucket: 'completed',
-  },
-  {
-    id: 'wk_95873321',
-    reference: '#95873321',
-    category: 'Fixture',
-    status: 'Completed',
-    date: '2026-07-04T16:40:00',
-    type: 'Bench',
-    priority: 'Low',
-    zone: 'Zone 2',
-    ...ANA,
-    address: 'Union Station, 1701 Wynkoop St, Denver, CO',
-    bucket: 'completed',
-    outcome: 'Repaired',
-  },
-  {
-    id: 'wk_95840012',
-    reference: '#95840012',
-    category: 'Incident',
-    status: 'Completed',
-    date: '2026-07-04T14:15:00',
-    type: 'Vandalism',
-    priority: 'Medium',
-    zone: 'Zone 2',
-    ...SARA,
-    address: '2001 Blake St, Denver, CO 80205',
-    bucket: 'completed',
-    outcome: 'Reported',
-  },
-  {
-    id: 'wk_95811900',
-    reference: '#95811900',
-    category: 'POI',
-    status: 'Completed',
-    date: '2026-07-04T11:30:00',
-    type: 'Outreach',
-    priority: 'Low',
-    zone: 'Zone 3',
-    ...CHEN,
-    address: 'Civic Center Park, Denver, CO',
-    bucket: 'completed',
-    interaction: 'Check-in',
-    disposition: 'Engaged',
-  },
-  {
-    id: 'wk_95790233',
-    reference: '#95790233',
-    category: 'Activity',
-    status: 'Completed',
-    date: '2026-07-03T17:20:00',
-    type: 'Safety Patrol',
-    priority: 'Medium',
-    zone: 'Zone 1',
-    ...TOM,
-    address: '1701 Wynkoop St, Denver, CO 80202',
-    bucket: 'completed',
-    businessName: 'Union Station',
-    quantity: '01',
-  },
-  {
-    id: 'wk_95772140',
-    reference: '#95772140',
-    category: 'Maintenance',
-    status: 'Completed',
-    date: '2026-07-03T13:05:00',
-    type: 'Graffiti Removal',
-    priority: 'Low',
-    zone: 'Zone 1',
-    ...ANA,
-    address: '1437 Bannock St, Denver, CO 80204',
-    bucket: 'completed',
-  },
-  {
-    id: 'wk_95744098',
-    reference: '#95744098',
-    category: 'Fixture',
-    status: 'Completed',
-    date: '2026-07-02T15:48:00',
-    type: 'Trash Can',
-    priority: 'Low',
-    zone: 'Zone 5',
-    ...TOM,
-    address: '900 Larimer St, Denver, CO 80202',
-    bucket: 'completed',
-    outcome: 'Replaced',
-  },
-  {
-    id: 'wk_95733001',
-    reference: '#95733001',
-    category: 'Incident',
-    status: 'Completed',
-    date: '2026-07-02T10:22:00',
-    type: 'Medical',
-    priority: 'High',
-    zone: 'Zone 5',
-    ...CHEN,
-    address: '16th & Curtis St, Denver, CO',
-    bucket: 'completed',
-    outcome: 'EMS Called',
-  },
-];
-
-export const MOCK_WORK_ITEMS = [...ASSIGNED, ...COMPLETED] satisfies WorkItem[];
