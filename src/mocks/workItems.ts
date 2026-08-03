@@ -1,6 +1,7 @@
 import {QuickAction, WorkItem, WorkPriority} from '../types/work';
 import {MOCK_MAINTENANCE_REQUESTS} from './maintenance';
 import {MOCK_FIXTURES} from './fixture';
+import {MOCK_WORK_LOG_ENTRIES} from './workLog';
 
 export const MOCK_QUICK_ACTIONS = [
   {
@@ -87,7 +88,44 @@ const FIXTURE_WORK_ITEMS: WorkItem[] = MOCK_FIXTURES.map((fixture, index) => ({
   outcome: fixture.status,
 }));
 
+/** 'Marcus Bell' -> 'MB', 'You' -> 'YO' — same shape as Fixture's createdBy.initials. */
+function initialsOf(name: string): string {
+  if (name === 'You') {
+    return 'YO';
+  }
+  const parts = name.split(' ').filter(Boolean);
+  return (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '');
+}
+
+/** Work Log entries have no priority concept — cycled deterministically, same as Fixture. */
+const WORKLOG_PRIORITIES: WorkPriority[] = ['Low', 'Medium', 'High'];
+
+/**
+ * Work Log entries are self-reported completed work, not assignable tasks —
+ * every one lands in the 'completed' bucket with status 'Completed', same
+ * treatment an Active fixture gets.
+ */
+const WORKLOG_WORK_ITEMS: WorkItem[] = MOCK_WORK_LOG_ENTRIES.map(
+  (entry, index) => ({
+    id: entry.id,
+    reference: entry.reference,
+    category: 'Activity',
+    status: 'Completed',
+    date: entry.createdAt,
+    type: entry.entryType,
+    priority: WORKLOG_PRIORITIES[index % WORKLOG_PRIORITIES.length],
+    zone: entry.zone ?? `Zone ${(index % 6) + 1}`,
+    assignee: entry.loggedBy,
+    assigneeInitials: initialsOf(entry.loggedBy),
+    address: entry.address,
+    bucket: 'completed',
+    businessName: entry.businessName ?? undefined,
+    quantity: entry.quantity,
+  }),
+);
+
 export const MOCK_WORK_ITEMS: WorkItem[] = [
   ...MAINTENANCE_WORK_ITEMS,
   ...FIXTURE_WORK_ITEMS,
+  ...WORKLOG_WORK_ITEMS,
 ];
