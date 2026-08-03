@@ -381,6 +381,86 @@ const checks: Check[] = [
     assert.deepEqual(d.incidents, []);
   }],
 
+  ['work log entries resolve with uppercase YesNo enums', async () => {
+    const r: any = await run(
+      'query W($p: ID!) { workLogEntries(programId: $p) { id reference shiftTypeName fvmAccessibilityChecked } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.workLogEntries.length, 18);
+    assert.ok(['YES', 'NO'].includes(r.data.workLogEntries[0].fvmAccessibilityChecked));
+    // One entry per shift type, 3 each — Cleaning is seeded first.
+    assert.equal(r.data.workLogEntries[0].shiftTypeName, 'Cleaning');
+  }],
+
+  ['an unknown work log id resolves to null rather than throwing', async () => {
+    const r: any = await run(
+      'query W($id: ID!) { workLogEntry(id: $id) { reference } }',
+      {id: 'wl_nope'},
+    );
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.workLogEntry, null);
+  }],
+
+  ['work log form options serve every dropdown', async () => {
+    const r: any = await run(
+      'query O($p: ID!, $s: ID!) { workLogFormOptions(programId: $p, shiftTypeId: $s) { nextReference entryTypes zones businessNames } }',
+      {p: 'p1', s: 'st1'},
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.workLogFormOptions;
+    assert.equal(o.entryTypes.length, 16);
+    assert.equal(o.zones.length, 6);
+    assert.equal(o.businessNames.length, 4);
+  }],
+
+  ['work log create freezes the shift, then round-trips through update and delete', async () => {
+    const input = {
+      entryType: 'Litter Pickup', machineNo: '12345678',
+      requestDateTime: '2026-08-01T09:00:00',
+      fvmAccessibilityChecked: 'YES', bridgePlateSecured: 'YES',
+      accessibleFareGateWorking: 'NO', automaticDoorWorking: 'YES', fvmNotWorking: 'NO',
+      address: '123 Test St', shiftTypeId: 'st5', shiftTypeName: 'Outreach',
+    };
+    const created: any = await run(
+      'mutation C($p: ID!, $i: WorkLogInput!) { createWorkLogEntry(programId: $p, input: $i) { id reference } }',
+      {p: 'p1', i: input},
+    );
+    assert.equal(created.errors, undefined);
+    const id = created.data.createWorkLogEntry.id;
+
+    const detail: any = await run(
+      'query D($id: ID!) { workLogEntry(id: $id) { shiftTypeId shiftTypeName entryType quantity } }',
+      {id},
+    );
+    assert.equal(detail.data.workLogEntry.shiftTypeId, 'st5');
+    assert.equal(detail.data.workLogEntry.shiftTypeName, 'Outreach');
+    assert.equal(detail.data.workLogEntry.entryType, 'Litter Pickup');
+    // Never sent — the resolver's own default.
+    assert.equal(detail.data.workLogEntry.quantity, '01');
+
+    const updated: any = await run(
+      'mutation U($id: ID!, $i: WorkLogInput!) { updateWorkLogEntry(id: $id, input: $i) { reference } }',
+      {id, i: {...input, quantity: '03'}},
+    );
+    assert.equal(updated.errors, undefined);
+    const afterUpdate: any = await run(
+      'query D($id: ID!) { workLogEntry(id: $id) { quantity shiftTypeName } }', {id},
+    );
+    assert.equal(afterUpdate.data.workLogEntry.quantity, '03');
+    // Update never touches the frozen shift, even though the input carries one.
+    assert.equal(afterUpdate.data.workLogEntry.shiftTypeName, 'Outreach');
+
+    const deleted: any = await run(
+      'mutation Del($id: ID!) { deleteWorkLogEntry(id: $id) }', {id},
+    );
+    assert.equal(deleted.data.deleteWorkLogEntry, id);
+    const gone: any = await run(
+      'query D($id: ID!) { workLogEntry(id: $id) { reference } }', {id},
+    );
+    assert.equal(gone.data.workLogEntry, null);
+  }],
+
   ['a typo fails loudly', async () => {
     const r: any = await run('query Bad { me { enable_shift_entry } }');
     assert.ok(r.errors?.[0]?.message.includes('Cannot query field'));
