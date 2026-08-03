@@ -12,7 +12,8 @@ export type Feature =
   | 'equipment'
   | 'maintenance'
   | 'fixture'
-  | 'dispatch';
+  | 'dispatch'
+  | 'workLog';
 
 export const API_TRANSPORT: Record<Feature, Transport> = {
   auth: 'mock',
@@ -22,6 +23,7 @@ export const API_TRANSPORT: Record<Feature, Transport> = {
   maintenance: 'mock',
   fixture: 'mock',
   dispatch: 'mock',
+  workLog: 'mock',
 };
 
 export const GRAPHQL_ENDPOINT = 'https://REPLACE_ME/graphql';

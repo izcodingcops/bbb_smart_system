@@ -5,6 +5,7 @@ import {fixtureTypeDefs} from './features/fixture/schema';
 import {maintenanceTypeDefs} from './features/maintenance/schema';
 import {navigationTypeDefs} from './features/navigation/schema';
 import {workTypeDefs} from './features/work/schema';
+import {workLogTypeDefs} from './features/workLog/schema';
 
 /**
  * Every feature `extend`s these two roots, so they have to exist first. When
@@ -29,4 +30,5 @@ export const typeDefs = [
   maintenanceTypeDefs,
   fixtureTypeDefs,
   dispatchTypeDefs,
+  workLogTypeDefs,
 ].join('\n');

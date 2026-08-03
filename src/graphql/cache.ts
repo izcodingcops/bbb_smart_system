@@ -27,5 +27,6 @@ export const cache = new InMemoryCache({
     DispatchResponderInfo: {keyFields: false},
     DispatchParty: {keyFields: false},
     DispatchVehicle: {keyFields: false},
+    WorkLogEntry: {keyFields: ['id']},
   },
 });

@@ -6,6 +6,7 @@ import {fixtureResolvers} from './features/fixture/resolvers';
 import {maintenanceResolvers} from './features/maintenance/resolvers';
 import {navigationResolvers} from './features/navigation/resolvers';
 import {workResolvers} from './features/work/resolvers';
+import {workLogResolvers} from './features/workLog/resolvers';
 import {typeDefs} from './schema';
 
 /**
@@ -25,12 +26,14 @@ export const mockSchema = makeExecutableSchema({
       ...maintenanceResolvers.Query,
       ...fixtureResolvers.Query,
       ...dispatchResolvers.Query,
+      ...workLogResolvers.Query,
     },
     Mutation: {
       ...authResolvers.Mutation,
       ...workResolvers.Mutation,
       ...maintenanceResolvers.Mutation,
       ...fixtureResolvers.Mutation,
+      ...workLogResolvers.Mutation,
     },
   },
 });
