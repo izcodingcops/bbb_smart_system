@@ -1,4 +1,5 @@
 import {QuickAction, WorkItem, WorkPriority} from '../types/work';
+import {WorkLogEntry} from '../types/workLog';
 import {MOCK_MAINTENANCE_REQUESTS} from './maintenance';
 import {MOCK_FIXTURES} from './fixture';
 import {MOCK_WORK_LOG_ENTRIES} from './workLog';
@@ -100,29 +101,47 @@ function initialsOf(name: string): string {
 /** Work Log entries have no priority concept — cycled deterministically, same as Fixture. */
 const WORKLOG_PRIORITIES: WorkPriority[] = ['Low', 'Medium', 'High'];
 
+/** Deterministic from the id rather than array position, so the cycling stays
+ *  stable when this runs live against workLogStore.records, whose order shifts
+ *  as entries are created (unshifted to the front) and deleted. */
+function priorityFor(id: string): WorkPriority {
+  let sum = 0;
+  for (let i = 0; i < id.length; i++) {
+    sum += id.charCodeAt(i);
+  }
+  return WORKLOG_PRIORITIES[sum % WORKLOG_PRIORITIES.length];
+}
+
 /**
  * Work Log entries are self-reported completed work, not assignable tasks —
  * every one lands in the 'completed' bucket with status 'Completed', same
  * treatment an Active fixture gets.
+ *
+ * Exported so the `work` GraphQL feature can map `workLogStore.records` the
+ * same way at query time — the Work Log store is mutated in place by its own
+ * create/update/delete mutations, so a WorkItem list built once from this
+ * module's static MOCK_WORK_LOG_ENTRIES would never reflect them.
  */
-const WORKLOG_WORK_ITEMS: WorkItem[] = MOCK_WORK_LOG_ENTRIES.map(
-  (entry, index) => ({
+export function toWorkLogWorkItem(entry: WorkLogEntry): WorkItem {
+  return {
     id: entry.id,
     reference: entry.reference,
     category: 'Activity',
     status: 'Completed',
     date: entry.createdAt,
     type: entry.entryType,
-    priority: WORKLOG_PRIORITIES[index % WORKLOG_PRIORITIES.length],
-    zone: entry.zone ?? `Zone ${(index % 6) + 1}`,
+    priority: priorityFor(entry.id),
+    zone: entry.zone ?? 'Zone 1',
     assignee: entry.loggedBy,
     assigneeInitials: initialsOf(entry.loggedBy),
     address: entry.address,
     bucket: 'completed',
     businessName: entry.businessName ?? undefined,
     quantity: entry.quantity,
-  }),
-);
+  };
+}
+
+const WORKLOG_WORK_ITEMS: WorkItem[] = MOCK_WORK_LOG_ENTRIES.map(toWorkLogWorkItem);
 
 export const MOCK_WORK_ITEMS: WorkItem[] = [
   ...MAINTENANCE_WORK_ITEMS,

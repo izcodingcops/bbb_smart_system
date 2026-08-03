@@ -19,7 +19,7 @@ import {
   useWorkLogFormOptionsQuery,
 } from '../../graphql/features/workLog/hooks';
 import {GetActiveProgram, GetShiftTypes} from '../../redux/auth/selectors';
-import {YesNo} from '../../types/workLog';
+import {WorkLogEntry, WorkLogFormValues, YesNo} from '../../types/workLog';
 import WorkLogForm from './components/WorkLogForm';
 import {theme} from '../../theme';
 import {workLogCopy} from './shiftText';
@@ -28,11 +28,31 @@ function ynLabel(value: YesNo): string {
   return value === 'yes' ? 'Yes' : 'No';
 }
 
+/** Entry type and shift stay locked in edit mode — every other field is editable. */
+function toFormValues(detail: WorkLogEntry): WorkLogFormValues {
+  return {
+    entryType: detail.entryType,
+    machineNo: detail.machineNo,
+    requestDateTime: detail.requestDateTime,
+    fvmAccessibilityChecked: detail.fvmAccessibilityChecked,
+    bridgePlateSecured: detail.bridgePlateSecured,
+    accessibleFareGateWorking: detail.accessibleFareGateWorking,
+    automaticDoorWorking: detail.automaticDoorWorking,
+    fvmNotWorking: detail.fvmNotWorking,
+    address: detail.address,
+    zone: detail.zone,
+    describeLocation: detail.describeLocation,
+    businessName: detail.businessName,
+    quantity: detail.quantity,
+  };
+}
+
 interface Props {
   id: string;
   onClose: () => void;
-  /** Fires after the record is gone, so the caller can pop back and toast. */
-  onDeleted: (reference: string) => void;
+  /** Fires after the record is gone, so the caller can pop back and toast.
+   *  shiftTypeName lets the caller build the toast via workLogCopy(). */
+  onDeleted: (reference: string, shiftTypeName: string) => void;
 }
 
 const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
@@ -40,6 +60,7 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   // detail branches must not change hook order between renders.
   const {data: detail, isLoading, isError, refetch} = useGetWorkLogEntryQuery(id);
   const [editing, setEditing] = useState(false);
+  const [editValues, setEditValues] = useState<WorkLogFormValues | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [toast, setToast] = useState<{
     title: string;
@@ -94,7 +115,7 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
     shiftTypes.find(t => t.id === detail.shiftTypeId)?.icon ?? 'general';
 
   // Edit replaces the detail in place, matching the design's slide-over.
-  if (editing && options) {
+  if (editing && options && editValues) {
     return (
       <View style={styles.root}>
         <WorkLogForm
@@ -103,21 +124,8 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
           shiftTypeIcon={shiftTypeIcon}
           reference={detail.reference}
           options={options}
-          initialValues={{
-            entryType: detail.entryType,
-            machineNo: detail.machineNo,
-            requestDateTime: detail.requestDateTime,
-            fvmAccessibilityChecked: detail.fvmAccessibilityChecked,
-            bridgePlateSecured: detail.bridgePlateSecured,
-            accessibleFareGateWorking: detail.accessibleFareGateWorking,
-            automaticDoorWorking: detail.automaticDoorWorking,
-            fvmNotWorking: detail.fvmNotWorking,
-            address: detail.address,
-            zone: detail.zone,
-            describeLocation: detail.describeLocation,
-            businessName: detail.businessName,
-            quantity: detail.quantity,
-          }}
+          values={editValues}
+          onChangeValues={setEditValues}
           submitLabel="Update"
           isSubmitting={isUpdating}
           onSubmit={async values => {
@@ -140,7 +148,10 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
         title={copy.viewTitle}
         reference={detail.reference}
         onBack={onClose}
-        onEdit={() => setEditing(true)}
+        onEdit={() => {
+          setEditValues(toFormValues(detail));
+          setEditing(true);
+        }}
         onDelete={() => setConfirmDelete(true)}
       />
 
@@ -210,7 +221,7 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
           try {
             await remove(detail.id);
             setConfirmDelete(false);
-            onDeleted(detail.reference);
+            onDeleted(detail.reference, detail.shiftTypeName);
           } catch {
             setConfirmDelete(false);
             setToast({

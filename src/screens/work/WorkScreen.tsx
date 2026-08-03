@@ -13,6 +13,7 @@ import ViewMaintenanceScreen from '../maintenance/ViewMaintenanceScreen';
 import ViewFixtureScreen from '../fixture/ViewFixtureScreen';
 import CreateWorkLogScreen from '../workLog/CreateWorkLogScreen';
 import ViewWorkLogScreen from '../workLog/ViewWorkLogScreen';
+import {workLogCopy} from '../workLog/shiftText';
 import {
   BackToTopPill,
   ConfirmDialog,
@@ -253,9 +254,10 @@ const WorkScreen: React.FC = () => {
         onCreated={created => {
           setRoute({name: 'list'});
           setReturnTo(null);
+          const copy = workLogCopy(created.shiftTypeName);
           setToast({
-            title: 'Saved to Work Log',
-            message: `${created.entryType} was logged successfully.`,
+            title: copy.toastTitle,
+            message: copy.toastMessage(created.entryType),
           });
         }}
       />
@@ -267,12 +269,13 @@ const WorkScreen: React.FC = () => {
       <ViewWorkLogScreen
         id={route.id}
         onClose={() => setRoute({name: 'list'})}
-        onDeleted={reference => {
+        onDeleted={(reference, shiftTypeName) => {
           setRoute({name: 'list'});
           refetch();
+          const copy = workLogCopy(shiftTypeName);
           setToast({
-            title: 'Work Log entry deleted',
-            message: `${reference} was removed from your Work Log.`,
+            title: copy.deletedToastTitle,
+            message: copy.deletedToastMessage(reference),
             variant: 'danger',
           });
         }}

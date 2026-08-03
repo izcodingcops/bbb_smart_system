@@ -137,11 +137,20 @@ const toWireInput = (values: WorkLogFormValues) => ({
   quantity: values.quantity || '01',
 });
 
-/** The mock store mutates in place, so refetch rather than patch the cache. */
-const REFRESH_LIST = {...WORKLOG_CONTEXT, refetchQueries: ['GetWorkLogEntries']};
+/**
+ * The mock store mutates in place, so refetch rather than patch the cache.
+ * 'GetWorkItems' is included because the Work tab's list computes its Activity
+ * items live from this same store (see work/resolvers.ts) — without refetching
+ * it too, a created/updated/deleted entry wouldn't show up there until some
+ * unrelated refetch happened to run.
+ */
+const REFRESH_LIST = {
+  ...WORKLOG_CONTEXT,
+  refetchQueries: ['GetWorkLogEntries', 'GetWorkItems'],
+};
 const REFRESH_DETAIL = {
   ...WORKLOG_CONTEXT,
-  refetchQueries: ['GetWorkLogEntries', 'GetWorkLogEntry'],
+  refetchQueries: ['GetWorkLogEntries', 'GetWorkLogEntry', 'GetWorkItems'],
 };
 
 /**

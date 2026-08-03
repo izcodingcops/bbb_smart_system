@@ -439,22 +439,45 @@ const checks: Check[] = [
     // Never sent — the resolver's own default.
     assert.equal(detail.data.workLogEntry.quantity, '01');
 
+    // The update input deliberately carries a DIFFERENT shift than the one the
+    // entry was created under, so this actually exercises the freeze — an
+    // update input that repeated the same shift would pass even if the
+    // resolver started (wrongly) applying shiftTypeId/shiftTypeName from it.
     const updated: any = await run(
       'mutation U($id: ID!, $i: WorkLogInput!) { updateWorkLogEntry(id: $id, input: $i) { reference } }',
-      {id, i: {...input, quantity: '03'}},
+      {id, i: {...input, shiftTypeId: 'st1', shiftTypeName: 'Cleaning', quantity: '03'}},
     );
     assert.equal(updated.errors, undefined);
     const afterUpdate: any = await run(
-      'query D($id: ID!) { workLogEntry(id: $id) { quantity shiftTypeName } }', {id},
+      'query D($id: ID!) { workLogEntry(id: $id) { quantity shiftTypeId shiftTypeName } }', {id},
     );
     assert.equal(afterUpdate.data.workLogEntry.quantity, '03');
-    // Update never touches the frozen shift, even though the input carries one.
+    // Frozen at creation — unaffected by the update input's different shift.
+    assert.equal(afterUpdate.data.workLogEntry.shiftTypeId, 'st5');
     assert.equal(afterUpdate.data.workLogEntry.shiftTypeName, 'Outreach');
+
+    // The Work tab's own list computes its Activity items live from the same
+    // store this mutation just edited — confirm the entry is actually visible
+    // there, not just readable back through workLogEntry.
+    const inWorkList: any = await run(
+      'query W($p: ID!) { workItems(programId: $p) { id category quantity } }',
+      {p: 'p1'},
+    );
+    const workItem = inWorkList.data.workItems.find((w: any) => w.id === id);
+    assert.ok(workItem, 'created entry should appear in workItems');
+    // category is a plain String on WorkItem, not an enum — unlike status/priority.
+    assert.equal(workItem.category, 'Activity');
+    assert.equal(workItem.quantity, '03');
 
     const deleted: any = await run(
       'mutation Del($id: ID!) { deleteWorkLogEntry(id: $id) }', {id},
     );
     assert.equal(deleted.data.deleteWorkLogEntry, id);
+
+    const goneFromWorkList: any = await run(
+      'query W($p: ID!) { workItems(programId: $p) { id } }', {p: 'p1'},
+    );
+    assert.ok(!goneFromWorkList.data.workItems.some((w: any) => w.id === id));
     const gone: any = await run(
       'query D($id: ID!) { workLogEntry(id: $id) { reference } }', {id},
     );

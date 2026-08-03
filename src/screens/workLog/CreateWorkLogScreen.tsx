@@ -16,8 +16,15 @@ import {workLogCopy} from './shiftText';
 
 interface Props {
   onClose: () => void;
-  /** Fires with the new record's id, reference and entry type once created. */
-  onCreated: (created: {id: string; reference: string; entryType: string}) => void;
+  /** Fires with the new record's id, reference, entry type and the shift it
+   *  was logged under once created — the caller needs shiftTypeName to build
+   *  the "{Shift} · {EntryType}" toast via workLogCopy(). */
+  onCreated: (created: {
+    id: string;
+    reference: string;
+    entryType: string;
+    shiftTypeName: string;
+  }) => void;
 }
 
 const CreateWorkLogScreen: React.FC<Props> = ({onClose, onCreated}) => {
@@ -29,6 +36,11 @@ const CreateWorkLogScreen: React.FC<Props> = ({onClose, onCreated}) => {
 
   const [step, setStep] = useState<'entryType' | 'form'>('entryType');
   const [entryType, setEntryType] = useState<string | null>(null);
+  // Owned here rather than inside WorkLogForm: Step 2 unmounts when the user
+  // taps Back to Step 1, so form state living inside it wouldn't survive a
+  // Back → pick a different type → Next round trip. This component itself
+  // stays mounted across that whole trip, so state here does.
+  const [values, setValues] = useState<WorkLogFormValues>(() => buildInitialValues(''));
 
   const {
     data: options,
@@ -44,7 +56,10 @@ const CreateWorkLogScreen: React.FC<Props> = ({onClose, onCreated}) => {
         shiftTypeName={shiftTypeName}
         selected={entryType}
         onSelect={setEntryType}
-        onNext={() => setStep('form')}
+        onNext={() => {
+          setValues(current => ({...current, entryType: entryType ?? ''}));
+          setStep('form');
+        }}
         onCancel={onClose}
       />
     );
@@ -79,9 +94,9 @@ const CreateWorkLogScreen: React.FC<Props> = ({onClose, onCreated}) => {
     );
   }
 
-  const submit = async (values: WorkLogFormValues) => {
-    const created = await create(values);
-    onCreated({...created, entryType: values.entryType});
+  const submit = async (submitted: WorkLogFormValues) => {
+    const created = await create(submitted);
+    onCreated({...created, entryType: submitted.entryType, shiftTypeName});
   };
 
   return (
@@ -92,7 +107,8 @@ const CreateWorkLogScreen: React.FC<Props> = ({onClose, onCreated}) => {
         shiftTypeIcon={shiftTypeIcon}
         reference={options.nextReference}
         options={options}
-        initialValues={buildInitialValues(entryType ?? '')}
+        values={values}
+        onChangeValues={setValues}
         submitLabel="Submit Work"
         isSubmitting={isSubmitting}
         onSubmit={submit}

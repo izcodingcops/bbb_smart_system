@@ -65,7 +65,14 @@ interface Props {
   /** Display reference shown under the title, e.g. '#76231707'. */
   reference: string;
   options: WorkLogFormOptions;
-  initialValues: WorkLogFormValues;
+  /**
+   * Controlled rather than an `initialValues` the form owns internally: in
+   * create mode, going Back to Step 1 unmounts this component, so its own
+   * state wouldn't survive a Back → Next round trip — the parent has to hold
+   * it instead.
+   */
+  values: WorkLogFormValues;
+  onChangeValues: (values: WorkLogFormValues) => void;
   submitLabel: string;
   isSubmitting: boolean;
   onSubmit: (values: WorkLogFormValues) => Promise<void>;
@@ -82,14 +89,14 @@ const WorkLogForm: React.FC<Props> = ({
   shiftTypeIcon,
   reference,
   options,
-  initialValues,
+  values,
+  onChangeValues,
   submitLabel,
   isSubmitting,
   onSubmit,
   onClose,
   onBack,
 }) => {
-  const [values, setValues] = useState<WorkLogFormValues>(initialValues);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   /** Set when onSubmit rejects, so the form can report it without navigating away. */
@@ -111,7 +118,7 @@ const WorkLogForm: React.FC<Props> = ({
   const set = <K extends keyof WorkLogFormValues>(
     key: K,
     value: WorkLogFormValues[K],
-  ) => setValues(current => ({...current, [key]: value}));
+  ) => onChangeValues({...values, [key]: value});
 
   const canSubmit =
     values.machineNo.trim().length > 0 &&

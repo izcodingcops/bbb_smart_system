@@ -63,10 +63,13 @@ export const MOCK_WORK_LOG_ENTRIES: WorkLogEntry[] = MOCK_SHIFT_TYPES.flatMap(
         automaticDoorWorking: YES_NO[(index + 1) % 2],
         fvmNotWorking: YES_NO[index % 2],
         address: 'Rue Des Hauteurs, Val-David, Quebec J0T 2N0, Canada',
-        zone: ZONES[index % ZONES.length],
+        // The third record of every shift type leaves Zone/Business unset, so
+        // the detail screen's "N/A" fallback rendering is actually reachable
+        // in the running app rather than only in theory.
+        zone: i === 2 ? null : ZONES[index % ZONES.length],
         describeLocation:
           i === 0 ? 'North entrance, beside ticket vending machine' : '',
-        businessName: BUSINESS_NAMES[index % BUSINESS_NAMES.length],
+        businessName: i === 2 ? null : BUSINESS_NAMES[index % BUSINESS_NAMES.length],
         quantity: pad((index % 4) + 1),
         loggedBy: LOGGERS[index % LOGGERS.length],
         createdAt: toLocalIso(new Date(GEN_BASE - index * 13 * HOUR)),
