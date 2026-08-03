@@ -16,6 +16,9 @@ export function workLogCopy(shiftTypeName: string) {
     toastTitle: 'Saved to Work Log',
     toastMessage: (entryType: string) =>
       `${shiftTypeName} · ${entryType} was logged successfully.`,
+    queuedToastTitle: 'Saved — will upload when back online',
+    queuedToastMessage: (entryType: string) =>
+      `${shiftTypeName} · ${entryType} is queued and will upload automatically once you're back online.`,
     viewTitle: shiftTypeName,
     deleteDialogTitle: `Delete this ${shiftTypeName} Work?`,
     deleteDialogMessage: (reference: string) =>

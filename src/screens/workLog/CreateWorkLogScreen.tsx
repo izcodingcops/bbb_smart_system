@@ -24,6 +24,7 @@ interface Props {
     reference: string;
     entryType: string;
     shiftTypeName: string;
+    queued: boolean;
   }) => void;
 }
 

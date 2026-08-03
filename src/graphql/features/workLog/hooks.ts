@@ -153,6 +153,11 @@ const REFRESH_DETAIL = {
   refetchQueries: ['GetWorkLogEntries', 'GetWorkLogEntry', 'GetWorkItems'],
 };
 
+const CREATE_CONTEXT = {
+  context: {feature: 'workLog', offlineQueueKey: 'CREATE_WORK_LOG_ENTRY'},
+  refetchQueries: ['GetWorkLogEntries', 'GetWorkItems'],
+};
+
 /**
  * Resolves the frozen `shiftTypeId`/`shiftTypeName` pair itself from the
  * active shift, so callers only ever pass form values — the shift a Work Log
@@ -166,7 +171,7 @@ export function useCreateWorkLogEntryMutation() {
     shiftTypes.find(t => t.id === shiftTypeId)?.name ?? 'Shift';
   const [run, {loading}] = useMutation<{
     createWorkLogEntry: {id: string; reference: string};
-  }>(CREATE_WORK_LOG_ENTRY, REFRESH_LIST);
+  }>(CREATE_WORK_LOG_ENTRY, CREATE_CONTEXT);
   return {
     mutate: async (values: WorkLogFormValues) => {
       const result = await run({
@@ -175,9 +180,13 @@ export function useCreateWorkLogEntryMutation() {
           input: {...toWireInput(values), shiftTypeId, shiftTypeName},
         },
       });
+      const id = result.data?.createWorkLogEntry.id ?? '';
       return {
-        id: result.data?.createWorkLogEntry.id ?? '',
+        id,
         reference: result.data?.createWorkLogEntry.reference ?? '',
+        // `offlineQueueLink` stamps queued ids with this prefix (link.ts) —
+        // cheaper than threading a separate flag through Apollo's context.
+        queued: id.startsWith('outbox_'),
       };
     },
     isLoading: loading,
