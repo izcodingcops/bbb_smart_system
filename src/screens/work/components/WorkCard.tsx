@@ -7,6 +7,7 @@ import {
   RecordCard,
   StatusPill,
 } from '../../../components/ui';
+import {CloudOffIcon} from '../../../components/icons';
 import {WorkCategory, WorkItem, WorkPriority, WorkStatus} from '../../../types/work';
 import {theme} from '../../../theme';
 
@@ -157,6 +158,14 @@ const WorkCard: React.FC<Props> = ({
         />
       }
       dateLine={`${item.bucket === 'assigned' ? 'Assigned ' : ''}${formatCardDate(item.date)}`}
+      badge={
+        item.queuedOffline ? (
+          <View style={styles.queuedRow}>
+            <CloudOffIcon size={13} color="#C26401" />
+            <Text style={styles.queued}>Queued · offline</Text>
+          </View>
+        ) : undefined
+      }
       fields={fields}
       addressLabel="Address"
       addressValue={item.address}
@@ -165,6 +174,8 @@ const WorkCard: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
+  queuedRow: {flexDirection: 'row', alignItems: 'center', gap: 5},
+  queued: {fontFamily: theme.fonts.black, fontSize: 12, color: '#C26401'},
   // Matches RecordCard's own internal `value` style for a custom field node.
   value: {fontFamily: theme.fonts.black, fontSize: 13, color: '#181B1F'},
   assignee: {flexDirection: 'row', alignItems: 'center', gap: 6},

@@ -62,6 +62,7 @@ import {
 } from './filtering';
 import WorkCard from './components/WorkCard';
 import TabSwitcher from './components/TabSwitcher';
+import {usePendingWorkLogItems} from './pendingWorkItems';
 import {theme} from '../../theme';
 
 interface ToastState {
@@ -81,11 +82,13 @@ type WorkRoute =
 
 const WorkScreen: React.FC = () => {
   const {
-    data: items = [],
+    data: queryItems = [],
     isLoading,
     isError,
     refetch,
   } = useGetWorkItemsQuery();
+  const pendingItems = usePendingWorkLogItems();
+  const items = useMemo(() => [...pendingItems, ...queryItems], [pendingItems, queryItems]);
 
   const [bucket, setBucket] = useState<WorkBucket>('assigned');
   const [search, setSearch] = useState('');
@@ -152,6 +155,13 @@ const WorkScreen: React.FC = () => {
   }, []);
 
   const handleOpenItem = useCallback((record: WorkItem) => {
+    if (record.queuedOffline) {
+      Alert.alert(
+        'Still uploading',
+        "This entry hasn't finished uploading yet — it'll be available to view once you're back online.",
+      );
+      return;
+    }
     if (record.category === 'Maintenance' || record.category === 'Fixture') {
       setDetail({category: record.category, id: record.id});
       return;
@@ -255,10 +265,11 @@ const WorkScreen: React.FC = () => {
           setRoute({name: 'list'});
           setReturnTo(null);
           const copy = workLogCopy(created.shiftTypeName);
-          setToast({
-            title: copy.toastTitle,
-            message: copy.toastMessage(created.entryType),
-          });
+          setToast(
+            created.queued
+              ? {title: copy.queuedToastTitle, message: copy.queuedToastMessage(created.entryType)}
+              : {title: copy.toastTitle, message: copy.toastMessage(created.entryType)},
+          );
         }}
       />
     );

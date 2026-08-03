@@ -29,6 +29,13 @@ export interface WorkItem {
   disposition?: string;
   businessName?: string;
   quantity?: string;
+  /**
+   * Client-only, unlike Fixture/Maintenance's server-modeled `queuedOffline`
+   * field — a real Work Log record from the server is never marked queued.
+   * Only set (`true`) on the synthetic placeholder `usePendingWorkLogItems`
+   * builds for an entry still sitting in the outbox.
+   */
+  queuedOffline?: boolean;
 }
 
 export interface QuickAction {
