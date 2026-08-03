@@ -16,25 +16,49 @@ const Splash = () => (
   </View>
 );
 
-const App: React.FC = () => {
+/**
+ * Renders as a child of `PersistGate` (not alongside it) so this only mounts
+ * — and only reads `store.getState()` — after redux-persist has finished
+ * rehydrating the outbox slice from AsyncStorage. Mounting this any higher
+ * (e.g. in `App`'s own effect) would race rehydration and see an empty
+ * queue every time. See Finding 1 in the offline-outbox review.
+ */
+const OfflineQueueSync: React.FC = () => {
   useEffect(() => {
-    connectivity.init();
-    if (connectivity.isOnline()) {
-      flushOutbox();
-    }
-    return connectivity.onChange(online => {
-      if (online) {
+    let cancelled = false;
+
+    connectivity.init().then(() => {
+      if (cancelled) {
+        return;
+      }
+      if (connectivity.isOnline()) {
         flushOutbox();
       }
     });
+
+    const unsubscribe = connectivity.onChange(online => {
+      if (online && !cancelled) {
+        flushOutbox();
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
+  return null;
+};
+
+const App: React.FC = () => {
   return (
     <Provider store={store}>
       <PersistGate loading={<Splash />} persistor={persistor}>
         <ApolloProvider client={apolloClient}>
           <SafeAreaProvider>
             <StatusBar barStyle="light-content" backgroundColor="#4F46E5" />
+            <OfflineQueueSync />
             <AppNavigator />
           </SafeAreaProvider>
         </ApolloProvider>

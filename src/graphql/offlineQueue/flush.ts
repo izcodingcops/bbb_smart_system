@@ -24,6 +24,11 @@ export async function flushOutbox(): Promise<void> {
     const items = store.getState().outbox.items;
     for (const item of items) {
       const entry = OFFLINE_MUTATIONS[item.mutationKey as OfflineMutationKey];
+      if (!entry) {
+        logger.warn('OfflineQueue', `Dropping queued item with unrecognized mutationKey ${item.mutationKey}`);
+        store.dispatch(synced({id: item.id}));
+        continue;
+      }
       try {
         await apolloClient.mutate({
           mutation: entry.document,

@@ -27,14 +27,19 @@ export const connectivity = {
     return () => listeners.delete(listener);
   },
 
-  init: (): void => {
+  init: (): Promise<void> => {
     if (initialized) {
-      return;
+      return Promise.resolve();
     }
     initialized = true;
-    NetInfo.fetch().then(state => {
-      online = deriveOnline(state);
-    });
+    const fetchPromise = NetInfo.fetch()
+      .then(state => {
+        online = deriveOnline(state);
+      })
+      .catch(() => {
+        // Keep the module-level default and let the event listener below
+        // correct it once NetInfo is able to report state.
+      });
     NetInfo.addEventListener(state => {
       const next = deriveOnline(state);
       if (next !== online) {
@@ -42,5 +47,6 @@ export const connectivity = {
         listeners.forEach(listener => listener(online));
       }
     });
+    return fetchPromise;
   },
 };
