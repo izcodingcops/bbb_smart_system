@@ -18,6 +18,7 @@ export const SCREEN = {
 export const CREATE_TARGET_BY_TILE: Record<string, string> = {
   maintenance: SCREEN.maintenance,
   fixture: SCREEN.fixture,
+  work_log: SCREEN.work,
 };
 
 export const createTargetForTile = (tileId: string): string | null =>

@@ -11,6 +11,8 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import ViewMaintenanceScreen from '../maintenance/ViewMaintenanceScreen';
 import ViewFixtureScreen from '../fixture/ViewFixtureScreen';
+import CreateWorkLogScreen from '../workLog/CreateWorkLogScreen';
+import ViewWorkLogScreen from '../workLog/ViewWorkLogScreen';
 import {
   BackToTopPill,
   ConfirmDialog,
@@ -32,8 +34,12 @@ import {
 import {WorkBucket, WorkItem, WorkStatus} from '../../types/work';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
-import {useAppDispatch} from '../../redux/store';
-import {setTabBarHidden} from '../../redux/ui/slice';
+import {useAppDispatch, useAppSelector} from '../../redux/store';
+import {
+  clearPendingCreate,
+  requestScreen,
+  setTabBarHidden,
+} from '../../redux/ui/slice';
 import {SCREEN} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {
@@ -66,6 +72,12 @@ interface ToastState {
 /** Only these categories have a detail screen built; others fall back to a "coming soon" alert. */
 type DetailTarget = {category: 'Maintenance' | 'Fixture'; id: string};
 
+/** Create and Work Log's own View are full-screen pushes within the Work tab. */
+type WorkRoute =
+  | {name: 'list'}
+  | {name: 'create'}
+  | {name: 'view-worklog'; id: string};
+
 const WorkScreen: React.FC = () => {
   const {
     data: items = [],
@@ -87,18 +99,32 @@ const WorkScreen: React.FC = () => {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [detail, setDetail] = useState<DetailTarget | null>(null);
+  const [route, setRoute] = useState<WorkRoute>({name: 'list'});
+  /** Tab to go back to when create was opened from elsewhere and then closed. */
+  const [returnTo, setReturnTo] = useState<string | null>(null);
   const listRef = useRef<FlatList<WorkItem>>(null);
   const {mutate: setStatus} = useSetWorkItemStatusMutation();
   const {queueTile, flushTile} = useAddRequestTiles(SCREEN.work);
   const dispatch = useAppDispatch();
+  const pendingCreate = useAppSelector(state => state.ui.pendingCreate);
 
-  // View is a full-screen push within the Work tab — the tab bar has no place there.
+  // Someone asked for a Work Log create from another tab — the navigator has
+  // since brought this screen on, so open create and spend the request,
+  // holding on to where they came from for an unsaved close.
   useEffect(() => {
-    dispatch(setTabBarHidden(detail !== null));
+    if (pendingCreate?.target !== SCREEN.work) return;
+    setReturnTo(pendingCreate.origin === SCREEN.work ? null : pendingCreate.origin);
+    setRoute({name: 'create'});
+    dispatch(clearPendingCreate());
+  }, [dispatch, pendingCreate]);
+
+  // Create and View are full-screen pushes — the tab bar has no place there.
+  useEffect(() => {
+    dispatch(setTabBarHidden(detail !== null || route.name !== 'list'));
     return () => {
       dispatch(setTabBarHidden(false));
     };
-  }, [dispatch, detail]);
+  }, [dispatch, detail, route.name]);
 
   const handleSelectStatus = useCallback(
     async (item: WorkItem, status: WorkStatus) => {
@@ -127,6 +153,10 @@ const WorkScreen: React.FC = () => {
   const handleOpenItem = useCallback((record: WorkItem) => {
     if (record.category === 'Maintenance' || record.category === 'Fixture') {
       setDetail({category: record.category, id: record.id});
+      return;
+    }
+    if (record.category === 'Activity') {
+      setRoute({name: 'view-worklog', id: record.id});
       return;
     }
     Alert.alert(record.reference, `${record.category} detail view is coming soon.`);
@@ -200,6 +230,48 @@ const WorkScreen: React.FC = () => {
           refetch();
           setToast({
             title: 'Fixture deleted',
+            message: `${reference} was removed from your Work Log.`,
+            variant: 'danger',
+          });
+        }}
+      />
+    );
+  }
+
+  if (route.name === 'create') {
+    return (
+      <CreateWorkLogScreen
+        onClose={() => {
+          setRoute({name: 'list'});
+          // Closed unsaved, so the trip into this module never really
+          // happened — go back where it started from.
+          if (returnTo) {
+            dispatch(requestScreen(returnTo));
+            setReturnTo(null);
+          }
+        }}
+        onCreated={created => {
+          setRoute({name: 'list'});
+          setReturnTo(null);
+          setToast({
+            title: 'Saved to Work Log',
+            message: `${created.entryType} was logged successfully.`,
+          });
+        }}
+      />
+    );
+  }
+
+  if (route.name === 'view-worklog') {
+    return (
+      <ViewWorkLogScreen
+        id={route.id}
+        onClose={() => setRoute({name: 'list'})}
+        onDeleted={reference => {
+          setRoute({name: 'list'});
+          refetch();
+          setToast({
+            title: 'Work Log entry deleted',
             message: `${reference} was removed from your Work Log.`,
             variant: 'danger',
           });
