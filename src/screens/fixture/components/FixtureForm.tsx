@@ -5,8 +5,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -25,6 +23,7 @@ import {
   UploadField,
 } from '../../../components/ui';
 import {ChevronLeftIcon, MapPinIcon, RefreshIcon, XIcon} from '../../../components/icons';
+import {useSectionScrollTabs} from '../../../hooks/useSectionScrollTabs';
 import {
   FixtureDetail,
   FixtureFormOptions,
@@ -47,9 +46,6 @@ const SECTION_TABS: SectionTabItem[] = [
   {key: 'location', label: 'Location'},
   {key: 'other', label: 'Other'},
 ];
-
-/** Scroll offset (px) past which the section tabs fade in and start tracking. */
-const TABS_SHOW_AT = 40;
 
 /** Create starts from device state; edit starts from the saved record. */
 export function buildInitialValues(
@@ -110,43 +106,24 @@ const FixtureForm: React.FC<Props> = ({
   /** Set when onSubmit rejects, so the form can report it without navigating away. */
   const [submitFailed, setSubmitFailed] = useState(false);
 
-  const scrollRef = useRef<ScrollView>(null);
   const otherRef = useRef<AccordionSectionHandle>(null);
-  /** Each section's y-offset within the scroll content, captured via onLayout. */
-  const sectionOffsets = useRef<Record<string, number>>({});
-  const [activeTab, setActiveTab] = useState(SECTION_TABS[0].key);
-  const [tabsVisible, setTabsVisible] = useState(false);
-
-  const recordSectionY = (key: string) => (event: {
-    nativeEvent: {layout: {y: number}};
-  }) => {
-    sectionOffsets.current[key] = event.nativeEvent.layout.y;
-  };
-
-  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const {y} = e.nativeEvent.contentOffset;
-    const viewportHeight = e.nativeEvent.layoutMeasurement.height;
-    setTabsVisible(y > TABS_SHOW_AT);
-
-    const line = y + viewportHeight * 0.4;
-    let active = SECTION_TABS[0].key;
-    for (const tab of SECTION_TABS) {
-      const sectionY = sectionOffsets.current[tab.key];
-      if (sectionY !== undefined && sectionY <= line) {
-        active = tab.key;
+  const {
+    scrollRef,
+    activeTab,
+    tabsVisible,
+    recordSectionY,
+    handleScroll,
+    handleScrollBeginDrag,
+    handleMomentumScrollEnd,
+    handleTabSelect,
+  } = useSectionScrollTabs({
+    sectionKeys: SECTION_TABS.map(tab => tab.key),
+    onSelect: key => {
+      if (key === 'other') {
+        otherRef.current?.open();
       }
-    }
-    setActiveTab(active);
-  };
-
-  const handleTabSelect = (key: string) => {
-    if (key === 'other') {
-      otherRef.current?.open();
-    }
-    const targetY = sectionOffsets.current[key] ?? 0;
-    scrollRef.current?.scrollTo({y: Math.max(0, targetY - 12), animated: true});
-    setActiveTab(key);
-  };
+    },
+  });
 
   const set = <K extends keyof FixtureFormValues>(
     key: K,
@@ -203,6 +180,8 @@ const FixtureForm: React.FC<Props> = ({
           contentContainerStyle={styles.bodyContent}
           keyboardShouldPersistTaps="handled"
           onScroll={handleScroll}
+          onScrollBeginDrag={handleScrollBeginDrag}
+          onMomentumScrollEnd={handleMomentumScrollEnd}
           scrollEventThrottle={16}>
           {/* ---- Basic Details ---- */}
           <View style={styles.section} onLayout={recordSectionY('basic')}>
