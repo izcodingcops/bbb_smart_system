@@ -8,6 +8,7 @@ import {authToken} from './authToken';
 import {cache} from './cache';
 import {loadApolloDevMessages} from './devMessages';
 import {mockSchema} from './mockSchema';
+import {offlineQueueLink} from './offlineQueue/link';
 
 loadApolloDevMessages();
 
@@ -56,7 +57,7 @@ const transportLink = ApolloLink.split(
 );
 
 export const apolloClient = new ApolloClient({
-  link: ApolloLink.from([errorLink, authLink, transportLink]),
+  link: ApolloLink.from([errorLink, authLink, offlineQueueLink, transportLink]),
   cache,
   defaultOptions: {
     watchQuery: {
