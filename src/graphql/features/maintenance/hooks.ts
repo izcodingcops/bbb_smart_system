@@ -184,6 +184,11 @@ const REFRESH_DETAIL = {
   refetchQueries: ['GetMaintenanceRequests', 'GetMaintenanceRequest'],
 };
 
+const CREATE_CONTEXT = {
+  context: {feature: 'maintenance', offlineQueueKey: 'CREATE_MAINTENANCE_REQUEST'},
+  refetchQueries: ['GetMaintenanceRequests'],
+};
+
 export function useGetMaintenanceRequestQuery(id: string) {
   const {data, loading, error, refetch} = useQuery<{
     maintenanceRequest: GqlMaintenanceDetail | null;
@@ -236,15 +241,17 @@ export function useCreateMaintenanceRequestMutation() {
   const programId = GetActiveProgramId();
   const [run, {loading}] = useMutation<{
     createMaintenanceRequest: {id: string; reference: string};
-  }>(CREATE_MAINTENANCE_REQUEST, REFRESH_LIST);
+  }>(CREATE_MAINTENANCE_REQUEST, CREATE_CONTEXT);
   return {
     mutate: async (values: MaintenanceFormValues) => {
       const result = await run({
         variables: {programId: programId ?? '', input: toWireInput(values)},
       });
+      const id = result.data?.createMaintenanceRequest.id ?? '';
       return {
-        id: result.data?.createMaintenanceRequest.id ?? '',
+        id,
         reference: result.data?.createMaintenanceRequest.reference ?? '',
+        queued: id.startsWith('outbox_'),
       };
     },
     isLoading: loading,
