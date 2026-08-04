@@ -108,6 +108,15 @@ export interface DispatchIncident {
   connectedMaintenance: string[];
   connectedPois: string[];
   connectedEquipment: string[];
+
+  /**
+   * Client-only, unlike Fixture/Maintenance's server-modeled `queuedOffline`
+   * field — a real DispatchIncident from the server is never marked queued.
+   * Only set (`true`) on the synthetic placeholder
+   * `usePendingDispatchIncidents` builds for a create still sitting in the
+   * outbox (see src/screens/dispatch/pendingDispatchIncidents.ts).
+   */
+  queuedOffline?: boolean;
 }
 
 /** What the Add Incident form's dropdowns offer. */

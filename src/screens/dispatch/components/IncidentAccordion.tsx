@@ -1,12 +1,12 @@
 import React from 'react';
-import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet, Alert} from 'react-native';
 import {
   AccordionSection,
   DetailField,
   detailGrid,
   formatDateTime,
 } from '../../../components/ui';
-import {ArrowRightIcon} from '../../../components/icons';
+import {ArrowRightIcon, CloudOffIcon} from '../../../components/icons';
 import {DispatchIncident} from '../../../types/dispatch';
 import {theme} from '../../../theme';
 
@@ -29,6 +29,12 @@ const IncidentAccordion: React.FC<Props> = ({
     subtitle={incident.label}
     initiallyOpen={initiallyOpen}
     highlighted={highlighted}>
+    {incident.queuedOffline ? (
+      <View style={styles.queuedRow}>
+        <CloudOffIcon size={13} color="#C26401" />
+        <Text style={styles.queued}>Queued · offline — not yet uploaded</Text>
+      </View>
+    ) : null}
     <View style={detailGrid}>
       <DetailField label="ID" value={incident.reference} />
       <DetailField label="Created By" value={incident.createdBy} />
@@ -42,7 +48,18 @@ const IncidentAccordion: React.FC<Props> = ({
     <TouchableOpacity
       style={styles.viewMore}
       activeOpacity={0.85}
-      onPress={() => onViewMore(incident)}>
+      onPress={() => {
+        // A queued placeholder isn't in any store yet — its detail sheet
+        // would just show the same summary again with nothing more to add.
+        if (incident.queuedOffline) {
+          Alert.alert(
+            'Still uploading',
+            "This incident hasn't finished uploading yet — full detail will be available once you're back online.",
+          );
+          return;
+        }
+        onViewMore(incident);
+      }}>
       <Text style={styles.viewMoreText}>View More Detail</Text>
       <ArrowRightIcon size={16} color={theme.colors.primary} />
     </TouchableOpacity>
@@ -50,6 +67,13 @@ const IncidentAccordion: React.FC<Props> = ({
 );
 
 const styles = StyleSheet.create({
+  queuedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginBottom: theme.spacing.md,
+  },
+  queued: {fontFamily: theme.fonts.black, fontSize: 12, color: '#C26401'},
   viewMore: {
     flexDirection: 'row',
     alignItems: 'center',

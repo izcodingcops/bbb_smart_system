@@ -23,6 +23,7 @@ import DispatchTabs, {DispatchTab, DispatchTabKey} from './components/DispatchTa
 import EscalationAccordion from './components/EscalationAccordion';
 import IncidentAccordion from './components/IncidentAccordion';
 import IncidentDetailSheet from './components/IncidentDetailSheet';
+import {usePendingDispatchIncidents} from './pendingDispatchIncidents';
 import {DispatchIncident} from '../../types/dispatch';
 import {theme} from '../../theme';
 
@@ -35,6 +36,12 @@ const TABS: DispatchTab[] = [
 /** Add Incident is a full-screen push within the detail screen. */
 type DetailRoute = {name: 'detail'} | {name: 'addIncident'};
 
+interface ToastState {
+  title: string;
+  message: string;
+  variant: 'success' | 'danger';
+}
+
 interface Props {
   id: string;
   onClose: () => void;
@@ -44,6 +51,7 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
   // Every hook runs before the early returns below — the loading, error and
   // loaded branches must not change hook order between renders.
   const {data: detail, isLoading, isError, refetch} = useGetDispatchQuery(id);
+  const pendingIncidents = usePendingDispatchIncidents(id);
   const [tab, setTab] = useState<DispatchTabKey>('dispatch');
   const [openIncident, setOpenIncident] = useState<DispatchIncident | null>(null);
   const scrollRef = useRef<ScrollView>(null);
@@ -52,7 +60,13 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
   const [justAdded, setJustAdded] = useState<
     {id: string; label: string; queued: boolean} | null
   >(null);
-  const [toastVisible, setToastVisible] = useState(false);
+  /**
+   * Snapshotted at onCreated rather than derived from `justAdded` — that
+   * state gets nulled by handleTabChange as soon as the user leaves the
+   * Incident tab, which would otherwise flip a still-visible "queued"
+   * toast over to a false "attached" one mid-display.
+   */
+  const [toast, setToast] = useState<ToastState | null>(null);
 
   // Wrapped in useCallback: DispatchTabs is React.memo'd, so a fresh inline
   // arrow passed as onChange on every render would defeat that memo.
@@ -103,8 +117,25 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
           setRoute({name: 'detail'});
           setJustAdded({id: created.id, label: created.label, queued: created.queued});
           setTab('incident');
-          setToastVisible(true);
-          refetch();
+          setToast(
+            created.queued
+              ? {
+                  title: 'Saved — will upload when back online',
+                  message:
+                    "This incident is queued and will upload automatically once you're back online.",
+                  variant: 'danger',
+                }
+              : {
+                  title: 'Incident added',
+                  message: `${created.label} was attached to this dispatch.`,
+                  variant: 'success',
+                },
+          );
+          // No explicit refetch() here — CREATE_CONTEXT (src/graphql/features/
+          // dispatch/hooks.ts) already declares refetchQueries: ['GetDispatch'],
+          // and useGetDispatchQuery keeps that query active the whole time
+          // since it's called above every early return in this component, so
+          // the declarative refetch alone covers it.
         }}
       />
     );
@@ -195,7 +226,7 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
         ) : null}
 
         {tab === 'incident' ? (
-          detail.incidents.length > 0 ? (
+          detail.incidents.length > 0 || pendingIncidents.length > 0 ? (
             <View style={styles.accordions}>
               {newlyAdded.length > 0 ? (
                 <>
@@ -211,11 +242,27 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
                   ))}
                 </>
               ) : null}
+              {pendingIncidents.length > 0 ? (
+                <>
+                  <Text style={styles.newBand}>Pending Upload</Text>
+                  {pendingIncidents.map(incident => (
+                    <IncidentAccordion
+                      key={incident.id}
+                      incident={incident}
+                      initiallyOpen
+                      highlighted
+                      onViewMore={setOpenIncident}
+                    />
+                  ))}
+                </>
+              ) : null}
               {rest.map((incident, index) => (
                 <IncidentAccordion
                   key={incident.id}
                   incident={incident}
-                  initiallyOpen={newlyAdded.length === 0 && index === 0}
+                  initiallyOpen={
+                    newlyAdded.length === 0 && pendingIncidents.length === 0 && index === 0
+                  }
                   onViewMore={setOpenIncident}
                 />
               ))}
@@ -233,19 +280,11 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
       />
 
       <Toast
-        visible={toastVisible}
-        title={
-          justAdded?.queued ? 'Saved — will upload when back online' : 'Incident added'
-        }
-        message={
-          justAdded
-            ? justAdded.queued
-              ? "This incident is queued and will upload automatically once you're back online."
-              : `${justAdded.label} was attached to this dispatch.`
-            : 'It was attached to this dispatch.'
-        }
-        variant={justAdded?.queued ? 'danger' : 'success'}
-        onDismiss={() => setToastVisible(false)}
+        visible={toast !== null}
+        title={toast?.title ?? ''}
+        message={toast?.message ?? ''}
+        variant={toast?.variant}
+        onDismiss={() => setToast(null)}
       />
     </View>
   );
