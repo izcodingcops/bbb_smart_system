@@ -56,6 +56,8 @@ export const dispatchTypeDefs = /* GraphQL */ `
   "What Dispatch reads about a connected incident. Not the canonical Incident type."
   type DispatchIncident {
     id: ID!
+    "Display reference, e.g. '#96211407'."
+    reference: String!
     label: String!
     createdBy: String!
     priority: DispatchPriority!

@@ -69,6 +69,8 @@ export interface DispatchVehicle {
  */
 export interface DispatchIncident {
   id: string;
+  /** Display reference, e.g. '#96211407'. Never the id — see the trap table. */
+  reference: string;
   /** Accordion label, e.g. 'Incident 1'. */
   label: string;
   createdBy: string;

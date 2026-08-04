@@ -336,7 +336,7 @@ const checks: Check[] = [
         reference createdBy tagSelected assignedIndividual initialOutcome outcomeNotes
         escalations { id label type respondingPerson timeCalled status notes }
         incidents {
-          id label priority incidentType outcome zone businessName documentCount
+          id reference label priority incidentType outcome zone businessName documentCount
           police { name timeCalled timeArrived }
           ems { name responder }
           parties { name }
@@ -354,6 +354,10 @@ const checks: Check[] = [
     assert.equal(d.escalations[0].label, 'EMS');
     assert.equal(d.incidents.length, 1);
     assert.equal(d.incidents[0].id, '1496371');
+    assert.equal(d.incidents[0].reference, '#96211407');
+    // The id/reference seam again, one level down: nested types get it wrong
+    // more often than top-level ones, because nothing forces the distinction.
+    assert.ok(d.incidents.every((i: any) => i.id !== i.reference));
     assert.equal(d.incidents[0].priority, 'HIGH');
     assert.equal(d.incidents[0].police.name, 'Jack Son');
     assert.equal(d.incidents[0].ems.name, null);

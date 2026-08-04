@@ -96,6 +96,7 @@ const GEN_BASE = new Date(seedAt(3, 6 * 60)).getTime();
  */
 const INCIDENT_1: DispatchIncident = {
   id: '1496371',
+  reference: '#96211407',
   label: 'Incident 1',
   createdBy: 'test user 99',
   priority: 'High',

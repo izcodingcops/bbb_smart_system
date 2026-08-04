@@ -18,11 +18,11 @@ interface Props {
 
 const IncidentAccordion: React.FC<Props> = ({incident, initiallyOpen, onViewMore}) => (
   <AccordionSection
-    title={incident.id}
+    title={incident.reference}
     subtitle={incident.label}
     initiallyOpen={initiallyOpen}>
     <View style={detailGrid}>
-      <DetailField label="ID" value={incident.id} />
+      <DetailField label="ID" value={incident.reference} />
       <DetailField label="Created By" value={incident.createdBy} />
       <DetailField label="Priority Level" value={incident.priority} />
       <DetailField label="Incident Type" value={incident.incidentType} />

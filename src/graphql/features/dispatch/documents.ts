@@ -53,6 +53,7 @@ export const GET_DISPATCH = gql`
       }
       incidents {
         id
+        reference
         label
         createdBy
         priority
