@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View, Text, FlatList, ScrollView, StyleSheet} from 'react-native';
+import {View, Text, FlatList, ScrollView, StyleSheet, Alert} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import {BackToTopPill, DateRangeSheet, EmptyState, FilterChips, GradientFab, ListSearchRow, ListSummary, MultiSelectSheet, RecordCardSkeleton, SingleSelectSheet, Toast} from '../../components/ui';
@@ -35,6 +35,7 @@ import {
 import FixtureCard from './components/FixtureCard';
 import CreateFixtureScreen from './CreateFixtureScreen';
 import ViewFixtureScreen from './ViewFixtureScreen';
+import {usePendingFixtureItems} from './pendingFixtureItems';
 import {theme} from '../../theme';
 
 /** Create and View are full-screen pushes within the Fixture tab. */
@@ -49,7 +50,12 @@ interface ToastState {
 }
 
 const FixtureScreen: React.FC = () => {
-  const {data: fixtures = [], isLoading, isError, refetch} = useGetFixturesQuery();
+  const {data: queryFixtures = [], isLoading, isError, refetch} = useGetFixturesQuery();
+  const pendingFixtures = usePendingFixtureItems();
+  const fixtures = useMemo(
+    () => [...pendingFixtures, ...queryFixtures],
+    [pendingFixtures, queryFixtures],
+  );
 
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('latest');
@@ -112,6 +118,13 @@ const FixtureScreen: React.FC = () => {
   }, []);
 
   const handleOpenFixture = useCallback((record: Fixture) => {
+    if (record.queuedOffline) {
+      Alert.alert(
+        'Still uploading',
+        "This fixture hasn't finished uploading yet — it'll be available to view once you're back online.",
+      );
+      return;
+    }
     setRoute({name: 'view', id: record.id});
   }, []);
 
@@ -161,11 +174,20 @@ const FixtureScreen: React.FC = () => {
           // Submitting keeps them here: the toast's View action opens the new
           // record, which only exists on this tab.
           setReturnTo(null);
-          setToast({
-            title: 'Fixture submitted',
-            message: `${created.reference} was added to your Work Log.`,
-            routeId: created.id,
-          });
+          setToast(
+            created.queued
+              ? {
+                  title: 'Saved — will upload when back online',
+                  message:
+                    "This fixture is queued and will upload automatically once you're back online.",
+                  routeId: '',
+                }
+              : {
+                  title: 'Fixture submitted',
+                  message: `${created.reference} was added to your Work Log.`,
+                  routeId: created.id,
+                },
+          );
         }}
       />
     );

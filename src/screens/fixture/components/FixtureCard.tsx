@@ -27,6 +27,9 @@ interface Props {
 
 const FixtureCard: React.FC<Props> = ({fixture, onPress, menuOpen, onToggleMenu, onSelectStatus}) => {
   const status = STATUS_STYLE[fixture.status];
+  // A queued placeholder doesn't exist in any store yet, so its status can't
+  // be changed until it syncs.
+  const actionable = !fixture.queuedOffline;
   const menuOptions = TRANSITIONS[fixture.status].map(option => ({
     value: option.status,
     label: option.label,
@@ -43,13 +46,13 @@ const FixtureCard: React.FC<Props> = ({fixture, onPress, menuOpen, onToggleMenu,
           label={fixture.status}
           bg={status.bg}
           fg={status.fg}
-          onPress={() => onToggleMenu(fixture.id)}
-          trailingChevron
+          onPress={actionable ? () => onToggleMenu(fixture.id) : undefined}
+          trailingChevron={actionable}
         />
       }
       kebab={
         <KebabMenu
-          visible
+          visible={actionable}
           open={menuOpen}
           onToggle={() => onToggleMenu(fixture.id)}
           options={menuOptions}
