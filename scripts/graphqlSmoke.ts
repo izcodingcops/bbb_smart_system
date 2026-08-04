@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {graphql} from 'graphql';
 import {mockSchema} from '../src/graphql/mockSchema';
+import {DATE_RANGE_OPTIONS, matchesDateRange} from '../src/utils/dateRange';
 
 type Check = [name: string, run: () => Promise<void> | void];
 
@@ -379,6 +380,33 @@ const checks: Check[] = [
     assert.equal(d.reference, '#BBB-D 0000-07');
     assert.deepEqual(d.escalations, []);
     assert.deepEqual(d.incidents, []);
+  }],
+
+  ['every dispatch date-range bucket is non-empty against the current clock', async () => {
+    const r: any = await run(
+      'query D($p: ID!) { dispatches(programId: $p) { createdAt } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const dates: string[] = r.data.dispatches.map((d: any) => d.createdAt);
+
+    // 'custom' is excluded: with no dates picked it matches everything, so it
+    // proves nothing about the seed.
+    const buckets = DATE_RANGE_OPTIONS.map(o => o.value).filter(v => v !== 'custom');
+    const counts = new Map(
+      buckets.map(v => [v, dates.filter(d => matchesDateRange(d, v)).length]),
+    );
+
+    for (const [bucket, count] of counts) {
+      assert.ok(count > 0, `date range bucket "${bucket}" is empty — the seed has gone stale`);
+    }
+    // Last 30 must reach strictly further back than Last 7, or the two chips
+    // are indistinguishable and the seed is too tightly clustered.
+    assert.ok(counts.get('last30')! > counts.get('last7')!);
+
+    // Nothing may be seeded into the future against a live clock.
+    const now = Date.now();
+    assert.ok(dates.every(d => Date.parse(d) <= now));
   }],
 
   ['work log entries resolve with uppercase YesNo enums', async () => {

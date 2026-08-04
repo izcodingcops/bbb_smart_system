@@ -33,15 +33,66 @@ const DETAIL_DEFAULTS = {
   incidents: [] as DispatchIncident[],
 };
 
+function pad(value: number): string {
+  return String(value).padStart(2, '0');
+}
+
+/** Formats back to the same timezone-naive shape the explicit records use. */
+function toLocalIso(date: Date): string {
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}:00`
+  );
+}
+
+const MINUTE = 60 * 1000;
+const HOUR = 60 * MINUTE;
+
+/**
+ * Captured once at module load. Every seeded date is expressed relative to it,
+ * so the seed cannot go stale the way the original absolute July literals did:
+ * three of the five Date Range buckets were empty within four days of the
+ * module shipping.
+ */
+const SEED_NOW = Date.now();
+
+/** Midnight `dayOffset` days from the day `t` falls on, in the device timezone. */
+function startOfDay(t: number, dayOffset: number): number {
+  const d = new Date(t);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + dayOffset);
+  return d.getTime();
+}
+
+/**
+ * `minutes` into the day that fell `daysAgo` days ago — so the mockup's own
+ * clock times survive, while the calendar day rides the device clock.
+ *
+ * Clamped to SEED_NOW: without it, a record seeded at "today 07:34" would sit
+ * in the future for anyone opening the app before 07:34, and the app would
+ * show dispatches that had not happened yet.
+ */
+function seedAt(daysAgo: number, minutes: number): string {
+  const t = Math.min(startOfDay(SEED_NOW, -daysAgo) + minutes * MINUTE, SEED_NOW);
+  return toLocalIso(new Date(t));
+}
+
+/**
+ * Three days back at 06:00 — just under the oldest explicit record, so
+ * generated rows sort below them. Stepping back 7h each covers roughly six
+ * further days, putting the oldest around nine days ago: far enough that
+ * Last 30 days reaches records Last 7 days does not.
+ */
+const GEN_BASE = new Date(seedAt(3, 6 * 60)).getTime();
+
 /**
  * The mockup's single fully-populated incident, on dispatch #BBB-D 0000-06.
  *
  * The source mockup dates this incident 8 days after its parent dispatch
- * (07/10/2026 vs. the dispatch's 07/02/2026) — a mockup artifact, not a
- * domain rule, since it only made sense while every date was frozen in the
- * past. Pinned to the parent's own day instead, so no seeded record lands
- * in the future against a live clock. The police-before-incident ordering
- * within the same day is left as-is; that oddity is harmless.
+ * (07/10/2026 vs. 07/02/2026) — a mockup artifact, not a domain rule. It is
+ * pinned to the parent's own day instead, so no seeded record lands in the
+ * future against a live clock. The police-before-incident ordering within the
+ * same day is left as-is; that oddity is harmless.
  */
 const INCIDENT_1: DispatchIncident = {
   id: '1496371',
@@ -49,7 +100,7 @@ const INCIDENT_1: DispatchIncident = {
   createdBy: 'test user 99',
   priority: 'High',
   incidentType: 'Narcan',
-  occurredAt: '2026-07-31T07:49:00',
+  occurredAt: seedAt(0, 7 * 60 + 49),
   outcome: '911 CALLED',
   notes: 'Again',
   ambassador: 'test user 99',
@@ -64,12 +115,12 @@ const INCIDENT_1: DispatchIncident = {
   fixture: null,
   documentCount: 0,
   lastModifiedBy: 'test user 99',
-  lastModifiedAt: '2026-07-31T07:49:00',
+  lastModifiedAt: seedAt(0, 7 * 60 + 49),
   police: {
     name: 'Jack Son',
     responder: null,
-    timeCalled: '2026-07-31T07:40:00',
-    timeArrived: '2026-07-31T07:45:00',
+    timeCalled: seedAt(0, 7 * 60 + 40),
+    timeArrived: seedAt(0, 7 * 60 + 45),
   },
   fire: {...NO_RESPONDER},
   ems: {...NO_RESPONDER},
@@ -87,8 +138,8 @@ const ESCALATION_EMS: DispatchEscalation = {
   label: 'EMS',
   type: 'EMS',
   respondingPerson: 'test',
-  timeCalled: '2026-07-31T04:18:00',
-  timeArrived: '2026-07-31T04:18:00',
+  timeCalled: seedAt(0, 4 * 60 + 18),
+  timeArrived: seedAt(0, 4 * 60 + 18),
   timeCleared: null,
   status: 'Open',
   notes: 'test',
@@ -100,9 +151,9 @@ const ESCALATION_POLICE: DispatchEscalation = {
   label: 'Police',
   type: 'Police',
   respondingPerson: 'Officer D. Reyes',
-  timeCalled: '2026-07-30T21:20:00',
-  timeArrived: '2026-07-30T21:31:00',
-  timeCleared: '2026-07-30T22:05:00',
+  timeCalled: seedAt(1, 21 * 60 + 20),
+  timeArrived: seedAt(1, 21 * 60 + 31),
+  timeCleared: seedAt(1, 22 * 60 + 5),
   status: 'Open',
   notes: 'Subject transported for evaluation.',
 };
@@ -112,8 +163,8 @@ const ESCALATION_FIRE: DispatchEscalation = {
   label: 'Fire',
   type: 'Fire',
   respondingPerson: 'Engine 12',
-  timeCalled: '2026-07-30T15:52:00',
-  timeArrived: '2026-07-30T16:04:00',
+  timeCalled: seedAt(1, 15 * 60 + 52),
+  timeArrived: seedAt(1, 16 * 60 + 4),
   timeCleared: null,
   status: 'Open',
   notes: null,
@@ -129,7 +180,7 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'New Referred Type For Testing',
     status: 'Closed',
     priority: 'Low',
-    createdAt: '2026-07-31T07:34:00',
+    createdAt: seedAt(0, 7 * 60 + 34),
     address: '6215 Kamer Ct, Charlestown, IN 47111, USA',
     location: '6215 Kamer Ct, Charlestown, IN 47111, USA',
     initialOutcome: 'Resolved',
@@ -142,15 +193,15 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'Stakeholder/User Contact',
     status: 'Closed',
     priority: 'Low',
-    createdAt: '2026-07-31T04:29:00',
+    createdAt: seedAt(0, 4 * 60 + 29),
     address: 'Lahore, Virginia, United States',
     location: 'Lahore, Virginia, United States',
     sourceNotes: 'test',
     locationNotes: 'test',
     tagSelected: 'Unsheltered',
     assignedIndividual: 'Waqas Taz',
-    timeDispatched: '2026-07-31T04:28:00',
-    timeArrived: '2026-07-31T04:28:00',
+    timeDispatched: seedAt(0, 4 * 60 + 28),
+    timeArrived: seedAt(0, 4 * 60 + 28),
     initialOutcome: 'Resolved',
     outcomeNotes: 'Resolved in Dispatch initial review',
     escalations: [ESCALATION_EMS],
@@ -164,7 +215,7 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'Identified On Camera',
     status: 'Closed',
     priority: 'Low',
-    createdAt: '2026-07-31T04:24:00',
+    createdAt: seedAt(0, 4 * 60 + 24),
     address: 'Junipero Serra Freeway, Belmont, California 94002, USA',
     location: 'Junipero Serra Freeway, Belmont, California 94002, USA',
     initialOutcome: 'Resolved',
@@ -177,7 +228,7 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'New Referred Type For Testing',
     status: 'Escalated',
     priority: 'Low',
-    createdAt: '2026-07-31T04:17:00',
+    createdAt: seedAt(0, 4 * 60 + 17),
     address: 'Lahore, Virginia, United States',
     location: 'Lahore, Virginia, United States',
     tagSelected: 'Unsheltered',
@@ -191,14 +242,14 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'Cro Initiated',
     status: 'Open',
     priority: 'High',
-    createdAt: '2026-07-30T21:12:00',
+    createdAt: seedAt(1, 21 * 60 + 12),
     address: '900 16th St Mall, Denver, CO 80202',
     location: '900 16th St Mall, Denver, CO 80202',
     sourceNotes: 'Caller reported a person in distress near the kiosk.',
     tagSelected: 'Unsheltered',
     assignedIndividual: 'Marcus Bell',
-    timeDispatched: '2026-07-30T21:15:00',
-    timeArrived: '2026-07-30T21:27:00',
+    timeDispatched: seedAt(1, 21 * 60 + 15),
+    timeArrived: seedAt(1, 21 * 60 + 27),
     initialOutcome: 'Referred to Outreach',
     escalations: [ESCALATION_POLICE],
   },
@@ -210,11 +261,11 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'Citizen App',
     status: 'Escalated',
     priority: 'Medium',
-    createdAt: '2026-07-30T15:40:00',
+    createdAt: seedAt(1, 15 * 60 + 40),
     address: '1701 Wynkoop St, Denver, CO 80202',
     location: '1701 Wynkoop St, Denver, CO 80202',
     assignedIndividual: 'Sara Diaz',
-    timeDispatched: '2026-07-30T15:46:00',
+    timeDispatched: seedAt(1, 15 * 60 + 46),
     escalations: [ESCALATION_FIRE],
   },
   {
@@ -225,13 +276,13 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'Supervisor/Management Initiated',
     status: 'Closed',
     priority: 'High',
-    createdAt: '2026-07-30T11:20:00',
+    createdAt: seedAt(1, 11 * 60 + 20),
     address: 'Civic Center Park, Denver, CO 80204',
     location: 'Civic Center Park, Denver, CO 80204',
     assignedIndividual: 'Ava Nguyen',
-    timeDispatched: '2026-07-30T11:24:00',
-    timeArrived: '2026-07-30T11:36:00',
-    timeCleared: '2026-07-30T12:02:00',
+    timeDispatched: seedAt(1, 11 * 60 + 24),
+    timeArrived: seedAt(1, 11 * 60 + 36),
+    timeCleared: seedAt(1, 12 * 60 + 2),
     initialOutcome: 'Resolved',
     fullSquadResponse: 'Yes',
   },
@@ -243,7 +294,7 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'Webform',
     status: 'Closed',
     priority: 'Low',
-    createdAt: '2026-07-29T18:55:00',
+    createdAt: seedAt(2, 18 * 60 + 55),
     address: '1430 Larimer St, Denver, CO 80202',
     location: '1430 Larimer St, Denver, CO 80202',
     initialOutcome: 'Resolved',
@@ -256,7 +307,7 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'Stakeholder/User Contact',
     status: 'Open',
     priority: 'Medium',
-    createdAt: '2026-07-29T13:05:00',
+    createdAt: seedAt(2, 13 * 60 + 5),
     address: '1601 Wewatta St, Denver, CO 80202',
     location: '1601 Wewatta St, Denver, CO 80202',
     assignedIndividual: 'Marcus Bell',
@@ -269,7 +320,7 @@ const EXPLICIT: DispatchDetail[] = [
     howReferred: 'Identified On Camera',
     status: 'Closed',
     priority: 'Low',
-    createdAt: '2026-07-29T08:30:00',
+    createdAt: seedAt(2, 8 * 60 + 30),
     address: '16th & Curtis St, Denver, CO 80202',
     location: '16th & Curtis St, Denver, CO 80202',
     initialOutcome: 'Documented',
@@ -308,22 +359,6 @@ const GEN_ADDRESSES = [
 ];
 
 const GEN_ASSIGNEES = ['Marcus Bell', 'Sara Diaz', 'Ava Nguyen', 'Waqas Taz'];
-
-function pad(value: number): string {
-  return String(value).padStart(2, '0');
-}
-
-/** Formats back to the same timezone-naive shape the explicit records use. */
-function toLocalIso(date: Date): string {
-  return (
-    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
-    `T${pad(date.getHours())}:${pad(date.getMinutes())}:00`
-  );
-}
-
-const HOUR = 60 * 60 * 1000;
-/** Just under the oldest explicit record, so generated rows sort below them. */
-const GEN_BASE = new Date('2026-07-29T06:00:00').getTime();
 
 /**
  * Reference numbers count up from 0000-15, clear of every explicit reference
