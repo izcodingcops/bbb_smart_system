@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View, Text, FlatList, ScrollView, StyleSheet} from 'react-native';
+import {View, Text, FlatList, ScrollView, StyleSheet, Alert} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import {
@@ -55,6 +55,7 @@ import {
 import MaintenanceCard from './components/MaintenanceCard';
 import CreateMaintenanceScreen from './CreateMaintenanceScreen';
 import ViewMaintenanceScreen from './ViewMaintenanceScreen';
+import {usePendingMaintenanceItems} from './pendingMaintenanceItems';
 import {theme} from '../../theme';
 
 /** Create and View are full-screen pushes within the Maintenance tab. */
@@ -73,11 +74,16 @@ interface ToastState {
 
 const MaintenanceScreen: React.FC = () => {
   const {
-    data: requests = [],
+    data: queryRequests = [],
     isLoading,
     isError,
     refetch,
   } = useGetMaintenanceRequestsQuery();
+  const pendingRequests = usePendingMaintenanceItems();
+  const requests = useMemo(
+    () => [...pendingRequests, ...queryRequests],
+    [pendingRequests, queryRequests],
+  );
 
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('latest');
@@ -149,6 +155,13 @@ const MaintenanceScreen: React.FC = () => {
   }, []);
 
   const handleOpenRequest = useCallback((record: MaintenanceRequest) => {
+    if (record.queuedOffline) {
+      Alert.alert(
+        'Still uploading',
+        "This request hasn't finished uploading yet — it'll be available to view once you're back online.",
+      );
+      return;
+    }
     setRoute({name: 'view', id: record.id});
   }, []);
 
@@ -199,11 +212,21 @@ const MaintenanceScreen: React.FC = () => {
           // Submitting keeps them here: the toast's View action opens the new
           // record, which only exists on this tab.
           setReturnTo(null);
-          setToast({
-            title: 'Maintenance submitted',
-            message: `${created.reference} was added to your Work Log.`,
-            routeId: created.id,
-          });
+          setToast(
+            created.queued
+              ? {
+                  title: 'Saved — will upload when back online',
+                  message:
+                    "This request is queued and will upload automatically once you're back online.",
+                  routeId: '',
+                  variant: 'danger',
+                }
+              : {
+                  title: 'Maintenance submitted',
+                  message: `${created.reference} was added to your Work Log.`,
+                  routeId: created.id,
+                },
+          );
         }}
       />
     );
