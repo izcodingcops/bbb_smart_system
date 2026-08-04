@@ -15,6 +15,7 @@ import {
   DateTimeField,
   DropdownField,
   FieldLabel,
+  formChrome,
   MultiDropdownField,
   SectionTabs,
   SectionTabItem,
@@ -176,11 +177,11 @@ const MaintenanceForm: React.FC<Props> = ({
   };
 
   return (
-    <View style={styles.root}>
-      <SafeAreaView edges={['top']} style={styles.topbar}>
-        <View style={styles.topbarRow}>
+    <View style={formChrome.root}>
+      <SafeAreaView edges={['top']} style={formChrome.topbar}>
+        <View style={formChrome.topbarRow}>
           <TouchableOpacity
-            style={styles.topbarButton}
+            style={formChrome.topbarButton}
             activeOpacity={0.8}
             onPress={() =>
               mode === 'create' ? setConfirmDiscard(true) : onClose()
@@ -191,26 +192,26 @@ const MaintenanceForm: React.FC<Props> = ({
               <ChevronLeftIcon size={19} color="#3A3F46" />
             )}
           </TouchableOpacity>
-          <View style={styles.topbarText}>
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.reference}>{reference}</Text>
+          <View style={formChrome.topbarText}>
+            <Text style={formChrome.title}>{title}</Text>
+            <Text style={formChrome.reference}>{reference}</Text>
           </View>
         </View>
       </SafeAreaView>
 
-      <View style={styles.bodyWrap}>
+      <View style={formChrome.bodyWrap}>
         <ScrollView
           ref={scrollRef}
-          style={styles.body}
-          contentContainerStyle={styles.bodyContent}
+          style={formChrome.body}
+          contentContainerStyle={formChrome.bodyContent}
           keyboardShouldPersistTaps="handled"
           onScroll={handleScroll}
           onScrollBeginDrag={handleScrollBeginDrag}
           onMomentumScrollEnd={handleMomentumScrollEnd}
           scrollEventThrottle={16}>
           {/* ---- Basic Details ---- */}
-          <View style={styles.section} onLayout={recordSectionY('basic')}>
-            <Text style={styles.sectionTitle}>Basic Details</Text>
+          <View style={formChrome.section} onLayout={recordSectionY('basic')}>
+            <Text style={formChrome.sectionTitle}>Basic Details</Text>
 
             <DropdownField
               label="Maintenance Type"
@@ -228,7 +229,7 @@ const MaintenanceForm: React.FC<Props> = ({
               onChange={next => set('requestedAt', next)}
             />
 
-            <View style={styles.field}>
+            <View style={formChrome.field}>
               <FieldLabel label="Choose Assignee" required />
               <AssigneeToggle
                 value={values.assigneeKind}
@@ -254,7 +255,7 @@ const MaintenanceForm: React.FC<Props> = ({
               ) : null}
             </View>
 
-            <View style={styles.lastField}>
+            <View style={formChrome.lastField}>
               <FieldLabel label="Priority" required />
               <SegmentedButtons
                 options={PRIORITY_OPTIONS}
@@ -270,7 +271,7 @@ const MaintenanceForm: React.FC<Props> = ({
             title="Other Details"
             initiallyOpen
             onLayout={recordSectionY('other')}>
-            <View style={styles.field}>
+            <View style={formChrome.field}>
               <FieldLabel label="Description" />
               <TextField
                 placeholder="Add any notes about this maintenance…"
@@ -278,7 +279,7 @@ const MaintenanceForm: React.FC<Props> = ({
                 onChangeText={next => set('description', next)}
                 multiline
                 numberOfLines={4}
-                style={styles.textarea}
+                style={formChrome.textarea}
               />
             </View>
             <UploadField
@@ -289,16 +290,16 @@ const MaintenanceForm: React.FC<Props> = ({
           </AccordionSection>
 
           {/* ---- Location Details ---- */}
-          <View style={styles.section} onLayout={recordSectionY('location')}>
-            <Text style={styles.sectionTitle}>Location Details</Text>
+          <View style={formChrome.section} onLayout={recordSectionY('location')}>
+            <Text style={formChrome.sectionTitle}>Location Details</Text>
 
-            <View style={styles.field}>
+            <View style={formChrome.field}>
               <FieldLabel
                 label="Address"
                 required
                 trailing={
                   <TouchableOpacity
-                    style={styles.changeLocation}
+                    style={formChrome.changeLocation}
                     activeOpacity={0.7}
                     onPress={() =>
                       Alert.alert(
@@ -307,13 +308,13 @@ const MaintenanceForm: React.FC<Props> = ({
                       )
                     }>
                     <RefreshIcon size={14} color={theme.colors.primary} />
-                    <Text style={styles.changeLocationText}>Change Location</Text>
+                    <Text style={formChrome.changeLocationText}>Change Location</Text>
                   </TouchableOpacity>
                 }
               />
-              <View style={styles.addressBox}>
+              <View style={formChrome.addressBox}>
                 <MapPinIcon size={19} color={theme.colors.primary} />
-                <Text style={styles.addressText}>{values.address}</Text>
+                <Text style={formChrome.addressText}>{values.address}</Text>
               </View>
             </View>
 
@@ -326,7 +327,7 @@ const MaintenanceForm: React.FC<Props> = ({
               searchable={false}
             />
 
-            <View style={styles.field}>
+            <View style={formChrome.field}>
               <FieldLabel label="Describe Location" />
               <TextField
                 placeholder="e.g. North entrance, near bus stop"
@@ -335,7 +336,7 @@ const MaintenanceForm: React.FC<Props> = ({
               />
             </View>
 
-            <View style={styles.lastField}>
+            <View style={formChrome.lastField}>
               <DropdownField
                 label="Business Name"
                 placeholder="Select business name"
@@ -393,15 +394,15 @@ const MaintenanceForm: React.FC<Props> = ({
         />
       </View>
 
-      <SafeAreaView edges={['bottom']} style={styles.footer}>
+      <SafeAreaView edges={['bottom']} style={formChrome.footer}>
         <TouchableOpacity
-          style={[styles.submit, !canSubmit && styles.submitDisabled]}
+          style={[formChrome.submit, !canSubmit && formChrome.submitDisabled]}
           activeOpacity={0.9}
           disabled={!canSubmit}
           onPress={() =>
             mode === 'create' ? setConfirmSubmit(true) : runSubmit()
           }>
-          <Text style={styles.submitText}>{submitLabel}</Text>
+          <Text style={formChrome.submitText}>{submitLabel}</Text>
         </TouchableOpacity>
       </SafeAreaView>
 
@@ -448,120 +449,7 @@ const MaintenanceForm: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: theme.colors.background},
-  topbar: {
-    backgroundColor: theme.colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  topbarRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 13,
-    paddingHorizontal: 18,
-    paddingBottom: 14,
-    paddingTop: theme.spacing.xs,
-  },
-  topbarButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F0F1F4',
-  },
-  topbarText: {flex: 1, minWidth: 0},
-  title: {
-    fontFamily: theme.fonts.bold,
-    fontSize: 20,
-    letterSpacing: -0.6,
-    color: theme.colors.text,
-  },
-  reference: {
-    fontFamily: theme.fonts.black,
-    fontSize: 13.5,
-    color: theme.colors.textMuted,
-    marginTop: theme.spacing.xs,
-  },
-  bodyWrap: {flex: 1},
-  body: {flex: 1},
-  bodyContent: {paddingBottom: 40},
-  section: {
-    marginHorizontal: theme.spacing.lg,
-    marginTop: 14,
-    padding: theme.spacing.lg,
-    paddingBottom: theme.spacing.xs,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.white,
-    ...theme.shadow.card,
-  },
-  sectionTitle: {
-    fontFamily: theme.fonts.black,
-    fontSize: 18,
-    letterSpacing: -0.2,
-    color: theme.colors.text,
-    marginBottom: 14,
-  },
-  field: {marginBottom: theme.spacing.lg},
-  lastField: {marginBottom: 6},
   nested: {marginTop: theme.spacing.md},
-  textarea: {
-    minHeight: 96,
-    textAlignVertical: 'top',
-    paddingTop: theme.spacing.md,
-  },
-  changeLocation: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginLeft: 'auto',
-  },
-  changeLocationText: {
-    fontFamily: theme.fonts.black,
-    fontSize: 13,
-    color: theme.colors.primary,
-  },
-  addressBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.spacing.sm,
-    padding: 14,
-    borderRadius: 13,
-    borderWidth: 1.5,
-    borderColor: theme.colors.border,
-    backgroundColor: '#F4F5F7',
-  },
-  addressText: {
-    flex: 1,
-    fontFamily: theme.fonts.bold,
-    fontSize: 14.5,
-    lineHeight: 20,
-    color: theme.colors.text,
-  },
-  footer: {
-    paddingHorizontal: theme.spacing.xl,
-    paddingTop: 13,
-    borderTopWidth: 1,
-    borderTopColor: '#EAEAEA',
-    backgroundColor: theme.colors.white,
-  },
-  submit: {
-    height: 54,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.primary,
-    marginBottom: 13,
-  },
-  submitDisabled: {opacity: 0.45},
-  submitText: {
-    fontFamily: theme.fonts.black,
-    fontSize: 16,
-    letterSpacing: 0.2,
-    color: theme.colors.white,
-  },
 });
 
 export default MaintenanceForm;

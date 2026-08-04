@@ -22,6 +22,7 @@ export {
 } from './DropdownField';
 export {default as EmptyState} from './EmptyState';
 export {default as FilterChips} from './FilterChips';
+export {formChrome} from './formChrome';
 export {default as FormScreenSkeleton} from './FormScreenSkeleton';
 export {default as GradientFab} from './GradientFab';
 export {default as KebabMenu} from './KebabMenu';
