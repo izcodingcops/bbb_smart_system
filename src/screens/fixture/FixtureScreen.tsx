@@ -181,6 +181,7 @@ const FixtureScreen: React.FC = () => {
                   message:
                     "This fixture is queued and will upload automatically once you're back online.",
                   routeId: '',
+                  variant: 'danger',
                 }
               : {
                   title: 'Fixture submitted',
