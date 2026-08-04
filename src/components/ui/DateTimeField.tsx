@@ -8,10 +8,12 @@ import {theme} from '../../theme';
 interface Props {
   label: string;
   required?: boolean;
-  /** ISO-8601. */
-  value: string;
+  /** ISO-8601, or null/'' when nothing has been picked yet. */
+  value: string | null;
   onChange: (iso: string) => void;
   helpText?: string;
+  /** Shown in place of a formatted date while `value` is unset. */
+  placeholder?: string;
 }
 
 function pad(n: number): string {
@@ -70,9 +72,10 @@ const DateTimeField: React.FC<Props> = ({
   value,
   onChange,
   helpText = 'Auto-filled from your device — tap to adjust.',
+  placeholder = 'Select date & time',
 }) => {
   const [stage, setStage] = useState<'idle' | 'date' | 'time'>('idle');
-  const [draft, setDraft] = useState<Date>(new Date(value));
+  const [draft, setDraft] = useState<Date>(() => (value ? new Date(value) : new Date()));
   const [touched, setTouched] = useState(false);
 
   return (
@@ -82,15 +85,20 @@ const DateTimeField: React.FC<Props> = ({
         style={styles.control}
         activeOpacity={0.85}
         onPress={() => {
-          setDraft(new Date(value));
+          // No value yet — seed the picker from now rather than an Invalid
+          // Date built from '' or null.
+          setDraft(value ? new Date(value) : new Date());
           setStage('date');
         }}>
-        <Text style={styles.value}>{formatDateTime(value)}</Text>
-        {touched ? null : (
+        <Text style={[styles.value, !value && styles.placeholderText]}>
+          {value ? formatDateTime(value) : placeholder}
+        </Text>
+        {/* An unset field was never auto-filled, so it never earns the chip. */}
+        {!touched && value ? (
           <View style={styles.autoChip}>
             <Text style={styles.autoChipText}>AUTO</Text>
           </View>
-        )}
+        ) : null}
         <CalendarIcon size={19} />
       </TouchableOpacity>
       <Text style={styles.help}>{helpText}</Text>
@@ -141,6 +149,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: theme.colors.text,
   },
+  // Same muted treatment TextField/DropdownField give their own placeholders.
+  placeholderText: {color: theme.colors.textMuted},
   autoChip: {
     paddingHorizontal: 7,
     paddingVertical: 2,

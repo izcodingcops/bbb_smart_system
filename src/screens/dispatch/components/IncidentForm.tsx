@@ -583,12 +583,12 @@ const IncidentForm: React.FC<Props> = ({
               </View>
               <DateTimeField
                 label="Time Called"
-                value={values.policeTimeCalled ?? ''}
+                value={values.policeTimeCalled}
                 onChange={next => set('policeTimeCalled', next)}
               />
               <DateTimeField
                 label="Arrived Time"
-                value={values.policeTimeArrived ?? ''}
+                value={values.policeTimeArrived}
                 onChange={next => set('policeTimeArrived', next)}
               />
             </Involvement>
@@ -613,12 +613,12 @@ const IncidentForm: React.FC<Props> = ({
               </View>
               <DateTimeField
                 label="Time Called"
-                value={values.fireTimeCalled ?? ''}
+                value={values.fireTimeCalled}
                 onChange={next => set('fireTimeCalled', next)}
               />
               <DateTimeField
                 label="Arrived Time"
-                value={values.fireTimeArrived ?? ''}
+                value={values.fireTimeArrived}
                 onChange={next => set('fireTimeArrived', next)}
               />
             </Involvement>
@@ -651,12 +651,12 @@ const IncidentForm: React.FC<Props> = ({
               </View>
               <DateTimeField
                 label="Time Called"
-                value={values.emsTimeCalled ?? ''}
+                value={values.emsTimeCalled}
                 onChange={next => set('emsTimeCalled', next)}
               />
               <DateTimeField
                 label="Arrived Time"
-                value={values.emsTimeArrived ?? ''}
+                value={values.emsTimeArrived}
                 onChange={next => set('emsTimeArrived', next)}
               />
             </Involvement>
