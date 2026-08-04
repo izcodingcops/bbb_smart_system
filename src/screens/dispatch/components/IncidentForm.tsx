@@ -244,6 +244,25 @@ const IncidentForm: React.FC<Props> = ({
   const [submitFailed, setSubmitFailed] = useState(false);
 
   /**
+   * Repeatable Party and Vehicle cards key their DropdownFields by array
+   * index. DropdownField holds its own open/query state locally, so when a
+   * card is deleted and indices shift, React would reuse a surviving
+   * instance's dropdown state for a different card's data. A stable id per
+   * card — assigned once and never reused — keeps each card's transient UI
+   * state pinned to that card for its whole life. The counter only ever
+   * increments, so ids never collide even after deletes.
+   */
+  const nextCardId = useRef(0);
+  const makeCardKeys = (count: number) =>
+    Array.from({length: count}, () => nextCardId.current++);
+  const [partyKeys, setPartyKeys] = useState<number[]>(() =>
+    makeCardKeys(initialValues.parties.length),
+  );
+  const [vehicleKeys, setVehicleKeys] = useState<number[]>(() =>
+    makeCardKeys(initialValues.vehicles.length),
+  );
+
+  /**
    * Every collapsed section needs a handle, so tapping its tab can open it
    * before the scroll lands — jumping to a closed accordion otherwise scrolls
    * to a header with nothing under it.
@@ -313,6 +332,43 @@ const IncidentForm: React.FC<Props> = ({
         i === index ? {...vehicle, [key]: value} : vehicle,
       ),
     }));
+
+  /**
+   * Add/remove keep the key arrays in lockstep with values.parties /
+   * values.vehicles — same length, same order, always — so index i's key
+   * array entry always names the card currently at index i.
+   */
+  const addParty = () => {
+    setValues(current => ({
+      ...current,
+      parties: [...current.parties, {...EMPTY_PARTY}],
+    }));
+    setPartyKeys(current => [...current, nextCardId.current++]);
+  };
+
+  const removeParty = (index: number) => {
+    setValues(current => ({
+      ...current,
+      parties: current.parties.filter((_, i) => i !== index),
+    }));
+    setPartyKeys(current => current.filter((_, i) => i !== index));
+  };
+
+  const addVehicle = () => {
+    setValues(current => ({
+      ...current,
+      vehicles: [...current.vehicles, {...EMPTY_VEHICLE}],
+    }));
+    setVehicleKeys(current => [...current, nextCardId.current++]);
+  };
+
+  const removeVehicle = (index: number) => {
+    setValues(current => ({
+      ...current,
+      vehicles: current.vehicles.filter((_, i) => i !== index),
+    }));
+    setVehicleKeys(current => current.filter((_, i) => i !== index));
+  };
 
   /**
    * The four fields the design marks required and does not pre-seed. Location
@@ -633,15 +689,11 @@ const IncidentForm: React.FC<Props> = ({
             onLayout={recordSectionY('parties')}>
             {values.parties.map((party, index) => (
               <RepeatableCard
-                key={`party-${index}`}
+                key={partyKeys[index]}
                 label={`Party ${index + 1}`}
                 onRemove={
                   values.parties.length > 1
-                    ? () =>
-                        set(
-                          'parties',
-                          values.parties.filter((_, i) => i !== index),
-                        )
+                    ? () => removeParty(index)
                     : undefined
                 }>
                 <View style={formChrome.field}>
@@ -697,10 +749,7 @@ const IncidentForm: React.FC<Props> = ({
                 </View>
               </RepeatableCard>
             ))}
-            <AddRowButton
-              label="Add New Party"
-              onPress={() => set('parties', [...values.parties, {...EMPTY_PARTY}])}
-            />
+            <AddRowButton label="Add New Party" onPress={addParty} />
           </AccordionSection>
 
           {/* ---- Vehicle Details ---- */}
@@ -710,15 +759,11 @@ const IncidentForm: React.FC<Props> = ({
             onLayout={recordSectionY('vehicles')}>
             {values.vehicles.map((vehicle, index) => (
               <RepeatableCard
-                key={`vehicle-${index}`}
+                key={vehicleKeys[index]}
                 label={`Vehicle ${index + 1}`}
                 onRemove={
                   values.vehicles.length > 1
-                    ? () =>
-                        set(
-                          'vehicles',
-                          values.vehicles.filter((_, i) => i !== index),
-                        )
+                    ? () => removeVehicle(index)
                     : undefined
                 }>
                 <View style={formChrome.field}>
@@ -770,10 +815,7 @@ const IncidentForm: React.FC<Props> = ({
                 />
               </RepeatableCard>
             ))}
-            <AddRowButton
-              label="Add Vehicle"
-              onPress={() => set('vehicles', [...values.vehicles, {...EMPTY_VEHICLE}])}
-            />
+            <AddRowButton label="Add Vehicle" onPress={addVehicle} />
           </AccordionSection>
 
           {/* ---- Connected Elements ---- */}
