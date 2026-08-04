@@ -49,7 +49,9 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
   const scrollRef = useRef<ScrollView>(null);
   const [route, setRoute] = useState<DetailRoute>({name: 'detail'});
   /** The incident just added, shown under a "Newly Added" band until the user leaves the tab. */
-  const [justAdded, setJustAdded] = useState<{id: string; label: string} | null>(null);
+  const [justAdded, setJustAdded] = useState<
+    {id: string; label: string; queued: boolean} | null
+  >(null);
   const [toastVisible, setToastVisible] = useState(false);
 
   // Wrapped in useCallback: DispatchTabs is React.memo'd, so a fresh inline
@@ -99,7 +101,7 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
         onClose={() => setRoute({name: 'detail'})}
         onCreated={created => {
           setRoute({name: 'detail'});
-          setJustAdded({id: created.id, label: created.label});
+          setJustAdded({id: created.id, label: created.label, queued: created.queued});
           setTab('incident');
           setToastVisible(true);
           refetch();
@@ -107,6 +109,16 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
       />
     );
   }
+
+  // Derived, not state: split out the just-added incident (if it has actually
+  // landed in `detail.incidents` yet) from the rest. Kept as exact complements
+  // so no incident renders twice and none disappears while these diverge —
+  // e.g. right after an online create, before refetch() resolves, or for an
+  // offline create whose synthetic outbox id never matches a real incident.
+  const newlyAdded = justAdded
+    ? detail.incidents.filter(incident => incident.id === justAdded.id)
+    : [];
+  const rest = detail.incidents.filter(incident => incident.id !== justAdded?.id);
 
   return (
     <View style={styles.root}>
@@ -185,32 +197,28 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
         {tab === 'incident' ? (
           detail.incidents.length > 0 ? (
             <View style={styles.accordions}>
-              {justAdded ? (
+              {newlyAdded.length > 0 ? (
                 <>
                   <Text style={styles.newBand}>Newly Added</Text>
-                  {detail.incidents
-                    .filter(incident => incident.id === justAdded.id)
-                    .map(incident => (
-                      <IncidentAccordion
-                        key={incident.id}
-                        incident={incident}
-                        initiallyOpen
-                        highlighted
-                        onViewMore={setOpenIncident}
-                      />
-                    ))}
+                  {newlyAdded.map(incident => (
+                    <IncidentAccordion
+                      key={incident.id}
+                      incident={incident}
+                      initiallyOpen
+                      highlighted
+                      onViewMore={setOpenIncident}
+                    />
+                  ))}
                 </>
               ) : null}
-              {detail.incidents
-                .filter(incident => incident.id !== justAdded?.id)
-                .map((incident, index) => (
-                  <IncidentAccordion
-                    key={incident.id}
-                    incident={incident}
-                    initiallyOpen={!justAdded && index === 0}
-                    onViewMore={setOpenIncident}
-                  />
-                ))}
+              {rest.map((incident, index) => (
+                <IncidentAccordion
+                  key={incident.id}
+                  incident={incident}
+                  initiallyOpen={newlyAdded.length === 0 && index === 0}
+                  onViewMore={setOpenIncident}
+                />
+              ))}
             </View>
           ) : (
             <Text style={styles.empty}>No Incidents</Text>
@@ -226,12 +234,17 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
 
       <Toast
         visible={toastVisible}
-        title="Incident added"
+        title={
+          justAdded?.queued ? 'Saved — will upload when back online' : 'Incident added'
+        }
         message={
           justAdded
-            ? `${justAdded.label} was attached to this dispatch.`
+            ? justAdded.queued
+              ? "This incident is queued and will upload automatically once you're back online."
+              : `${justAdded.label} was attached to this dispatch.`
             : 'It was attached to this dispatch.'
         }
+        variant={justAdded?.queued ? 'danger' : 'success'}
         onDismiss={() => setToastVisible(false)}
       />
     </View>

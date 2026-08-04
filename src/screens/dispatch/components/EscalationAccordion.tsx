@@ -8,12 +8,21 @@ import {
   formatDateTimeOrNull,
 } from '../../../components/ui';
 import {DispatchEscalation} from '../../../types/dispatch';
-import {theme} from '../../../theme';
 
 interface Props {
   escalation: DispatchEscalation;
   initiallyOpen?: boolean;
 }
+
+// The mockup shows this pill outlined (white fill, hairline border), but
+// StatusPill is fill-only — it has no border support, and this fix
+// deliberately doesn't add one to a shared primitive. So we tint it instead,
+// matching every other size="md" status pill in the app. `status` is a
+// free-form string (only ever 'Open' in seeded data), so unrecognised values
+// fall back to the same "Open" tones rather than indexing into undefined —
+// reusing DispatchCard's STATUS_STYLE.Open / ViewDispatchScreen's own
+// dispatch-status tones.
+const OPEN_STATUS_STYLE = {bg: '#EFF6FF', fg: '#1D4ED8'};
 
 const EscalationAccordion: React.FC<Props> = ({escalation, initiallyOpen}) => (
   <AccordionSection title={escalation.label} initiallyOpen={initiallyOpen}>
@@ -26,8 +35,8 @@ const EscalationAccordion: React.FC<Props> = ({escalation, initiallyOpen}) => (
       <DetailField label="Status">
         <StatusPill
           label={escalation.status}
-          bg={theme.colors.white}
-          fg={theme.colors.text}
+          bg={OPEN_STATUS_STYLE.bg}
+          fg={OPEN_STATUS_STYLE.fg}
           size="md"
         />
       </DetailField>
