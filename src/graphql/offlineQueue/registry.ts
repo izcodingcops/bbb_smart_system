@@ -4,6 +4,7 @@ import {OfflineMutationKey} from '../../types/offlineQueue';
 import {CREATE_WORK_LOG_ENTRY} from '../features/workLog/documents';
 import {CREATE_FIXTURE} from '../features/fixture/documents';
 import {CREATE_MAINTENANCE_REQUEST} from '../features/maintenance/documents';
+import {CREATE_DISPATCH_INCIDENT} from '../features/dispatch/documents';
 
 interface OfflineMutationEntry {
   document: DocumentNode;
@@ -43,6 +44,19 @@ export const OFFLINE_MUTATIONS: Record<OfflineMutationKey, OfflineMutationEntry>
         __typename: 'MaintenanceRequest',
         id: localId,
         reference: 'Pending',
+      },
+    }),
+  },
+  CREATE_DISPATCH_INCIDENT: {
+    document: CREATE_DISPATCH_INCIDENT,
+    feature: 'dispatch',
+    refetchQueries: ['GetDispatch'],
+    buildOptimisticData: localId => ({
+      createDispatchIncident: {
+        __typename: 'DispatchIncident',
+        id: localId,
+        reference: 'Pending',
+        label: 'Pending',
       },
     }),
   },

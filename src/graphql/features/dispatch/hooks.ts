@@ -171,7 +171,7 @@ export function useDispatchIncidentFormOptionsQuery() {
 }
 
 const CREATE_CONTEXT = {
-  context: {feature: 'dispatch'},
+  context: {feature: 'dispatch', offlineQueueKey: 'CREATE_DISPATCH_INCIDENT'},
   refetchQueries: ['GetDispatch'],
 };
 
