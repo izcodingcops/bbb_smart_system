@@ -132,3 +132,13 @@ export const GET_DISPATCH_INCIDENT_FORM_OPTIONS = gql`
     }
   }
 `;
+
+export const CREATE_DISPATCH_INCIDENT = gql`
+  mutation CreateDispatchIncident($dispatchId: ID!, $input: DispatchIncidentInput!) {
+    createDispatchIncident(dispatchId: $dispatchId, input: $input) {
+      id
+      reference
+      label
+    }
+  }
+`;

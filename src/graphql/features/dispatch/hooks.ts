@@ -1,5 +1,5 @@
 import {useMemo} from 'react';
-import {useQuery} from '@apollo/client/react';
+import {useMutation, useQuery} from '@apollo/client/react';
 import {GetActiveProgramId} from '../../../redux/auth/selectors';
 import {
   Dispatch,
@@ -7,10 +7,16 @@ import {
   DispatchEscalation,
   DispatchIncident,
   DispatchIncidentFormOptions,
+  DispatchIncidentFormValues,
   DispatchPriority,
   DispatchStatus,
 } from '../../../types/dispatch';
-import {GET_DISPATCH, GET_DISPATCHES, GET_DISPATCH_INCIDENT_FORM_OPTIONS} from './documents';
+import {
+  CREATE_DISPATCH_INCIDENT,
+  GET_DISPATCH,
+  GET_DISPATCHES,
+  GET_DISPATCH_INCIDENT_FORM_OPTIONS,
+} from './documents';
 
 const DISPATCH_CONTEXT = {context: {feature: 'dispatch'}};
 
@@ -27,6 +33,12 @@ const PRIORITY: Record<WirePriority, DispatchPriority> = {
   LOW: 'Low',
   MEDIUM: 'Medium',
   HIGH: 'High',
+};
+
+const PRIORITY_OUT: Record<DispatchPriority, WirePriority> = {
+  Low: 'LOW',
+  Medium: 'MEDIUM',
+  High: 'HIGH',
 };
 
 interface GqlDispatch {
@@ -155,5 +167,109 @@ export function useDispatchIncidentFormOptionsQuery() {
     isLoading: loading,
     isError: !!error,
     refetch,
+  };
+}
+
+const CREATE_CONTEXT = {
+  context: {feature: 'dispatch'},
+  refetchQueries: ['GetDispatch'],
+};
+
+/** A responder block is submitted whole, or not at all — see the SDL. */
+const responderOrNull = (
+  involved: boolean,
+  block: {
+    name: string;
+    responder?: string;
+    timeCalled: string | null;
+    timeArrived: string | null;
+  },
+) =>
+  involved
+    ? {
+        name: block.name.trim() || null,
+        responder: block.responder?.trim() || null,
+        timeCalled: block.timeCalled,
+        timeArrived: block.timeArrived,
+      }
+    : null;
+
+/** '' from a controlled input is not a value — the read sheet wants null. */
+const orNull = (value: string) => value.trim() || null;
+
+const toIncidentInput = (values: DispatchIncidentFormValues) => ({
+  incidentType: values.incidentType,
+  occurredAt: values.occurredAt,
+  outcome: values.outcome,
+  priority: PRIORITY_OUT[values.priority],
+  address: values.address,
+  describeLocation: orNull(values.describeLocation),
+  zone: orNull(values.zone),
+  businessName: orNull(values.businessName),
+  notes: orNull(values.description),
+  documentCount: values.documents.length,
+  reportStatus: values.reportStatus,
+  supervisorStatus: values.supervisorStatus,
+  police: responderOrNull(values.policeInvolved, {
+    name: values.policeOfficerName,
+    timeCalled: values.policeTimeCalled,
+    timeArrived: values.policeTimeArrived,
+  }),
+  fire: responderOrNull(values.fireInvolved, {
+    name: values.fireEngineName,
+    timeCalled: values.fireTimeCalled,
+    timeArrived: values.fireTimeArrived,
+  }),
+  ems: responderOrNull(values.emsInvolved, {
+    name: values.emsCompanyName,
+    responder: values.emsResponderName,
+    timeCalled: values.emsTimeCalled,
+    timeArrived: values.emsTimeArrived,
+  }),
+  clientName: values.clientInvolved ? orNull(values.clientName) : null,
+  parties: values.parties.map(party => ({
+    name: orNull(party.name),
+    type: orNull(party.type),
+    organization: orNull(party.organization),
+    streetAddress: orNull(party.streetAddress),
+    phone: orNull(party.phone),
+    email: orNull(party.email),
+  })),
+  // `images` is dropped here on purpose: DispatchVehicle has no image field
+  // and nothing renders one. The form still collects them because the design
+  // shows the control — revisit when a gateway accepts uploads.
+  vehicles: values.vehicles.map(vehicle => ({
+    year: orNull(vehicle.year),
+    make: orNull(vehicle.make),
+    model: orNull(vehicle.model),
+    color: orNull(vehicle.color),
+    licenseNumber: orNull(vehicle.licenseNumber),
+  })),
+  fixture: orNull(values.fixture),
+  connectedMaintenance: values.connectedMaintenance,
+  connectedPois: values.connectedPois,
+  connectedEquipment: values.connectedEquipment,
+});
+
+export function useCreateDispatchIncidentMutation() {
+  const [run, {loading}] = useMutation<{
+    createDispatchIncident: {id: string; reference: string; label: string};
+  }>(CREATE_DISPATCH_INCIDENT, CREATE_CONTEXT);
+  return {
+    mutate: async (dispatchId: string, values: DispatchIncidentFormValues) => {
+      const result = await run({
+        variables: {dispatchId, input: toIncidentInput(values)},
+      });
+      const id = result.data?.createDispatchIncident.id ?? '';
+      return {
+        id,
+        reference: result.data?.createDispatchIncident.reference ?? '',
+        label: result.data?.createDispatchIncident.label ?? '',
+        // offlineQueueLink stamps queued ids with this prefix (offlineQueue/link.ts)
+        // — the same convention useCreateFixtureMutation already uses.
+        queued: id.startsWith('outbox_'),
+      };
+    },
+    isLoading: loading,
   };
 }

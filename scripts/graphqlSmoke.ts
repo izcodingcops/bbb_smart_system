@@ -439,6 +439,179 @@ const checks: Check[] = [
     assert.equal(again.data.dispatchIncidentFormOptions.nextReference, o.nextReference);
   }],
 
+  ['dispatch incident create round-trips onto its parent dispatch', async () => {
+    const before: any = await run(
+      'query O($p: ID!) { dispatchIncidentFormOptions(programId: $p) { nextReference } }',
+      {p: 'p1'},
+    );
+    const reserved = before.data.dispatchIncidentFormOptions.nextReference;
+
+    const created: any = await run(
+      `mutation C($d: ID!, $i: DispatchIncidentInput!) {
+        createDispatchIncident(dispatchId: $d, input: $i) { id reference label priority }
+      }`,
+      {
+        d: 'dp_0000_09',
+        i: {
+          incidentType: 'Welfare Check',
+          occurredAt: '2026-08-04T10:00:00',
+          outcome: 'Referred to Outreach',
+          priority: 'MEDIUM',
+          address: '1601 Wewatta St, Denver, CO 80202',
+          describeLocation: null,
+          zone: 'Zone 2',
+          businessName: null,
+          notes: 'Added from dispatch review',
+          documentCount: 0,
+          reportStatus: 'In Progress',
+          supervisorStatus: 'In Progress',
+          police: null,
+          fire: null,
+          ems: null,
+          clientName: null,
+          parties: [],
+          vehicles: [],
+          fixture: null,
+          connectedMaintenance: [],
+          connectedPois: [],
+          connectedEquipment: [],
+        },
+      },
+    );
+    assert.equal(created.errors, undefined);
+    const inc = created.data.createDispatchIncident;
+    assert.equal(inc.reference, reserved);
+    assert.notEqual(inc.id, inc.reference);
+    // First incident on this dispatch — the label counts within the dispatch.
+    assert.equal(inc.label, 'Incident 1');
+    // The nested-enum trap: priority must come back uppercased, like the
+    // seeded incidents do, not as the display-shape 'Medium'.
+    assert.equal(inc.priority, 'MEDIUM');
+
+    const read: any = await run(
+      'query D($id: ID!) { dispatch(id: $id) { incidents { id reference label priority } } }',
+      {id: 'dp_0000_09'},
+    );
+    assert.equal(read.errors, undefined);
+    assert.equal(read.data.dispatch.incidents.length, 1);
+    assert.equal(read.data.dispatch.incidents[0].reference, reserved);
+    assert.equal(read.data.dispatch.incidents[0].priority, 'MEDIUM');
+
+    // The reserved reference is consumed, so the next open gets a fresh one.
+    const after: any = await run(
+      'query O($p: ID!) { dispatchIncidentFormOptions(programId: $p) { nextReference } }',
+      {p: 'p1'},
+    );
+    assert.notEqual(after.data.dispatchIncidentFormOptions.nextReference, reserved);
+  }],
+
+  ['a dispatch incident created with every involvement answered No stores nulls', async () => {
+    const created: any = await run(
+      `mutation C($d: ID!, $i: DispatchIncidentInput!) {
+        createDispatchIncident(dispatchId: $d, input: $i) {
+          id
+          police { name timeCalled timeArrived }
+          fire { name }
+          ems { name responder }
+          clientName
+          describeLocation
+          businessName
+        }
+      }`,
+      {
+        d: 'dp_0000_14',
+        i: {
+          incidentType: 'Graffiti',
+          occurredAt: '2026-08-04T11:00:00',
+          outcome: 'Documented',
+          priority: 'LOW',
+          address: '1430 Larimer St, Denver, CO 80202',
+          describeLocation: null,
+          zone: 'Zone 1',
+          businessName: null,
+          notes: null,
+          documentCount: 0,
+          reportStatus: 'Open',
+          supervisorStatus: 'In Progress',
+          police: null,
+          fire: null,
+          ems: null,
+          clientName: null,
+          parties: [],
+          vehicles: [],
+          fixture: null,
+          connectedMaintenance: [],
+          connectedPois: [],
+          connectedEquipment: [],
+        },
+      },
+    );
+    assert.equal(created.errors, undefined);
+    const inc = created.data.createDispatchIncident;
+    // A No answer must land as null, not '' — the read sheet renders null as
+    // 'N/A' and an empty string as blank.
+    assert.equal(inc.police.name, null);
+    assert.equal(inc.police.timeCalled, null);
+    assert.equal(inc.police.timeArrived, null);
+    assert.equal(inc.fire.name, null);
+    assert.equal(inc.ems.name, null);
+    assert.equal(inc.ems.responder, null);
+    assert.equal(inc.clientName, null);
+    assert.equal(inc.describeLocation, null);
+    assert.equal(inc.businessName, null);
+  }],
+
+  ['a second dispatch incident gets the next label within its own dispatch', async () => {
+    const input = {
+      incidentType: 'Trespassing',
+      occurredAt: '2026-08-04T12:00:00',
+      outcome: 'Warning Issued',
+      priority: 'HIGH',
+      address: '1601 Wewatta St, Denver, CO 80202',
+      describeLocation: 'North entrance',
+      zone: 'Zone 3',
+      businessName: 'Union Station',
+      notes: 'Second one',
+      documentCount: 2,
+      reportStatus: 'Open',
+      supervisorStatus: 'In Progress',
+      police: {name: 'Officer R. Vance', responder: null, timeCalled: '2026-08-04T11:50:00', timeArrived: '2026-08-04T11:58:00'},
+      fire: null,
+      ems: null,
+      clientName: 'Jacob',
+      parties: [{name: 'Jacob', type: 'Witness', organization: 'Jacob & Sons', streetAddress: null, phone: '+1 555-5555', email: 'jacob12@gmail.com'}],
+      vehicles: [{year: '2021', make: 'Honda', model: 'Civic', color: 'Black', licenseNumber: 'SL139224'}],
+      fixture: 'Bench #B-204',
+      connectedMaintenance: ['Maintenance #96211'],
+      connectedPois: [],
+      connectedEquipment: ['Tool Box'],
+    };
+    // dp_0000_09 already has the incident created two checks above.
+    const created: any = await run(
+      `mutation C($d: ID!, $i: DispatchIncidentInput!) {
+        createDispatchIncident(dispatchId: $d, input: $i) {
+          label documentCount police { name timeCalled }
+          parties { name type organization streetAddress }
+          vehicles { make licenseNumber }
+          fixture connectedMaintenance connectedEquipment
+        }
+      }`,
+      {d: 'dp_0000_09', i: input},
+    );
+    assert.equal(created.errors, undefined);
+    const inc = created.data.createDispatchIncident;
+    assert.equal(inc.label, 'Incident 2');
+    assert.equal(inc.documentCount, 2);
+    assert.equal(inc.police.name, 'Officer R. Vance');
+    assert.equal(inc.parties.length, 1);
+    assert.equal(inc.parties[0].type, 'Witness');
+    assert.equal(inc.parties[0].streetAddress, null);
+    assert.equal(inc.vehicles[0].licenseNumber, 'SL139224');
+    assert.equal(inc.fixture, 'Bench #B-204');
+    assert.deepEqual(inc.connectedMaintenance, ['Maintenance #96211']);
+    assert.deepEqual(inc.connectedEquipment, ['Tool Box']);
+  }],
+
   ['work log entries resolve with uppercase YesNo enums', async () => {
     const r: any = await run(
       'query W($p: ID!) { workLogEntries(programId: $p) { id reference shiftTypeName fvmAccessibilityChecked } }',

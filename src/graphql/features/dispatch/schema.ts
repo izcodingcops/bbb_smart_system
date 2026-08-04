@@ -148,9 +148,74 @@ export const dispatchTypeDefs = /* GraphQL */ `
     search: String
   }
 
+  "A Police / Fire / EMS block. Null in its entirety when the answer is No."
+  input DispatchResponderInput {
+    name: String
+    "EMS only."
+    responder: String
+    "ISO-8601."
+    timeCalled: String
+    timeArrived: String
+  }
+
+  input DispatchIncidentPartyInput {
+    name: String
+    type: String
+    organization: String
+    streetAddress: String
+    phone: String
+    email: String
+  }
+
+  input DispatchIncidentVehicleInput {
+    year: String
+    make: String
+    model: String
+    color: String
+    licenseNumber: String
+  }
+
+  input DispatchIncidentInput {
+    incidentType: String!
+    "ISO-8601."
+    occurredAt: String!
+    outcome: String!
+    priority: DispatchPriority!
+
+    address: String!
+    describeLocation: String
+    zone: String
+
+    businessName: String
+    notes: String
+    documentCount: Int!
+    reportStatus: String!
+    supervisorStatus: String!
+
+    police: DispatchResponderInput
+    fire: DispatchResponderInput
+    ems: DispatchResponderInput
+    clientName: String
+
+    parties: [DispatchIncidentPartyInput!]!
+    vehicles: [DispatchIncidentVehicleInput!]!
+
+    fixture: String
+    connectedMaintenance: [String!]!
+    connectedPois: [String!]!
+    connectedEquipment: [String!]!
+  }
+
   extend type Query {
     dispatches(programId: ID!, filter: DispatchFilter): [Dispatch!]!
     dispatch(id: ID!): Dispatch
     dispatchIncidentFormOptions(programId: ID!): DispatchIncidentFormOptions!
+  }
+
+  extend type Mutation {
+    createDispatchIncident(
+      dispatchId: ID!
+      input: DispatchIncidentInput!
+    ): DispatchIncident!
   }
 `;
