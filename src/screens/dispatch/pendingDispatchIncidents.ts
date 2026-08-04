@@ -114,7 +114,9 @@ export function usePendingDispatchIncidents(dispatchId: string): DispatchInciden
             id: item.id,
             // Never a real reference — nothing has been assigned one yet.
             reference: 'Pending',
-            label: 'Pending',
+            // No reference exists yet, so the incident type stands in as the
+            // subtitle to tell queued incidents on the same dispatch apart.
+            label: input.incidentType || 'Pending',
             createdBy: 'You',
             priority: PRIORITY[input.priority],
             incidentType: input.incidentType,

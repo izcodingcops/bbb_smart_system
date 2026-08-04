@@ -588,11 +588,13 @@ const IncidentForm: React.FC<Props> = ({
                 label="Time Called"
                 value={values.policeTimeCalled}
                 onChange={next => set('policeTimeCalled', next)}
+                helpText="Tap to set the date & time."
               />
               <DateTimeField
                 label="Arrived Time"
                 value={values.policeTimeArrived}
                 onChange={next => set('policeTimeArrived', next)}
+                helpText="Tap to set the date & time."
               />
             </Involvement>
           </AccordionSection>
@@ -618,11 +620,13 @@ const IncidentForm: React.FC<Props> = ({
                 label="Time Called"
                 value={values.fireTimeCalled}
                 onChange={next => set('fireTimeCalled', next)}
+                helpText="Tap to set the date & time."
               />
               <DateTimeField
                 label="Arrived Time"
                 value={values.fireTimeArrived}
                 onChange={next => set('fireTimeArrived', next)}
+                helpText="Tap to set the date & time."
               />
             </Involvement>
           </AccordionSection>
@@ -656,11 +660,13 @@ const IncidentForm: React.FC<Props> = ({
                 label="Time Called"
                 value={values.emsTimeCalled}
                 onChange={next => set('emsTimeCalled', next)}
+                helpText="Tap to set the date & time."
               />
               <DateTimeField
                 label="Arrived Time"
                 value={values.emsTimeArrived}
                 onChange={next => set('emsTimeArrived', next)}
+                helpText="Tap to set the date & time."
               />
             </Involvement>
           </AccordionSection>
