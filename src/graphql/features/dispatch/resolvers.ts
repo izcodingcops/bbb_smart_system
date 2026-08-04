@@ -5,7 +5,8 @@ import {
   DispatchStatus,
 } from '../../../types/dispatch';
 import {sleep} from '../../mockSession';
-import {dispatchStore, findRecord} from './store';
+import {MOCK_DISPATCH_INCIDENT_OPTIONS} from '../../../mocks/dispatch';
+import {dispatchStore, findRecord, nextIncidentReference} from './store';
 
 const STATUS: Record<DispatchStatus, string> = {
   Open: 'OPEN',
@@ -45,6 +46,14 @@ export const dispatchResolvers = {
       await sleep();
       const record = findRecord(args.id);
       return record ? toWire(record) : null;
+    },
+
+    dispatchIncidentFormOptions: async () => {
+      await sleep();
+      return {
+        ...MOCK_DISPATCH_INCIDENT_OPTIONS,
+        nextReference: nextIncidentReference(),
+      };
     },
   },
 };

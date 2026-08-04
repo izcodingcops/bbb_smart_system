@@ -126,6 +126,21 @@ export const dispatchTypeDefs = /* GraphQL */ `
     incidents: [DispatchIncident!]
   }
 
+  "Everything the Add Incident form's dropdowns offer."
+  type DispatchIncidentFormOptions {
+    "Reserved when the form opens, e.g. '#96211408'."
+    nextReference: String!
+    incidentTypes: [String!]!
+    outcomes: [String!]!
+    zones: [String!]!
+    businessNames: [String!]!
+    fixtures: [String!]!
+    partyTypes: [String!]!
+    maintenanceOptions: [String!]!
+    poiOptions: [String!]!
+    equipmentOptions: [String!]!
+  }
+
   input DispatchFilter {
     statuses: [DispatchStatus!]
     priorities: [DispatchPriority!]
@@ -136,5 +151,6 @@ export const dispatchTypeDefs = /* GraphQL */ `
   extend type Query {
     dispatches(programId: ID!, filter: DispatchFilter): [Dispatch!]!
     dispatch(id: ID!): Dispatch
+    dispatchIncidentFormOptions(programId: ID!): DispatchIncidentFormOptions!
   }
 `;

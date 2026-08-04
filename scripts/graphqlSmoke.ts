@@ -413,6 +413,32 @@ const checks: Check[] = [
     assert.ok(dates.every(d => Date.parse(d) <= now));
   }],
 
+  ['dispatch incident form options serve every dropdown', async () => {
+    const r: any = await run(
+      `query O($p: ID!) { dispatchIncidentFormOptions(programId: $p) {
+        nextReference incidentTypes outcomes zones businessNames fixtures
+        partyTypes maintenanceOptions poiOptions equipmentOptions
+      } }`,
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.dispatchIncidentFormOptions;
+    assert.ok(o.nextReference.startsWith('#'));
+    assert.equal(o.incidentTypes.length, 13);
+    assert.equal(o.outcomes.length, 13);
+    assert.equal(o.zones.length, 6);
+    assert.equal(o.partyTypes.length, 6);
+    for (const list of [o.businessNames, o.fixtures, o.maintenanceOptions, o.poiOptions, o.equipmentOptions]) {
+      assert.ok(list.length > 0);
+    }
+    // Fresh per call, so two opens of the form never claim the same reference.
+    const again: any = await run(
+      'query O($p: ID!) { dispatchIncidentFormOptions(programId: $p) { nextReference } }',
+      {p: 'p1'},
+    );
+    assert.equal(again.data.dispatchIncidentFormOptions.nextReference, o.nextReference);
+  }],
+
   ['work log entries resolve with uppercase YesNo enums', async () => {
     const r: any = await run(
       'query W($p: ID!) { workLogEntries(programId: $p) { id reference shiftTypeName fvmAccessibilityChecked } }',

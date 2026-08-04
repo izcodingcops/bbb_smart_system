@@ -6,10 +6,11 @@ import {
   DispatchDetail,
   DispatchEscalation,
   DispatchIncident,
+  DispatchIncidentFormOptions,
   DispatchPriority,
   DispatchStatus,
 } from '../../../types/dispatch';
-import {GET_DISPATCH, GET_DISPATCHES} from './documents';
+import {GET_DISPATCH, GET_DISPATCHES, GET_DISPATCH_INCIDENT_FORM_OPTIONS} from './documents';
 
 const DISPATCH_CONTEXT = {context: {feature: 'dispatch'}};
 
@@ -135,4 +136,24 @@ export function useGetDispatchQuery(id: string) {
   );
 
   return {data: detail, isLoading: loading, isError: !!error, refetch};
+}
+
+export function useDispatchIncidentFormOptionsQuery() {
+  const programId = GetActiveProgramId();
+  const {data, loading, error, refetch} = useQuery<{
+    dispatchIncidentFormOptions: DispatchIncidentFormOptions;
+  }>(GET_DISPATCH_INCIDENT_FORM_OPTIONS, {
+    ...DISPATCH_CONTEXT,
+    variables: {programId: programId ?? ''},
+    skip: !programId,
+    // nextReference has to be fresh on every open.
+    fetchPolicy: 'network-only',
+  });
+
+  return {
+    data: data?.dispatchIncidentFormOptions ?? null,
+    isLoading: loading,
+    isError: !!error,
+    refetch,
+  };
 }

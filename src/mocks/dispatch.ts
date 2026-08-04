@@ -2,6 +2,7 @@ import {
   DispatchDetail,
   DispatchEscalation,
   DispatchIncident,
+  DispatchIncidentFormOptions,
   DispatchPriority,
   DispatchStatus,
 } from '../types/dispatch';
@@ -133,6 +134,45 @@ const INCIDENT_1: DispatchIncident = {
   connectedEquipment: ['Equipment #4340'],
 };
 
+/**
+ * A second, sparser incident on a different dispatch — the accordion list is
+ * otherwise only ever length 1, and the empty responder blocks exercise the
+ * 'N/A' rendering the read sheet does for a No answer.
+ */
+const INCIDENT_2: DispatchIncident = {
+  id: '1496402',
+  reference: '#96211412',
+  label: 'Incident 1',
+  createdBy: 'Marcus Bell',
+  priority: 'Medium',
+  incidentType: 'Welfare Check',
+  occurredAt: seedAt(1, 21 * 60 + 40),
+  outcome: 'Referred to Outreach',
+  notes: 'Subject accepted an outreach referral.',
+  ambassador: 'Marcus Bell',
+  reportStatus: 'In Progress',
+  supervisorStatus: 'In Progress',
+  address: '900 16th St Mall, Denver, CO 80202',
+  describeLocation: null,
+  latitude: null,
+  longitude: null,
+  zone: 'Zone 2',
+  businessName: '16th St Mall',
+  fixture: null,
+  documentCount: 0,
+  lastModifiedBy: 'Marcus Bell',
+  lastModifiedAt: seedAt(1, 21 * 60 + 40),
+  police: {...NO_RESPONDER},
+  fire: {...NO_RESPONDER},
+  ems: {...NO_RESPONDER},
+  clientName: null,
+  parties: [],
+  vehicles: [],
+  connectedMaintenance: [],
+  connectedPois: [],
+  connectedEquipment: [],
+};
+
 /** The mockup's single escalation, on the same dispatch. */
 const ESCALATION_EMS: DispatchEscalation = {
   id: 'esc_0000_06_1',
@@ -253,6 +293,7 @@ const EXPLICIT: DispatchDetail[] = [
     timeArrived: seedAt(1, 21 * 60 + 27),
     initialOutcome: 'Referred to Outreach',
     escalations: [ESCALATION_POLICE],
+    incidents: [INCIDENT_2],
   },
   {
     ...DETAIL_DEFAULTS,
@@ -387,3 +428,70 @@ const GENERATED: DispatchDetail[] = Array.from({length: 21}, (_, i) => {
 });
 
 export const MOCK_DISPATCHES: DispatchDetail[] = [...EXPLICIT, ...GENERATED];
+
+/** Every list the Add Incident form offers, verbatim from the design's IncForm. */
+export const MOCK_DISPATCH_INCIDENT_OPTIONS: Omit<
+  DispatchIncidentFormOptions,
+  'nextReference'
+> = {
+  incidentTypes: [
+    'Vandalism',
+    'Medical Emergency',
+    'Theft',
+    'Suspicious Activity',
+    'Trespassing',
+    'Property Damage',
+    'Drug Activity',
+    'Disturbance',
+    'Graffiti',
+    'Assault',
+    'Lost Property',
+    'Fire Hazard',
+    'Panhandling',
+  ],
+  outcomes: [
+    'Police Notified',
+    'Police Called',
+    'EMS Called',
+    'EMS & Police',
+    'Report Filed',
+    'Warning Issued',
+    'Reported',
+    'Monitored',
+    'Resolved',
+    'Documented',
+    'Returned to Owner',
+    'Fire Dept Notified',
+    'Referred to Outreach',
+  ],
+  zones: ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'Zone 5', 'Zone 6'],
+  businessNames: [
+    '16th St Mall',
+    'Union Station',
+    'Larimer Square',
+    'Civic Center',
+    'LoDo District',
+    'BlockByBlock',
+  ],
+  fixtures: [
+    'Bench #B-204',
+    'Trash Bin #T-88',
+    'Planter #P-12',
+    'Bike Rack #BR-5',
+    'Light Pole #LP-19',
+  ],
+  partyTypes: ['Witness', 'Victim', 'Suspect', 'Bystander', 'Reporting Party', 'Other'],
+  maintenanceOptions: [
+    'Maintenance #96211407',
+    'Maintenance #96211',
+    'Maintenance #42984',
+    'Maintenance #42931',
+  ],
+  poiOptions: ['POI #96211407', 'POI #96211', 'R. Blake', 'M. Ortiz', 'D. Cole'],
+  equipmentOptions: [
+    'Equipment #96211407',
+    'Equipment #96211',
+    'Tool Box',
+    'Pressure Washer',
+  ],
+};

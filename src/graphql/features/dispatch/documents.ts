@@ -115,3 +115,20 @@ export const GET_DISPATCH = gql`
     }
   }
 `;
+
+export const GET_DISPATCH_INCIDENT_FORM_OPTIONS = gql`
+  query GetDispatchIncidentFormOptions($programId: ID!) {
+    dispatchIncidentFormOptions(programId: $programId) {
+      nextReference
+      incidentTypes
+      outcomes
+      zones
+      businessNames
+      fixtures
+      partyTypes
+      maintenanceOptions
+      poiOptions
+      equipmentOptions
+    }
+  }
+`;

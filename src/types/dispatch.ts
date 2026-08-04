@@ -110,6 +110,97 @@ export interface DispatchIncident {
   connectedEquipment: string[];
 }
 
+/** What the Add Incident form's dropdowns offer. */
+export interface DispatchIncidentFormOptions {
+  /** Reserved when the form opens, e.g. '#96211408'. */
+  nextReference: string;
+  incidentTypes: string[];
+  outcomes: string[];
+  zones: string[];
+  businessNames: string[];
+  fixtures: string[];
+  partyTypes: string[];
+  maintenanceOptions: string[];
+  poiOptions: string[];
+  equipmentOptions: string[];
+}
+
+export interface DispatchIncidentPartyValues {
+  name: string;
+  type: string;
+  organization: string;
+  streetAddress: string;
+  phone: string;
+  email: string;
+}
+
+export interface DispatchIncidentVehicleValues {
+  year: string;
+  make: string;
+  model: string;
+  color: string;
+  licenseNumber: string;
+  /**
+   * Local URIs from UploadField. Collected because the design shows the
+   * control, but dropped at the mapper: DispatchVehicle has no image field and
+   * nothing renders one. Revisit when a gateway accepts uploads.
+   */
+  images: string[];
+}
+
+/**
+ * The Add Incident form's own shape. Optional values are '' or [] rather than
+ * null — a controlled input needs a string — and the mapper converts empties
+ * to null on the way into DispatchIncident.
+ */
+export interface DispatchIncidentFormValues {
+  incidentType: string;
+  /** ISO-8601, seeded from the device clock. */
+  occurredAt: string;
+  outcome: string;
+  priority: DispatchPriority;
+
+  address: string;
+  describeLocation: string;
+  zone: string;
+
+  businessName: string;
+  description: string;
+  documents: string[];
+  /** 'Open' | 'In Progress' | 'Completed'. */
+  reportStatus: string;
+  /** 'In Progress' | 'Completed'. */
+  supervisorStatus: string;
+
+  /** Each flag gates whether its block is submitted at all. */
+  policeInvolved: boolean;
+  policeOfficerName: string;
+  policeTimeCalled: string | null;
+  policeTimeArrived: string | null;
+
+  fireInvolved: boolean;
+  fireEngineName: string;
+  fireTimeCalled: string | null;
+  fireTimeArrived: string | null;
+
+  emsInvolved: boolean;
+  emsCompanyName: string;
+  emsResponderName: string;
+  emsTimeCalled: string | null;
+  emsTimeArrived: string | null;
+
+  clientInvolved: boolean;
+  clientName: string;
+
+  parties: DispatchIncidentPartyValues[];
+  vehicles: DispatchIncidentVehicleValues[];
+
+  fixture: string;
+  connectedMaintenance: string[];
+  connectedPois: string[];
+  connectedEquipment: string[];
+}
+
 /** Everything the detail screen shows beyond the list card. */
 export interface DispatchDetail extends Dispatch {
   /** Nullable: detail-only field, absent from the SDL's list selection set. */
