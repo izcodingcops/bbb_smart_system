@@ -4,9 +4,16 @@ type Listener = (online: boolean) => void;
 
 /**
  * Holds connectivity state outside redux, same reasoning as
- * `graphql/authToken.ts`: `link.ts` needs to read it synchronously on every
- * mutation without importing the store into a module the store itself
- * doesn't depend on.
+ * `graphql/authToken.ts`: consumers need to read it synchronously without
+ * importing the store into a module the store itself doesn't depend on.
+ *
+ * This is the single source of truth for "is the device online" app-wide —
+ * both for gating the offline mutation queue (`link.ts`/`flush.ts`, driven
+ * from `App.tsx`'s `OfflineQueueSync`) and for any UI that displays
+ * connectivity status (e.g. the Home screen's offline banner). Don't stand
+ * up a second connectivity signal for UI purposes — a native NWPathMonitor
+ * bridged separately for that used to exist and was the root cause of the
+ * Home screen banner disagreeing with the app's actual online state.
  */
 let online = true;
 let initialized = false;

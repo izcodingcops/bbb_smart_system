@@ -41,7 +41,17 @@ final class LocationManager: NSObject {
   }
 
   // MARK: - Network monitoring (replaces Reachability)
-  
+
+  /// This monitor and the `isOnline`/`onConnectivityChange` signal it drives
+  /// are INTERNAL to this class's own background GPS upload-retry pipeline
+  /// (see the `uploadDataToServer()` call below on the offline→online edge).
+  /// They are intentionally NOT the app's general-purpose "is the device
+  /// online" API — that's `connectivity.ts` (NetInfo) on the JS side. Native
+  /// code needs its own monitor here because this pipeline must keep working
+  /// even when JS/the bridge isn't reliably running (background location
+  /// updates). Do not re-wire JS UI to this closure — that was the cause of
+  /// a Home-screen banner bug where this Simulator-flaky `NWPathMonitor` and
+  /// the reliable NetInfo signal could disagree.
   private func startNetworkMonitor() {
     pathMonitor.pathUpdateHandler = { [weak self] path in
       let satisfied = path.status == .satisfied

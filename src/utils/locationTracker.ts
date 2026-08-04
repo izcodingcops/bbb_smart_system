@@ -98,20 +98,6 @@ export const locationTracker = {
     );
   },
 
-  getConnectivityStatus: (): Promise<boolean> => {
-    if (!LocationBridge?.getConnectivityStatus) return Promise.resolve(true);
-    return LocationBridge.getConnectivityStatus();
-  },
-
-  onConnectivityChange: (callback: (isOnline: boolean) => void) => {
-    if (!emitter) return () => {};
-    const sub = emitter.addListener(
-      'onConnectivityChange',
-      (e: { isOnline: boolean }) => callback(e.isOnline),
-    );
-    return () => sub.remove();
-  },
-
   // ---- One-shot location --------------------------------------------------
 
   getCurrentLocation: (): Promise<{

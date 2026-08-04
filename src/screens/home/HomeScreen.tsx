@@ -11,6 +11,7 @@ import QuickActions from './components/QuickActions';
 import RecentWork from './components/RecentWork';
 import CheckedInEquipment from './components/CheckedInEquipment';
 import {locationTracker} from '../../utils/locationTracker';
+import {connectivity} from '../../graphql/offlineQueue/connectivity';
 import {useAuth} from '../../hooks/useAuth';
 import {useAppDispatch} from '../../redux/store';
 import {SCREEN} from '../../navigation/screens';
@@ -19,6 +20,7 @@ import {endShift} from '../../redux/shift/slice';
 import {requestScreen} from '../../redux/ui/slice';
 import {GetActiveProgram, GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
+import {GetOutboxItems} from '../../redux/outbox/selectors';
 import {
   useGetQuickActionsQuery,
   useGetWorkItemsQuery,
@@ -27,8 +29,6 @@ import {useGetCheckedInEquipmentQuery} from '../../graphql/features/equipment/ho
 import {EquipmentItem} from '../../types/equipment';
 import {theme} from '../../theme';
 
-// Placeholder — wire to the real sync-queue length once exposed by the tracker.
-const PENDING_COUNT = 7;
 const NOTIFICATION_COUNT = 7;
 
 const HomeScreen: React.FC = () => {
@@ -37,6 +37,7 @@ const HomeScreen: React.FC = () => {
   const program = GetActiveProgram();
   const shiftTypes = GetShiftTypes();
   const shiftTypeId = GetActiveShiftTypeId();
+  const outboxItems = GetOutboxItems();
 
   const {
     data: workItems = [],
@@ -52,7 +53,12 @@ const HomeScreen: React.FC = () => {
   } = useGetCheckedInEquipmentQuery();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
+  // Single source of truth for "are we online" app-wide — see connectivity.ts.
+  // This used to read a separate native NWPathMonitor signal via
+  // locationTracker, which could disagree with NetInfo (the signal the
+  // offline mutation queue actually obeys) and was unreliable in the iOS
+  // Simulator when toggling the host Mac's network.
+  const [isOnline, setIsOnline] = useState(() => connectivity.isOnline());
   const [addOpen, setAddOpen] = useState(false);
   const {queueTile, flushTile} = useAddRequestTiles(SCREEN.home);
 
@@ -66,19 +72,7 @@ const HomeScreen: React.FC = () => {
     return removeComplete;
   }, []);
 
-  useEffect(() => {
-    let mounted = true;
-    locationTracker.getConnectivityStatus().then(online => {
-      if (mounted) {
-        setIsOnline(online);
-      }
-    });
-    const removeConnectivity = locationTracker.onConnectivityChange(setIsOnline);
-    return () => {
-      mounted = false;
-      removeConnectivity();
-    };
-  }, []);
+  useEffect(() => connectivity.onChange(setIsOnline), []);
 
   const handleEnd = useCallback(() => {
     Alert.alert('End shift', 'Are you sure you want to end your shift?', [
@@ -143,7 +137,7 @@ const HomeScreen: React.FC = () => {
 
           <ShiftTimerCard shiftName={shiftName} onEnd={handleEnd} />
 
-          {!isOnline ? <OfflineNotice pendingCount={PENDING_COUNT} /> : null}
+          {!isOnline ? <OfflineNotice pendingCount={outboxItems.length} /> : null}
 
           <QuickActions actions={quickActions} isLoading={isQuickActionsLoading} />
 
