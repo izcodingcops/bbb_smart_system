@@ -431,7 +431,8 @@ const checks: Check[] = [
     for (const list of [o.businessNames, o.fixtures, o.maintenanceOptions, o.poiOptions, o.equipmentOptions]) {
       assert.ok(list.length > 0);
     }
-    // Fresh per call, so two opens of the form never claim the same reference.
+    // The reference is reserved, not consumed by reading it — two reads with
+    // no create in between must still agree on the same nextReference.
     const again: any = await run(
       'query O($p: ID!) { dispatchIncidentFormOptions(programId: $p) { nextReference } }',
       {p: 'p1'},

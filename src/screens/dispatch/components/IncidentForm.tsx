@@ -158,9 +158,12 @@ interface InvolvementProps {
 }
 
 /**
- * The design's Yes/No reveal. The fields stay mounted but unrendered when the
- * answer is No, and the mapper drops the whole block anyway — so flipping to
- * No and back does not silently resurrect stale text.
+ * The design's Yes/No reveal. The fields fully unmount when the answer is No
+ * (`involved ? children : null`) — but what they edit lives in the parent
+ * form's `values` state, not in the fields themselves, so flipping back to
+ * Yes remounts them showing whatever was last typed rather than blank. The
+ * mapper drops the whole block when not involved, so a No answer never
+ * submits that leftover text.
  */
 const Involvement: React.FC<InvolvementProps> = ({
   question,
