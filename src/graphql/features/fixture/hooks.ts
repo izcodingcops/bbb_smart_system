@@ -119,6 +119,11 @@ const REFRESH_DETAIL = {
   refetchQueries: ['GetFixtures', 'GetFixture'],
 };
 
+const CREATE_CONTEXT = {
+  context: {feature: 'fixture', offlineQueueKey: 'CREATE_FIXTURE'},
+  refetchQueries: ['GetFixtures'],
+};
+
 export function useGetFixtureQuery(id: string) {
   const {data, loading, error, refetch} = useQuery<{
     fixture: GqlFixtureDetail | null;
@@ -171,15 +176,19 @@ export function useCreateFixtureMutation() {
   const programId = GetActiveProgramId();
   const [run, {loading}] = useMutation<{
     createFixture: {id: string; reference: string};
-  }>(CREATE_FIXTURE, REFRESH_LIST);
+  }>(CREATE_FIXTURE, CREATE_CONTEXT);
   return {
     mutate: async (values: FixtureFormValues) => {
       const result = await run({
         variables: {programId: programId ?? '', input: toWireInput(values)},
       });
+      const id = result.data?.createFixture.id ?? '';
       return {
-        id: result.data?.createFixture.id ?? '',
+        id,
         reference: result.data?.createFixture.reference ?? '',
+        // offlineQueueLink stamps queued ids with this prefix (link.ts) —
+        // same convention useCreateWorkLogEntryMutation already uses.
+        queued: id.startsWith('outbox_'),
       };
     },
     isLoading: loading,

@@ -12,8 +12,8 @@ import {theme} from '../../theme';
 
 interface Props {
   onClose: () => void;
-  /** Fires with the new record's id and reference once it's been created. */
-  onCreated: (created: {id: string; reference: string}) => void;
+  /** Fires with the new record's id, reference and queued state once created. */
+  onCreated: (created: {id: string; reference: string; queued: boolean}) => void;
 }
 
 const CreateFixtureScreen: React.FC<Props> = ({onClose, onCreated}) => {
