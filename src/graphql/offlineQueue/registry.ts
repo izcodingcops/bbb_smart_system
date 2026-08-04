@@ -2,6 +2,8 @@ import {DocumentNode} from 'graphql';
 import {Feature} from '../../config/transport';
 import {OfflineMutationKey} from '../../types/offlineQueue';
 import {CREATE_WORK_LOG_ENTRY} from '../features/workLog/documents';
+import {CREATE_FIXTURE} from '../features/fixture/documents';
+import {CREATE_MAINTENANCE_REQUEST} from '../features/maintenance/documents';
 
 interface OfflineMutationEntry {
   document: DocumentNode;
@@ -22,6 +24,26 @@ export const OFFLINE_MUTATIONS: Record<OfflineMutationKey, OfflineMutationEntry>
     refetchQueries: ['GetWorkLogEntries', 'GetWorkItems'],
     buildOptimisticData: localId => ({
       createWorkLogEntry: {__typename: 'WorkLogEntry', id: localId, reference: 'Pending'},
+    }),
+  },
+  CREATE_FIXTURE: {
+    document: CREATE_FIXTURE,
+    feature: 'fixture',
+    refetchQueries: ['GetFixtures'],
+    buildOptimisticData: localId => ({
+      createFixture: {__typename: 'Fixture', id: localId, reference: 'Pending'},
+    }),
+  },
+  CREATE_MAINTENANCE_REQUEST: {
+    document: CREATE_MAINTENANCE_REQUEST,
+    feature: 'maintenance',
+    refetchQueries: ['GetMaintenanceRequests'],
+    buildOptimisticData: localId => ({
+      createMaintenanceRequest: {
+        __typename: 'MaintenanceRequest',
+        id: localId,
+        reference: 'Pending',
+      },
     }),
   },
 };

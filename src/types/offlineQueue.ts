@@ -3,7 +3,10 @@
  * union — and `OFFLINE_MUTATIONS` in `graphql/offlineQueue/registry.ts` —
  * as more create flows opt in.
  */
-export type OfflineMutationKey = 'CREATE_WORK_LOG_ENTRY';
+export type OfflineMutationKey =
+  | 'CREATE_WORK_LOG_ENTRY'
+  | 'CREATE_FIXTURE'
+  | 'CREATE_MAINTENANCE_REQUEST';
 
 export interface OutboxItem {
   /** Locally generated when queued (`outbox_...`) — never a server id. */
