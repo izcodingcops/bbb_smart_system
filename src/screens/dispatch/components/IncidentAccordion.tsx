@@ -13,14 +13,22 @@ import {theme} from '../../../theme';
 interface Props {
   incident: DispatchIncident;
   initiallyOpen?: boolean;
+  /** Set on the incident the user just added, under the "Newly Added" band. */
+  highlighted?: boolean;
   onViewMore: (incident: DispatchIncident) => void;
 }
 
-const IncidentAccordion: React.FC<Props> = ({incident, initiallyOpen, onViewMore}) => (
+const IncidentAccordion: React.FC<Props> = ({
+  incident,
+  initiallyOpen,
+  highlighted,
+  onViewMore,
+}) => (
   <AccordionSection
     title={incident.reference}
     subtitle={incident.label}
-    initiallyOpen={initiallyOpen}>
+    initiallyOpen={initiallyOpen}
+    highlighted={highlighted}>
     <View style={detailGrid}>
       <DetailField label="ID" value={incident.reference} />
       <DetailField label="Created By" value={incident.createdBy} />

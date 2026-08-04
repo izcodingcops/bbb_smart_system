@@ -3,10 +3,12 @@ import {View, StyleSheet} from 'react-native';
 import {
   AccordionSection,
   DetailField,
+  StatusPill,
   detailGrid,
   formatDateTimeOrNull,
 } from '../../../components/ui';
 import {DispatchEscalation} from '../../../types/dispatch';
+import {theme} from '../../../theme';
 
 interface Props {
   escalation: DispatchEscalation;
@@ -21,7 +23,14 @@ const EscalationAccordion: React.FC<Props> = ({escalation, initiallyOpen}) => (
       <DetailField label="Time Called" value={formatDateTimeOrNull(escalation.timeCalled)} />
       <DetailField label="Time Arrived" value={formatDateTimeOrNull(escalation.timeArrived)} />
       <DetailField label="Time Cleared" value={formatDateTimeOrNull(escalation.timeCleared)} />
-      <DetailField label="Status" value={escalation.status} />
+      <DetailField label="Status">
+        <StatusPill
+          label={escalation.status}
+          bg={theme.colors.white}
+          fg={theme.colors.text}
+          size="md"
+        />
+      </DetailField>
       <DetailField label="Source Notes" value={escalation.notes} full />
     </View>
   </AccordionSection>

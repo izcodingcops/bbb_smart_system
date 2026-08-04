@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   StyleSheet,
 } from 'react-native';
 import {
@@ -13,11 +12,13 @@ import {
   DetailSection,
   DetailTopBar,
   EmptyState,
+  Toast,
   formatDateTime,
   formatDateTimeOrNull,
 } from '../../components/ui';
 import {PlusIcon, SendIcon} from '../../components/icons';
 import {useGetDispatchQuery} from '../../graphql/features/dispatch/hooks';
+import CreateDispatchIncidentScreen from './CreateDispatchIncidentScreen';
 import DispatchTabs, {DispatchTab, DispatchTabKey} from './components/DispatchTabs';
 import EscalationAccordion from './components/EscalationAccordion';
 import IncidentAccordion from './components/IncidentAccordion';
@@ -31,6 +32,9 @@ const TABS: DispatchTab[] = [
   {value: 'incident', label: 'Incident'},
 ];
 
+/** Add Incident is a full-screen push within the detail screen. */
+type DetailRoute = {name: 'detail'} | {name: 'addIncident'};
+
 interface Props {
   id: string;
   onClose: () => void;
@@ -43,11 +47,18 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
   const [tab, setTab] = useState<DispatchTabKey>('dispatch');
   const [openIncident, setOpenIncident] = useState<DispatchIncident | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+  const [route, setRoute] = useState<DetailRoute>({name: 'detail'});
+  /** The incident just added, shown under a "Newly Added" band until the user leaves the tab. */
+  const [justAdded, setJustAdded] = useState<{id: string; label: string} | null>(null);
+  const [toastVisible, setToastVisible] = useState(false);
 
   // Wrapped in useCallback: DispatchTabs is React.memo'd, so a fresh inline
   // arrow passed as onChange on every render would defeat that memo.
   const handleTabChange = useCallback((next: DispatchTabKey) => {
     setTab(next);
+    if (next !== 'incident') {
+      setJustAdded(null);
+    }
     scrollRef.current?.scrollTo({y: 0, animated: false});
   }, []);
 
@@ -81,13 +92,25 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
     );
   }
 
+  if (route.name === 'addIncident') {
+    return (
+      <CreateDispatchIncidentScreen
+        dispatchId={id}
+        onClose={() => setRoute({name: 'detail'})}
+        onCreated={created => {
+          setRoute({name: 'detail'});
+          setJustAdded({id: created.id, label: created.label});
+          setTab('incident');
+          setToastVisible(true);
+          refetch();
+        }}
+      />
+    );
+  }
+
   return (
     <View style={styles.root}>
-      <DetailTopBar
-        title="Dispatch Details"
-        reference={detail.reference}
-        onBack={onClose}
-      />
+      <DetailTopBar title="Dispatch Details" onBack={onClose} />
 
       <View style={styles.idRow}>
         <Text style={styles.idBig} numberOfLines={1}>
@@ -96,14 +119,7 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
         <TouchableOpacity
           style={styles.addButton}
           activeOpacity={0.85}
-          // Deferred seam: this opens the full Incident create form once the
-          // Incident module exists. See the module design doc.
-          onPress={() =>
-            Alert.alert(
-              'Coming soon',
-              'Adding an incident from a dispatch is not wired up yet.',
-            )
-          }>
+          onPress={() => setRoute({name: 'addIncident'})}>
           <PlusIcon size={16} color={theme.colors.white} />
           <Text style={styles.addText}>Add Incident</Text>
         </TouchableOpacity>
@@ -169,14 +185,32 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
         {tab === 'incident' ? (
           detail.incidents.length > 0 ? (
             <View style={styles.accordions}>
-              {detail.incidents.map((incident, index) => (
-                <IncidentAccordion
-                  key={incident.id}
-                  incident={incident}
-                  initiallyOpen={index === 0}
-                  onViewMore={setOpenIncident}
-                />
-              ))}
+              {justAdded ? (
+                <>
+                  <Text style={styles.newBand}>Newly Added</Text>
+                  {detail.incidents
+                    .filter(incident => incident.id === justAdded.id)
+                    .map(incident => (
+                      <IncidentAccordion
+                        key={incident.id}
+                        incident={incident}
+                        initiallyOpen
+                        highlighted
+                        onViewMore={setOpenIncident}
+                      />
+                    ))}
+                </>
+              ) : null}
+              {detail.incidents
+                .filter(incident => incident.id !== justAdded?.id)
+                .map((incident, index) => (
+                  <IncidentAccordion
+                    key={incident.id}
+                    incident={incident}
+                    initiallyOpen={!justAdded && index === 0}
+                    onViewMore={setOpenIncident}
+                  />
+                ))}
             </View>
           ) : (
             <Text style={styles.empty}>No Incidents</Text>
@@ -188,6 +222,17 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
         visible={openIncident !== null}
         incident={openIncident}
         onClose={() => setOpenIncident(null)}
+      />
+
+      <Toast
+        visible={toastVisible}
+        title="Incident added"
+        message={
+          justAdded
+            ? `${justAdded.label} was attached to this dispatch.`
+            : 'It was attached to this dispatch.'
+        }
+        onDismiss={() => setToastVisible(false)}
       />
     </View>
   );
@@ -236,6 +281,16 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
   },
   accordions: {paddingBottom: theme.spacing.lg},
+  newBand: {
+    fontFamily: theme.fonts.black,
+    fontSize: 12.5,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: theme.colors.primary,
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.sm,
+  },
   empty: {
     fontFamily: theme.fonts.bold,
     fontSize: 14.5,

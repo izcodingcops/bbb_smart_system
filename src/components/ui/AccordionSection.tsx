@@ -14,6 +14,8 @@ interface Props {
   /** Second line under the title — e.g. an incident's 'Incident 1' label. */
   subtitle?: string;
   initiallyOpen?: boolean;
+  /** Draws the card's border in the accent colour — e.g. a just-added record. */
+  highlighted?: boolean;
   children: React.ReactNode;
   /** Forwarded to the root card — lets a parent measure its scroll offset. */
   onLayout?: (event: LayoutChangeEvent) => void;
@@ -30,7 +32,7 @@ export interface AccordionSectionHandle {
  * them mounted-but-clipped leaves their sheets reachable while collapsed.
  */
 const AccordionSection = forwardRef<AccordionSectionHandle, Props>(
-  ({title, subtitle, initiallyOpen = false, children, onLayout}, ref) => {
+  ({title, subtitle, initiallyOpen = false, highlighted, children, onLayout}, ref) => {
     const [open, setOpen] = useState(initiallyOpen);
 
     useImperativeHandle(ref, () => ({
@@ -38,7 +40,7 @@ const AccordionSection = forwardRef<AccordionSectionHandle, Props>(
     }));
 
     return (
-      <View style={styles.card} onLayout={onLayout}>
+      <View style={[styles.card, highlighted && styles.cardHighlighted]} onLayout={onLayout}>
         <TouchableOpacity
           style={styles.header}
           activeOpacity={0.8}
@@ -69,6 +71,10 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     overflow: 'hidden',
     ...theme.shadow.card,
+  },
+  cardHighlighted: {
+    borderWidth: 1.5,
+    borderColor: theme.colors.primary,
   },
   header: {
     flexDirection: 'row',
