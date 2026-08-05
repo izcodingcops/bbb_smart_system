@@ -3,6 +3,7 @@ import {authResolvers} from './features/auth/resolvers';
 import {dispatchResolvers} from './features/dispatch/resolvers';
 import {equipmentResolvers} from './features/equipment/resolvers';
 import {fixtureResolvers} from './features/fixture/resolvers';
+import {incidentResolvers} from './features/incident/resolvers';
 import {maintenanceResolvers} from './features/maintenance/resolvers';
 import {navigationResolvers} from './features/navigation/resolvers';
 import {workResolvers} from './features/work/resolvers';
@@ -25,6 +26,7 @@ export const mockSchema = makeExecutableSchema({
       ...equipmentResolvers.Query,
       ...maintenanceResolvers.Query,
       ...fixtureResolvers.Query,
+      ...incidentResolvers.Query,
       ...dispatchResolvers.Query,
       ...workLogResolvers.Query,
     },

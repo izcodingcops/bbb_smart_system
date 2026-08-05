@@ -12,6 +12,7 @@ export type Feature =
   | 'equipment'
   | 'maintenance'
   | 'fixture'
+  | 'incident'
   | 'dispatch'
   | 'workLog';
 
@@ -22,6 +23,7 @@ export const API_TRANSPORT: Record<Feature, Transport> = {
   equipment: 'mock',
   maintenance: 'mock',
   fixture: 'mock',
+  incident: 'mock',
   dispatch: 'mock',
   workLog: 'mock',
 };

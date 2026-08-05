@@ -20,6 +20,15 @@ export const cache = new InMemoryCache({
     MaintenanceComment: {keyFields: ['id']},
     Fixture: {keyFields: ['id']},
     FixtureCreator: {keyFields: false},
+    Incident: {keyFields: ['id']},
+    // No id of their own; keep them embedded in the incident they belong to.
+    IncidentAssignee: {keyFields: false},
+    IncidentResponderInfo: {keyFields: false},
+    IncidentParty: {keyFields: false},
+    IncidentVehicle: {keyFields: false},
+    IncidentComment: {keyFields: ['id']},
+    // No id of its own — options belong to the query that asked for them.
+    IncidentFormOptions: {keyFields: false},
     Dispatch: {keyFields: ['id']},
     DispatchEscalation: {keyFields: ['id']},
     DispatchIncident: {keyFields: ['id']},

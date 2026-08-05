@@ -720,6 +720,122 @@ const checks: Check[] = [
     const r: any = await run('query Bad { me { enable_shift_entry } }');
     assert.ok(r.errors?.[0]?.message.includes('Cannot query field'));
   }],
+
+  ['incidents list resolves and the id/reference seam holds', async () => {
+    const r: any = await run(
+      `query I($p: ID!) { incidents(programId: $p) {
+        id reference type outcome priority status occurredAt assignee { name initials }
+        person businessName zone address queuedOffline dispatchReference
+      } }`,
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const list = r.data.incidents;
+    assert.equal(list.length, 15);
+    assert.ok(list.every((i: any) => i.id !== i.reference));
+    assert.ok(list.every((i: any) => i.reference.startsWith('#IN-')));
+    const first = list.find((i: any) => i.reference === '#IN-42984');
+    assert.equal(first.type, 'Vandalism');
+    assert.equal(first.status, 'IN_PROGRESS');
+    assert.equal(first.priority, 'HIGH');
+    assert.equal(first.assignee.name, 'John Carter');
+    assert.equal(first.dispatchReference, null);
+    const unassigned = list.find((i: any) => i.reference === '#IN-42905');
+    assert.equal(unassigned.assignee, null);
+    assert.equal(unassigned.queuedOffline, true);
+    // The two records absorbed from Dispatch's old mocks — present in the
+    // standalone list too, unassigned, and tagged with the dispatch that
+    // created them.
+    const fromDispatch1 = list.find((i: any) => i.reference === '#IN-42986');
+    assert.equal(fromDispatch1.dispatchReference, 'dp_0000_06');
+    assert.equal(fromDispatch1.assignee, null);
+    const fromDispatch2 = list.find((i: any) => i.reference === '#IN-42987');
+    assert.equal(fromDispatch2.dispatchReference, 'dp_0000_11');
+  }],
+
+  ['incident detail resolves every section', async () => {
+    const list: any = await run('query I($p: ID!) { incidents(programId: $p) { id reference } }', {p: 'p1'});
+    const id = list.data.incidents.find((i: any) => i.reference === '#IN-42984').id;
+    const r: any = await run(
+      `query D($id: ID!) { incident(id: $id) {
+        ambassador createdBy supervisorStatus lastModifiedBy lastModifiedAt
+        describeLocation fixture description documents
+        police { name timeCalled timeArrived } fire { name } ems { name responder } clientName
+        parties { name type organization streetAddress phone email }
+        vehicles { year make model color licenseNumber }
+        connectedMaintenance connectedPois connectedEquipment comments { id }
+      } }`,
+      {id},
+    );
+    assert.equal(r.errors, undefined);
+    const d = r.data.incident;
+    assert.equal(d.ambassador, 'John Carter');
+    assert.equal(d.supervisorStatus, 'In Progress');
+    assert.equal(d.police.name, 'Jack Son');
+    assert.equal(d.fire.name, null);
+    assert.equal(d.parties.length, 1);
+    assert.equal(d.parties[0].organization, 'Jacob & Sons');
+    assert.equal(d.vehicles[0].licenseNumber, 'SL139224');
+    assert.deepEqual(d.connectedPois, ['POI #96211407']);
+
+    const sparse: any = await run('query I($p: ID!) { incidents(programId: $p) { id reference } }', {p: 'p1'});
+    const sparseId = sparse.data.incidents.find((i: any) => i.reference === '#IN-42960').id;
+    const r2: any = await run('query D($id: ID!) { incident(id: $id) { police { name } fixture parties { name } } }', {id: sparseId});
+    assert.equal(r2.data.incident.police.name, null);
+    assert.equal(r2.data.incident.fixture, null);
+    assert.equal(r2.data.incident.parties.length, 0);
+  }],
+
+  ['incidentFormOptions serves every dropdown and reserves a fresh reference each read', async () => {
+    const r: any = await run(
+      `query O($p: ID!) { incidentFormOptions(programId: $p) {
+        nextReference incidentTypes outcomes zones businessNames fixtures
+        partyTypes maintenanceOptions poiOptions equipmentOptions
+      } }`,
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.incidentFormOptions;
+    assert.equal(o.nextReference, '#IN-42988');
+    assert.equal(o.incidentTypes.length, 13);
+    assert.equal(o.outcomes.length, 13);
+    assert.equal(o.zones.length, 6);
+    assert.equal(o.partyTypes.length, 6);
+    for (const list of [o.businessNames, o.fixtures, o.maintenanceOptions, o.poiOptions, o.equipmentOptions]) {
+      assert.ok(list.length > 0);
+    }
+  }],
+
+  ['every incident date-range bucket is non-empty against the current clock', async () => {
+    // Mirrors the existing dispatch check ('every dispatch date-range bucket
+    // is non-empty…') so the same stale-seed trap can't recur a third time —
+    // required by the approved spec (Decisions: "Date Range filtering is
+    // real, not the mockup's pass-through"; Verification section).
+    const r: any = await run(
+      'query I($p: ID!) { incidents(programId: $p) { occurredAt } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const dates: string[] = r.data.incidents.map((i: any) => i.occurredAt);
+
+    // 'custom' is excluded: with no dates picked it matches everything, so it
+    // proves nothing about the seed.
+    const buckets = DATE_RANGE_OPTIONS.map(o => o.value).filter(v => v !== 'custom');
+    const counts = new Map(
+      buckets.map(v => [v, dates.filter(d => matchesDateRange(d, v)).length]),
+    );
+
+    for (const [bucket, count] of counts) {
+      assert.ok(count > 0, `date range bucket "${bucket}" is empty — the seed has gone stale`);
+    }
+    // Last 30 must reach strictly further back than Last 7, or the two chips
+    // are indistinguishable and the seed is too tightly clustered.
+    assert.ok(counts.get('last30')! > counts.get('last7')!);
+
+    // Nothing may be seeded into the future against a live clock.
+    const now = Date.now();
+    assert.ok(dates.every(d => Date.parse(d) <= now));
+  }],
 ];
 
 async function main() {
