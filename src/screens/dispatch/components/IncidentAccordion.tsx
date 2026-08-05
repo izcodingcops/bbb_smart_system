@@ -1,32 +1,22 @@
 import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet, Alert} from 'react-native';
-import {
-  AccordionSection,
-  DetailField,
-  detailGrid,
-  formatDateTime,
-} from '../../../components/ui';
+import {AccordionSection, DetailField, detailGrid, formatDateTime} from '../../../components/ui';
 import {ArrowRightIcon, CloudOffIcon} from '../../../components/icons';
-import {DispatchIncident} from '../../../types/dispatch';
+import {IncidentDetail} from '../../../types/incident';
 import {theme} from '../../../theme';
 
 interface Props {
-  incident: DispatchIncident;
+  incident: IncidentDetail;
   initiallyOpen?: boolean;
   /** Set on the incident the user just added, under the "Newly Added" band. */
   highlighted?: boolean;
-  onViewMore: (incident: DispatchIncident) => void;
+  onViewMore: (incident: IncidentDetail) => void;
 }
 
-const IncidentAccordion: React.FC<Props> = ({
-  incident,
-  initiallyOpen,
-  highlighted,
-  onViewMore,
-}) => (
+const IncidentAccordion: React.FC<Props> = ({incident, initiallyOpen, highlighted, onViewMore}) => (
   <AccordionSection
     title={incident.reference}
-    subtitle={incident.label}
+    subtitle={incident.type}
     initiallyOpen={initiallyOpen}
     highlighted={highlighted}>
     {incident.queuedOffline ? (
@@ -39,17 +29,17 @@ const IncidentAccordion: React.FC<Props> = ({
       <DetailField label="ID" value={incident.reference} />
       <DetailField label="Created By" value={incident.createdBy} />
       <DetailField label="Priority Level" value={incident.priority} />
-      <DetailField label="Incident Type" value={incident.incidentType} />
+      <DetailField label="Incident Type" value={incident.type} />
       <DetailField label="Date & Time" value={formatDateTime(incident.occurredAt)} />
       <DetailField label="Outcome" value={incident.outcome} />
-      <DetailField label="Source Notes" value={incident.notes} full />
+      <DetailField label="Description" value={incident.description} full />
     </View>
 
     <TouchableOpacity
       style={styles.viewMore}
       activeOpacity={0.85}
       onPress={() => {
-        // A queued placeholder isn't in any store yet — its detail sheet
+        // A queued placeholder isn't in any store yet — its detail screen
         // would just show the same summary again with nothing more to add.
         if (incident.queuedOffline) {
           Alert.alert(

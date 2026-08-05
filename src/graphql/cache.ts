@@ -31,13 +31,6 @@ export const cache = new InMemoryCache({
     IncidentFormOptions: {keyFields: false},
     Dispatch: {keyFields: ['id']},
     DispatchEscalation: {keyFields: ['id']},
-    DispatchIncident: {keyFields: ['id']},
-    // No id of their own; keep them embedded in the incident they belong to.
-    DispatchResponderInfo: {keyFields: false},
-    DispatchParty: {keyFields: false},
-    DispatchVehicle: {keyFields: false},
-    // No id of its own — options belong to the query that asked for them.
-    DispatchIncidentFormOptions: {keyFields: false},
     WorkLogEntry: {keyFields: ['id']},
   },
 });

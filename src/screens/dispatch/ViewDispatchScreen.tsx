@@ -18,13 +18,13 @@ import {
 } from '../../components/ui';
 import {PlusIcon, SendIcon} from '../../components/icons';
 import {useGetDispatchQuery} from '../../graphql/features/dispatch/hooks';
-import CreateDispatchIncidentScreen from './CreateDispatchIncidentScreen';
+import CreateIncidentScreen from '../incident/CreateIncidentScreen';
+import ViewIncidentScreen from '../incident/ViewIncidentScreen';
 import DispatchTabs, {DispatchTab, DispatchTabKey} from './components/DispatchTabs';
 import EscalationAccordion from './components/EscalationAccordion';
 import IncidentAccordion from './components/IncidentAccordion';
-import IncidentDetailSheet from './components/IncidentDetailSheet';
-import {usePendingDispatchIncidents} from './pendingDispatchIncidents';
-import {DispatchIncident} from '../../types/dispatch';
+import {usePendingIncidentItems} from '../incident/pendingIncidentItems';
+import {IncidentDetail} from '../../types/incident';
 import {theme} from '../../theme';
 
 const TABS: DispatchTab[] = [
@@ -33,8 +33,8 @@ const TABS: DispatchTab[] = [
   {value: 'incident', label: 'Incident'},
 ];
 
-/** Add Incident is a full-screen push within the detail screen. */
-type DetailRoute = {name: 'detail'} | {name: 'addIncident'};
+/** Add Incident and View Incident are full-screen pushes within the detail screen. */
+type DetailRoute = {name: 'detail'} | {name: 'addIncident'} | {name: 'viewIncident'; id: string};
 
 interface ToastState {
   title: string;
@@ -51,15 +51,15 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
   // Every hook runs before the early returns below — the loading, error and
   // loaded branches must not change hook order between renders.
   const {data: detail, isLoading, isError, refetch} = useGetDispatchQuery(id);
-  const pendingIncidents = usePendingDispatchIncidents(id);
+  // Full detail placeholders, filtered to this dispatch — see Task 9's doc
+  // comment for why the hook synthesizes full detail rather than just the
+  // list-card shape.
+  const pendingIncidents = usePendingIncidentItems().filter(i => i.dispatchReference === id);
   const [tab, setTab] = useState<DispatchTabKey>('dispatch');
-  const [openIncident, setOpenIncident] = useState<DispatchIncident | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const [route, setRoute] = useState<DetailRoute>({name: 'detail'});
   /** The incident just added, shown under a "Newly Added" band until the user leaves the tab. */
-  const [justAdded, setJustAdded] = useState<
-    {id: string; label: string; queued: boolean} | null
-  >(null);
+  const [justAdded, setJustAdded] = useState<{id: string; queued: boolean} | null>(null);
   /**
    * Snapshotted at onCreated rather than derived from `justAdded` — that
    * state gets nulled by handleTabChange as soon as the user leaves the
@@ -77,6 +77,15 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
     }
     scrollRef.current?.scrollTo({y: 0, animated: false});
   }, []);
+
+  // Wrapped in useCallback for the same reason as handleTabChange above:
+  // IncidentAccordion is React.memo'd, and a single shared handler also
+  // avoids each of the three onViewMore call sites below shadowing the
+  // outer .map(incident => ...) parameter with their own inline `incident`.
+  const handleViewMore = useCallback(
+    (incident: IncidentDetail) => setRoute({name: 'viewIncident', id: incident.id}),
+    [],
+  );
 
   if (isLoading) {
     return (
@@ -110,12 +119,12 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
 
   if (route.name === 'addIncident') {
     return (
-      <CreateDispatchIncidentScreen
-        dispatchId={id}
+      <CreateIncidentScreen
+        dispatchReference={id}
         onClose={() => setRoute({name: 'detail'})}
         onCreated={created => {
           setRoute({name: 'detail'});
-          setJustAdded({id: created.id, label: created.label, queued: created.queued});
+          setJustAdded({id: created.id, queued: created.queued});
           setTab('incident');
           setToast(
             created.queued
@@ -126,16 +135,39 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
                   variant: 'danger',
                 }
               : {
-                  title: 'Incident added',
-                  message: `${created.label} was attached to this dispatch.`,
+                  title: 'Incident submitted',
+                  message: `${created.reference} was added to your Work Log.`,
                   variant: 'success',
                 },
           );
-          // No explicit refetch() here — CREATE_CONTEXT (src/graphql/features/
-          // dispatch/hooks.ts) already declares refetchQueries: ['GetDispatch'],
-          // and useGetDispatchQuery keeps that query active the whole time
-          // since it's called above every early return in this component, so
-          // the declarative refetch alone covers it.
+          // No explicit refetch() here — useCreateIncidentMutation's mutate()
+          // conditionally includes 'GetDispatch' in refetchQueries when a
+          // dispatchReference is passed (src/graphql/features/incident/
+          // hooks.ts, Task 9) — this screen always passes one, and this
+          // screen's own useGetDispatchQuery(id) — called above every early
+          // return — is the active 'GetDispatch' query that refetch targets,
+          // so the new incident shows up in the accordion list without this
+          // screen doing anything more.
+        }}
+      />
+    );
+  }
+
+  if (route.name === 'viewIncident') {
+    return (
+      <ViewIncidentScreen
+        id={route.id}
+        onClose={() => setRoute({name: 'detail'})}
+        onDeleted={reference => {
+          setRoute({name: 'detail'});
+          if (justAdded?.id === route.id) {
+            setJustAdded(null);
+          }
+          setToast({
+            title: 'Incident deleted',
+            message: `${reference} was removed from your Work Log.`,
+            variant: 'danger',
+          });
         }}
       />
     );
@@ -237,7 +269,7 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
                       incident={incident}
                       initiallyOpen
                       highlighted
-                      onViewMore={setOpenIncident}
+                      onViewMore={handleViewMore}
                     />
                   ))}
                 </>
@@ -251,7 +283,7 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
                       incident={incident}
                       initiallyOpen
                       highlighted
-                      onViewMore={setOpenIncident}
+                      onViewMore={handleViewMore}
                     />
                   ))}
                 </>
@@ -263,7 +295,7 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
                   initiallyOpen={
                     newlyAdded.length === 0 && pendingIncidents.length === 0 && index === 0
                   }
-                  onViewMore={setOpenIncident}
+                  onViewMore={handleViewMore}
                 />
               ))}
             </View>
@@ -272,12 +304,6 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
           )
         ) : null}
       </ScrollView>
-
-      <IncidentDetailSheet
-        visible={openIncident !== null}
-        incident={openIncident}
-        onClose={() => setOpenIncident(null)}
-      />
 
       <Toast
         visible={toast !== null}
