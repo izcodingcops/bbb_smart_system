@@ -4,6 +4,7 @@ export const SCREEN = {
   work: 'Work',
   maintenance: 'Maintenance',
   fixture: 'Fixture',
+  incident: 'Incidents',
   dispatch: 'Dispatch',
 } as const;
 
@@ -18,6 +19,7 @@ export const SCREEN = {
 export const CREATE_TARGET_BY_TILE: Record<string, string> = {
   maintenance: SCREEN.maintenance,
   fixture: SCREEN.fixture,
+  incident: SCREEN.incident,
   work_log: SCREEN.work,
 };
 
