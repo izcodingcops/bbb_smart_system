@@ -50,7 +50,13 @@ export const OFFLINE_MUTATIONS: Record<OfflineMutationKey, OfflineMutationEntry>
   CREATE_INCIDENT: {
     document: CREATE_INCIDENT,
     feature: 'incident',
-    refetchQueries: ['GetIncidents'],
+    // Unconditional here (unlike the hook's own per-call conditional) —
+    // the registry has no way to know at flush time whether the queued
+    // create was dispatch-linked. Refetching an inactive 'GetDispatch'
+    // query still runs to completion — it just triggers Apollo's dev-only
+    // console warning ("Unknown query named ... requested in
+    // refetchQueries"), not an error.
+    refetchQueries: ['GetIncidents', 'GetDispatch'],
     buildOptimisticData: localId => ({
       createIncident: {__typename: 'Incident', id: localId, reference: 'Pending'},
     }),

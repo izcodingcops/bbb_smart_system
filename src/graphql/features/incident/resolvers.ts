@@ -1,7 +1,7 @@
 import {IncidentDetail, IncidentParty, IncidentPriority, IncidentStatus, IncidentVehicle} from '../../../types/incident';
 import {sleep} from '../../mockSession';
 import {MOCK_INCIDENT_FORM_OPTIONS} from '../../../mocks/incident';
-import {findRecord, incidentStore, nextReference} from './store';
+import {allocateReference, findRecord, incidentStore, nextReference} from './store';
 
 const STATUS: Record<IncidentDetail['status'], string> = {
   Open: 'OPEN',
@@ -144,7 +144,7 @@ export const incidentResolvers = {
       args: {programId: string; input: WireIncidentInput; dispatchReference?: string | null},
     ) => {
       await sleep();
-      const reference = nextReference();
+      const reference = allocateReference();
       const record: IncidentDetail = {
         id: `inc_${reference.replace('#IN-', '')}`,
         reference,

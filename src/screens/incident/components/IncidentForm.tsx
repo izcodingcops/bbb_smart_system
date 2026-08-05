@@ -319,7 +319,8 @@ const IncidentForm: React.FC<Props> = ({
    * card is deleted and indices shift, React would reuse a surviving
    * instance's dropdown state for a different card's data. A stable id per
    * card — assigned once and never reused — keeps each card's transient UI
-   * state pinned to that card for its whole life.
+   * state pinned to that card for its whole life. The counter only ever
+   * increments, so ids never collide even after deletes.
    */
   const nextCardId = useRef(0);
   const makeCardKeys = (count: number) => Array.from({length: count}, () => nextCardId.current++);
@@ -388,6 +389,11 @@ const IncidentForm: React.FC<Props> = ({
       vehicles: current.vehicles.map((vehicle, i) => (i === index ? {...vehicle, [key]: value} : vehicle)),
     }));
 
+  /**
+   * Add/remove keep the key arrays in lockstep with values.parties /
+   * values.vehicles — same length, same order, always — so index i's key
+   * array entry always names the card currently at index i.
+   */
   const addParty = () => {
     setValues(current => ({...current, parties: [...current.parties, {...EMPTY_PARTY}]}));
     setPartyKeys(current => [...current, nextCardId.current++]);

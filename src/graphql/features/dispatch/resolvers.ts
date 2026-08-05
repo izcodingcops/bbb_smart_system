@@ -23,7 +23,7 @@ export const toWire = (record: DispatchDetail) => ({
   priority: PRIORITY[record.priority],
 });
 
-/** Every incident this dispatch's Add Incident flow created, joined fresh on every read. */
+/** Every incident linked to this dispatch via `dispatchReference` — whether created through this dispatch's own "Add Incident" flow or seeded that way — joined fresh on every read. */
 function incidentsFor(dispatchId: string) {
   return incidentStore.records
     .filter(incident => incident.dispatchReference === dispatchId)

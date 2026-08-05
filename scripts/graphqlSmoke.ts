@@ -593,7 +593,7 @@ const checks: Check[] = [
     assert.equal(r2.data.incident.parties.length, 0);
   }],
 
-  ['incidentFormOptions serves every dropdown and reserves a fresh reference each read', async () => {
+  ['incidentFormOptions previews the next reference idempotently, until an incident actually consumes it', async () => {
     const r: any = await run(
       `query O($p: ID!) { incidentFormOptions(programId: $p) {
         nextReference incidentTypes outcomes zones businessNames fixtures
@@ -611,6 +611,36 @@ const checks: Check[] = [
     for (const list of [o.businessNames, o.fixtures, o.maintenanceOptions, o.poiOptions, o.equipmentOptions]) {
       assert.ok(list.length > 0);
     }
+
+    const again: any = await run('query O($p: ID!) { incidentFormOptions(programId: $p) { nextReference } }', {p: 'p1'});
+    assert.equal(again.data.incidentFormOptions.nextReference, o.nextReference);
+
+    // Create → delete → preview again, with no intervening preview between
+    // create and delete: the number createIncident allocated must never be
+    // handed back out, proving allocation (not just observation of the live
+    // store) is what protects against reuse.
+    const created: any = await run(
+      `mutation C($p: ID!, $i: IncidentInput!) { createIncident(programId: $p, input: $i) { id reference } }`,
+      {
+        p: 'p1',
+        i: {
+          incidentType: 'Graffiti', occurredAt: '2026-08-05T09:00:00', outcome: 'Documented', priority: 'LOW',
+          address: '1430 Larimer St, Denver, CO 80202', describeLocation: null, zone: 'Zone 1', businessName: null,
+          description: null, documents: [], reportStatus: 'Open', supervisorStatus: 'In Progress',
+          police: null, fire: null, ems: null, clientName: null,
+          parties: [], vehicles: [], fixture: null, connectedMaintenance: [], connectedPois: [], connectedEquipment: [],
+        },
+      },
+    );
+    assert.equal(created.errors, undefined);
+    const createdRef = created.data.createIncident.reference;
+    assert.equal(createdRef, again.data.incidentFormOptions.nextReference);
+
+    const deleted: any = await run('mutation D($id: ID!) { deleteIncident(id: $id) }', {id: created.data.createIncident.id});
+    assert.equal(deleted.data.deleteIncident, created.data.createIncident.id);
+
+    const afterDelete: any = await run('query O($p: ID!) { incidentFormOptions(programId: $p) { nextReference } }', {p: 'p1'});
+    assert.notEqual(afterDelete.data.incidentFormOptions.nextReference, createdRef);
   }],
 
   ['every incident date-range bucket is non-empty against the current clock', async () => {

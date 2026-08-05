@@ -308,7 +308,16 @@ export function useUpdateIncidentMutation() {
 }
 
 export function useDeleteIncidentMutation() {
-  const [run, {loading}] = useMutation(DELETE_INCIDENT, REFRESH_LIST);
+  const [run, {loading}] = useMutation<{deleteIncident: string}>(DELETE_INCIDENT, {
+    ...REFRESH_LIST,
+    update: (cache, {data}) => {
+      const id = data?.deleteIncident;
+      if (id) {
+        cache.evict({id: cache.identify({__typename: 'Incident', id})});
+        cache.gc();
+      }
+    },
+  });
   return {
     mutate: async (id: string) => {
       await run({variables: {id}});
