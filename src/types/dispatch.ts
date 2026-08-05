@@ -1,3 +1,5 @@
+import {IncidentDetail} from './incident';
+
 export type DispatchStatus = 'Open' | 'Escalated' | 'Closed';
 export type DispatchPriority = 'Low' | 'Medium' | 'High';
 
@@ -32,184 +34,6 @@ export interface DispatchEscalation {
   notes: string | null;
 }
 
-/** The Police / Fire / EMS blocks of an incident, which share a shape. */
-export interface DispatchResponderInfo {
-  /** Officer name, fire engine name, or EMS company — the label varies. */
-  name: string | null;
-  /** EMS only; null in the Police and Fire blocks. */
-  responder: string | null;
-  /** ISO-8601. */
-  timeCalled: string | null;
-  timeArrived: string | null;
-}
-
-export interface DispatchParty {
-  name: string | null;
-  type: string | null;
-  organization: string | null;
-  streetAddress: string | null;
-  phone: string | null;
-  email: string | null;
-}
-
-export interface DispatchVehicle {
-  year: string | null;
-  make: string | null;
-  model: string | null;
-  color: string | null;
-  licenseNumber: string | null;
-}
-
-/**
- * The incident shape *Dispatch reads* — not the canonical Incident model.
- * The Incident module is not built yet; when it lands it owns its own types
- * and this either delegates to them or stays as the narrower projection the
- * dispatch review screen actually needs. Named `DispatchIncident` on purpose,
- * so it can't be mistaken for the real thing.
- */
-export interface DispatchIncident {
-  id: string;
-  /** Display reference, e.g. '#96211407'. Never the id — see the trap table. */
-  reference: string;
-  /** Accordion label, e.g. 'Incident 1'. */
-  label: string;
-  createdBy: string;
-  priority: DispatchPriority;
-  incidentType: string;
-  /** ISO-8601. */
-  occurredAt: string;
-  outcome: string;
-  notes: string | null;
-
-  // Shown only in the View More Detail sheet.
-  ambassador: string | null;
-  reportStatus: string;
-  supervisorStatus: string;
-  address: string;
-  describeLocation: string | null;
-  latitude: string | null;
-  longitude: string | null;
-  zone: string | null;
-  businessName: string | null;
-  fixture: string | null;
-  documentCount: number;
-  lastModifiedBy: string | null;
-  /** ISO-8601. */
-  lastModifiedAt: string | null;
-
-  police: DispatchResponderInfo;
-  fire: DispatchResponderInfo;
-  ems: DispatchResponderInfo;
-  clientName: string | null;
-
-  parties: DispatchParty[];
-  vehicles: DispatchVehicle[];
-
-  connectedMaintenance: string[];
-  connectedPois: string[];
-  connectedEquipment: string[];
-
-  /**
-   * Client-only, unlike Fixture/Maintenance's server-modeled `queuedOffline`
-   * field — a real DispatchIncident from the server is never marked queued.
-   * Only set (`true`) on the synthetic placeholder
-   * `usePendingDispatchIncidents` builds for a create still sitting in the
-   * outbox (see src/screens/dispatch/pendingDispatchIncidents.ts).
-   */
-  queuedOffline?: boolean;
-}
-
-/** What the Add Incident form's dropdowns offer. */
-export interface DispatchIncidentFormOptions {
-  /** Reserved when the form opens, e.g. '#96211408'. */
-  nextReference: string;
-  incidentTypes: string[];
-  outcomes: string[];
-  zones: string[];
-  businessNames: string[];
-  fixtures: string[];
-  partyTypes: string[];
-  maintenanceOptions: string[];
-  poiOptions: string[];
-  equipmentOptions: string[];
-}
-
-export interface DispatchIncidentPartyValues {
-  name: string;
-  type: string;
-  organization: string;
-  streetAddress: string;
-  phone: string;
-  email: string;
-}
-
-export interface DispatchIncidentVehicleValues {
-  year: string;
-  make: string;
-  model: string;
-  color: string;
-  licenseNumber: string;
-  /**
-   * Local URIs from UploadField. Collected because the design shows the
-   * control, but dropped at the mapper: DispatchVehicle has no image field and
-   * nothing renders one. Revisit when a gateway accepts uploads.
-   */
-  images: string[];
-}
-
-/**
- * The Add Incident form's own shape. Optional values are '' or [] rather than
- * null — a controlled input needs a string — and the mapper converts empties
- * to null on the way into DispatchIncident.
- */
-export interface DispatchIncidentFormValues {
-  incidentType: string;
-  /** ISO-8601, seeded from the device clock. */
-  occurredAt: string;
-  outcome: string;
-  priority: DispatchPriority;
-
-  address: string;
-  describeLocation: string;
-  zone: string;
-
-  businessName: string;
-  description: string;
-  documents: string[];
-  /** 'Open' | 'In Progress' | 'Completed'. */
-  reportStatus: string;
-  /** 'In Progress' | 'Completed'. */
-  supervisorStatus: string;
-
-  /** Each flag gates whether its block is submitted at all. */
-  policeInvolved: boolean;
-  policeOfficerName: string;
-  policeTimeCalled: string | null;
-  policeTimeArrived: string | null;
-
-  fireInvolved: boolean;
-  fireEngineName: string;
-  fireTimeCalled: string | null;
-  fireTimeArrived: string | null;
-
-  emsInvolved: boolean;
-  emsCompanyName: string;
-  emsResponderName: string;
-  emsTimeCalled: string | null;
-  emsTimeArrived: string | null;
-
-  clientInvolved: boolean;
-  clientName: string;
-
-  parties: DispatchIncidentPartyValues[];
-  vehicles: DispatchIncidentVehicleValues[];
-
-  fixture: string;
-  connectedMaintenance: string[];
-  connectedPois: string[];
-  connectedEquipment: string[];
-}
-
 /** Everything the detail screen shows beyond the list card. */
 export interface DispatchDetail extends Dispatch {
   /** Nullable: detail-only field, absent from the SDL's list selection set. */
@@ -235,5 +59,15 @@ export interface DispatchDetail extends Dispatch {
   outcomeNotes: string | null;
 
   escalations: DispatchEscalation[];
-  incidents: DispatchIncident[];
+  /**
+   * Resolver-computed via a join against the canonical incident store
+   * (`i.dispatchReference === this.id`) — never stored on the dispatch
+   * record itself. The mock's own stored value is always `[]` and is
+   * overwritten before the response leaves the resolver; see
+   * src/graphql/features/dispatch/resolvers.ts. Full detail, not the list
+   * card's narrower shape — IncidentAccordion shows `createdBy` and
+   * `description`, and "View More Detail" pushes the canonical
+   * ViewIncidentScreen for the rest.
+   */
+  incidents: IncidentDetail[];
 }

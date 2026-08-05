@@ -330,13 +330,13 @@ const checks: Check[] = [
     assert.ok(['LOW', 'MEDIUM', 'HIGH'].includes(r.data.dispatches[0].priority));
   }],
 
-  ['dispatch detail resolves its nested escalations and incidents', async () => {
+  ['dispatch detail resolves its nested incidents via a join, not a stored array', async () => {
     const r: any = await run(
       `query D($id: ID!) { dispatch(id: $id) {
         reference createdBy tagSelected assignedIndividual initialOutcome outcomeNotes
         escalations { id label type respondingPerson timeCalled status notes }
         incidents {
-          id reference label priority incidentType outcome zone businessName documentCount
+          id reference type outcome priority status businessName documents dispatchReference createdBy description
           police { name timeCalled timeArrived }
           ems { name responder }
           parties { name }
@@ -353,16 +353,23 @@ const checks: Check[] = [
     assert.equal(d.escalations.length, 1);
     assert.equal(d.escalations[0].label, 'EMS');
     assert.equal(d.incidents.length, 1);
-    assert.equal(d.incidents[0].id, '1496371');
-    assert.equal(d.incidents[0].reference, '#96211407');
-    // The id/reference seam again, one level down: nested types get it wrong
-    // more often than top-level ones, because nothing forces the distinction.
+    assert.equal(d.incidents[0].reference, '#IN-42986');
+    assert.equal(d.incidents[0].dispatchReference, 'dp_0000_06');
+    // Full detail flows through the join, not just the list-card fields —
+    // IncidentAccordion needs both of these.
+    assert.equal(d.incidents[0].createdBy, 'test user 99');
+    assert.equal(d.incidents[0].description, 'Again');
+    // The id/reference seam again, one level down.
     assert.ok(d.incidents.every((i: any) => i.id !== i.reference));
     assert.equal(d.incidents[0].priority, 'HIGH');
     assert.equal(d.incidents[0].police.name, 'Jack Son');
     assert.equal(d.incidents[0].ems.name, null);
     assert.deepEqual(d.incidents[0].parties, []);
     assert.deepEqual(d.incidents[0].connectedEquipment, ['Equipment #4340']);
+
+    // A second dispatch's incident is never mistaken for this one's.
+    const other: any = await run('query D($id: ID!) { dispatch(id: $id) { incidents { reference } } }', {id: 'dp_0000_11'});
+    assert.deepEqual(other.data.dispatch.incidents.map((i: any) => i.reference), ['#IN-42987']);
   }],
 
   ['an unknown dispatch id resolves to null rather than throwing', async () => {
@@ -411,206 +418,6 @@ const checks: Check[] = [
     // Nothing may be seeded into the future against a live clock.
     const now = Date.now();
     assert.ok(dates.every(d => Date.parse(d) <= now));
-  }],
-
-  ['dispatch incident form options serve every dropdown', async () => {
-    const r: any = await run(
-      `query O($p: ID!) { dispatchIncidentFormOptions(programId: $p) {
-        nextReference incidentTypes outcomes zones businessNames fixtures
-        partyTypes maintenanceOptions poiOptions equipmentOptions
-      } }`,
-      {p: 'p1'},
-    );
-    assert.equal(r.errors, undefined);
-    const o = r.data.dispatchIncidentFormOptions;
-    assert.ok(o.nextReference.startsWith('#'));
-    assert.equal(o.incidentTypes.length, 13);
-    assert.equal(o.outcomes.length, 13);
-    assert.equal(o.zones.length, 6);
-    assert.equal(o.partyTypes.length, 6);
-    for (const list of [o.businessNames, o.fixtures, o.maintenanceOptions, o.poiOptions, o.equipmentOptions]) {
-      assert.ok(list.length > 0);
-    }
-    // The reference is reserved, not consumed by reading it — two reads with
-    // no create in between must still agree on the same nextReference.
-    const again: any = await run(
-      'query O($p: ID!) { dispatchIncidentFormOptions(programId: $p) { nextReference } }',
-      {p: 'p1'},
-    );
-    assert.equal(again.data.dispatchIncidentFormOptions.nextReference, o.nextReference);
-  }],
-
-  ['dispatch incident create round-trips onto its parent dispatch', async () => {
-    const before: any = await run(
-      'query O($p: ID!) { dispatchIncidentFormOptions(programId: $p) { nextReference } }',
-      {p: 'p1'},
-    );
-    const reserved = before.data.dispatchIncidentFormOptions.nextReference;
-
-    const created: any = await run(
-      `mutation C($d: ID!, $i: DispatchIncidentInput!) {
-        createDispatchIncident(dispatchId: $d, input: $i) { id reference label priority }
-      }`,
-      {
-        d: 'dp_0000_09',
-        i: {
-          incidentType: 'Welfare Check',
-          occurredAt: '2026-08-04T10:00:00',
-          outcome: 'Referred to Outreach',
-          priority: 'MEDIUM',
-          address: '1601 Wewatta St, Denver, CO 80202',
-          describeLocation: null,
-          zone: 'Zone 2',
-          businessName: null,
-          notes: 'Added from dispatch review',
-          documentCount: 0,
-          reportStatus: 'In Progress',
-          supervisorStatus: 'In Progress',
-          police: null,
-          fire: null,
-          ems: null,
-          clientName: null,
-          parties: [],
-          vehicles: [],
-          fixture: null,
-          connectedMaintenance: [],
-          connectedPois: [],
-          connectedEquipment: [],
-        },
-      },
-    );
-    assert.equal(created.errors, undefined);
-    const inc = created.data.createDispatchIncident;
-    assert.equal(inc.reference, reserved);
-    assert.notEqual(inc.id, inc.reference);
-    // First incident on this dispatch — the label counts within the dispatch.
-    assert.equal(inc.label, 'Incident 1');
-    // The nested-enum trap: priority must come back uppercased, like the
-    // seeded incidents do, not as the display-shape 'Medium'.
-    assert.equal(inc.priority, 'MEDIUM');
-
-    const read: any = await run(
-      'query D($id: ID!) { dispatch(id: $id) { incidents { id reference label priority } } }',
-      {id: 'dp_0000_09'},
-    );
-    assert.equal(read.errors, undefined);
-    assert.equal(read.data.dispatch.incidents.length, 1);
-    assert.equal(read.data.dispatch.incidents[0].reference, reserved);
-    assert.equal(read.data.dispatch.incidents[0].priority, 'MEDIUM');
-
-    // The reserved reference is consumed, so the next open gets a fresh one.
-    const after: any = await run(
-      'query O($p: ID!) { dispatchIncidentFormOptions(programId: $p) { nextReference } }',
-      {p: 'p1'},
-    );
-    assert.notEqual(after.data.dispatchIncidentFormOptions.nextReference, reserved);
-  }],
-
-  ['a dispatch incident created with every involvement answered No stores nulls', async () => {
-    const created: any = await run(
-      `mutation C($d: ID!, $i: DispatchIncidentInput!) {
-        createDispatchIncident(dispatchId: $d, input: $i) {
-          id
-          police { name timeCalled timeArrived }
-          fire { name }
-          ems { name responder }
-          clientName
-          describeLocation
-          businessName
-        }
-      }`,
-      {
-        d: 'dp_0000_14',
-        i: {
-          incidentType: 'Graffiti',
-          occurredAt: '2026-08-04T11:00:00',
-          outcome: 'Documented',
-          priority: 'LOW',
-          address: '1430 Larimer St, Denver, CO 80202',
-          describeLocation: null,
-          zone: 'Zone 1',
-          businessName: null,
-          notes: null,
-          documentCount: 0,
-          reportStatus: 'Open',
-          supervisorStatus: 'In Progress',
-          police: null,
-          fire: null,
-          ems: null,
-          clientName: null,
-          parties: [],
-          vehicles: [],
-          fixture: null,
-          connectedMaintenance: [],
-          connectedPois: [],
-          connectedEquipment: [],
-        },
-      },
-    );
-    assert.equal(created.errors, undefined);
-    const inc = created.data.createDispatchIncident;
-    // A No answer must land as null, not '' — the read sheet renders null as
-    // 'N/A' and an empty string as blank.
-    assert.equal(inc.police.name, null);
-    assert.equal(inc.police.timeCalled, null);
-    assert.equal(inc.police.timeArrived, null);
-    assert.equal(inc.fire.name, null);
-    assert.equal(inc.ems.name, null);
-    assert.equal(inc.ems.responder, null);
-    assert.equal(inc.clientName, null);
-    assert.equal(inc.describeLocation, null);
-    assert.equal(inc.businessName, null);
-  }],
-
-  ['a second dispatch incident gets the next label within its own dispatch', async () => {
-    const input = {
-      incidentType: 'Trespassing',
-      occurredAt: '2026-08-04T12:00:00',
-      outcome: 'Warning Issued',
-      priority: 'HIGH',
-      address: '1601 Wewatta St, Denver, CO 80202',
-      describeLocation: 'North entrance',
-      zone: 'Zone 3',
-      businessName: 'Union Station',
-      notes: 'Second one',
-      documentCount: 2,
-      reportStatus: 'Open',
-      supervisorStatus: 'In Progress',
-      police: {name: 'Officer R. Vance', responder: null, timeCalled: '2026-08-04T11:50:00', timeArrived: '2026-08-04T11:58:00'},
-      fire: null,
-      ems: null,
-      clientName: 'Jacob',
-      parties: [{name: 'Jacob', type: 'Witness', organization: 'Jacob & Sons', streetAddress: null, phone: '+1 555-5555', email: 'jacob12@gmail.com'}],
-      vehicles: [{year: '2021', make: 'Honda', model: 'Civic', color: 'Black', licenseNumber: 'SL139224'}],
-      fixture: 'Bench #B-204',
-      connectedMaintenance: ['Maintenance #96211'],
-      connectedPois: [],
-      connectedEquipment: ['Tool Box'],
-    };
-    // dp_0000_09 already has the incident created two checks above.
-    const created: any = await run(
-      `mutation C($d: ID!, $i: DispatchIncidentInput!) {
-        createDispatchIncident(dispatchId: $d, input: $i) {
-          label documentCount police { name timeCalled }
-          parties { name type organization streetAddress }
-          vehicles { make licenseNumber }
-          fixture connectedMaintenance connectedEquipment
-        }
-      }`,
-      {d: 'dp_0000_09', i: input},
-    );
-    assert.equal(created.errors, undefined);
-    const inc = created.data.createDispatchIncident;
-    assert.equal(inc.label, 'Incident 2');
-    assert.equal(inc.documentCount, 2);
-    assert.equal(inc.police.name, 'Officer R. Vance');
-    assert.equal(inc.parties.length, 1);
-    assert.equal(inc.parties[0].type, 'Witness');
-    assert.equal(inc.parties[0].streetAddress, null);
-    assert.equal(inc.vehicles[0].licenseNumber, 'SL139224');
-    assert.equal(inc.fixture, 'Bench #B-204');
-    assert.deepEqual(inc.connectedMaintenance, ['Maintenance #96211']);
-    assert.deepEqual(inc.connectedEquipment, ['Tool Box']);
   }],
 
   ['work log entries resolve with uppercase YesNo enums', async () => {
@@ -978,6 +785,45 @@ const checks: Check[] = [
     assert.equal(deleted.data.deleteIncidentComment, comment.id);
     const goneRead: any = await run('query D($id: ID!) { incident(id: $id) { comments { id } } }', {id: target.id});
     assert.equal(goneRead.data.incident.comments.length, 0);
+  }],
+
+  ['creating and deleting a dispatch-linked incident updates the join, and only the join', async () => {
+    // Spec Verification section: createIncident with a dispatchReference
+    // shows up in that dispatch's join on the next read, and nowhere else.
+    // Only checkable once the join exists (this task). Positioned last in
+    // the file — it mutates shared state (creates one record, deletes
+    // another), and every other check in this file asserts exact state
+    // that must not shift out from under it.
+    const created: any = await run(
+      `mutation C($p: ID!, $i: IncidentInput!, $d: ID) {
+        createIncident(programId: $p, input: $i, dispatchReference: $d) { id reference }
+      }`,
+      {
+        p: 'p1',
+        d: 'dp_0000_06',
+        i: {
+          incidentType: 'Trespassing', occurredAt: '2026-08-05T12:00:00', outcome: 'Warning Issued', priority: 'LOW',
+          address: '16th St Mall, Denver, CO 80202', describeLocation: null, zone: 'Zone 4', businessName: null,
+          description: null, documents: [], reportStatus: 'Open', supervisorStatus: 'In Progress',
+          police: null, fire: null, ems: null, clientName: null,
+          parties: [], vehicles: [], fixture: null, connectedMaintenance: [], connectedPois: [], connectedEquipment: [],
+        },
+      },
+    );
+    assert.equal(created.errors, undefined);
+    const newRef = created.data.createIncident.reference;
+    const joined: any = await run('query D($id: ID!) { dispatch(id: $id) { incidents { reference } } }', {id: 'dp_0000_06'});
+    assert.ok(joined.data.dispatch.incidents.some((i: any) => i.reference === newRef));
+    const otherStillClean: any = await run('query D($id: ID!) { dispatch(id: $id) { incidents { reference } } }', {id: 'dp_0000_11'});
+    assert.ok(otherStillClean.data.dispatch.incidents.every((i: any) => i.reference !== newRef));
+
+    // Spec Verification section: deleting a dispatch-linked incident removes
+    // it from that dispatch's join on the next read.
+    const beforeDelete: any = await run('query D($id: ID!) { dispatch(id: $id) { incidents { id reference } } }', {id: 'dp_0000_06'});
+    const toDelete = beforeDelete.data.dispatch.incidents.find((i: any) => i.reference === '#IN-42986');
+    await run('mutation D($id: ID!) { deleteIncident(id: $id) }', {id: toDelete.id});
+    const afterDelete: any = await run('query D($id: ID!) { dispatch(id: $id) { incidents { reference } } }', {id: 'dp_0000_06'});
+    assert.ok(afterDelete.data.dispatch.incidents.every((i: any) => i.reference !== '#IN-42986'));
   }],
 ];
 

@@ -25,76 +25,6 @@ export const dispatchTypeDefs = /* GraphQL */ `
     notes: String
   }
 
-  "The Police / Fire / EMS blocks of an incident, which share a shape."
-  type DispatchResponderInfo {
-    "Officer name, fire engine name, or EMS company — the label varies."
-    name: String
-    "EMS only."
-    responder: String
-    "ISO-8601."
-    timeCalled: String
-    timeArrived: String
-  }
-
-  type DispatchParty {
-    name: String
-    type: String
-    organization: String
-    streetAddress: String
-    phone: String
-    email: String
-  }
-
-  type DispatchVehicle {
-    year: String
-    make: String
-    model: String
-    color: String
-    licenseNumber: String
-  }
-
-  "What Dispatch reads about a connected incident. Not the canonical Incident type."
-  type DispatchIncident {
-    id: ID!
-    "Display reference, e.g. '#96211407'."
-    reference: String!
-    label: String!
-    createdBy: String!
-    priority: DispatchPriority!
-    incidentType: String!
-    "ISO-8601."
-    occurredAt: String!
-    outcome: String!
-    notes: String
-
-    ambassador: String
-    reportStatus: String!
-    supervisorStatus: String!
-    address: String!
-    describeLocation: String
-    latitude: String
-    longitude: String
-    zone: String
-    businessName: String
-    fixture: String
-    documentCount: Int!
-    lastModifiedBy: String
-    "ISO-8601."
-    lastModifiedAt: String
-
-    police: DispatchResponderInfo!
-    fire: DispatchResponderInfo!
-    ems: DispatchResponderInfo!
-    clientName: String
-
-    parties: [DispatchParty!]!
-    vehicles: [DispatchVehicle!]!
-
-    connectedMaintenance: [String!]!
-    connectedPois: [String!]!
-    connectedEquipment: [String!]!
-  }
-
   type Dispatch {
     id: ID!
     "Display reference, e.g. '#BBB-D 0000-06'."
@@ -123,22 +53,8 @@ export const dispatchTypeDefs = /* GraphQL */ `
     fullSquadResponse: String
     outcomeNotes: String
     escalations: [DispatchEscalation!]
-    incidents: [DispatchIncident!]
-  }
-
-  "Everything the Add Incident form's dropdowns offer."
-  type DispatchIncidentFormOptions {
-    "Reserved when the form opens, e.g. '#96211408'."
-    nextReference: String!
-    incidentTypes: [String!]!
-    outcomes: [String!]!
-    zones: [String!]!
-    businessNames: [String!]!
-    fixtures: [String!]!
-    partyTypes: [String!]!
-    maintenanceOptions: [String!]!
-    poiOptions: [String!]!
-    equipmentOptions: [String!]!
+    "Resolver-computed — see the dispatch resolver's join against the incident store."
+    incidents: [Incident!]
   }
 
   input DispatchFilter {
@@ -148,74 +64,8 @@ export const dispatchTypeDefs = /* GraphQL */ `
     search: String
   }
 
-  "A Police / Fire / EMS block. Null in its entirety when the answer is No."
-  input DispatchResponderInput {
-    name: String
-    "EMS only."
-    responder: String
-    "ISO-8601."
-    timeCalled: String
-    timeArrived: String
-  }
-
-  input DispatchIncidentPartyInput {
-    name: String
-    type: String
-    organization: String
-    streetAddress: String
-    phone: String
-    email: String
-  }
-
-  input DispatchIncidentVehicleInput {
-    year: String
-    make: String
-    model: String
-    color: String
-    licenseNumber: String
-  }
-
-  input DispatchIncidentInput {
-    incidentType: String!
-    "ISO-8601."
-    occurredAt: String!
-    outcome: String!
-    priority: DispatchPriority!
-
-    address: String!
-    describeLocation: String
-    zone: String
-
-    businessName: String
-    notes: String
-    documentCount: Int!
-    reportStatus: String!
-    supervisorStatus: String!
-
-    police: DispatchResponderInput
-    fire: DispatchResponderInput
-    ems: DispatchResponderInput
-    clientName: String
-
-    parties: [DispatchIncidentPartyInput!]!
-    vehicles: [DispatchIncidentVehicleInput!]!
-
-    fixture: String
-    connectedMaintenance: [String!]!
-    connectedPois: [String!]!
-    connectedEquipment: [String!]!
-  }
-
   extend type Query {
     dispatches(programId: ID!, filter: DispatchFilter): [Dispatch!]!
     dispatch(id: ID!): Dispatch
-    dispatchIncidentFormOptions(programId: ID!): DispatchIncidentFormOptions!
-  }
-
-  extend type Mutation {
-    createDispatchIncident(
-      dispatchId: ID!
-      input: DispatchIncidentInput!
-    ): DispatchIncident!
   }
 `;

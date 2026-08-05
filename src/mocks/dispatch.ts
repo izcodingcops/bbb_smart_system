@@ -1,19 +1,10 @@
 import {
   DispatchDetail,
   DispatchEscalation,
-  DispatchIncident,
-  DispatchIncidentFormOptions,
   DispatchPriority,
   DispatchStatus,
 } from '../types/dispatch';
-
-/** No responder involved — the shape the mockup renders as four 'N/A' cells. */
-const NO_RESPONDER = {
-  name: null,
-  responder: null,
-  timeCalled: null,
-  timeArrived: null,
-};
+import {IncidentDetail} from '../types/incident';
 
 /** Detail fields every record carries, overridden per record where the source differs. */
 const DETAIL_DEFAULTS = {
@@ -31,7 +22,7 @@ const DETAIL_DEFAULTS = {
   fullSquadResponse: 'No' as string | null,
   outcomeNotes: null as string | null,
   escalations: [] as DispatchEscalation[],
-  incidents: [] as DispatchIncident[],
+  incidents: [] as IncidentDetail[],
 };
 
 function pad(value: number): string {
@@ -85,93 +76,6 @@ function seedAt(daysAgo: number, minutes: number): string {
  * Last 30 days reaches records Last 7 days does not.
  */
 const GEN_BASE = new Date(seedAt(3, 6 * 60)).getTime();
-
-/**
- * The mockup's single fully-populated incident, on dispatch #BBB-D 0000-06.
- *
- * The source mockup dates this incident 8 days after its parent dispatch
- * (07/10/2026 vs. 07/02/2026) — a mockup artifact, not a domain rule. It is
- * pinned to the parent's own day instead, so no seeded record lands in the
- * future against a live clock. The police-before-incident ordering within the
- * same day is left as-is; that oddity is harmless.
- */
-const INCIDENT_1: DispatchIncident = {
-  id: '1496371',
-  reference: '#96211407',
-  label: 'Incident 1',
-  createdBy: 'test user 99',
-  priority: 'High',
-  incidentType: 'Narcan',
-  occurredAt: seedAt(0, 7 * 60 + 49),
-  outcome: '911 CALLED',
-  notes: 'Again',
-  ambassador: 'test user 99',
-  reportStatus: 'Open',
-  supervisorStatus: 'In Progress',
-  address: 'Lahore, Virginia, United States',
-  describeLocation: null,
-  latitude: '31.5497',
-  longitude: '74.3436',
-  zone: 'Waterfront Park',
-  businessName: 'StarX',
-  fixture: null,
-  documentCount: 0,
-  lastModifiedBy: 'test user 99',
-  lastModifiedAt: seedAt(0, 7 * 60 + 49),
-  police: {
-    name: 'Jack Son',
-    responder: null,
-    timeCalled: seedAt(0, 7 * 60 + 40),
-    timeArrived: seedAt(0, 7 * 60 + 45),
-  },
-  fire: {...NO_RESPONDER},
-  ems: {...NO_RESPONDER},
-  clientName: null,
-  parties: [],
-  vehicles: [],
-  connectedMaintenance: [],
-  connectedPois: [],
-  connectedEquipment: ['Equipment #4340'],
-};
-
-/**
- * A second, sparser incident on a different dispatch — the accordion list is
- * otherwise only ever length 1, and the empty responder blocks exercise the
- * 'N/A' rendering the read sheet does for a No answer.
- */
-const INCIDENT_2: DispatchIncident = {
-  id: '1496402',
-  reference: '#96211412',
-  label: 'Incident 1',
-  createdBy: 'Marcus Bell',
-  priority: 'Medium',
-  incidentType: 'Welfare Check',
-  occurredAt: seedAt(1, 21 * 60 + 40),
-  outcome: 'Referred to Outreach',
-  notes: 'Subject accepted an outreach referral.',
-  ambassador: 'Marcus Bell',
-  reportStatus: 'In Progress',
-  supervisorStatus: 'In Progress',
-  address: '900 16th St Mall, Denver, CO 80202',
-  describeLocation: null,
-  latitude: null,
-  longitude: null,
-  zone: 'Zone 2',
-  businessName: '16th St Mall',
-  fixture: null,
-  documentCount: 0,
-  lastModifiedBy: 'Marcus Bell',
-  lastModifiedAt: seedAt(1, 21 * 60 + 40),
-  police: {...NO_RESPONDER},
-  fire: {...NO_RESPONDER},
-  ems: {...NO_RESPONDER},
-  clientName: null,
-  parties: [],
-  vehicles: [],
-  connectedMaintenance: [],
-  connectedPois: [],
-  connectedEquipment: [],
-};
 
 /** The mockup's single escalation, on the same dispatch. */
 const ESCALATION_EMS: DispatchEscalation = {
@@ -246,7 +150,6 @@ const EXPLICIT: DispatchDetail[] = [
     initialOutcome: 'Resolved',
     outcomeNotes: 'Resolved in Dispatch initial review',
     escalations: [ESCALATION_EMS],
-    incidents: [INCIDENT_1],
   },
   {
     ...DETAIL_DEFAULTS,
@@ -293,7 +196,6 @@ const EXPLICIT: DispatchDetail[] = [
     timeArrived: seedAt(1, 21 * 60 + 27),
     initialOutcome: 'Referred to Outreach',
     escalations: [ESCALATION_POLICE],
-    incidents: [INCIDENT_2],
   },
   {
     ...DETAIL_DEFAULTS,
@@ -428,70 +330,3 @@ const GENERATED: DispatchDetail[] = Array.from({length: 21}, (_, i) => {
 });
 
 export const MOCK_DISPATCHES: DispatchDetail[] = [...EXPLICIT, ...GENERATED];
-
-/** Every list the Add Incident form offers, verbatim from the design's IncForm. */
-export const MOCK_DISPATCH_INCIDENT_OPTIONS: Omit<
-  DispatchIncidentFormOptions,
-  'nextReference'
-> = {
-  incidentTypes: [
-    'Vandalism',
-    'Medical Emergency',
-    'Theft',
-    'Suspicious Activity',
-    'Trespassing',
-    'Property Damage',
-    'Drug Activity',
-    'Disturbance',
-    'Graffiti',
-    'Assault',
-    'Lost Property',
-    'Fire Hazard',
-    'Panhandling',
-  ],
-  outcomes: [
-    'Police Notified',
-    'Police Called',
-    'EMS Called',
-    'EMS & Police',
-    'Report Filed',
-    'Warning Issued',
-    'Reported',
-    'Monitored',
-    'Resolved',
-    'Documented',
-    'Returned to Owner',
-    'Fire Dept Notified',
-    'Referred to Outreach',
-  ],
-  zones: ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'Zone 5', 'Zone 6'],
-  businessNames: [
-    '16th St Mall',
-    'Union Station',
-    'Larimer Square',
-    'Civic Center',
-    'LoDo District',
-    'BlockByBlock',
-  ],
-  fixtures: [
-    'Bench #B-204',
-    'Trash Bin #T-88',
-    'Planter #P-12',
-    'Bike Rack #BR-5',
-    'Light Pole #LP-19',
-  ],
-  partyTypes: ['Witness', 'Victim', 'Suspect', 'Bystander', 'Reporting Party', 'Other'],
-  maintenanceOptions: [
-    'Maintenance #96211407',
-    'Maintenance #96211',
-    'Maintenance #42984',
-    'Maintenance #42931',
-  ],
-  poiOptions: ['POI #96211407', 'POI #96211', 'R. Blake', 'M. Ortiz', 'D. Cole'],
-  equipmentOptions: [
-    'Equipment #96211407',
-    'Equipment #96211',
-    'Tool Box',
-    'Pressure Washer',
-  ],
-};

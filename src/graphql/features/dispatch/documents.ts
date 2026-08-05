@@ -54,26 +54,32 @@ export const GET_DISPATCH = gql`
       incidents {
         id
         reference
-        label
-        createdBy
-        priority
-        incidentType
-        occurredAt
+        type
         outcome
-        notes
-        ambassador
-        reportStatus
-        supervisorStatus
+        priority
+        status
+        occurredAt
+        assignee {
+          name
+          initials
+        }
+        person
+        businessName
+        zone
         address
+        queuedOffline
+        dispatchReference
+        ambassador
+        createdBy
+        supervisorStatus
+        lastModifiedBy
+        lastModifiedAt
         describeLocation
         latitude
         longitude
-        zone
-        businessName
         fixture
-        documentCount
-        lastModifiedBy
-        lastModifiedAt
+        description
+        documents
         police {
           name
           responder
@@ -111,34 +117,14 @@ export const GET_DISPATCH = gql`
         connectedMaintenance
         connectedPois
         connectedEquipment
+        comments {
+          id
+          createdAt
+          text
+          edited
+          images
+        }
       }
-    }
-  }
-`;
-
-export const GET_DISPATCH_INCIDENT_FORM_OPTIONS = gql`
-  query GetDispatchIncidentFormOptions($programId: ID!) {
-    dispatchIncidentFormOptions(programId: $programId) {
-      nextReference
-      incidentTypes
-      outcomes
-      zones
-      businessNames
-      fixtures
-      partyTypes
-      maintenanceOptions
-      poiOptions
-      equipmentOptions
-    }
-  }
-`;
-
-export const CREATE_DISPATCH_INCIDENT = gql`
-  mutation CreateDispatchIncident($dispatchId: ID!, $input: DispatchIncidentInput!) {
-    createDispatchIncident(dispatchId: $dispatchId, input: $input) {
-      id
-      reference
-      label
     }
   }
 `;
