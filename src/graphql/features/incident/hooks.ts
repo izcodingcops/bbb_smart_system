@@ -252,8 +252,7 @@ function toIncidentInput(values: IncidentFormValues) {
 const REFRESH_LIST = {...INCIDENT_CONTEXT, refetchQueries: ['GetIncidents']};
 const REFRESH_DETAIL = {...INCIDENT_CONTEXT, refetchQueries: ['GetIncidents', 'GetIncident']};
 
-// Offline queue opt-in (offlineQueueKey) is added in a later task.
-const CREATE_CONTEXT = {context: {feature: 'incident'}, refetchQueries: ['GetIncidents']};
+const CREATE_CONTEXT = {context: {feature: 'incident', offlineQueueKey: 'CREATE_INCIDENT'}};
 
 export function useSetIncidentStatusMutation() {
   const [run, {loading}] = useMutation(SET_INCIDENT_STATUS, REFRESH_LIST);
@@ -282,6 +281,9 @@ export function useCreateIncidentMutation() {
           input: toIncidentInput(values),
           dispatchReference: options?.dispatchReference ?? null,
         },
+        refetchQueries: options?.dispatchReference
+          ? ['GetIncidents', 'GetDispatch']
+          : ['GetIncidents'],
       });
       const id = result.data?.createIncident.id ?? '';
       return {

@@ -7,6 +7,7 @@ export type OfflineMutationKey =
   | 'CREATE_WORK_LOG_ENTRY'
   | 'CREATE_FIXTURE'
   | 'CREATE_MAINTENANCE_REQUEST'
+  | 'CREATE_INCIDENT'
   | 'CREATE_DISPATCH_INCIDENT';
 
 export interface OutboxItem {
