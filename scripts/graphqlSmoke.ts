@@ -946,6 +946,39 @@ const checks: Check[] = [
     assert.equal(r.errors, undefined);
     assert.equal(r.data.setIncidentStatus.status, 'COMPLETED');
   }],
+
+  ['incident comments: add, edit and delete round-trip', async () => {
+    const list: any = await run('query I($p: ID!) { incidents(programId: $p) { id reference } }', {p: 'p1'});
+    const target = list.data.incidents.find((i: any) => i.reference === '#IN-42860');
+
+    const added: any = await run(
+      `mutation A($id: ID!, $t: String!) { addIncidentComment(incidentId: $id, text: $t) { id text edited images } }`,
+      {id: target.id, t: 'Followed up with the business owner.'},
+    );
+    assert.equal(added.errors, undefined);
+    const comment = added.data.addIncidentComment;
+    assert.equal(comment.edited, false);
+    assert.deepEqual(comment.images, []);
+
+    const read: any = await run('query D($id: ID!) { incident(id: $id) { comments { id text } } }', {id: target.id});
+    assert.equal(read.data.incident.comments.length, 1);
+    assert.equal(read.data.incident.comments[0].id, comment.id);
+
+    const updated: any = await run(
+      `mutation U($id: ID!, $c: ID!, $t: String!) { updateIncidentComment(incidentId: $id, commentId: $c, text: $t) { text edited } }`,
+      {id: target.id, c: comment.id, t: 'Followed up — resolved.'},
+    );
+    assert.equal(updated.data.updateIncidentComment.text, 'Followed up — resolved.');
+    assert.equal(updated.data.updateIncidentComment.edited, true);
+
+    const deleted: any = await run(
+      'mutation D($id: ID!, $c: ID!) { deleteIncidentComment(incidentId: $id, commentId: $c) }',
+      {id: target.id, c: comment.id},
+    );
+    assert.equal(deleted.data.deleteIncidentComment, comment.id);
+    const goneRead: any = await run('query D($id: ID!) { incident(id: $id) { comments { id } } }', {id: target.id});
+    assert.equal(goneRead.data.incident.comments.length, 0);
+  }],
 ];
 
 async function main() {

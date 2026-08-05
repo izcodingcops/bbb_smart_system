@@ -151,3 +151,33 @@ export const DELETE_INCIDENT = gql`
     deleteIncident(id: $id)
   }
 `;
+
+export const ADD_INCIDENT_COMMENT = gql`
+  mutation AddIncidentComment($incidentId: ID!, $text: String!, $images: [String!]) {
+    addIncidentComment(incidentId: $incidentId, text: $text, images: $images) {
+      id
+      createdAt
+      text
+      edited
+      images
+    }
+  }
+`;
+
+export const UPDATE_INCIDENT_COMMENT = gql`
+  mutation UpdateIncidentComment($incidentId: ID!, $commentId: ID!, $text: String!, $images: [String!]) {
+    updateIncidentComment(incidentId: $incidentId, commentId: $commentId, text: $text, images: $images) {
+      id
+      createdAt
+      text
+      edited
+      images
+    }
+  }
+`;
+
+export const DELETE_INCIDENT_COMMENT = gql`
+  mutation DeleteIncidentComment($incidentId: ID!, $commentId: ID!) {
+    deleteIncidentComment(incidentId: $incidentId, commentId: $commentId)
+  }
+`;

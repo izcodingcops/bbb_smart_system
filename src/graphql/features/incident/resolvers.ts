@@ -210,5 +210,53 @@ export const incidentResolvers = {
       incidentStore.records.splice(index, 1);
       return args.id;
     },
+
+    addIncidentComment: async (
+      _: unknown,
+      args: {incidentId: string; text: string; images?: string[] | null},
+    ) => {
+      await sleep();
+      const record = findRecord(args.incidentId);
+      if (!record) {
+        throw new Error(`Unknown incident: ${args.incidentId}`);
+      }
+      const comment = {
+        id: `c${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        text: args.text,
+        edited: false,
+        images: args.images ?? [],
+      };
+      record.comments.unshift(comment);
+      return comment;
+    },
+
+    updateIncidentComment: async (
+      _: unknown,
+      args: {incidentId: string; commentId: string; text: string; images?: string[] | null},
+    ) => {
+      await sleep();
+      const record = findRecord(args.incidentId);
+      const comment = record?.comments.find(c => c.id === args.commentId);
+      if (!comment) {
+        throw new Error(`Unknown comment: ${args.commentId}`);
+      }
+      comment.text = args.text;
+      comment.edited = true;
+      if (args.images) {
+        comment.images = args.images;
+      }
+      return comment;
+    },
+
+    deleteIncidentComment: async (_: unknown, args: {incidentId: string; commentId: string}) => {
+      await sleep();
+      const record = findRecord(args.incidentId);
+      if (!record) {
+        throw new Error(`Unknown incident: ${args.incidentId}`);
+      }
+      record.comments = record.comments.filter(c => c.id !== args.commentId);
+      return args.commentId;
+    },
   },
 };

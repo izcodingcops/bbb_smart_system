@@ -187,5 +187,8 @@ export const incidentTypeDefs = /* GraphQL */ `
     createIncident(programId: ID!, input: IncidentInput!, dispatchReference: ID): Incident!
     updateIncident(id: ID!, input: IncidentInput!): Incident!
     deleteIncident(id: ID!): ID!
+    addIncidentComment(incidentId: ID!, text: String!, images: [String!]): IncidentComment!
+    updateIncidentComment(incidentId: ID!, commentId: ID!, text: String!, images: [String!]): IncidentComment!
+    deleteIncidentComment(incidentId: ID!, commentId: ID!): ID!
   }
 `;

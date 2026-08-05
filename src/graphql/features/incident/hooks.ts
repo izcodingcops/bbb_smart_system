@@ -10,7 +10,18 @@ import {
   IncidentPriority,
   IncidentStatus,
 } from '../../../types/incident';
-import {CREATE_INCIDENT, DELETE_INCIDENT, GET_INCIDENT, GET_INCIDENTS, GET_INCIDENT_FORM_OPTIONS, SET_INCIDENT_STATUS, UPDATE_INCIDENT} from './documents';
+import {
+  ADD_INCIDENT_COMMENT,
+  CREATE_INCIDENT,
+  DELETE_INCIDENT,
+  DELETE_INCIDENT_COMMENT,
+  GET_INCIDENT,
+  GET_INCIDENTS,
+  GET_INCIDENT_FORM_OPTIONS,
+  SET_INCIDENT_STATUS,
+  UPDATE_INCIDENT,
+  UPDATE_INCIDENT_COMMENT,
+} from './documents';
 
 export const INCIDENT_CONTEXT = {context: {feature: 'incident'}};
 
@@ -299,6 +310,36 @@ export function useDeleteIncidentMutation() {
   return {
     mutate: async (id: string) => {
       await run({variables: {id}});
+    },
+    isLoading: loading,
+  };
+}
+
+export function useAddIncidentCommentMutation() {
+  const [run, {loading}] = useMutation(ADD_INCIDENT_COMMENT, REFRESH_DETAIL);
+  return {
+    mutate: async (incidentId: string, text: string, images: string[]) => {
+      await run({variables: {incidentId, text, images}});
+    },
+    isLoading: loading,
+  };
+}
+
+export function useUpdateIncidentCommentMutation() {
+  const [run, {loading}] = useMutation(UPDATE_INCIDENT_COMMENT, REFRESH_DETAIL);
+  return {
+    mutate: async (incidentId: string, commentId: string, text: string, images: string[]) => {
+      await run({variables: {incidentId, commentId, text, images}});
+    },
+    isLoading: loading,
+  };
+}
+
+export function useDeleteIncidentCommentMutation() {
+  const [run, {loading}] = useMutation(DELETE_INCIDENT_COMMENT, REFRESH_DETAIL);
+  return {
+    mutate: async (incidentId: string, commentId: string) => {
+      await run({variables: {incidentId, commentId}});
     },
     isLoading: loading,
   };
