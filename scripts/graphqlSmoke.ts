@@ -836,6 +836,116 @@ const checks: Check[] = [
     const now = Date.now();
     assert.ok(dates.every(d => Date.parse(d) <= now));
   }],
+
+  ['incident create round-trips, always unassigned, status derived from reportStatus', async () => {
+    const before: any = await run('query O($p: ID!) { incidentFormOptions(programId: $p) { nextReference } }', {p: 'p1'});
+    const reserved = before.data.incidentFormOptions.nextReference;
+
+    const created: any = await run(
+      `mutation C($p: ID!, $i: IncidentInput!) {
+        createIncident(programId: $p, input: $i) {
+          id reference status priority assignee { name } dispatchReference person
+        }
+      }`,
+      {
+        p: 'p1',
+        i: {
+          incidentType: 'Welfare Check', occurredAt: '2026-08-05T10:00:00', outcome: 'Referred to Outreach',
+          priority: 'MEDIUM', address: '1601 Wewatta St, Denver, CO 80202', describeLocation: null,
+          zone: 'Zone 2', businessName: null, description: 'Added from the Incident tab',
+          documents: [], reportStatus: 'In Progress', supervisorStatus: 'In Progress',
+          police: null, fire: null, ems: null, clientName: null,
+          parties: [{name: 'Jane Doe', type: 'Witness', organization: null, streetAddress: null, phone: null, email: null}],
+          vehicles: [], fixture: null, connectedMaintenance: [], connectedPois: [], connectedEquipment: [],
+        },
+      },
+    );
+    assert.equal(created.errors, undefined);
+    const inc = created.data.createIncident;
+    assert.equal(inc.reference, reserved);
+    assert.notEqual(inc.id, inc.reference);
+    assert.equal(inc.status, 'IN_PROGRESS');
+    assert.equal(inc.priority, 'MEDIUM');
+    assert.equal(inc.assignee, null);
+    assert.equal(inc.dispatchReference, null);
+    assert.equal(inc.person, 'Jane Doe');
+
+    const after: any = await run('query O($p: ID!) { incidentFormOptions(programId: $p) { nextReference } }', {p: 'p1'});
+    assert.notEqual(after.data.incidentFormOptions.nextReference, reserved);
+  }],
+
+  ['an incident created with every involvement answered No stores nulls, and a dispatchReference round-trips', async () => {
+    const created: any = await run(
+      `mutation C($p: ID!, $i: IncidentInput!, $d: ID) {
+        createIncident(programId: $p, input: $i, dispatchReference: $d) {
+          id dispatchReference person
+          police { name timeCalled timeArrived } fire { name } ems { name responder } clientName describeLocation businessName
+        }
+      }`,
+      {
+        p: 'p1',
+        d: 'dp_0000_09',
+        i: {
+          incidentType: 'Graffiti', occurredAt: '2026-08-05T11:00:00', outcome: 'Documented', priority: 'LOW',
+          address: '1430 Larimer St, Denver, CO 80202', describeLocation: null, zone: 'Zone 1', businessName: null,
+          description: null, documents: [], reportStatus: 'Open', supervisorStatus: 'In Progress',
+          police: null, fire: null, ems: null, clientName: null,
+          parties: [], vehicles: [], fixture: null, connectedMaintenance: [], connectedPois: [], connectedEquipment: [],
+        },
+      },
+    );
+    assert.equal(created.errors, undefined);
+    const inc = created.data.createIncident;
+    assert.equal(inc.dispatchReference, 'dp_0000_09');
+    assert.equal(inc.person, 'None');
+    assert.equal(inc.police.name, null);
+    assert.equal(inc.fire.name, null);
+    assert.equal(inc.ems.name, null);
+    assert.equal(inc.clientName, null);
+    assert.equal(inc.describeLocation, null);
+    // businessName is String! (non-null) on Incident, unlike the fields above —
+    // an unset value normalizes to '', not null.
+    assert.equal(inc.businessName, '');
+  }],
+
+  ['incident update and delete round-trip', async () => {
+    const list: any = await run('query I($p: ID!) { incidents(programId: $p) { id reference } }', {p: 'p1'});
+    const target = list.data.incidents.find((i: any) => i.reference === '#IN-42788');
+
+    const updated: any = await run(
+      `mutation U($id: ID!, $i: IncidentInput!) { updateIncident(id: $id, input: $i) { outcome priority } }`,
+      {
+        id: target.id,
+        i: {
+          incidentType: 'Graffiti', occurredAt: '2026-08-05T09:00:00', outcome: 'Resolved', priority: 'HIGH',
+          address: '1430 Larimer St, Denver, CO 80202', describeLocation: null, zone: 'Zone 1', businessName: null,
+          description: null, documents: [], reportStatus: 'Completed', supervisorStatus: 'Completed',
+          police: null, fire: null, ems: null, clientName: null,
+          parties: [], vehicles: [], fixture: null, connectedMaintenance: [], connectedPois: [], connectedEquipment: [],
+        },
+      },
+    );
+    assert.equal(updated.errors, undefined);
+    assert.equal(updated.data.updateIncident.outcome, 'Resolved');
+    assert.equal(updated.data.updateIncident.priority, 'HIGH');
+
+    const deleted: any = await run('mutation D($id: ID!) { deleteIncident(id: $id) }', {id: target.id});
+    assert.equal(deleted.data.deleteIncident, target.id);
+    const gone: any = await run('query D($id: ID!) { incident(id: $id) { id } }', {id: target.id});
+    assert.equal(gone.data.incident, null);
+  }],
+
+  ['setIncidentStatus round-trips', async () => {
+    const list: any = await run('query I($p: ID!) { incidents(programId: $p) { id reference status } }', {p: 'p1'});
+    const target = list.data.incidents.find((i: any) => i.reference === '#IN-42905');
+    assert.equal(target.status, 'OPEN');
+    const r: any = await run(
+      'mutation S($id: ID!, $s: IncidentStatus!) { setIncidentStatus(id: $id, status: $s) { status } }',
+      {id: target.id, s: 'COMPLETED'},
+    );
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.setIncidentStatus.status, 'COMPLETED');
+  }],
 ];
 
 async function main() {

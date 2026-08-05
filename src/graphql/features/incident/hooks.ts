@@ -1,15 +1,16 @@
 import {useMemo} from 'react';
-import {useQuery} from '@apollo/client/react';
+import {useMutation, useQuery} from '@apollo/client/react';
 import {GetActiveProgramId} from '../../../redux/auth/selectors';
 import {
   Incident,
   IncidentAssignee,
   IncidentDetail,
   IncidentFormOptions,
+  IncidentFormValues,
   IncidentPriority,
   IncidentStatus,
 } from '../../../types/incident';
-import {GET_INCIDENT, GET_INCIDENTS, GET_INCIDENT_FORM_OPTIONS} from './documents';
+import {CREATE_INCIDENT, DELETE_INCIDENT, GET_INCIDENT, GET_INCIDENTS, GET_INCIDENT_FORM_OPTIONS, SET_INCIDENT_STATUS, UPDATE_INCIDENT} from './documents';
 
 export const INCIDENT_CONTEXT = {context: {feature: 'incident'}};
 
@@ -156,4 +157,149 @@ export function useIncidentFormOptionsQuery() {
   );
 
   return {data: data?.incidentFormOptions ?? null, isLoading: loading, isError: !!error, refetch};
+}
+
+const PRIORITY_OUT: Record<IncidentPriority, WirePriority> = {
+  Low: 'LOW',
+  Medium: 'MEDIUM',
+  High: 'HIGH',
+};
+
+/** A responder block is submitted whole, or not at all. */
+const responderOrNull = (
+  involved: boolean,
+  block: {name: string; responder?: string; timeCalled: string | null; timeArrived: string | null},
+) =>
+  involved
+    ? {
+        name: block.name.trim() || null,
+        responder: block.responder?.trim() || null,
+        timeCalled: block.timeCalled,
+        timeArrived: block.timeArrived,
+      }
+    : null;
+
+/** '' from a controlled input is not a value — the read model wants null. */
+const orNull = (value: string) => value.trim() || null;
+
+function toIncidentInput(values: IncidentFormValues) {
+  return {
+    incidentType: values.incidentType,
+    occurredAt: values.occurredAt,
+    outcome: values.outcome,
+    priority: PRIORITY_OUT[values.priority],
+    address: values.address,
+    describeLocation: orNull(values.describeLocation),
+    zone: orNull(values.zone),
+    businessName: orNull(values.businessName),
+    description: orNull(values.description),
+    documents: values.documents,
+    reportStatus: values.reportStatus,
+    supervisorStatus: values.supervisorStatus,
+    police: responderOrNull(values.policeInvolved, {
+      name: values.policeOfficerName,
+      timeCalled: values.policeTimeCalled,
+      timeArrived: values.policeTimeArrived,
+    }),
+    fire: responderOrNull(values.fireInvolved, {
+      name: values.fireEngineName,
+      timeCalled: values.fireTimeCalled,
+      timeArrived: values.fireTimeArrived,
+    }),
+    ems: responderOrNull(values.emsInvolved, {
+      name: values.emsCompanyName,
+      responder: values.emsResponderName,
+      timeCalled: values.emsTimeCalled,
+      timeArrived: values.emsTimeArrived,
+    }),
+    clientName: values.clientInvolved ? orNull(values.clientName) : null,
+    parties: values.parties.map(party => ({
+      name: orNull(party.name),
+      type: orNull(party.type),
+      organization: orNull(party.organization),
+      streetAddress: orNull(party.streetAddress),
+      phone: orNull(party.phone),
+      email: orNull(party.email),
+    })),
+    // `images` is dropped here on purpose: IncidentVehicle has no image field
+    // and nothing renders one — the form still collects them because the
+    // design shows the control.
+    vehicles: values.vehicles.map(vehicle => ({
+      year: orNull(vehicle.year),
+      make: orNull(vehicle.make),
+      model: orNull(vehicle.model),
+      color: orNull(vehicle.color),
+      licenseNumber: orNull(vehicle.licenseNumber),
+    })),
+    fixture: orNull(values.fixture),
+    connectedMaintenance: values.connectedMaintenance,
+    connectedPois: values.connectedPois,
+    connectedEquipment: values.connectedEquipment,
+  };
+}
+
+const REFRESH_LIST = {...INCIDENT_CONTEXT, refetchQueries: ['GetIncidents']};
+const REFRESH_DETAIL = {...INCIDENT_CONTEXT, refetchQueries: ['GetIncidents', 'GetIncident']};
+
+// Offline queue opt-in (offlineQueueKey) is added in a later task.
+const CREATE_CONTEXT = {context: {feature: 'incident'}, refetchQueries: ['GetIncidents']};
+
+export function useSetIncidentStatusMutation() {
+  const [run, {loading}] = useMutation(SET_INCIDENT_STATUS, REFRESH_LIST);
+  const mutate = async (id: string, status: IncidentStatus) => {
+    const STATUS_IN_OUT: Record<IncidentStatus, WireStatus> = {
+      Open: 'OPEN',
+      'In-progress': 'IN_PROGRESS',
+      Completed: 'COMPLETED',
+    };
+    await run({variables: {id, status: STATUS_IN_OUT[status]}});
+  };
+  return {mutate, isLoading: loading};
+}
+
+export function useCreateIncidentMutation() {
+  const programId = GetActiveProgramId();
+  const [run, {loading}] = useMutation<{createIncident: {id: string; reference: string}}>(
+    CREATE_INCIDENT,
+    CREATE_CONTEXT,
+  );
+  return {
+    mutate: async (values: IncidentFormValues, options?: {dispatchReference?: string}) => {
+      const result = await run({
+        variables: {
+          programId: programId ?? '',
+          input: toIncidentInput(values),
+          dispatchReference: options?.dispatchReference ?? null,
+        },
+      });
+      const id = result.data?.createIncident.id ?? '';
+      return {
+        id,
+        reference: result.data?.createIncident.reference ?? '',
+        // offlineQueueLink stamps queued ids with this prefix.
+        queued: id.startsWith('outbox_'),
+      };
+    },
+    isLoading: loading,
+  };
+}
+
+export function useUpdateIncidentMutation() {
+  const [run, {loading}] = useMutation(UPDATE_INCIDENT, REFRESH_DETAIL);
+  return {
+    mutate: async (id: string, values: IncidentFormValues) => {
+      await run({variables: {id, input: toIncidentInput(values)}});
+    },
+    isLoading: loading,
+  };
+}
+
+export function useDeleteIncidentMutation() {
+  const [run, {loading}] = useMutation(DELETE_INCIDENT, REFRESH_LIST);
+  return {
+    mutate: async (id: string) => {
+      await run({variables: {id}});
+    },
+    isLoading: loading,
+  };
 }

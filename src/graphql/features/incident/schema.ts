@@ -116,9 +116,76 @@ export const incidentTypeDefs = /* GraphQL */ `
     search: String
   }
 
+  "A Police / Fire / EMS block. Null in its entirety when the answer is No."
+  input IncidentResponderInput {
+    name: String
+    "EMS only."
+    responder: String
+    "ISO-8601."
+    timeCalled: String
+    timeArrived: String
+  }
+
+  input IncidentPartyInput {
+    name: String
+    type: String
+    organization: String
+    streetAddress: String
+    phone: String
+    email: String
+  }
+
+  input IncidentVehicleInput {
+    year: String
+    make: String
+    model: String
+    color: String
+    licenseNumber: String
+  }
+
+  input IncidentInput {
+    incidentType: String!
+    "ISO-8601."
+    occurredAt: String!
+    outcome: String!
+    priority: Priority!
+
+    address: String!
+    describeLocation: String
+    zone: String
+
+    businessName: String
+    description: String
+    documents: [String!]
+    "'Open' | 'In Progress' | 'Completed'."
+    reportStatus: String!
+    "'In Progress' | 'Completed'."
+    supervisorStatus: String!
+
+    police: IncidentResponderInput
+    fire: IncidentResponderInput
+    ems: IncidentResponderInput
+    clientName: String
+
+    parties: [IncidentPartyInput!]!
+    vehicles: [IncidentVehicleInput!]!
+
+    fixture: String
+    connectedMaintenance: [String!]!
+    connectedPois: [String!]!
+    connectedEquipment: [String!]!
+  }
+
   extend type Query {
     incidents(programId: ID!, filter: IncidentFilter): [Incident!]!
     incident(id: ID!): Incident
     incidentFormOptions(programId: ID!): IncidentFormOptions!
+  }
+
+  extend type Mutation {
+    setIncidentStatus(id: ID!, status: IncidentStatus!): Incident!
+    createIncident(programId: ID!, input: IncidentInput!, dispatchReference: ID): Incident!
+    updateIncident(id: ID!, input: IncidentInput!): Incident!
+    deleteIncident(id: ID!): ID!
   }
 `;

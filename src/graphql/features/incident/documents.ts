@@ -119,3 +119,35 @@ export const GET_INCIDENT_FORM_OPTIONS = gql`
     }
   }
 `;
+
+export const SET_INCIDENT_STATUS = gql`
+  mutation SetIncidentStatus($id: ID!, $status: IncidentStatus!) {
+    setIncidentStatus(id: $id, status: $status) {
+      id
+      status
+    }
+  }
+`;
+
+export const CREATE_INCIDENT = gql`
+  mutation CreateIncident($programId: ID!, $input: IncidentInput!, $dispatchReference: ID) {
+    createIncident(programId: $programId, input: $input, dispatchReference: $dispatchReference) {
+      id
+      reference
+    }
+  }
+`;
+
+export const UPDATE_INCIDENT = gql`
+  mutation UpdateIncident($id: ID!, $input: IncidentInput!) {
+    updateIncident(id: $id, input: $input) {
+      id
+    }
+  }
+`;
+
+export const DELETE_INCIDENT = gql`
+  mutation DeleteIncident($id: ID!) {
+    deleteIncident(id: $id)
+  }
+`;
