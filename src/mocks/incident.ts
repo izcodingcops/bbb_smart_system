@@ -202,7 +202,7 @@ export const MOCK_INCIDENTS: IncidentDetail[] = [
     id: 'inc_42699', reference: '#IN-42699', type: 'Panhandling', priority: 'Low',
     outcome: 'Referred to Outreach', status: 'Open', assignee: assigneeOf('John Carter'),
     person: 'G. Fisher', businessName: 'Civic Center', zone: 'Zone 3',
-    occurredAt: seedAt(6, 16 * 60 + 45), address: 'Civic Center Park, Denver, CO 80202',
+    occurredAt: seedAt(10, 16 * 60 + 45), address: 'Civic Center Park, Denver, CO 80202',
     queuedOffline: false, dispatchReference: null,
   },
   // The two records Dispatch's own mocks seeded as `INCIDENT_1`/`INCIDENT_2`
