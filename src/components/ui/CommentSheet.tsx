@@ -1,37 +1,30 @@
 import React, {useEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  Alert,
-  StyleSheet,
-} from 'react-native';
+import {View, Text, TouchableOpacity, Image, Alert, StyleSheet} from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import type {ImagePickerResponse} from 'react-native-image-picker';
-import {BottomSheet, FieldLabel, TextField, Toast} from '../../../components/ui';
-import {CameraIcon, ImageIcon, XIcon} from '../../../components/icons';
-import {MaintenanceComment} from '../../../types/maintenance';
-import {theme} from '../../../theme';
+import BottomSheet from './BottomSheet';
+import {FieldLabel} from './DropdownField';
+import TextField from './TextField';
+import Toast from './Toast';
+import {Comment} from './CommentList';
+import {CameraIcon, ImageIcon, XIcon} from '../icons';
+import {theme} from '../../theme';
 
 interface Props {
   visible: boolean;
   /** null adds a comment; a comment edits it in place. */
-  comment: MaintenanceComment | null;
+  comment: Comment | null;
   onSubmit: (text: string, images: string[]) => Promise<void>;
   onClose: () => void;
+  /** e.g. "Write a comment about this maintenance…" — module-specific copy. */
+  placeholder: string;
 }
 
 /**
  * Gallery and Camera only — the design also offers a file browser, which would
  * need a document-picker native module we don't ship.
  */
-const CommentSheet: React.FC<Props> = ({
-  visible,
-  comment,
-  onSubmit,
-  onClose,
-}) => {
+const CommentSheet: React.FC<Props> = ({visible, comment, onSubmit, onClose, placeholder}) => {
   const [text, setText] = useState('');
   const [images, setImages] = useState<string[]>([]);
   /** Set when onSubmit rejects, so the sheet can report it without discarding the draft. */
@@ -54,9 +47,7 @@ const CommentSheet: React.FC<Props> = ({
       Alert.alert("Couldn't attach that", result.errorMessage ?? 'Try again.');
       return;
     }
-    const picked = (result.assets ?? [])
-      .map(asset => asset.uri)
-      .filter((uri): uri is string => !!uri);
+    const picked = (result.assets ?? []).map(asset => asset.uri).filter((uri): uri is string => !!uri);
     setImages(current => [...current, ...picked]);
   };
 
@@ -77,14 +68,11 @@ const CommentSheet: React.FC<Props> = ({
   };
 
   return (
-    <BottomSheet
-      visible={visible}
-      title={comment ? 'Edit Comment' : 'Add Comment'}
-      onClose={onClose}>
+    <BottomSheet visible={visible} title={comment ? 'Edit Comment' : 'Add Comment'} onClose={onClose}>
       <View style={styles.field}>
         <FieldLabel label="Comment" />
         <TextField
-          placeholder="Write a comment about this maintenance…"
+          placeholder={placeholder}
           value={text}
           onChangeText={setText}
           multiline
@@ -99,25 +87,14 @@ const CommentSheet: React.FC<Props> = ({
           <TouchableOpacity
             style={styles.attachButton}
             activeOpacity={0.85}
-            onPress={async () =>
-              collect(
-                await launchImageLibrary({
-                  mediaType: 'photo',
-                  selectionLimit: 0,
-                }),
-              )
-            }>
+            onPress={async () => collect(await launchImageLibrary({mediaType: 'photo', selectionLimit: 0}))}>
             <ImageIcon size={20} />
             <Text style={styles.attachText}>Gallery</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.attachButton}
             activeOpacity={0.85}
-            onPress={async () =>
-              collect(
-                await launchCamera({mediaType: 'photo', saveToPhotos: false}),
-              )
-            }>
+            onPress={async () => collect(await launchCamera({mediaType: 'photo', saveToPhotos: false}))}>
             <CameraIcon size={20} />
             <Text style={styles.attachText}>Camera</Text>
           </TouchableOpacity>
@@ -133,9 +110,7 @@ const CommentSheet: React.FC<Props> = ({
                   style={styles.thumbRemove}
                   activeOpacity={0.8}
                   hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-                  onPress={() =>
-                    setImages(current => current.filter(u => u !== uri))
-                  }>
+                  onPress={() => setImages(current => current.filter(u => u !== uri))}>
                   <XIcon size={10} color={theme.colors.white} />
                 </TouchableOpacity>
               </View>
@@ -145,10 +120,7 @@ const CommentSheet: React.FC<Props> = ({
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.button, styles.cancel]}
-          activeOpacity={0.85}
-          onPress={onClose}>
+        <TouchableOpacity style={[styles.button, styles.cancel]} activeOpacity={0.85} onPress={onClose}>
           <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -156,9 +128,7 @@ const CommentSheet: React.FC<Props> = ({
           activeOpacity={0.85}
           disabled={!canPost}
           onPress={runSubmit}>
-          <Text style={styles.postText}>
-            {comment ? 'Save Comment' : 'Post Comment'}
-          </Text>
+          <Text style={styles.postText}>{comment ? 'Save Comment' : 'Post Comment'}</Text>
         </TouchableOpacity>
       </View>
 
@@ -175,11 +145,7 @@ const CommentSheet: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
   field: {marginBottom: theme.spacing.lg},
-  textarea: {
-    minHeight: 110,
-    textAlignVertical: 'top',
-    paddingTop: theme.spacing.md,
-  },
+  textarea: {minHeight: 110, textAlignVertical: 'top', paddingTop: theme.spacing.md},
   attachRow: {flexDirection: 'row', gap: 9},
   attachButton: {
     flex: 1,
@@ -193,27 +159,11 @@ const styles = StyleSheet.create({
     borderColor: '#99D3FF',
     backgroundColor: theme.colors.primaryLight,
   },
-  attachText: {
-    fontFamily: theme.fonts.black,
-    fontSize: 12,
-    color: theme.colors.primary,
-  },
-  help: {
-    fontFamily: theme.fonts.bold,
-    fontSize: 12.5,
-    color: theme.colors.textMuted,
-    marginTop: 7,
-  },
+  attachText: {fontFamily: theme.fonts.black, fontSize: 12, color: theme.colors.primary},
+  help: {fontFamily: theme.fonts.bold, fontSize: 12.5, color: theme.colors.textMuted, marginTop: 7},
   thumbs: {flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginTop: 10},
   thumb: {width: 52, height: 52},
-  thumbImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: '#F4F5F7',
-  },
+  thumbImage: {width: '100%', height: '100%', borderRadius: 11, borderWidth: 1, borderColor: theme.colors.border, backgroundColor: '#F4F5F7'},
   thumbRemove: {
     position: 'absolute',
     top: -6,
@@ -228,22 +178,12 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.text,
   },
   footer: {flexDirection: 'row', gap: 11, marginTop: theme.spacing.md},
-  button: {
-    flex: 1,
-    height: 50,
-    borderRadius: theme.radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  button: {flex: 1, height: 50, borderRadius: theme.radius.lg, alignItems: 'center', justifyContent: 'center'},
   cancel: {backgroundColor: '#F0F1F4'},
   cancelText: {fontFamily: theme.fonts.black, fontSize: 15.5, color: '#3A3F46'},
   post: {backgroundColor: theme.colors.primary},
   postDisabled: {opacity: 0.45},
-  postText: {
-    fontFamily: theme.fonts.black,
-    fontSize: 15.5,
-    color: theme.colors.white,
-  },
+  postText: {fontFamily: theme.fonts.black, fontSize: 15.5, color: theme.colors.white},
 });
 
 export default CommentSheet;

@@ -8,6 +8,8 @@ import {
   StyleSheet,
 } from 'react-native';
 import {
+  CommentList,
+  CommentSheet,
   ConfirmDialog,
   DetailField,
   DetailScreenSkeleton,
@@ -35,8 +37,6 @@ import {
   MaintenanceStatus,
 } from '../../types/maintenance';
 import AddFixtureSheet from './components/AddFixtureSheet';
-import CommentList from './components/CommentList';
-import CommentSheet from './components/CommentSheet';
 import MaintenanceForm, {buildInitialValues} from './components/MaintenanceForm';
 import {theme} from '../../theme';
 
@@ -297,6 +297,7 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
       <CommentSheet
         visible={commentSheetOpen}
         comment={editingComment}
+        placeholder="Write a comment about this maintenance…"
         onSubmit={async (text, images) => {
           if (editingComment) {
             await updateComment(detail.id, editingComment.id, text, images);
