@@ -36,6 +36,7 @@ import ComingSoonScreen from '../screens/ComingSoonScreen';
 import MaintenanceScreen from '../screens/maintenance/MaintenanceScreen';
 import WorkScreen from '../screens/work/WorkScreen';
 import FixtureScreen from '../screens/fixture/FixtureScreen';
+import IncidentScreen from '../screens/incident/IncidentScreen';
 import DispatchScreen from '../screens/dispatch/DispatchScreen';
 
 const {LATO} = fontFamilies;
@@ -45,6 +46,7 @@ const SCREEN_MAP: Record<string, React.ComponentType<any>> = {
   [SCREEN.work]: WorkScreen,
   [SCREEN.maintenance]: MaintenanceScreen,
   [SCREEN.fixture]: FixtureScreen,
+  [SCREEN.incident]: IncidentScreen,
   [SCREEN.dispatch]: DispatchScreen,
 };
 
