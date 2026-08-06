@@ -42,15 +42,32 @@ const CurrentLocationCard: React.FC<Props> = ({
   const resolvedRef = useRef(onCoordinateResolved);
   resolvedRef.current = onCoordinateResolved;
 
+  // A permission prompt and a network geocode both sit inside `load`, so the
+  // user can easily leave before it finishes. Same guard App.tsx's
+  // OfflineQueueSync uses for its async effect.
+  const mounted = useRef(true);
+  useEffect(
+    () => () => {
+      mounted.current = false;
+    },
+    [],
+  );
+
   const load = useCallback(async () => {
     setStatus('loading');
     const coordinate = await getCurrentPosition();
+    if (!mounted.current) {
+      return;
+    }
     if (!coordinate) {
       setStatus('unavailable');
       return;
     }
     resolvedRef.current?.(coordinate);
     const resolved = await reverseGeocode(coordinate);
+    if (!mounted.current) {
+      return;
+    }
     setPlace(
       resolved ?? {
         name: 'Current location',
