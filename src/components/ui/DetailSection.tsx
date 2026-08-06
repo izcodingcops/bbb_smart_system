@@ -20,13 +20,26 @@ interface Props {
    * section, which holds a list component rather than DetailField cells.
    */
   grid?: boolean;
+  /**
+   * Trailing control on the heading row — e.g. POI's "Add" button on its
+   * Interaction History and Update History sections.
+   */
+  action?: React.ReactNode;
   children: React.ReactNode;
 }
 
 /** Heading over a hairline-separated block of `DetailField` cells. */
-const DetailSection: React.FC<Props> = ({title, grid = true, children}) => (
+const DetailSection: React.FC<Props> = ({
+  title,
+  grid = true,
+  action,
+  children,
+}) => (
   <View style={styles.section}>
-    <Text style={styles.title}>{title}</Text>
+    <View style={styles.titleRow}>
+      <Text style={[styles.title, !action && styles.titleAlone]}>{title}</Text>
+      {action}
+    </View>
     {grid ? <View style={detailGrid}>{children}</View> : children}
   </View>
 );
@@ -38,13 +51,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EEF0F2',
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
   title: {
+    flexShrink: 1,
     fontFamily: theme.fonts.black,
     fontSize: 17.5,
     letterSpacing: -0.2,
     color: theme.colors.text,
-    marginBottom: theme.spacing.lg,
   },
+  // Without an action the row is a single child, so the title takes the width
+  // it always had rather than being squeezed by space-between.
+  titleAlone: {flex: 1},
 });
 
 export default DetailSection;
