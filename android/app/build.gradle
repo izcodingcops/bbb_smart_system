@@ -84,6 +84,13 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        // Resolves ${googleMapsApiKey} in AndroidManifest.xml. Set
+        // GOOGLE_MAPS_API_KEY in ~/.gradle/gradle.properties or pass
+        // -PGOOGLE_MAPS_API_KEY=... so the key never enters the repo. An empty
+        // value still builds; the map just renders blank.
+        manifestPlaceholders = [
+            googleMapsApiKey: (project.findProperty("GOOGLE_MAPS_API_KEY") ?: "")
+        ]
     }
     signingConfigs {
         debug {

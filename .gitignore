@@ -91,3 +91,7 @@ docs/superpowers/specs/
 
 # graphql smoke runner output
 .smoke/
+
+# Local secrets — see .env.example for the shape
+.env
+.env.local
