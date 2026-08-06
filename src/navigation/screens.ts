@@ -6,6 +6,7 @@ export const SCREEN = {
   fixture: 'Fixture',
   incident: 'Incidents',
   dispatch: 'Dispatch',
+  maps: 'Maps',
 } as const;
 
 /**
