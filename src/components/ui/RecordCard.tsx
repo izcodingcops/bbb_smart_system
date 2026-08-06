@@ -25,6 +25,13 @@ interface Props {
   fields: RecordCardField[];
   addressLabel?: string;
   addressValue?: string;
+  /**
+   * Rendered before the id/type block — POI's person avatar. Every other
+   * module omits it and its header row is unchanged.
+   */
+  leading?: React.ReactNode;
+  /** Rendered under the address block — POI's two action buttons. */
+  footer?: React.ReactNode;
 }
 
 const RecordCard: React.FC<Props> = ({
@@ -38,11 +45,14 @@ const RecordCard: React.FC<Props> = ({
   fields,
   addressLabel,
   addressValue,
+  leading,
+  footer,
 }) => {
   const body = (
     <Card style={styles.card}>
       <View style={styles.headerRow}>
         <View style={styles.headerLeft}>
+          {leading}
           <Text style={styles.id}>{idLabel}</Text>
           <Text style={styles.type} numberOfLines={1}>
             {typeLabel}
@@ -79,6 +89,8 @@ const RecordCard: React.FC<Props> = ({
           <Text style={styles.value}>{addressValue}</Text>
         </View>
       ) : null}
+
+      {footer}
     </Card>
   );
 
