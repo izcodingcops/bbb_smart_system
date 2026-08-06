@@ -49,6 +49,8 @@ const GROUPS: {key: MenuGroup; label: string}[] = [
 interface Props {
   visible: boolean;
   items: MenuItem[];
+  /** Currently active screen, so its row can stay highlighted after a selection. */
+  selected?: string;
   onSelect: (screen: string) => void;
   onClose: () => void;
   /** Fired once the sheet's modal is gone — see BottomSheet's onClosed. */
@@ -59,6 +61,7 @@ interface Props {
 const MoreSheet: React.FC<Props> = ({
   visible,
   items,
+  selected,
   onSelect,
   onClose,
   onClosed,
@@ -88,6 +91,7 @@ const MoreSheet: React.FC<Props> = ({
             <Text style={styles.sectionLabel}>{group.label}</Text>
             {groupItems.map((item, index) => {
               const Icon = ICON_MAP[item.menu_icon] ?? BoxIcon;
+              const active = item.screen_name === selected;
               return (
                 <TouchableOpacity
                   key={item.id}
@@ -96,12 +100,18 @@ const MoreSheet: React.FC<Props> = ({
                   style={[
                     styles.row,
                     index < groupItems.length - 1 && styles.rowBorder,
+                    active && styles.rowActive,
                   ]}>
                   <View style={styles.rowIcon}>
-                    <Icon size={20} color={ROW_ICON} />
+                    <Icon size={20} color={active ? theme.colors.primary : ROW_ICON} />
                   </View>
-                  <Text style={styles.rowLabel}>{item.menu_name}</Text>
-                  <ChevronRightIcon size={18} color={theme.colors.textMuted} />
+                  <Text style={[styles.rowLabel, active && styles.rowLabelActive]}>
+                    {item.menu_name}
+                  </Text>
+                  <ChevronRightIcon
+                    size={18}
+                    color={active ? theme.colors.primary : theme.colors.textMuted}
+                  />
                 </TouchableOpacity>
               );
             })}
@@ -142,6 +152,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.border,
   },
+  rowActive: {
+    backgroundColor: theme.colors.primaryLight,
+    marginHorizontal: -theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.radius.md,
+  },
   rowIcon: {
     width: 24,
     alignItems: 'center',
@@ -152,6 +168,9 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.bold,
     fontSize: theme.fontSize.base,
     color: '#181B1F',
+  },
+  rowLabelActive: {
+    color: theme.colors.primary,
   },
 });
 

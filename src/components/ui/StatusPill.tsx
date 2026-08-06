@@ -47,6 +47,7 @@ const styles = StyleSheet.create({
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
+    alignSelf: 'flex-start',
     gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -54,7 +55,6 @@ const styles = StyleSheet.create({
   },
   pillText: {fontFamily: theme.fonts.black, fontSize: 11},
   pillMd: {
-    alignSelf: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 5,
   },

@@ -41,6 +41,10 @@ const BottomSheet: React.FC<Props> = ({
 }) => {
   const [mounted, setMounted] = useState(visible);
   const [sheetHeight, setSheetHeight] = useState(400);
+  // Floors the sheet to the tallest height it's reached this time it's open, so
+  // content that shrinks in place (e.g. a search filter narrowing the list)
+  // doesn't visibly collapse the sheet while it's up.
+  const maxHeightSeen = useRef(0);
   const anim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
   const {height: windowHeight} = useWindowDimensions();
@@ -53,6 +57,7 @@ const BottomSheet: React.FC<Props> = ({
   useEffect(() => {
     if (visible) {
       setMounted(true);
+      maxHeightSeen.current = 0;
       Animated.timing(anim, {
         toValue: 1,
         duration: 240,
@@ -97,10 +102,20 @@ const BottomSheet: React.FC<Props> = ({
         </TouchableWithoutFeedback>
 
         <Animated.View
-          onLayout={e => setSheetHeight(e.nativeEvent.layout.height)}
+          onLayout={e => {
+            const height = e.nativeEvent.layout.height;
+            setSheetHeight(height);
+            if (height > maxHeightSeen.current) {
+              maxHeightSeen.current = height;
+            }
+          }}
           style={[
             styles.sheet,
-            {maxHeight: windowHeight * 0.8, transform: [{translateY}]},
+            {
+              maxHeight: windowHeight * 0.8,
+              minHeight: maxHeightSeen.current,
+              transform: [{translateY}],
+            },
           ]}>
           <View style={styles.handle} />
 

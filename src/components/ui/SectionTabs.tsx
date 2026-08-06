@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 import {ScrollView, Text, TouchableOpacity, View, StyleSheet} from 'react-native';
 import {theme} from '../../theme';
 
@@ -22,6 +22,19 @@ interface Props {
  * (Maintenance, Fixture, Incident, Dispatch).
  */
 const SectionTabs: React.FC<Props> = ({tabs, activeKey, visible, onSelect}) => {
+  const scrollRef = useRef<ScrollView>(null);
+  /** Each tab's x-offset within the strip, captured via onLayout. */
+  const tabOffsets = useRef<Record<string, number>>({});
+
+  // Keeps the active pill in view when it becomes active from scrolling the
+  // form itself, not just from tapping a tab directly.
+  useEffect(() => {
+    const x = tabOffsets.current[activeKey];
+    if (x !== undefined) {
+      scrollRef.current?.scrollTo({x: Math.max(0, x - 16), animated: true});
+    }
+  }, [activeKey]);
+
   if (!visible) {
     return null;
   }
@@ -29,6 +42,7 @@ const SectionTabs: React.FC<Props> = ({tabs, activeKey, visible, onSelect}) => {
   return (
     <View style={styles.wrap} pointerEvents="box-none">
       <ScrollView
+        ref={scrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -40,6 +54,15 @@ const SectionTabs: React.FC<Props> = ({tabs, activeKey, visible, onSelect}) => {
               key={tab.key}
               style={[styles.tab, active && styles.tabActive]}
               activeOpacity={0.8}
+              onLayout={e => {
+                const x = e.nativeEvent.layout.x;
+                tabOffsets.current[tab.key] = x;
+                // First layout after the strip (re)appears: jump straight to
+                // the active tab instead of waiting for activeKey to change.
+                if (active) {
+                  scrollRef.current?.scrollTo({x: Math.max(0, x - 16), animated: false});
+                }
+              }}
               onPress={() => onSelect(tab.key)}>
               <Text style={[styles.label, active && styles.labelActive]}>{tab.label}</Text>
             </TouchableOpacity>

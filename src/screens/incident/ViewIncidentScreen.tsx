@@ -421,8 +421,8 @@ const styles = StyleSheet.create({
   avatar: {width: 26, height: 26, borderRadius: 13, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center'},
   avatarText: {fontFamily: theme.fonts.black, fontSize: 10, color: theme.colors.white},
   chips: {flexDirection: 'row', flexWrap: 'wrap', gap: 8},
-  chip: {paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1, borderColor: theme.colors.border, backgroundColor: '#F4F5F7'},
-  chipText: {fontFamily: theme.fonts.bold, fontSize: 13, color: theme.colors.text},
+  chip: {paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1, borderColor: '#99D3FF', backgroundColor: theme.colors.primaryLight},
+  chipText: {fontFamily: theme.fonts.bold, fontSize: 13, color: theme.colors.primary},
   na: {fontFamily: theme.fonts.bold, fontSize: 15, lineHeight: 20, color: theme.colors.textMuted},
 });
 

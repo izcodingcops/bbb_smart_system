@@ -280,6 +280,7 @@ const MainTabNavigator: React.FC = () => {
       <MoreSheet
         visible={moreOpen}
         items={moreItems}
+        selected={activeScreen}
         onSelect={handleMoreSelect}
         onClose={() => setMoreOpen(false)}
         onClosed={handleMoreClosed}
