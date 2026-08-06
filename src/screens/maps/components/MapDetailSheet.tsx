@@ -1,4 +1,4 @@
-import React, {useMemo} from 'react';
+import React, {useMemo, useRef} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {DownloadedMap, MapRegion} from '../../../types/maps';
 import {formatDownloadedOn} from '../saving';
@@ -28,11 +28,20 @@ const MapDetailSheet: React.FC<Props> = ({
   onClosed,
   onDelete,
 }) => {
+  // BottomSheet keeps animating for ~200ms after `visible` goes false, but the
+  // list screen clears its selection in the same tick — so hold the last item
+  // and let the content retreat with the sheet instead of blanking mid-slide.
+  const lastShown = useRef<DownloadedMap | null>(null);
+  if (item) {
+    lastShown.current = item;
+  }
+  const shown = item ?? lastShown.current;
+
   // regionFor() builds a fresh object per call and MapSurface is memoized, so
   // the region is held stable against the item rather than the render.
   const region: MapRegion | null = useMemo(
-    () => (item ? regionFor(item.coordinate) : null),
-    [item],
+    () => (shown ? regionFor(shown.coordinate) : null),
+    [shown],
   );
 
   return (
@@ -41,7 +50,7 @@ const MapDetailSheet: React.FC<Props> = ({
       title="Location details"
       onClose={onClose}
       onClosed={onClosed}>
-      {item && region ? (
+      {shown && region ? (
         <View>
           <MapSurface
             region={region}
@@ -52,7 +61,7 @@ const MapDetailSheet: React.FC<Props> = ({
 
           <View style={styles.nameRow}>
             <Text style={styles.name} numberOfLines={2}>
-              {item.name}
+              {shown.name}
             </Text>
             <View style={styles.badge}>
               <CloudOffIcon size={11} color="#C26401" />
@@ -61,10 +70,10 @@ const MapDetailSheet: React.FC<Props> = ({
           </View>
 
           <View style={styles.fields}>
-            <DetailField label="Address" value={item.address} full />
+            <DetailField label="Address" value={shown.address} full />
             <DetailField
               label="Downloaded on"
-              value={formatDownloadedOn(item.downloadedAt)}
+              value={formatDownloadedOn(shown.downloadedAt)}
               full
             />
           </View>
@@ -79,7 +88,7 @@ const MapDetailSheet: React.FC<Props> = ({
             <TouchableOpacity
               style={styles.delete}
               activeOpacity={0.85}
-              onPress={() => onDelete(item)}>
+              onPress={() => onDelete(shown)}>
               <TrashIcon size={17} color={theme.colors.white} />
               <Text style={styles.deleteLabel}>Delete</Text>
             </TouchableOpacity>
