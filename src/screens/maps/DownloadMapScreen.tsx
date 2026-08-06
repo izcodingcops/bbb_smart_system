@@ -97,8 +97,6 @@ const DownloadMapScreen: React.FC<Props> = ({
   const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** The centre the pin's address was last resolved for. */
   const lastGeocoded = useRef<MapCoordinate | null>(null);
-  /** Set before a programmatic move so its settle doesn't re-geocode. */
-  const skipGeocode = useRef(false);
   const inputRef = useRef<TextInput>(null);
   /**
    * Ticket numbers for the two async paths. A debounce timer only cancels a
@@ -167,14 +165,13 @@ const DownloadMapScreen: React.FC<Props> = ({
       setRegion(next);
       const centre = {latitude: next.latitude, longitude: next.longitude};
 
-      if (skipGeocode.current) {
-        skipGeocode.current = false;
-        lastGeocoded.current = centre;
-        return;
-      }
-
       // Zoom buttons and animation settles report a centre that hasn't really
       // moved — resolving it again would overwrite a picked name for nothing.
+      // A pick sets lastGeocoded to its own coordinate first, so the settle it
+      // triggers lands inside this threshold and is skipped by the same test.
+      // A one-shot boolean latch used to do this job, but it could stay set
+      // when a pick landed close enough that MapSurface never animated, and
+      // then swallow the user's next real pan.
       const last = lastGeocoded.current;
       if (
         last &&
@@ -212,6 +209,10 @@ const DownloadMapScreen: React.FC<Props> = ({
       setQuery(text);
       if (searchTimer.current) clearTimeout(searchTimer.current);
       if (!text.trim()) {
+        // Retire the ticket too: a request already in flight for the previous
+        // text would otherwise still be "current" and repopulate the list
+        // under an empty input.
+        searchTicket.current++;
         setSuggestions([]);
         setSearchBusy(false);
         return;
@@ -237,6 +238,7 @@ const DownloadMapScreen: React.FC<Props> = ({
 
   const handleEndSearch = useCallback(() => {
     if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTicket.current++;
     setSearching(false);
     setQuery('');
     setSuggestions([]);
@@ -266,7 +268,6 @@ const DownloadMapScreen: React.FC<Props> = ({
       setErrorMessage(null);
       setBlockMessage(null);
       setPicked(detail);
-      skipGeocode.current = true;
       lastGeocoded.current = detail.coordinate;
       setRegion(regionFor(detail.coordinate));
       setHintDismissed(false);

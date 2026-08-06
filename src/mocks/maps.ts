@@ -39,9 +39,14 @@ export const MOCK_CURRENT_LOCATION: PickedLocation = {
 };
 
 /**
- * The mockup's five records, names and addresses verbatim. Ids are opaque
- * rather than the mockup's dl1…dl5: an accidental id/name swap then shows up
- * on screen instead of compiling silently.
+ * Three of the mockup's five records, names and addresses verbatim. Ids are
+ * opaque rather than the mockup's dl1…dl5: an accidental id/name swap then
+ * shows up on screen instead of compiling silently.
+ *
+ * Deliberately fewer than MAX_DOWNLOADED_MAPS. Seeding all five would put a
+ * fresh install at the cap, so the very first save would be refused with
+ * "Delete one to make room" — the module's headline action, unreachable
+ * until the user deletes records they never created.
  */
 export const MOCK_DOWNLOADED_MAPS: DownloadedMap[] = [
   {
@@ -64,20 +69,6 @@ export const MOCK_DOWNLOADED_MAPS: DownloadedMap[] = [
     address: '101 W 14th Ave Pkwy, Denver, CO 80204',
     downloadedAt: seedDaysAgo(5),
     coordinate: {latitude: 39.7375, longitude: -104.9895},
-  },
-  {
-    id: 'map_7ad0e4f6',
-    name: 'Larimer Square',
-    address: '1430 Larimer St, Denver, CO 80202',
-    downloadedAt: seedDaysAgo(8),
-    coordinate: {latitude: 39.7476, longitude: -104.9994},
-  },
-  {
-    id: 'map_e51b8c34',
-    name: 'LoDo District',
-    address: '1601 Wewatta St, Denver, CO 80202',
-    downloadedAt: seedDaysAgo(12),
-    coordinate: {latitude: 39.7515, longitude: -105.0026},
   },
 ];
 
