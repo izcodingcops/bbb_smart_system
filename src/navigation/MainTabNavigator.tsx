@@ -39,6 +39,7 @@ import FixtureScreen from '../screens/fixture/FixtureScreen';
 import IncidentScreen from '../screens/incident/IncidentScreen';
 import DispatchScreen from '../screens/dispatch/DispatchScreen';
 import MapsScreen from '../screens/maps/MapsScreen';
+import PoiScreen from '../screens/poi/PoiScreen';
 
 const {LATO} = fontFamilies;
 
@@ -50,6 +51,7 @@ const SCREEN_MAP: Record<string, React.ComponentType<any>> = {
   [SCREEN.incident]: IncidentScreen,
   [SCREEN.dispatch]: DispatchScreen,
   [SCREEN.maps]: MapsScreen,
+  [SCREEN.poi]: PoiScreen,
 };
 
 /**

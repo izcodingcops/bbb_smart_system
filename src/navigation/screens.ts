@@ -7,6 +7,7 @@ export const SCREEN = {
   incident: 'Incidents',
   dispatch: 'Dispatch',
   maps: 'Maps',
+  poi: 'Poi',
 } as const;
 
 /**
@@ -21,6 +22,9 @@ export const CREATE_TARGET_BY_TILE: Record<string, string> = {
   maintenance: SCREEN.maintenance,
   fixture: SCREEN.fixture,
   incident: SCREEN.incident,
+  // The only tile whose target opens a chooser rather than a single create
+  // screen — POI has three record types. PoiScreen reads the handoff.
+  poi: SCREEN.poi,
   work_log: SCREEN.work,
 };
 
