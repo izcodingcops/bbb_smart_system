@@ -1,13 +1,14 @@
 import {MigrationManifest, PersistedState} from 'redux-persist';
 import {initialAuthState} from './auth/initialState';
 import {initialShiftState} from './shift/initialState';
+import {initialMapsState} from './maps/initialState';
 
 /**
  * Bump PERSIST_VERSION and add a migration whenever a persisted slice gains or
  * changes a field. Without this, state saved by an older build rehydrates
  * missing the new keys and selectors read `undefined`.
  */
-export const PERSIST_VERSION = 2;
+export const PERSIST_VERSION = 3;
 
 export const migrations: MigrationManifest = {
   // v1: auth gained programs/activeProgramId/shiftTypes; the shift slice was
@@ -44,5 +45,20 @@ export const migrations: MigrationManifest = {
     }
 
     return rest as unknown as PersistedState;
+  },
+
+  // v3: the Maps module added a persisted `maps` slice. State saved by an
+  // older build has no such key, and GetDownloadedMaps() would read
+  // `undefined` after upgrade. Spread initial state first so an install that
+  // already has items keeps them rather than being reseeded.
+  3: (state): PersistedState => {
+    const previous = state as Record<string, any> | undefined;
+    if (!previous) {
+      return state;
+    }
+    return {
+      ...previous,
+      maps: {...initialMapsState, ...(previous.maps ?? {})},
+    } as unknown as PersistedState;
   },
 };

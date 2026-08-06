@@ -28,6 +28,7 @@
     "react-native-fs": "^2.20.0",
     "react-native-image-picker": "^8.2.1",
     "react-native-linear-gradient": "^2.8.3",
+    "react-native-maps": "^1.29.0",
     "react-native-safe-area-context": "^5.7.0",
     "react-native-screens": "^4.24.0",
     "react-native-svg": "^15.15.5",
@@ -49,6 +50,7 @@
     "@types/react": "^19.2.0",
     "eslint": "^8.19.0",
     "prettier": "2.8.8",
+    "react-native-dotenv": "^3.4.12",
     "typescript": "^5.8.3"
   },
   "engines": {

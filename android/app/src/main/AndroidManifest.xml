@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
       android:name=".MainApplication"
@@ -11,6 +12,17 @@
       android:theme="@style/AppTheme"
       android:usesCleartextTraffic="${usesCleartextTraffic}"
       android:supportsRtl="true">
+
+      <!--
+        react-native-maps renders Google Maps on Android and needs this key or
+        the map is a blank grid. The old app omits it entirely — a defect
+        there, not a design to copy. The value comes from a Gradle property so
+        no key is ever committed; see android/app/build.gradle.
+      -->
+      <meta-data
+        android:name="com.google.android.geo.API_KEY"
+        android:value="${googleMapsApiKey}" />
+
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
