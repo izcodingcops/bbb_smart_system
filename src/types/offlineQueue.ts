@@ -7,7 +7,10 @@ export type OfflineMutationKey =
   | 'CREATE_WORK_LOG_ENTRY'
   | 'CREATE_FIXTURE'
   | 'CREATE_MAINTENANCE_REQUEST'
-  | 'CREATE_INCIDENT';
+  | 'CREATE_INCIDENT'
+  | 'CREATE_POI'
+  | 'ADD_POI_INTERACTION'
+  | 'ADD_POI_UPDATE';
 
 export interface OutboxItem {
   /** Locally generated when queued (`outbox_...`) — never a server id. */

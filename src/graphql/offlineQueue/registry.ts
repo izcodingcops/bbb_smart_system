@@ -5,6 +5,11 @@ import {CREATE_WORK_LOG_ENTRY} from '../features/workLog/documents';
 import {CREATE_FIXTURE} from '../features/fixture/documents';
 import {CREATE_MAINTENANCE_REQUEST} from '../features/maintenance/documents';
 import {CREATE_INCIDENT} from '../features/incident/documents';
+import {
+  ADD_POI_INTERACTION,
+  ADD_POI_UPDATE,
+  CREATE_POI,
+} from '../features/poi/documents';
 
 interface OfflineMutationEntry {
   document: DocumentNode;
@@ -59,6 +64,37 @@ export const OFFLINE_MUTATIONS: Record<OfflineMutationKey, OfflineMutationEntry>
     refetchQueries: ['GetIncidents', 'GetDispatch'],
     buildOptimisticData: localId => ({
       createIncident: {__typename: 'Incident', id: localId, reference: 'Pending'},
+    }),
+  },
+  CREATE_POI: {
+    document: CREATE_POI,
+    feature: 'poi',
+    refetchQueries: ['GetPois'],
+    buildOptimisticData: localId => ({
+      createPoi: {__typename: 'Poi', id: localId, reference: 'Pending'},
+    }),
+  },
+  // A queued interaction has no list row of its own to appear in — unlike a
+  // queued person, there's no pending-items projection for it. It surfaces on
+  // the person's timeline once it syncs; the submit toast says as much.
+  ADD_POI_INTERACTION: {
+    document: ADD_POI_INTERACTION,
+    feature: 'poi',
+    refetchQueries: ['GetPois', 'GetPoi'],
+    buildOptimisticData: localId => ({
+      addPoiInteraction: {
+        __typename: 'PoiInteraction',
+        id: localId,
+        reference: 'Pending',
+      },
+    }),
+  },
+  ADD_POI_UPDATE: {
+    document: ADD_POI_UPDATE,
+    feature: 'poi',
+    refetchQueries: ['GetPois', 'GetPoi'],
+    buildOptimisticData: localId => ({
+      addPoiUpdate: {__typename: 'PoiUpdate', id: localId, reference: 'Pending'},
     }),
   },
 };
