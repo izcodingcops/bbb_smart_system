@@ -389,7 +389,13 @@ const PoiScreen: React.FC = () => {
         onPress={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}
       />
 
-      <GradientFab onPress={() => setChooserOpen(true)} />
+      {/*
+        The FAB opens Add Requests, as it does on every other list screen —
+        the chooser is what the sheet's own POI tile leads to, via the
+        pendingCreate handoff above. Opening the chooser straight from the FAB
+        would strand the sheet on this one tab.
+      */}
+      <GradientFab onPress={() => setAddOpen(true)} />
 
       <SingleSelectSheet
         visible={sortOpen}

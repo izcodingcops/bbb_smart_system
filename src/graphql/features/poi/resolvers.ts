@@ -262,6 +262,9 @@ export const poiResolvers = {
         throw new Error(`Unknown person: ${args.id}`);
       }
       applyInput(record, args.input);
+      // The form shows Date & Time in edit mode too, so it has to land
+      // somewhere — it's this person's first-seen stamp, not the audit date.
+      record.firstSeenAt = args.input.occurredAt;
       record.lastModifiedAt = new Date().toISOString();
       record.lastModifiedBy = 'You';
       return toWire(record);

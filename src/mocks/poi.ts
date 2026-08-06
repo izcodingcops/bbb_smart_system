@@ -124,6 +124,27 @@ const DAY = 24 * HOUR;
 
 const ago = (offset: number): string => new Date(SEED_NOW - offset).toISOString();
 
+/**
+ * Milliseconds elapsed since local midnight. The Today and Yesterday records
+ * are placed relative to it rather than at a fixed number of hours back, so
+ * they stay in their own bucket whatever time of day the app is launched — a
+ * record seeded "6 hours ago" falls into Yesterday if you open the app at 5am.
+ */
+const SINCE_MIDNIGHT = (() => {
+  const now = new Date(SEED_NOW);
+  return (
+    now.getHours() * HOUR + now.getMinutes() * 60000 + now.getSeconds() * 1000
+  );
+})();
+
+/** `fraction` of the way back through today, from now to midnight. */
+const todayAt = (fraction: number): string =>
+  ago(Math.round(SINCE_MIDNIGHT * fraction));
+
+/** `fraction` of the way back through yesterday, from its midnight. */
+const yesterdayAt = (fraction: number): string =>
+  ago(SINCE_MIDNIGHT + Math.round(DAY * fraction));
+
 /** Fields every seeded person shares unless it overrides them. */
 const DETAIL_DEFAULTS = {
   top1020: false,
@@ -205,7 +226,7 @@ export const MOCK_POIS: PoiRecord[] = [
     address: 'Union Station, 1701 Wynkoop St, Denver',
     createdBy: {name: 'John Carter', initials: 'JC'},
     queuedOffline: false,
-    lastModifiedAt: ago(2 * HOUR),
+    lastModifiedAt: todayAt(0.2),
     firstSeenAt: ago(62 * DAY),
     lastModifiedBy: 'John Carter',
     contact: '(303) 555-0142',
@@ -246,7 +267,7 @@ export const MOCK_POIS: PoiRecord[] = [
         id: 'int_rivera_4',
         reference: '#INT-9006',
         interactionType: 'Wellness Check',
-        occurredAt: ago(2 * HOUR),
+        occurredAt: todayAt(0.2),
         zone: 'Zone 2',
         fixture: null,
         businessLocation: null,
@@ -295,7 +316,7 @@ export const MOCK_POIS: PoiRecord[] = [
       {
         id: 'upd_rivera_2',
         reference: '#UPD-3300',
-        occurredAt: ago(DAY + 6 * HOUR),
+        occurredAt: yesterdayAt(0.4),
         zone: 'Zone 2',
         description:
           'Evening patrol — individual remains near the transit plaza. No new concerns observed.',
@@ -321,7 +342,7 @@ export const MOCK_POIS: PoiRecord[] = [
     address: '16th St Mall, 900 16th St, Denver',
     createdBy: {name: 'John Carter', initials: 'JC'},
     queuedOffline: false,
-    lastModifiedAt: ago(6 * HOUR),
+    lastModifiedAt: todayAt(0.75),
     firstSeenAt: ago(96 * DAY),
     lastModifiedBy: 'John Carter',
     contact: '(303) 555-0188',
@@ -339,7 +360,7 @@ export const MOCK_POIS: PoiRecord[] = [
     address: 'Larimer Square, 1430 Larimer St, Denver',
     createdBy: {name: 'Sara Diaz', initials: 'SD'},
     queuedOffline: false,
-    lastModifiedAt: ago(DAY + 3 * HOUR),
+    lastModifiedAt: yesterdayAt(0.3),
     firstSeenAt: ago(71 * DAY),
     lastModifiedBy: 'Sara Diaz',
     contact: 'd.whitfield@email.com',
@@ -359,7 +380,7 @@ export const MOCK_POIS: PoiRecord[] = [
     // The export's one `sync: 'queued'` record, kept so the "Queued · offline"
     // badge and the still-uploading guard are both reachable from a cold start.
     queuedOffline: true,
-    lastModifiedAt: ago(DAY + 9 * HOUR),
+    lastModifiedAt: yesterdayAt(0.75),
     firstSeenAt: ago(58 * DAY),
     lastModifiedBy: 'John Carter',
     contact: '(303) 555-0110',
