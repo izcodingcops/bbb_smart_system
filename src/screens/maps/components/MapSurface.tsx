@@ -23,8 +23,13 @@ export const DEFAULT_DELTA = 0.012;
 const MIN_DELTA = 0.0005;
 const MAX_DELTA = 80;
 
-export const ZOOM_IN_FACTOR = 0.55;
-export const ZOOM_OUT_FACTOR = 1.8;
+/**
+ * Reciprocal on purpose: 0.5 × 2 is exactly 1, so zooming in and back out
+ * returns to the span you started from. Any other pairing compounds — 0.55
+ * and 1.8 multiply to 0.99, which creeps toward MIN_DELTA over a session.
+ */
+export const ZOOM_IN_FACTOR = 0.5;
+export const ZOOM_OUT_FACTOR = 2;
 
 export const regionFor = (
   coordinate: MapCoordinate,
