@@ -186,13 +186,20 @@ const CREATE_CONTEXT = {
   context: {feature: 'poi', offlineQueueKey: 'CREATE_POI'},
   refetchQueries: ['GetPois'],
 };
+/**
+ * Both sub-record creates are reached by routing away from the detail screen,
+ * so 'GetPoi' is guaranteed to be unmounted by the time they run — naming it in
+ * refetchQueries only earns Apollo's "unknown query" warning and refreshes
+ * nothing. The detail's own cache-and-network policy is what reconciles the
+ * timeline on the way back in.
+ */
 const ADD_INTERACTION_CONTEXT = {
   context: {feature: 'poi', offlineQueueKey: 'ADD_POI_INTERACTION'},
-  refetchQueries: ['GetPois', 'GetPoi'],
+  refetchQueries: ['GetPois'],
 };
 const ADD_UPDATE_CONTEXT = {
   context: {feature: 'poi', offlineQueueKey: 'ADD_POI_UPDATE'},
-  refetchQueries: ['GetPois', 'GetPoi'],
+  refetchQueries: ['GetPois'],
 };
 
 /**
@@ -219,7 +226,15 @@ export function useGetPoisQuery() {
 export function useGetPoiQuery(id: string) {
   const {data, loading, error, refetch} = useQuery<{
     poi: GqlPoiDetail | null;
-  }>(GET_POI, {...POI_CONTEXT, variables: {id}});
+  }>(GET_POI, {
+    ...POI_CONTEXT,
+    variables: {id},
+    // Interactions and updates are created from screens that unmount this one,
+    // and the mock store mutates in place — so a cache-first read would show a
+    // timeline that's one entry behind. Serve the cache instantly, then
+    // reconcile.
+    fetchPolicy: 'cache-and-network',
+  });
 
   const detail = useMemo(() => (data?.poi ? toDetail(data.poi) : null), [data]);
 

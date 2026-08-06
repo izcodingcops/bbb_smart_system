@@ -96,7 +96,10 @@ const DropdownField: React.FC<Props> = ({
         <Text
           style={[styles.value, !value && styles.placeholder]}
           numberOfLines={1}>
-          {value ?? placeholder}
+          {/* `||`, not `??`: every form seeds its unset dropdowns with '',
+              which is not nullish, so `??` rendered an empty control instead
+              of the placeholder the adjacent style is already greying. */}
+          {value || placeholder}
         </Text>
         <View style={open ? styles.chevOpen : undefined}>
           <ChevronDownIcon size={19} />
