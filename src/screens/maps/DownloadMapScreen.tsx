@@ -100,12 +100,24 @@ const DownloadMapScreen: React.FC<Props> = ({
   /** Set before a programmatic move so its settle doesn't re-geocode. */
   const skipGeocode = useRef(false);
   const inputRef = useRef<TextInput>(null);
+  /**
+   * Ticket numbers for the two async paths. A debounce timer only cancels a
+   * call that hasn't fired yet — it does nothing about one already in flight,
+   * so a slow earlier response could otherwise land last and overwrite newer
+   * state. Each request keeps its ticket and drops itself if it is no longer
+   * the latest. Cleared on unmount, which is also what stops a late response
+   * setting state on a screen the user has left.
+   */
+  const searchTicket = useRef(0);
+  const geocodeTicket = useRef(0);
+  const mounted = useRef(true);
 
   // The app-wide connectivity signal — never stand up a second one.
   useEffect(() => connectivity.onChange(setOnline), []);
 
   useEffect(
     () => () => {
+      mounted.current = false;
       if (searchTimer.current) clearTimeout(searchTimer.current);
       if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
     },
@@ -113,8 +125,12 @@ const DownloadMapScreen: React.FC<Props> = ({
   );
 
   const resolvePin = useCallback(async (coordinate: MapCoordinate) => {
+    const ticket = ++geocodeTicket.current;
     setResolving(true);
     const resolved = await reverseGeocode(coordinate);
+    if (!mounted.current || ticket !== geocodeTicket.current) {
+      return;
+    }
     setResolving(false);
     if (resolved) {
       setPicked(resolved);
@@ -175,8 +191,12 @@ const DownloadMapScreen: React.FC<Props> = ({
   );
 
   const runSearch = useCallback(async (text: string) => {
+    const ticket = ++searchTicket.current;
     setSearchBusy(true);
     const results = await autocomplete(text, sessionToken.current);
+    if (!mounted.current || ticket !== searchTicket.current) {
+      return;
+    }
     setSearchBusy(false);
     if (results === null) {
       setSuggestions([]);
@@ -226,6 +246,8 @@ const DownloadMapScreen: React.FC<Props> = ({
   const handlePickSuggestion = useCallback(
     async (suggestion: MapSuggestion) => {
       handleEndSearch();
+      // A pick supersedes any pin resolve still in flight.
+      const ticket = ++geocodeTicket.current;
       setResolving(true);
       const detail = await placeDetails(
         suggestion.placeId,
@@ -233,6 +255,9 @@ const DownloadMapScreen: React.FC<Props> = ({
       );
       // Details closes the billing session — the next search opens a new one.
       sessionToken.current = newSessionToken();
+      if (!mounted.current || ticket !== geocodeTicket.current) {
+        return;
+      }
       setResolving(false);
       if (!detail) {
         setErrorMessage(NETWORK_ERROR);
