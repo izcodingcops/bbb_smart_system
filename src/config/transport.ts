@@ -14,6 +14,7 @@ export type Feature =
   | 'fixture'
   | 'incident'
   | 'dispatch'
+  | 'poi'
   | 'workLog';
 
 export const API_TRANSPORT: Record<Feature, Transport> = {
@@ -25,6 +26,7 @@ export const API_TRANSPORT: Record<Feature, Transport> = {
   fixture: 'mock',
   incident: 'mock',
   dispatch: 'mock',
+  poi: 'mock',
   workLog: 'mock',
 };
 

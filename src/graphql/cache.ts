@@ -31,6 +31,17 @@ export const cache = new InMemoryCache({
     IncidentFormOptions: {keyFields: false},
     Dispatch: {keyFields: ['id']},
     DispatchEscalation: {keyFields: ['id']},
+    Poi: {keyFields: ['id']},
+    PoiInteraction: {keyFields: ['id']},
+    PoiUpdate: {keyFields: ['id']},
+    PoiPerson: {keyFields: ['id']},
+    // No id of their own; keep them embedded in the person they belong to.
+    PoiCreator: {keyFields: false},
+    PoiContact: {keyFields: false},
+    // No id of their own — options belong to the query that asked for them.
+    PoiFormOptions: {keyFields: false},
+    PoiInteractionFormOptions: {keyFields: false},
+    PoiUpdateFormOptions: {keyFields: false},
     WorkLogEntry: {keyFields: ['id']},
   },
 });

@@ -855,6 +855,201 @@ const checks: Check[] = [
     const afterDelete: any = await run('query D($id: ID!) { dispatch(id: $id) { incidents { reference } } }', {id: 'dp_0000_06'});
     assert.ok(afterDelete.data.dispatch.incidents.every((i: any) => i.reference !== '#IN-42986'));
   }],
+
+  // ---- POI ----
+
+  ['poi list resolves with uppercase disposition enums', async () => {
+    const r: any = await run(
+      'query P($p: ID!) { pois(programId: $p) { reference disposition interactionCount queuedOffline } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.pois.length, 11);
+    assert.ok(r.data.pois.every((p: any) => /^[A-Z_]+$/.test(p.disposition)));
+    // The export's one queued record, kept so the badge is reachable cold.
+    assert.equal(r.data.pois.filter((p: any) => p.queuedOffline).length, 1);
+    // Derived from the timeline, so it can never be a stale denormalised copy.
+    assert.ok(r.data.pois.every((p: any) => typeof p.interactionCount === 'number'));
+  }],
+
+  ['poi detail resolves every section', async () => {
+    const r: any = await run(
+      `query D($id: ID!) { poi(id: $id) {
+        reference name personType disposition zone address interactionCount
+        createdBy { name initials } queuedOffline lastModifiedAt
+        firstSeenAt lastModifiedBy contact top1020 alias gender age race weight height
+        physicalDescription situation describeLocation
+        contacts { name email phone relationship notes }
+        connectedIncidents connectedMaintenance connectedEquipment
+        interactions { id reference interactionType occurredAt zone fixture businessLocation violation note documents }
+        updates { id reference occurredAt zone description }
+      } }`,
+      {id: 'poi_rivera'},
+    );
+    assert.equal(r.errors, undefined);
+    const d = r.data.poi;
+    assert.equal(d.reference, '#POI-4021');
+    assert.equal(d.top1020, true);
+    assert.equal(d.contacts.length, 2);
+    assert.equal(d.interactions.length, 4);
+    assert.equal(d.interactionCount, 4);
+    assert.equal(d.updates.length, 2);
+    assert.equal(d.connectedIncidents.length, 2);
+    assert.ok(d.describeLocation);
+    // Newest first — the order the view renders without re-sorting.
+    assert.equal(d.interactions[0].reference, '#INT-9006');
+  }],
+
+  ['poi on an unknown id returns null, not an error', async () => {
+    const r: any = await run('query D($id: ID!) { poi(id: $id) { reference } }', {id: 'nope'});
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.poi, null);
+  }],
+
+  ['person create, update and delete round-trip through the store', async () => {
+    const input = {
+      name: 'Test Person', personType: 'Regular Visitor', disposition: 'HOUSED',
+      occurredAt: '2026-08-07T09:00:00.000Z', contact: '(303) 555-0000', top1020: false,
+      alias: null, gender: 'Unknown', age: '40', race: 'Unknown', weight: null, height: null,
+      physicalDescription: null, situation: null,
+      contacts: [{name: 'Case Worker', email: '', phone: '(303) 555-0001', relationship: 'Case Worker', notes: ''}],
+      connectedIncidents: [], connectedMaintenance: [], connectedEquipment: [],
+    };
+    const created: any = await run(
+      'mutation C($p: ID!, $i: PoiInput!) { createPoi(programId: $p, input: $i) { id reference disposition address zone describeLocation interactionCount contacts { name } } }',
+      {p: 'p1', i: input},
+    );
+    assert.equal(created.errors, undefined);
+    const c = created.data.createPoi;
+    assert.ok(c.reference.startsWith('#POI-'));
+    assert.equal(c.disposition, 'HOUSED');
+    assert.equal(c.interactionCount, 0);
+    // Location is stamped server-side; the form has no Location section, so
+    // describeLocation is the one part of it that stays null.
+    assert.ok(c.address.length > 0);
+    assert.ok(c.zone.length > 0);
+    assert.equal(c.describeLocation, null);
+    assert.equal(c.contacts.length, 1);
+
+    const updated: any = await run(
+      'mutation U($id: ID!, $i: PoiInput!) { updatePoi(id: $id, input: $i) { name disposition address zone } }',
+      {id: c.id, i: {...input, name: 'Renamed Person', disposition: 'ACTIVE'}},
+    );
+    assert.equal(updated.errors, undefined);
+    assert.equal(updated.data.updatePoi.name, 'Renamed Person');
+    assert.equal(updated.data.updatePoi.disposition, 'ACTIVE');
+    // address/zone aren't in PoiInput — an edit must not clear them.
+    assert.equal(updated.data.updatePoi.address, c.address);
+    assert.equal(updated.data.updatePoi.zone, c.zone);
+
+    await run('mutation D($id: ID!) { deletePoi(id: $id) }', {id: c.id});
+    const gone: any = await run('query D($id: ID!) { poi(id: $id) { reference } }', {id: c.id});
+    assert.equal(gone.data.poi, null);
+  }],
+
+  ['addPoiInteraction appends to the timeline and increments interactionCount', async () => {
+    const READ = 'query D($id: ID!) { poi(id: $id) { interactionCount interactions { id reference } } }';
+    const before: any = await run(READ, {id: 'poi_rivera'});
+    const count = before.data.poi.interactionCount;
+    const added: any = await run(
+      'mutation A($id: ID!, $i: PoiInteractionInput!) { addPoiInteraction(personId: $id, input: $i) { id reference } }',
+      {id: 'poi_rivera', i: {
+        interactionType: 'Observation', occurredAt: '2026-08-07T10:00:00.000Z', zone: 'Zone 2',
+        fixture: null, businessLocation: null, violation: null, note: 'Smoke check.', documents: [],
+      }},
+    );
+    assert.equal(added.errors, undefined);
+    assert.ok(added.data.addPoiInteraction.reference.startsWith('#INT-'));
+    const after: any = await run(READ, {id: 'poi_rivera'});
+    assert.equal(after.data.poi.interactionCount, count + 1);
+    assert.equal(after.data.poi.interactions.length, count + 1);
+    // Newest first.
+    assert.equal(after.data.poi.interactions[0].id, added.data.addPoiInteraction.id);
+  }],
+
+  ['addPoiUpdate appends to the timeline and leaves interactionCount unchanged', async () => {
+    const READ = 'query D($id: ID!) { poi(id: $id) { interactionCount updates { id reference } } }';
+    const before: any = await run(READ, {id: 'poi_rivera'});
+    const count = before.data.poi.interactionCount;
+    const updates = before.data.poi.updates.length;
+    const added: any = await run(
+      'mutation A($id: ID!, $i: PoiUpdateInput!) { addPoiUpdate(personId: $id, input: $i) { id reference } }',
+      {id: 'poi_rivera', i: {occurredAt: '2026-08-07T11:00:00.000Z', zone: 'Zone 2', description: 'Smoke check.'}},
+    );
+    assert.equal(added.errors, undefined);
+    assert.ok(added.data.addPoiUpdate.reference.startsWith('#UPD-'));
+    const after: any = await run(READ, {id: 'poi_rivera'});
+    assert.equal(after.data.poi.updates.length, updates + 1);
+    assert.equal(after.data.poi.updates[0].id, added.data.addPoiUpdate.id);
+    // An update is not an interaction.
+    assert.equal(after.data.poi.interactionCount, count);
+  }],
+
+  ['deleting a person removes its interactions and updates with it', async () => {
+    const created: any = await run(
+      'mutation C($p: ID!, $i: PoiInput!) { createPoi(programId: $p, input: $i) { id } }',
+      {p: 'p1', i: {
+        name: 'Doomed Person', personType: 'Other', disposition: 'ACTIVE',
+        occurredAt: '2026-08-07T09:00:00.000Z', contact: null, top1020: false,
+        alias: null, gender: null, age: null, race: null, weight: null, height: null,
+        physicalDescription: null, situation: null, contacts: [],
+        connectedIncidents: [], connectedMaintenance: [], connectedEquipment: [],
+      }},
+    );
+    const id = created.data.createPoi.id;
+    await run(
+      'mutation A($id: ID!, $i: PoiInteractionInput!) { addPoiInteraction(personId: $id, input: $i) { id } }',
+      {id, i: {interactionType: 'Observation', occurredAt: '2026-08-07T10:00:00.000Z', zone: 'Zone 1',
+        fixture: null, businessLocation: null, violation: null, note: null, documents: []}},
+    );
+    await run(
+      'mutation A($id: ID!, $i: PoiUpdateInput!) { addPoiUpdate(personId: $id, input: $i) { id } }',
+      {id, i: {occurredAt: '2026-08-07T11:00:00.000Z', zone: 'Zone 1', description: 'Doomed.'}},
+    );
+    const before: any = await run('query D($id: ID!) { poi(id: $id) { interactions { id } updates { id } } }', {id});
+    assert.equal(before.data.poi.interactions.length, 1);
+    assert.equal(before.data.poi.updates.length, 1);
+
+    await run('mutation D($id: ID!) { deletePoi(id: $id) }', {id});
+    // The timelines have no query of their own, so their removal is proven by
+    // the record's — which is what the confirm dialog promises.
+    const gone: any = await run('query D($id: ID!) { poi(id: $id) { reference } }', {id});
+    assert.equal(gone.data.poi, null);
+    const addingToGhost: any = await run(
+      'mutation A($id: ID!, $i: PoiUpdateInput!) { addPoiUpdate(personId: $id, input: $i) { id } }',
+      {id, i: {occurredAt: '2026-08-07T12:00:00.000Z', zone: 'Zone 1', description: 'Nope.'}},
+    );
+    assert.ok(addingToGhost.errors);
+  }],
+
+  ['the three POI form-options queries resolve and people are id/name pairs', async () => {
+    const r: any = await run(
+      `query O($p: ID!) {
+        poiFormOptions(programId: $p) { nextReference personTypes dispositions genders races incidentOptions maintenanceOptions equipmentOptions }
+        poiInteractionFormOptions(programId: $p) { nextReference people { id name } interactionTypes violations zones fixtures businessLocations }
+        poiUpdateFormOptions(programId: $p) { nextReference people { id name } zones }
+      }`,
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.poiFormOptions;
+    assert.ok(o.nextReference.startsWith('#POI-'));
+    assert.equal(o.personTypes.length, 10);
+    assert.equal(o.dispositions.length, 6);
+    assert.equal(o.genders.length, 3);
+    assert.equal(o.races.length, 8);
+    const i = r.data.poiInteractionFormOptions;
+    assert.ok(i.nextReference.startsWith('#INT-'));
+    assert.equal(i.interactionTypes.length, 9);
+    assert.equal(i.violations.length, 7);
+    // A name is not a key: the picker sends the id, so the two must differ.
+    assert.ok(i.people.length > 0);
+    assert.ok(i.people[0].id.length > 0);
+    assert.notEqual(i.people[0].id, i.people[0].name);
+    const u = r.data.poiUpdateFormOptions;
+    assert.ok(u.nextReference.startsWith('#UPD-'));
+    assert.equal(u.zones.length, 6);
+  }],
 ];
 
 async function main() {

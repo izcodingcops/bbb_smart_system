@@ -6,6 +6,7 @@ import {fixtureResolvers} from './features/fixture/resolvers';
 import {incidentResolvers} from './features/incident/resolvers';
 import {maintenanceResolvers} from './features/maintenance/resolvers';
 import {navigationResolvers} from './features/navigation/resolvers';
+import {poiResolvers} from './features/poi/resolvers';
 import {workResolvers} from './features/work/resolvers';
 import {workLogResolvers} from './features/workLog/resolvers';
 import {typeDefs} from './schema';
@@ -28,6 +29,7 @@ export const mockSchema = makeExecutableSchema({
       ...fixtureResolvers.Query,
       ...incidentResolvers.Query,
       ...dispatchResolvers.Query,
+      ...poiResolvers.Query,
       ...workLogResolvers.Query,
     },
     Mutation: {
@@ -36,6 +38,7 @@ export const mockSchema = makeExecutableSchema({
       ...maintenanceResolvers.Mutation,
       ...fixtureResolvers.Mutation,
       ...incidentResolvers.Mutation,
+      ...poiResolvers.Mutation,
       ...workLogResolvers.Mutation,
     },
   },
