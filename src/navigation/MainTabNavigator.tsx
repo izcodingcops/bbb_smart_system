@@ -45,7 +45,7 @@ import MaintenanceNavigator from '../screens/maintenance/MaintenanceNavigator';
 import WorkNavigator from '../screens/work/WorkNavigator';
 import FixtureNavigator from '../screens/fixture/FixtureNavigator';
 import IncidentNavigator from '../screens/incident/IncidentNavigator';
-import DispatchScreen from '../screens/dispatch/DispatchScreen';
+import DispatchNavigator from '../screens/dispatch/DispatchNavigator';
 import MapsNavigator from '../screens/maps/MapsNavigator';
 import PoiScreen from '../screens/poi/PoiScreen';
 
@@ -59,7 +59,7 @@ const SCREEN_MAP: Record<string, React.ComponentType<any>> = {
   [SCREEN.maintenance]: MaintenanceNavigator,
   [SCREEN.fixture]: FixtureNavigator,
   [SCREEN.incident]: IncidentNavigator,
-  [SCREEN.dispatch]: DispatchScreen,
+  [SCREEN.dispatch]: DispatchNavigator,
   [SCREEN.maps]: MapsNavigator,
   [SCREEN.poi]: PoiScreen,
 };

@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -24,8 +24,6 @@ import {useGetDispatchesQuery} from '../../graphql/features/dispatch/hooks';
 import {Dispatch} from '../../types/dispatch';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
-import {useAppDispatch} from '../../redux/store';
-import {setTabBarHidden} from '../../redux/ui/slice';
 import {SCREEN} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {
@@ -45,11 +43,15 @@ import {
   optionsForField,
 } from './filtering';
 import DispatchCard from './components/DispatchCard';
-import ViewDispatchScreen from './ViewDispatchScreen';
+import {useNavigation} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {DispatchStackParamList} from './routes';
 import {theme} from '../../theme';
 
-/** View is a full-screen push within the Dispatch screen. */
-type DispatchRoute = {name: 'list'} | {name: 'view'; id: string};
+type ListNavigation = NativeStackNavigationProp<
+  DispatchStackParamList,
+  'DispatchList'
+>;
 
 const DispatchScreen: React.FC = () => {
   const {data: dispatches = [], isLoading, isError, refetch} = useGetDispatchesQuery();
@@ -62,21 +64,15 @@ const DispatchScreen: React.FC = () => {
   const [addOpen, setAddOpen] = useState(false);
   const {queueTile, flushTile} = useAddRequestTiles(SCREEN.dispatch);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [route, setRoute] = useState<DispatchRoute>({name: 'list'});
-  const dispatch = useAppDispatch();
+  const navigation = useNavigation<ListNavigation>();
   const listRef = useRef<FlatList<Dispatch>>(null);
 
-  // View is a full-screen push — the tab bar has no place there.
-  useEffect(() => {
-    dispatch(setTabBarHidden(route.name !== 'list'));
-    return () => {
-      dispatch(setTabBarHidden(false));
-    };
-  }, [dispatch, route.name]);
-
-  const handleOpenDispatch = useCallback((record: Dispatch) => {
-    setRoute({name: 'view', id: record.id});
-  }, []);
+  const handleOpenDispatch = useCallback(
+    (record: Dispatch) => {
+      navigation.navigate('DispatchView', {id: record.id});
+    },
+    [navigation],
+  );
 
   const renderItem = useCallback(
     ({item}: {item: Dispatch}) => (
@@ -101,14 +97,6 @@ const DispatchScreen: React.FC = () => {
     setFilters(EMPTY_FILTERS);
   };
 
-  if (route.name === 'view') {
-    return (
-      <ViewDispatchScreen
-        id={route.id}
-        onClose={() => setRoute({name: 'list'})}
-      />
-    );
-  }
 
   return (
     <View style={styles.root}>

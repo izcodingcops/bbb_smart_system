@@ -1,4 +1,4 @@
-import React, {useCallback, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -18,8 +18,9 @@ import {
 } from '../../components/ui';
 import {PlusIcon, SendIcon} from '../../components/icons';
 import {useGetDispatchQuery} from '../../graphql/features/dispatch/hooks';
-import CreateIncidentScreen from '../incident/CreateIncidentScreen';
-import ViewIncidentScreen from '../incident/ViewIncidentScreen';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {DispatchStackParamList} from './routes';
+import {useHideTabBar} from '../../hooks/useHideTabBar';
 import DispatchTabs, {DispatchTab, DispatchTabKey} from './components/DispatchTabs';
 import EscalationAccordion from './components/EscalationAccordion';
 import IncidentAccordion from './components/IncidentAccordion';
@@ -33,21 +34,21 @@ const TABS: DispatchTab[] = [
   {value: 'incident', label: 'Incident'},
 ];
 
-/** Add Incident and View Incident are full-screen pushes within the detail screen. */
-type DetailRoute = {name: 'detail'} | {name: 'addIncident'} | {name: 'viewIncident'; id: string};
-
 interface ToastState {
   title: string;
   message: string;
   variant: 'success' | 'danger';
 }
 
-interface Props {
-  id: string;
-  onClose: () => void;
-}
+type Props = NativeStackScreenProps<DispatchStackParamList, 'DispatchView'>;
 
-const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
+const ViewDispatchScreen: React.FC<Props> = ({navigation, route: navRoute}) => {
+  const {id} = navRoute.params;
+  const onClose = useCallback(
+    () => navigation.popTo('DispatchList'),
+    [navigation],
+  );
+  useHideTabBar();
   // Every hook runs before the early returns below — the loading, error and
   // loaded branches must not change hook order between renders.
   const {data: detail, isLoading, isError, refetch} = useGetDispatchQuery(id);
@@ -57,16 +58,52 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
   const pendingIncidents = usePendingIncidentItems().filter(i => i.dispatchReference === id);
   const [tab, setTab] = useState<DispatchTabKey>('dispatch');
   const scrollRef = useRef<ScrollView>(null);
-  const [route, setRoute] = useState<DetailRoute>({name: 'detail'});
   /** The incident just added, shown under a "Newly Added" band until the user leaves the tab. */
   const [justAdded, setJustAdded] = useState<{id: string; queued: boolean} | null>(null);
   /**
-   * Snapshotted at onCreated rather than derived from `justAdded` — that
-   * state gets nulled by handleTabChange as soon as the user leaves the
+   * Snapshotted from the route param rather than derived from `justAdded` —
+   * that state gets nulled by handleTabChange as soon as the user leaves the
    * Incident tab, which would otherwise flip a still-visible "queued"
    * toast over to a false "attached" one mid-display.
    */
   const [toast, setToast] = useState<ToastState | null>(null);
+
+  // Add Incident hands its result back here rather than this screen owning the
+  // form — it sits on top in the stack, so this screen never unmounted and its
+  // tab and scroll position are still where the user left them.
+  const {added, deleted} = navRoute.params;
+
+  useEffect(() => {
+    if (!added) return;
+    setJustAdded({id: added.id, queued: added.queued});
+    setTab('incident');
+    setToast(
+      added.queued
+        ? {
+            title: 'Saved — will upload when back online',
+            message:
+              "This incident is queued and will upload automatically once you're back online.",
+            variant: 'danger',
+          }
+        : {
+            title: 'Incident submitted',
+            message: `${added.reference} was added to your Work Log.`,
+            variant: 'success',
+          },
+    );
+    navigation.setParams({added: undefined});
+  }, [added, navigation]);
+
+  useEffect(() => {
+    if (!deleted) return;
+    setJustAdded(current => (current?.id === deleted.id ? null : current));
+    setToast({
+      title: 'Incident deleted',
+      message: `${deleted.reference} was removed from your Work Log.`,
+      variant: 'danger',
+    });
+    navigation.setParams({deleted: undefined});
+  }, [deleted, navigation]);
 
   // Wrapped in useCallback: DispatchTabs is React.memo'd, so a fresh inline
   // arrow passed as onChange on every render would defeat that memo.
@@ -83,8 +120,12 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
   // avoids each of the three onViewMore call sites below shadowing the
   // outer .map(incident => ...) parameter with their own inline `incident`.
   const handleViewMore = useCallback(
-    (incident: IncidentDetail) => setRoute({name: 'viewIncident', id: incident.id}),
-    [],
+    (incident: IncidentDetail) =>
+      navigation.navigate('DispatchViewIncident', {
+        id: incident.id,
+        dispatchId: id,
+      }),
+    [navigation, id],
   );
 
   if (isLoading) {
@@ -117,62 +158,6 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
     );
   }
 
-  if (route.name === 'addIncident') {
-    return (
-      <CreateIncidentScreen
-        dispatchReference={id}
-        onClose={() => setRoute({name: 'detail'})}
-        onCreated={created => {
-          setRoute({name: 'detail'});
-          setJustAdded({id: created.id, queued: created.queued});
-          setTab('incident');
-          setToast(
-            created.queued
-              ? {
-                  title: 'Saved — will upload when back online',
-                  message:
-                    "This incident is queued and will upload automatically once you're back online.",
-                  variant: 'danger',
-                }
-              : {
-                  title: 'Incident submitted',
-                  message: `${created.reference} was added to your Work Log.`,
-                  variant: 'success',
-                },
-          );
-          // No explicit refetch() here — useCreateIncidentMutation's mutate()
-          // conditionally includes 'GetDispatch' in refetchQueries when a
-          // dispatchReference is passed (src/graphql/features/incident/
-          // hooks.ts, Task 9) — this screen always passes one, and this
-          // screen's own useGetDispatchQuery(id) — called above every early
-          // return — is the active 'GetDispatch' query that refetch targets,
-          // so the new incident shows up in the accordion list without this
-          // screen doing anything more.
-        }}
-      />
-    );
-  }
-
-  if (route.name === 'viewIncident') {
-    return (
-      <ViewIncidentScreen
-        id={route.id}
-        onClose={() => setRoute({name: 'detail'})}
-        onDeleted={reference => {
-          setRoute({name: 'detail'});
-          if (justAdded?.id === route.id) {
-            setJustAdded(null);
-          }
-          setToast({
-            title: 'Incident deleted',
-            message: `${reference} was removed from your Work Log.`,
-            variant: 'danger',
-          });
-        }}
-      />
-    );
-  }
-
   // Derived, not state: split out the just-added incident (if it has actually
   // landed in `detail.incidents` yet) from the rest. Kept as exact complements
   // so no incident renders twice and none disappears while these diverge —
@@ -194,7 +179,9 @@ const ViewDispatchScreen: React.FC<Props> = ({id, onClose}) => {
         <TouchableOpacity
           style={styles.addButton}
           activeOpacity={0.85}
-          onPress={() => setRoute({name: 'addIncident'})}>
+          onPress={() =>
+            navigation.navigate('DispatchAddIncident', {dispatchId: id})
+          }>
           <PlusIcon size={16} color={theme.colors.white} />
           <Text style={styles.addText}>Add Incident</Text>
         </TouchableOpacity>
