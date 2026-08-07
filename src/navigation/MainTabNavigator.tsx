@@ -43,7 +43,7 @@ import {
 import ComingSoonScreen from '../screens/ComingSoonScreen';
 import MaintenanceScreen from '../screens/maintenance/MaintenanceScreen';
 import WorkScreen from '../screens/work/WorkScreen';
-import FixtureScreen from '../screens/fixture/FixtureScreen';
+import FixtureNavigator from '../screens/fixture/FixtureNavigator';
 import IncidentScreen from '../screens/incident/IncidentScreen';
 import DispatchScreen from '../screens/dispatch/DispatchScreen';
 import MapsScreen from '../screens/maps/MapsScreen';
@@ -57,7 +57,7 @@ const SCREEN_MAP: Record<string, React.ComponentType<any>> = {
   [SCREEN.home]: HomeScreen,
   [SCREEN.work]: WorkScreen,
   [SCREEN.maintenance]: MaintenanceScreen,
-  [SCREEN.fixture]: FixtureScreen,
+  [SCREEN.fixture]: FixtureNavigator,
   [SCREEN.incident]: IncidentScreen,
   [SCREEN.dispatch]: DispatchScreen,
   [SCREEN.maps]: MapsScreen,
@@ -104,6 +104,33 @@ const ComingSoonTab: React.FC = () => {
     'Coming soon';
   return <ComingSoonScreen title={label} />;
 };
+
+/**
+ * Each tab's component, wrapped in its own error boundary so one module
+ * crashing leaves the rest of the app usable.
+ *
+ * Cached at module level because React Navigation identifies a screen by its
+ * component type: building the wrapper during render would hand it a new type
+ * every time and remount the whole tab, losing exactly the state this
+ * navigator exists to preserve.
+ */
+const wrappedTabs = new Map<string, React.ComponentType>();
+
+function tabComponent(screenName: string): React.ComponentType {
+  const cached = wrappedTabs.get(screenName);
+  if (cached) {
+    return cached;
+  }
+  const Screen = SCREEN_MAP[screenName] ?? ComingSoonTab;
+  const Wrapped: React.FC = () => (
+    <ErrorBoundary label={screenName}>
+      <Screen />
+    </ErrorBoundary>
+  );
+  Wrapped.displayName = `Tab(${screenName})`;
+  wrappedTabs.set(screenName, Wrapped);
+  return Wrapped;
+}
 
 interface TabBarProps extends BottomTabBarProps {
   menuItems: MenuItem[];
@@ -365,19 +392,18 @@ const MainTabNavigator: React.FC = () => {
           headerShown: false,
           sceneStyle: {backgroundColor: theme.colors.background},
         }}
+        // `tabBar` is a render prop, not a screen component — React Navigation
+        // calls it in place each render and the element type it returns is
+        // stable, so nothing remounts. The rule can't tell the two apart.
+        // eslint-disable-next-line react/no-unstable-nested-components
         tabBar={props => <AppTabBar {...props} menuItems={menuItems} />}>
-        {routableItems.map(item => {
-          const Screen = SCREEN_MAP[item.screen_name] ?? ComingSoonTab;
-          return (
-            <Tab.Screen key={item.id} name={item.screen_name}>
-              {() => (
-                <ErrorBoundary label={item.screen_name}>
-                  <Screen />
-                </ErrorBoundary>
-              )}
-            </Tab.Screen>
-          );
-        })}
+        {routableItems.map(item => (
+          <Tab.Screen
+            key={item.id}
+            name={item.screen_name}
+            component={tabComponent(item.screen_name)}
+          />
+        ))}
       </Tab.Navigator>
     </SafeAreaView>
   );

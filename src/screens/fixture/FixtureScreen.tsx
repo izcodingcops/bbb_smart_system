@@ -1,6 +1,8 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {View, Text, FlatList, ScrollView, StyleSheet, Alert} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import {BackToTopPill, DateRangeSheet, EmptyState, FilterChips, GradientFab, ListSearchRow, ListSummary, MultiSelectSheet, RecordCardSkeleton, SingleSelectSheet, Toast} from '../../components/ui';
 import {BoxIcon} from '../../components/icons';
@@ -9,12 +11,7 @@ import {Fixture, FixtureStatus} from '../../types/fixture';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import {useAppDispatch, useAppSelector} from '../../redux/store';
-import {
-  clearPendingCreate,
-  clearPendingRecord,
-  requestScreen,
-  setTabBarHidden,
-} from '../../redux/ui/slice';
+import {clearPendingCreate, clearPendingRecord} from '../../redux/ui/slice';
 import {SCREEN} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {
@@ -34,21 +31,14 @@ import {
   optionsForField,
 } from './filtering';
 import FixtureCard from './components/FixtureCard';
-import CreateFixtureScreen from './CreateFixtureScreen';
-import ViewFixtureScreen from './ViewFixtureScreen';
 import {usePendingFixtureItems} from './pendingFixtureItems';
+import {FixtureStackParamList, FixtureToast} from './routes';
 import {theme} from '../../theme';
 
-/** Create and View are full-screen pushes within the Fixture tab. */
-type FixtureRoute = {name: 'list'} | {name: 'create'} | {name: 'view'; id: string};
-
-interface ToastState {
-  title: string;
-  message: string;
-  /** Record id used by the toast's View action. Empty when there is nowhere to go. */
-  routeId: string;
-  variant?: 'success' | 'danger';
-}
+type ListNavigation = NativeStackNavigationProp<
+  FixtureStackParamList,
+  'FixtureList'
+>;
 
 const FixtureScreen: React.FC = () => {
   const {data: queryFixtures = [], isLoading, isError, refetch} = useGetFixturesQuery();
@@ -64,13 +54,12 @@ const FixtureScreen: React.FC = () => {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [openFilter, setOpenFilter] = useState<FilterField | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  /** Tab to go back to when create was opened from elsewhere and then closed. */
-  const [returnTo, setReturnTo] = useState<string | null>(null);
   /** Which card's inline status menu is open, if any — only one at a time. */
   const [menuFixtureId, setMenuFixtureId] = useState<string | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [route, setRoute] = useState<FixtureRoute>({name: 'list'});
-  const [toast, setToast] = useState<ToastState | null>(null);
+  const [toast, setToast] = useState<FixtureToast | null>(null);
+  const navigation = useNavigation<ListNavigation>();
+  const route = useRoute<RouteProp<FixtureStackParamList, 'FixtureList'>>();
   const dispatch = useAppDispatch();
   const listRef = useRef<FlatList<Fixture>>(null);
   const {mutate: setStatus} = useSetFixtureStatusMutation();
@@ -78,33 +67,36 @@ const FixtureScreen: React.FC = () => {
   const pendingRecord = useAppSelector(state => state.ui.pendingRecord);
   const {queueTile, flushTile} = useAddRequestTiles(SCREEN.fixture);
 
-  // Someone asked for a fixture create from another tab — the navigator has
-  // since brought this screen on, so open create and spend the request,
-  // holding on to where they came from for an unsaved close.
+  // Someone asked for a fixture create from another tab — the tab navigator
+  // has since brought this stack on, so push create and spend the request.
+  // Where they came from travels as a route param for an unsaved close.
   useEffect(() => {
     if (pendingCreate?.target !== SCREEN.fixture) return;
-    setReturnTo(
-      pendingCreate.origin === SCREEN.fixture ? null : pendingCreate.origin,
-    );
-    setRoute({name: 'create'});
+    navigation.navigate('FixtureCreate', {
+      origin:
+        pendingCreate.origin === SCREEN.fixture
+          ? undefined
+          : pendingCreate.origin,
+    });
     dispatch(clearPendingCreate());
-  }, [dispatch, pendingCreate]);
+  }, [dispatch, navigation, pendingCreate]);
 
-  // A notification asked for one of this module's records — the navigator has
-  // since brought this screen on, so open it and spend the request.
+  // A notification asked for one of this module's records — the tab navigator
+  // has since brought this stack on, so push it and spend the request.
   useEffect(() => {
     if (pendingRecord?.target !== SCREEN.fixture) return;
-    setRoute({name: 'view', id: pendingRecord.recordId});
+    navigation.navigate('FixtureView', {id: pendingRecord.recordId});
     dispatch(clearPendingRecord());
-  }, [dispatch, pendingRecord]);
+  }, [dispatch, navigation, pendingRecord]);
 
-  // Create and View are full-screen pushes — the tab bar has no place there.
+  // Create and View hand a toast back on the way out — show it once, then
+  // clear the param so returning here later doesn't replay it.
+  const incomingToast = route.params?.toast;
   useEffect(() => {
-    dispatch(setTabBarHidden(route.name !== 'list'));
-    return () => {
-      dispatch(setTabBarHidden(false));
-    };
-  }, [dispatch, route.name]);
+    if (!incomingToast) return;
+    setToast(incomingToast);
+    navigation.setParams({toast: undefined});
+  }, [incomingToast, navigation]);
 
   const handleSelectStatus = useCallback(
     async (fixture: Fixture, status: FixtureStatus) => {
@@ -127,16 +119,19 @@ const FixtureScreen: React.FC = () => {
     setMenuFixtureId(current => (current === cardId ? null : cardId));
   }, []);
 
-  const handleOpenFixture = useCallback((record: Fixture) => {
-    if (record.queuedOffline) {
-      Alert.alert(
-        'Still uploading',
-        "This fixture hasn't finished uploading yet — it'll be available to view once you're back online.",
-      );
-      return;
-    }
-    setRoute({name: 'view', id: record.id});
-  }, []);
+  const handleOpenFixture = useCallback(
+    (record: Fixture) => {
+      if (record.queuedOffline) {
+        Alert.alert(
+          'Still uploading',
+          "This fixture hasn't finished uploading yet — it'll be available to view once you're back online.",
+        );
+        return;
+      }
+      navigation.navigate('FixtureView', {id: record.id});
+    },
+    [navigation],
+  );
 
   const renderItem = useCallback(
     ({item}: {item: Fixture}) => (
@@ -166,61 +161,6 @@ const FixtureScreen: React.FC = () => {
     setSearch('');
     setFilters(EMPTY_FILTERS);
   };
-
-  if (route.name === 'create') {
-    return (
-      <CreateFixtureScreen
-        onClose={() => {
-          setRoute({name: 'list'});
-          // Closed unsaved, so the trip into this module never really
-          // happened — go back where it started from.
-          if (returnTo) {
-            dispatch(requestScreen(returnTo));
-            setReturnTo(null);
-          }
-        }}
-        onCreated={created => {
-          setRoute({name: 'list'});
-          // Submitting keeps them here: the toast's View action opens the new
-          // record, which only exists on this tab.
-          setReturnTo(null);
-          setToast(
-            created.queued
-              ? {
-                  title: 'Saved — will upload when back online',
-                  message:
-                    "This fixture is queued and will upload automatically once you're back online.",
-                  routeId: '',
-                  variant: 'danger',
-                }
-              : {
-                  title: 'Fixture submitted',
-                  message: `${created.reference} was added to your Work Log.`,
-                  routeId: created.id,
-                },
-          );
-        }}
-      />
-    );
-  }
-
-  if (route.name === 'view') {
-    return (
-      <ViewFixtureScreen
-        id={route.id}
-        onClose={() => setRoute({name: 'list'})}
-        onDeleted={reference => {
-          setRoute({name: 'list'});
-          setToast({
-            title: 'Fixture deleted',
-            message: `${reference} was removed from your Work Log.`,
-            routeId: '',
-            variant: 'danger',
-          });
-        }}
-      />
-    );
-  }
 
   return (
     <View style={styles.root}>
@@ -371,7 +311,7 @@ const FixtureScreen: React.FC = () => {
             ? undefined
             : () => {
                 if (toast) {
-                  setRoute({name: 'view', id: toast.routeId});
+                  navigation.navigate('FixtureView', {id: toast.routeId});
                 }
                 setToast(null);
               }
