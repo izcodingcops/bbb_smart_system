@@ -2,13 +2,14 @@ import {MigrationManifest, PersistedState} from 'redux-persist';
 import {initialAuthState} from './auth/initialState';
 import {initialShiftState} from './shift/initialState';
 import {initialMapsState} from './maps/initialState';
+import {initialOutboxState} from './outbox/initialState';
 
 /**
  * Bump PERSIST_VERSION and add a migration whenever a persisted slice gains or
  * changes a field. Without this, state saved by an older build rehydrates
  * missing the new keys and selectors read `undefined`.
  */
-export const PERSIST_VERSION = 3;
+export const PERSIST_VERSION = 4;
 
 export const migrations: MigrationManifest = {
   // v1: auth gained programs/activeProgramId/shiftTypes; the shift slice was
@@ -59,6 +60,31 @@ export const migrations: MigrationManifest = {
     return {
       ...previous,
       maps: {...initialMapsState, ...(previous.maps ?? {})},
+    } as unknown as PersistedState;
+  },
+
+  // v4: outbox items gained `attempts`/`lastError` and the slice gained a
+  // `failed` list. State saved by an older build has neither, so flushOutbox
+  // would increment `undefined` and never dead-letter. Spread the item last so
+  // an install that somehow already has the fields keeps its counts.
+  4: (state): PersistedState => {
+    const previous = state as Record<string, any> | undefined;
+    if (!previous) {
+      return state;
+    }
+    const outbox = previous.outbox ?? initialOutboxState;
+    return {
+      ...previous,
+      outbox: {
+        ...initialOutboxState,
+        ...outbox,
+        items: (outbox.items ?? []).map((item: any) => ({
+          attempts: 0,
+          lastError: null,
+          ...item,
+        })),
+        failed: outbox.failed ?? [],
+      },
     } as unknown as PersistedState;
   },
 };

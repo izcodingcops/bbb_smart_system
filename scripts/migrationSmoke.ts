@@ -4,8 +4,8 @@ import {migrations, PERSIST_VERSION} from '../src/redux/migrations';
 type Check = [name: string, run: () => void];
 
 const checks: Check[] = [
-  ['PERSIST_VERSION is 3', () => {
-    assert.equal(PERSIST_VERSION, 3);
+  ['PERSIST_VERSION is 4', () => {
+    assert.equal(PERSIST_VERSION, 4);
   }],
 
   ['migration 2 drops the api key entirely', () => {
