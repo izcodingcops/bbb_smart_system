@@ -25,7 +25,14 @@ export interface PoiSubRecordParams {
 }
 
 export type PoiStackParamList = {
-  PoiList: {toast?: PoiToast} | undefined;
+  /**
+   * `openChooser` is how the Add Requests POI tile arrives: POI has three
+   * record types, so the tile lands here and the three-way chooser opens over
+   * the list rather than guessing a create screen. `origin` rides along so
+   * backing out — whether by dismissing the chooser or closing the create it
+   * leads to — returns to the tab the tile was tapped on.
+   */
+  PoiList: {toast?: PoiToast; openChooser?: boolean; origin?: string} | undefined;
   PoiCreatePerson: {origin?: string} | undefined;
   PoiCreateInteraction: PoiSubRecordParams | undefined;
   PoiCreateUpdate: PoiSubRecordParams | undefined;

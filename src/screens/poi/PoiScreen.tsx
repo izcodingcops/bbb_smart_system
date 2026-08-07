@@ -23,7 +23,7 @@ import {useGetPoisQuery} from '../../graphql/features/poi/hooks';
 import {Poi} from '../../types/poi';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
-import {SCREEN} from '../../navigation/screens';
+import {SCREEN, TabNavigation} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {
   EMPTY_FILTERS,
@@ -79,18 +79,23 @@ const PoiScreen: React.FC = () => {
    * useAddRequestTiles defers a tile.
    */
   const [chosenKind, setChosenKind] = useState<PoiCreateKind | null>(null);
+  /**
+   * Tab the Add Requests POI tile was tapped on, when it was another one. Held
+   * in state rather than left on the route params because it has to outlive
+   * them: the params are spent on arrival, but the value is still needed when
+   * the chooser closes, and again by whichever create it leads to.
+   */
+  const [returnTo, setReturnTo] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [toast, setToast] = useState<PoiToast | null>(null);
   const navigation = useNavigation<ListNavigation>();
   const route = useRoute<RouteProp<PoiStackParamList, 'PoiList'>>();
   const listRef = useRef<FlatList<Poi>>(null);
-  // The POI tile tapped from another tab goes straight to Create Person — a
-  // full-screen form covers the tab switch. Tapped here it opens the three-way
-  // chooser instead: it's a bottom sheet, so it would otherwise leave this list
-  // in full view behind it and read as a teleport into a module.
-  const openChooser = useCallback(() => setChooserOpen(true), []);
-  const {queueTile, flushTile} = useAddRequestTiles(SCREEN.poi, openChooser);
+  const {queueTile, flushTile} = useAddRequestTiles(SCREEN.poi);
+  // Crossing back out to the tab the POI tile was tapped on, if it was another
+  // one — only the parent can leave this stack.
+  const tabNavigation = navigation.getParent<TabNavigation>();
 
   // The creates and detail hand a toast back on the way out — show it once,
   // then clear the param so returning here later doesn't replay it.
@@ -100,6 +105,17 @@ const PoiScreen: React.FC = () => {
     setToast(incomingToast);
     navigation.setParams({toast: undefined});
   }, [incomingToast, navigation]);
+
+  // The Add Requests POI tile, from this tab or any other. Both params are
+  // spent on arrival; `origin` is parked in state so it survives into whichever
+  // create the chooser leads to.
+  const {openChooser, origin: chooserOrigin} = route.params ?? {};
+  useEffect(() => {
+    if (!openChooser) return;
+    setChooserOpen(true);
+    setReturnTo(chooserOrigin ?? null);
+    navigation.setParams({openChooser: undefined, origin: undefined});
+  }, [openChooser, chooserOrigin, navigation]);
 
   const handleOpenPoi = useCallback(
     (record: Poi) => {
@@ -241,10 +257,10 @@ const PoiScreen: React.FC = () => {
       />
 
       {/*
-        The FAB opens Add Requests, as it does on every other list screen —
-        the chooser is what the sheet's own POI tile leads to, via the same-tab
-        override passed to useAddRequestTiles. Opening the chooser straight from
-        the FAB would strand the sheet on this one tab.
+        The FAB opens Add Requests, as it does on every other list screen — the
+        chooser is what the sheet's own POI tile leads to, wherever it was
+        tapped. Opening the chooser straight from the FAB would skip the sheet
+        and make this one tab behave unlike the rest.
       */}
       <GradientFab onPress={() => setAddOpen(true)} />
 
@@ -286,18 +302,24 @@ const PoiScreen: React.FC = () => {
           setChooserOpen(false);
           setChosenKind(kind);
         }}
-        // The chooser only ever opens from this tab's own Add Requests sheet,
-        // so dismissing it leaves the user on the POI list they were already
-        // looking at — there is nowhere to send them back to.
         onClose={() => setChooserOpen(false)}
         onClosed={() => {
-          if (!chosenKind) return;
-          if (chosenKind === 'person') {
-            navigation.navigate('PoiCreatePerson');
-          } else {
-            navigation.navigate(SUB_RECORD_ROUTE[chosenKind]);
+          if (chosenKind) {
+            // `origin` travels on so an unsaved close from the create returns
+            // to the tab the tile was tapped on, same as every other module.
+            const params = returnTo ? {origin: returnTo} : undefined;
+            if (chosenKind === 'person') {
+              navigation.navigate('PoiCreatePerson', params);
+            } else {
+              navigation.navigate(SUB_RECORD_ROUTE[chosenKind], params);
+            }
+            setChosenKind(null);
+          } else if (returnTo) {
+            // Dismissed without picking, and the tile was tapped on another
+            // tab — the trip here never really happened.
+            tabNavigation?.navigate(returnTo as never);
           }
-          setChosenKind(null);
+          setReturnTo(null);
         }}
       />
 

@@ -73,6 +73,8 @@ export const TAB_ROOT_ROUTE: Record<string, string> = {
 export interface ModuleTarget {
   tab: keyof MainTabParamList;
   screen: string;
+  /** Fixed params the destination always needs, merged under the caller's. */
+  params?: Record<string, unknown>;
 }
 
 /**
@@ -84,12 +86,10 @@ export const CREATE_TARGET_BY_TILE: Record<string, ModuleTarget> = {
   maintenance: {tab: SCREEN.maintenance, screen: 'MaintenanceCreate'},
   fixture: {tab: SCREEN.fixture, screen: 'FixtureCreate'},
   incident: {tab: SCREEN.incident, screen: 'IncidentCreate'},
-  // POI has three record types. From another tab this goes straight to Create
-  // Person — a full-screen form covers the tab switch. Tapped from the POI tab
-  // itself it opens a three-way chooser instead; PoiScreen supplies that as the
-  // same-tab override, because a bottom sheet would leave the POI list in full
-  // view behind it and read as a teleport.
-  poi: {tab: SCREEN.poi, screen: 'PoiCreatePerson'},
+  // The one tile that doesn't open a create screen. POI has three record types
+  // and the user picks which — so this lands on the POI list and asks the
+  // chooser to open over it, wherever the tile was tapped from.
+  poi: {tab: SCREEN.poi, screen: 'PoiList', params: {openChooser: true}},
   work_log: {tab: SCREEN.work, screen: 'WorkLogCreate'},
 };
 
@@ -111,6 +111,6 @@ export function navigateToTarget(
 ): void {
   navigation?.navigate(target.tab, {
     screen: target.screen,
-    params,
+    params: {...target.params, ...params},
   } as never);
 }

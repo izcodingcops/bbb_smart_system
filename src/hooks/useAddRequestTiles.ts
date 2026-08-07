@@ -15,12 +15,10 @@ import {
  * modal whose screen is swapped out from under it. So the tile is held until
  * the sheet reports its modal gone.
  *
- * @param origin Screen name of the caller, handed to the create route so
- *   closing it unsaved can return the user to the tab they started on.
- * @param onSameTab Overrides the jump when the tile targets the tab it was
- *   tapped on. Only POI uses this — see CREATE_TARGET_BY_TILE.
+ * @param origin Screen name of the caller, handed to the destination so
+ *   backing out unsaved can return the user to the tab they started on.
  */
-export const useAddRequestTiles = (origin: string, onSameTab?: () => void) => {
+export const useAddRequestTiles = (origin: string) => {
   // Every caller is a list screen inside its module's stack, so the parent is
   // the tab navigator — the only one that can cross to another module.
   const navigation = useNavigation().getParent<TabNavigation>();
@@ -42,19 +40,11 @@ export const useAddRequestTiles = (origin: string, onSameTab?: () => void) => {
       return;
     }
 
-    if (target.tab === origin) {
-      if (onSameTab) {
-        onSameTab();
-        return;
-      }
-      // Already here — there is nowhere to send them back to on an unsaved
-      // close, so the create route gets no origin.
-      navigateToTarget(navigation, target);
-      return;
-    }
-
-    navigateToTarget(navigation, target, {origin});
-  }, [navigation, onSameTab, origin, queuedTile]);
+    // Tapped on the tab that owns it — the user can see they never left, so
+    // there is nowhere to send them back to and the destination gets no origin.
+    const crossingTabs = target.tab !== origin;
+    navigateToTarget(navigation, target, crossingTabs ? {origin} : undefined);
+  }, [navigation, origin, queuedTile]);
 
   return {queueTile, flushTile};
 };
