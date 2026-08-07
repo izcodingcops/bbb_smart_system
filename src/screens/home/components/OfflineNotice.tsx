@@ -5,9 +5,11 @@ import {theme} from '../../../theme';
 
 interface Props {
   pendingCount: number;
+  /** Items that gave up syncing. Adds a warning line when above zero. */
+  failedCount?: number;
 }
 
-const OfflineNotice: React.FC<Props> = ({pendingCount}) => (
+const OfflineNotice: React.FC<Props> = ({pendingCount, failedCount = 0}) => (
   <View style={styles.card}>
     <View style={styles.icon}>
       <WifiOffIcon size={20} color={theme.colors.textSecondary} />
@@ -17,6 +19,11 @@ const OfflineNotice: React.FC<Props> = ({pendingCount}) => (
       <Text style={styles.body}>
         Work will sync automatically once you're online.
       </Text>
+      {failedCount > 0 && (
+        <Text style={styles.failed}>
+          {failedCount} {failedCount === 1 ? 'item' : 'items'} couldn't sync.
+        </Text>
+      )}
     </View>
     <View style={styles.pill}>
       <Text style={styles.pillText}>{pendingCount} Pending</Text>
@@ -67,6 +74,12 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.bold,
     fontSize: 12,
     color: theme.colors.textSecondary,
+  },
+  failed: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 12,
+    color: theme.colors.error,
+    marginTop: 2,
   },
   pill: {
     backgroundColor: '#F1F3F5',

@@ -20,7 +20,10 @@ import {endShift} from '../../redux/shift/slice';
 import {requestScreen, setTabBarHidden} from '../../redux/ui/slice';
 import {GetActiveProgram, GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
-import {GetOutboxItems} from '../../redux/outbox/selectors';
+import {
+  GetFailedOutboxItems,
+  GetOutboxItems,
+} from '../../redux/outbox/selectors';
 import {
   useGetQuickActionsQuery,
   useGetWorkItemsQuery,
@@ -41,6 +44,7 @@ const HomeScreen: React.FC = () => {
   const shiftTypes = GetShiftTypes();
   const shiftTypeId = GetActiveShiftTypeId();
   const outboxItems = GetOutboxItems();
+  const failedItems = GetFailedOutboxItems();
 
   const {
     data: workItems = [],
@@ -162,7 +166,12 @@ const HomeScreen: React.FC = () => {
 
           <ShiftTimerCard shiftName={shiftName} onEnd={handleEnd} />
 
-          {!isOnline ? <OfflineNotice pendingCount={outboxItems.length} /> : null}
+          {!isOnline ? (
+            <OfflineNotice
+              pendingCount={outboxItems.length}
+              failedCount={failedItems.length}
+            />
+          ) : null}
 
           <QuickActions actions={quickActions} isLoading={isQuickActionsLoading} />
 
