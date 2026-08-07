@@ -2,6 +2,7 @@ import {useCallback, useState} from 'react';
 import {Alert} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {
+  TAB_ROOT_ROUTE,
   TabNavigation,
   createTargetForTile,
   navigateToTarget,
@@ -40,10 +41,19 @@ export const useAddRequestTiles = (origin: string) => {
       return;
     }
 
-    // Tapped on the tab that owns it — the user can see they never left, so
-    // there is nowhere to send them back to and the destination gets no origin.
-    const crossingTabs = target.tab !== origin;
-    navigateToTarget(navigation, target, crossingTabs ? {origin} : undefined);
+    /*
+     * `origin` only makes sense when a full-screen form covers the tab switch:
+     * the user never sees the move, so closing it unsaved can quietly undo it.
+     *
+     * A target that lands on the module's own list — POI, whose three record
+     * types mean the tile has to ask which one — puts the user visibly on that
+     * tab instead. Sending them back from there would be the teleport, not the
+     * fix, so those targets get no origin and everything after the switch is
+     * that module's business.
+     */
+    const landsOnList = TAB_ROOT_ROUTE[target.tab] === target.screen;
+    const carriesOrigin = target.tab !== origin && !landsOnList;
+    navigateToTarget(navigation, target, carriesOrigin ? {origin} : undefined);
   }, [navigation, origin, queuedTile]);
 
   return {queueTile, flushTile};

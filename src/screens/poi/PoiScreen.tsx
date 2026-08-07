@@ -23,7 +23,7 @@ import {useGetPoisQuery} from '../../graphql/features/poi/hooks';
 import {Poi} from '../../types/poi';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
-import {SCREEN, TabNavigation} from '../../navigation/screens';
+import {SCREEN} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {
   EMPTY_FILTERS,
@@ -79,13 +79,6 @@ const PoiScreen: React.FC = () => {
    * useAddRequestTiles defers a tile.
    */
   const [chosenKind, setChosenKind] = useState<PoiCreateKind | null>(null);
-  /**
-   * Tab the Add Requests POI tile was tapped on, when it was another one. Held
-   * in state rather than left on the route params because it has to outlive
-   * them: the params are spent on arrival, but the value is still needed when
-   * the chooser closes, and again by whichever create it leads to.
-   */
-  const [returnTo, setReturnTo] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [toast, setToast] = useState<PoiToast | null>(null);
@@ -93,9 +86,6 @@ const PoiScreen: React.FC = () => {
   const route = useRoute<RouteProp<PoiStackParamList, 'PoiList'>>();
   const listRef = useRef<FlatList<Poi>>(null);
   const {queueTile, flushTile} = useAddRequestTiles(SCREEN.poi);
-  // Crossing back out to the tab the POI tile was tapped on, if it was another
-  // one — only the parent can leave this stack.
-  const tabNavigation = navigation.getParent<TabNavigation>();
 
   // The creates and detail hand a toast back on the way out — show it once,
   // then clear the param so returning here later doesn't replay it.
@@ -106,16 +96,14 @@ const PoiScreen: React.FC = () => {
     navigation.setParams({toast: undefined});
   }, [incomingToast, navigation]);
 
-  // The Add Requests POI tile, from this tab or any other. Both params are
-  // spent on arrival; `origin` is parked in state so it survives into whichever
-  // create the chooser leads to.
-  const {openChooser, origin: chooserOrigin} = route.params ?? {};
+  // The Add Requests POI tile, from this tab or any other. Spent on arrival so
+  // coming back here later doesn't reopen the chooser.
+  const openChooser = route.params?.openChooser;
   useEffect(() => {
     if (!openChooser) return;
     setChooserOpen(true);
-    setReturnTo(chooserOrigin ?? null);
-    navigation.setParams({openChooser: undefined, origin: undefined});
-  }, [openChooser, chooserOrigin, navigation]);
+    navigation.setParams({openChooser: undefined});
+  }, [openChooser, navigation]);
 
   const handleOpenPoi = useCallback(
     (record: Poi) => {
@@ -302,24 +290,18 @@ const PoiScreen: React.FC = () => {
           setChooserOpen(false);
           setChosenKind(kind);
         }}
+        // Dismissing leaves the user on the POI list — whichever tab the tile
+        // was tapped on, they can see they are here now, so there is nowhere
+        // to send them back to.
         onClose={() => setChooserOpen(false)}
         onClosed={() => {
-          if (chosenKind) {
-            // `origin` travels on so an unsaved close from the create returns
-            // to the tab the tile was tapped on, same as every other module.
-            const params = returnTo ? {origin: returnTo} : undefined;
-            if (chosenKind === 'person') {
-              navigation.navigate('PoiCreatePerson', params);
-            } else {
-              navigation.navigate(SUB_RECORD_ROUTE[chosenKind], params);
-            }
-            setChosenKind(null);
-          } else if (returnTo) {
-            // Dismissed without picking, and the tile was tapped on another
-            // tab — the trip here never really happened.
-            tabNavigation?.navigate(returnTo as never);
+          if (!chosenKind) return;
+          if (chosenKind === 'person') {
+            navigation.navigate('PoiCreatePerson');
+          } else {
+            navigation.navigate(SUB_RECORD_ROUTE[chosenKind]);
           }
-          setReturnTo(null);
+          setChosenKind(null);
         }}
       />
 

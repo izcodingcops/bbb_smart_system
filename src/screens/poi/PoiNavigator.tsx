@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   createNativeStackNavigator,
-  NativeStackNavigationProp,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
 import {PoiStackParamList, PoiToast} from './routes';
@@ -28,19 +27,6 @@ type CreateUpdateProps = NativeStackScreenProps<
 >;
 type ViewProps = NativeStackScreenProps<PoiStackParamList, 'PoiView'>;
 
-type AnyNavigation = NativeStackNavigationProp<PoiStackParamList>;
-
-/**
- * Closing a create unsaved means the trip here never really happened — go back
- * to the tab that asked for it, if it came from one.
- */
-function closeCreate(navigation: AnyNavigation, origin?: string): void {
-  navigation.popTo('PoiList');
-  if (origin) {
-    navigation.getParent()?.navigate(origin as never);
-  }
-}
-
 /**
  * Shared by all three creates — only the noun and the View target differ.
  * Submitting keeps the user here: the toast's View action opens a record that
@@ -62,14 +48,10 @@ function createdToast(
     : {title, message, routeId: created.id};
 }
 
-const CreatePersonRoute: React.FC<CreatePersonProps> = ({
-  navigation,
-  route,
-}) => {
-  const origin = route.params?.origin;
+const CreatePersonRoute: React.FC<CreatePersonProps> = ({navigation}) => {
   return (
     <CreatePoiScreen
-      onClose={() => closeCreate(navigation, origin)}
+      onClose={() => navigation.popTo('PoiList')}
       onCreated={created =>
         navigation.popTo('PoiList', {
           toast: createdToast(
@@ -88,12 +70,12 @@ const CreateInteractionRoute: React.FC<CreateInteractionProps> = ({
   navigation,
   route,
 }) => {
-  const {origin, personId, personName} = route.params ?? {};
+  const {personId, personName} = route.params ?? {};
   return (
     <CreateInteractionScreen
       personId={personId}
       personName={personName}
-      onClose={() => closeCreate(navigation, origin)}
+      onClose={() => navigation.popTo('PoiList')}
       // `created.id` is the person's — an interaction has no screen of its
       // own, so View opens the person it was logged against.
       onCreated={created =>
@@ -116,12 +98,12 @@ const CreateUpdateRoute: React.FC<CreateUpdateProps> = ({
   navigation,
   route,
 }) => {
-  const {origin, personId, personName} = route.params ?? {};
+  const {personId, personName} = route.params ?? {};
   return (
     <CreateUpdateScreen
       personId={personId}
       personName={personName}
-      onClose={() => closeCreate(navigation, origin)}
+      onClose={() => navigation.popTo('PoiList')}
       onCreated={created =>
         navigation.popTo('PoiList', {
           toast: createdToast(
