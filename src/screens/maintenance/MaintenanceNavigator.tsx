@@ -7,7 +7,6 @@ import {MaintenanceStackParamList} from './routes';
 import MaintenanceScreen from './MaintenanceScreen';
 import CreateMaintenanceScreen from './CreateMaintenanceScreen';
 import ViewMaintenanceScreen from './ViewMaintenanceScreen';
-import {useHideTabBar} from '../../hooks/useHideTabBar';
 import {theme} from '../../theme';
 
 const Stack = createNativeStackNavigator<MaintenanceStackParamList>();
@@ -28,7 +27,6 @@ type ViewProps = NativeStackScreenProps<
  */
 const CreateRoute: React.FC<CreateProps> = ({navigation, route}) => {
   const origin = route.params?.origin;
-  useHideTabBar();
   return (
     <CreateMaintenanceScreen
       onClose={() => {
@@ -64,7 +62,6 @@ const CreateRoute: React.FC<CreateProps> = ({navigation, route}) => {
 };
 
 const ViewRoute: React.FC<ViewProps> = ({navigation, route}) => {
-  useHideTabBar();
   return (
     <ViewMaintenanceScreen
       id={route.params.id}

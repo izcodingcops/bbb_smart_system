@@ -10,7 +10,6 @@ import ViewWorkLogScreen from '../workLog/ViewWorkLogScreen';
 import ViewMaintenanceScreen from '../maintenance/ViewMaintenanceScreen';
 import ViewFixtureScreen from '../fixture/ViewFixtureScreen';
 import {workLogCopy} from '../workLog/shiftText';
-import {useHideTabBar} from '../../hooks/useHideTabBar';
 import {theme} from '../../theme';
 
 const Stack = createNativeStackNavigator<WorkStackParamList>();
@@ -33,7 +32,6 @@ type FixtureViewProps = NativeStackScreenProps<
  */
 const CreateRoute: React.FC<CreateProps> = ({navigation, route}) => {
   const origin = route.params?.origin;
-  useHideTabBar();
   return (
     <CreateWorkLogScreen
       onClose={() => {
@@ -64,7 +62,6 @@ const CreateRoute: React.FC<CreateProps> = ({navigation, route}) => {
 };
 
 const LogViewRoute: React.FC<LogViewProps> = ({navigation, route}) => {
-  useHideTabBar();
   return (
     <ViewWorkLogScreen
       id={route.params.id}
@@ -88,7 +85,6 @@ const MaintenanceViewRoute: React.FC<MaintenanceViewProps> = ({
   navigation,
   route,
 }) => {
-  useHideTabBar();
   return (
     <ViewMaintenanceScreen
       id={route.params.id}
@@ -108,7 +104,6 @@ const MaintenanceViewRoute: React.FC<MaintenanceViewProps> = ({
 };
 
 const FixtureViewRoute: React.FC<FixtureViewProps> = ({navigation, route}) => {
-  useHideTabBar();
   return (
     <ViewFixtureScreen
       id={route.params.id}

@@ -8,7 +8,6 @@ import DispatchScreen from './DispatchScreen';
 import ViewDispatchScreen from './ViewDispatchScreen';
 import CreateIncidentScreen from '../incident/CreateIncidentScreen';
 import ViewIncidentScreen from '../incident/ViewIncidentScreen';
-import {useHideTabBar} from '../../hooks/useHideTabBar';
 import {theme} from '../../theme';
 
 const Stack = createNativeStackNavigator<DispatchStackParamList>();
@@ -34,7 +33,6 @@ type ViewIncidentProps = NativeStackScreenProps<
  */
 const AddIncidentRoute: React.FC<AddIncidentProps> = ({navigation, route}) => {
   const {dispatchId} = route.params;
-  useHideTabBar();
   return (
     <CreateIncidentScreen
       dispatchReference={dispatchId}
@@ -55,7 +53,6 @@ const AddIncidentRoute: React.FC<AddIncidentProps> = ({navigation, route}) => {
 
 const ViewIncidentRoute: React.FC<ViewIncidentProps> = ({navigation, route}) => {
   const {id: incidentId, dispatchId} = route.params;
-  useHideTabBar();
   return (
     <ViewIncidentScreen
       id={incidentId}

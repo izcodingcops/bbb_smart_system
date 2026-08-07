@@ -15,7 +15,7 @@ import {useRoute} from '@react-navigation/native';
 import ScreenBackground from '../components/ScreenBackground';
 import ErrorBoundary from '../components/ErrorBoundary';
 import {useGetMenuItemsQuery} from '../graphql/features/navigation/hooks';
-import {useAppDispatch, useAppSelector} from '../redux/store';
+import {useAppDispatch} from '../redux/store';
 import {SetupIntent, setSetupIntent} from '../redux/ui/slice';
 import {SCREEN} from './screens';
 import {endShift} from '../redux/shift/slice';
@@ -141,14 +141,28 @@ interface TabBarProps extends BottomTabBarProps {
 const AppTabBar: React.FC<TabBarProps> = ({state, navigation, menuItems}) => {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
-  const tabBarHidden = useAppSelector(s => s.ui.tabBarHidden);
   const program = GetActiveProgram();
   const [moreOpen, setMoreOpen] = useState(false);
   const [queuedIntent, setQueuedIntent] = useState<SetupIntent | null>(null);
   const [pendingIntent, setPendingIntent] = useState<SetupIntent | null>(null);
 
-  const activeScreen = state.routes[state.index]?.name ?? '';
+  const activeRoute = state.routes[state.index];
+  const activeScreen = activeRoute?.name ?? '';
   const registered = new Set(state.routes.map(route => route.name));
+
+  /**
+   * Hidden whenever the focused tab has pushed past its first route — every
+   * module stack keeps its list at index 0, so anything above that is a
+   * full-screen create or detail with no place for the bar.
+   *
+   * Read from navigator state rather than a redux flag written by each
+   * screen's focus effect. Those effects raced across navigators: jumping from
+   * a notification to another tab's detail fired the incoming screen's "hide"
+   * before the outgoing screen's "show" cleanup, so the bar came back over a
+   * detail screen. State can only describe one truth at a time.
+   */
+  const nestedIndex = activeRoute?.state?.index ?? 0;
+  const onPushedRoute = nestedIndex > 0;
 
   const handleMoreSelect = (screen: string) => {
     setMoreOpen(false);
@@ -185,7 +199,7 @@ const AppTabBar: React.FC<TabBarProps> = ({state, navigation, menuItems}) => {
   const isMoreActive =
     moreOpen || moreItems.some(item => item.screen_name === activeScreen);
 
-  if (tabBarHidden) {
+  if (onPushedRoute) {
     return null;
   }
 

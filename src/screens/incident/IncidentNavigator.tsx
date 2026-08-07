@@ -7,7 +7,6 @@ import {IncidentStackParamList} from './routes';
 import IncidentScreen from './IncidentScreen';
 import CreateIncidentScreen from './CreateIncidentScreen';
 import ViewIncidentScreen from './ViewIncidentScreen';
-import {useHideTabBar} from '../../hooks/useHideTabBar';
 import {theme} from '../../theme';
 
 const Stack = createNativeStackNavigator<IncidentStackParamList>();
@@ -29,7 +28,6 @@ type ViewProps = NativeStackScreenProps<IncidentStackParamList, 'IncidentView'>;
  */
 const CreateRoute: React.FC<CreateProps> = ({navigation, route}) => {
   const origin = route.params?.origin;
-  useHideTabBar();
   return (
     <CreateIncidentScreen
       onClose={() => {
@@ -63,7 +61,6 @@ const CreateRoute: React.FC<CreateProps> = ({navigation, route}) => {
 };
 
 const ViewRoute: React.FC<ViewProps> = ({navigation, route}) => {
-  useHideTabBar();
   return (
     <ViewIncidentScreen
       id={route.params.id}

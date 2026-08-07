@@ -9,7 +9,6 @@ import DownloadMapScreen from './DownloadMapScreen';
 import {GetDownloadedMaps} from '../../redux/maps/selectors';
 import {mapDownloaded} from '../../redux/maps/slice';
 import {useAppDispatch} from '../../redux/store';
-import {useHideTabBar} from '../../hooks/useHideTabBar';
 import {theme} from '../../theme';
 
 const Stack = createNativeStackNavigator<MapsStackParamList>();
@@ -27,7 +26,6 @@ type DownloadProps = NativeStackScreenProps<
 const DownloadRoute: React.FC<DownloadProps> = ({navigation, route}) => {
   const items = GetDownloadedMaps();
   const dispatch = useAppDispatch();
-  useHideTabBar();
   return (
     <DownloadMapScreen
       initialCoordinate={route.params?.initialCoordinate ?? null}

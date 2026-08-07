@@ -60,6 +60,11 @@ const NotificationsScreen: React.FC<Props> = ({onClose}) => {
    * mark read, then jump straight to the detail route in the owning module's
    * stack. A notification with nothing to open — System, and Equipment until
    * that module exists — stops at the mark.
+   *
+   * This screen closes itself on the way out. The Home tab is a stack now and
+   * keeps whatever is on it, so leaving Notifications up would mean the next
+   * tap on Home lands back here rather than on Home — the notification has
+   * already been acted on, so it has no reason to still be there.
    */
   const handlePress = useCallback(
     (notification: AppNotification) => {
@@ -68,11 +73,12 @@ const NotificationsScreen: React.FC<Props> = ({onClose}) => {
       }
       const related = notification.related;
       if (!related) return;
+      onClose();
       navigateToTarget(tabNavigation, TARGET_BY_RECORD_TYPE[related.recordType], {
         id: related.recordId,
       });
     },
-    [markRead, tabNavigation],
+    [markRead, onClose, tabNavigation],
   );
 
   const renderItem = useCallback(

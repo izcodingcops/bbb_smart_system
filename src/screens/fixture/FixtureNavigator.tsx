@@ -7,7 +7,6 @@ import {FixtureStackParamList} from './routes';
 import FixtureScreen from './FixtureScreen';
 import CreateFixtureScreen from './CreateFixtureScreen';
 import ViewFixtureScreen from './ViewFixtureScreen';
-import {useHideTabBar} from '../../hooks/useHideTabBar';
 import {theme} from '../../theme';
 
 const Stack = createNativeStackNavigator<FixtureStackParamList>();
@@ -22,7 +21,6 @@ type ViewProps = NativeStackScreenProps<FixtureStackParamList, 'FixtureView'>;
  */
 const CreateRoute: React.FC<CreateProps> = ({navigation, route}) => {
   const origin = route.params?.origin;
-  useHideTabBar();
   return (
     <CreateFixtureScreen
       onClose={() => {
@@ -58,7 +56,6 @@ const CreateRoute: React.FC<CreateProps> = ({navigation, route}) => {
 };
 
 const ViewRoute: React.FC<ViewProps> = ({navigation, route}) => {
-  useHideTabBar();
   return (
     <ViewFixtureScreen
       id={route.params.id}

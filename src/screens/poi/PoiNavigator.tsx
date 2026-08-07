@@ -10,7 +10,6 @@ import CreatePoiScreen from './CreatePoiScreen';
 import CreateInteractionScreen from './CreateInteractionScreen';
 import CreateUpdateScreen from './CreateUpdateScreen';
 import ViewPoiScreen from './ViewPoiScreen';
-import {useHideTabBar} from '../../hooks/useHideTabBar';
 import {theme} from '../../theme';
 
 const Stack = createNativeStackNavigator<PoiStackParamList>();
@@ -68,7 +67,6 @@ const CreatePersonRoute: React.FC<CreatePersonProps> = ({
   route,
 }) => {
   const origin = route.params?.origin;
-  useHideTabBar();
   return (
     <CreatePoiScreen
       onClose={() => closeCreate(navigation, origin)}
@@ -91,7 +89,6 @@ const CreateInteractionRoute: React.FC<CreateInteractionProps> = ({
   route,
 }) => {
   const {origin, personId, personName} = route.params ?? {};
-  useHideTabBar();
   return (
     <CreateInteractionScreen
       personId={personId}
@@ -120,7 +117,6 @@ const CreateUpdateRoute: React.FC<CreateUpdateProps> = ({
   route,
 }) => {
   const {origin, personId, personName} = route.params ?? {};
-  useHideTabBar();
   return (
     <CreateUpdateScreen
       personId={personId}
@@ -143,7 +139,6 @@ const CreateUpdateRoute: React.FC<CreateUpdateProps> = ({
 };
 
 const ViewRoute: React.FC<ViewProps> = ({navigation, route}) => {
-  useHideTabBar();
   return (
     <ViewPoiScreen
       id={route.params.id}

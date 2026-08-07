@@ -6,12 +6,10 @@ import {startShift} from '../shift/slice';
 export type SetupIntent = 'program' | 'shift_type';
 
 export interface UiState {
-  tabBarHidden: boolean;
   setupIntent: SetupIntent | null;
 }
 
 const initialState: UiState = {
-  tabBarHidden: false,
   setupIntent: null,
 };
 
@@ -19,9 +17,6 @@ const uiSlice = createSlice({
   name: 'ui',
   initialState,
   reducers: {
-    setTabBarHidden(state, action: PayloadAction<boolean>) {
-      state.tabBarHidden = action.payload;
-    },
     setSetupIntent(state, action: PayloadAction<SetupIntent | null>) {
       state.setupIntent = action.payload;
     },
@@ -36,5 +31,5 @@ const uiSlice = createSlice({
   },
 });
 
-export const {setTabBarHidden, setSetupIntent} = uiSlice.actions;
+export const {setSetupIntent} = uiSlice.actions;
 export default uiSlice.reducer;

@@ -6,7 +6,6 @@ import {
 import {HomeStackParamList} from './routes';
 import HomeScreen from './HomeScreen';
 import NotificationsScreen from '../notifications/NotificationsScreen';
-import {useHideTabBar} from '../../hooks/useHideTabBar';
 import {theme} from '../../theme';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -21,7 +20,6 @@ type NotificationsProps = NativeStackScreenProps<
  * translates navigation into it rather than rewriting a working screen.
  */
 const NotificationsRoute: React.FC<NotificationsProps> = ({navigation}) => {
-  useHideTabBar();
   return <NotificationsScreen onClose={() => navigation.popTo('HomeMain')} />;
 };
 

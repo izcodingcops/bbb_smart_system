@@ -20,7 +20,6 @@ import {PlusIcon, SendIcon} from '../../components/icons';
 import {useGetDispatchQuery} from '../../graphql/features/dispatch/hooks';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {DispatchStackParamList} from './routes';
-import {useHideTabBar} from '../../hooks/useHideTabBar';
 import DispatchTabs, {DispatchTab, DispatchTabKey} from './components/DispatchTabs';
 import EscalationAccordion from './components/EscalationAccordion';
 import IncidentAccordion from './components/IncidentAccordion';
@@ -48,7 +47,6 @@ const ViewDispatchScreen: React.FC<Props> = ({navigation, route: navRoute}) => {
     () => navigation.popTo('DispatchList'),
     [navigation],
   );
-  useHideTabBar();
   // Every hook runs before the early returns below — the loading, error and
   // loaded branches must not change hook order between renders.
   const {data: detail, isLoading, isError, refetch} = useGetDispatchQuery(id);
