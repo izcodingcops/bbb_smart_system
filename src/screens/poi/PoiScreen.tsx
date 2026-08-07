@@ -120,14 +120,26 @@ const PoiScreen: React.FC = () => {
   const pendingCreate = useAppSelector(state => state.ui.pendingCreate);
   const {queueTile, flushTile} = useAddRequestTiles(SCREEN.poi);
 
-  // Someone asked for a POI create from another tab — the navigator has since
-  // brought this screen on, so open the chooser and spend the request, holding
-  // on to where they came from for an unsaved close. POI is the one tile whose
-  // target is a three-way choice rather than a single form.
+  // Someone asked for a POI create — the navigator has since brought this
+  // screen on, so act on the request and spend it.
+  //
+  // Where they asked from decides what opens. From another tab, the tile
+  // behaves like every other Create New tile: a full-screen Create Person
+  // covers the tab switch, so the switch is never seen and closing it returns
+  // them where they started. The three-way chooser is a bottom sheet, so it
+  // would instead leave the POI list sitting in full view behind it — the user
+  // asked to create something and would appear to have been teleported into a
+  // module. So the chooser is offered only when they were already on POI, where
+  // a sheet over the list is exactly what it looks like.
   useEffect(() => {
     if (pendingCreate?.target !== SCREEN.poi) return;
-    setReturnTo(pendingCreate.origin === SCREEN.poi ? null : pendingCreate.origin);
-    setChooserOpen(true);
+    const alreadyHere = pendingCreate.origin === SCREEN.poi;
+    setReturnTo(alreadyHere ? null : pendingCreate.origin);
+    if (alreadyHere) {
+      setChooserOpen(true);
+    } else {
+      setRoute({name: 'createPerson'});
+    }
     dispatch(clearPendingCreate());
   }, [dispatch, pendingCreate]);
 
@@ -435,14 +447,10 @@ const PoiScreen: React.FC = () => {
           setChooserOpen(false);
           setChosenKind(kind);
         }}
-        onClose={() => {
-          setChooserOpen(false);
-          // Dismissed without choosing — the trip here never happened.
-          if (returnTo) {
-            dispatch(requestScreen(returnTo));
-            setReturnTo(null);
-          }
-        }}
+        // The chooser only ever opens from this tab's own Add Requests sheet,
+        // so dismissing it leaves the user on the POI list they were already
+        // looking at — there is nowhere to send them back to.
+        onClose={() => setChooserOpen(false)}
         onClosed={() => {
           if (!chosenKind) return;
           setRoute(
