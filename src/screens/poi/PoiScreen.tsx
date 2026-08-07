@@ -1,6 +1,8 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {View, Text, FlatList, ScrollView, StyleSheet, Alert} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import {
   BackToTopPill,
@@ -18,15 +20,13 @@ import {
 } from '../../components/ui';
 import {UserPlusIcon} from '../../components/icons';
 import {useGetPoisQuery} from '../../graphql/features/poi/hooks';
-import {Poi, PoiDetail} from '../../types/poi';
+import {Poi} from '../../types/poi';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import {useAppDispatch, useAppSelector} from '../../redux/store';
 import {
   clearPendingCreate,
   clearPendingRecord,
-  requestScreen,
-  setTabBarHidden,
 } from '../../redux/ui/slice';
 import {SCREEN} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
@@ -48,46 +48,20 @@ import {
 } from './filtering';
 import PoiCard from './components/PoiCard';
 import PoiChoiceSheet, {PoiCreateKind} from './components/PoiChoiceSheet';
-import CreatePoiScreen from './CreatePoiScreen';
-import CreateInteractionScreen from './CreateInteractionScreen';
-import CreateUpdateScreen from './CreateUpdateScreen';
-import ViewPoiScreen from './ViewPoiScreen';
 import {usePendingPoiItems} from './pendingPoiItems';
+import {PoiStackParamList, PoiToast} from './routes';
 import {theme} from '../../theme';
 
-/** Create and View are full-screen pushes within the POI tab. */
-type PoiRoute =
-  | {name: 'list'}
-  | {name: 'createPerson'}
-  | {name: 'createInteraction'; personId?: string; personName?: string}
-  | {name: 'createUpdate'; personId?: string; personName?: string}
-  | {name: 'view'; id: string};
-
-interface ToastState {
-  title: string;
-  message: string;
-  /** Record id used by the toast's View action. Empty when there is nowhere to go. */
-  routeId: string;
-  variant?: 'success' | 'danger';
-}
+type ListNavigation = NativeStackNavigationProp<PoiStackParamList, 'PoiList'>;
 
 /** Which card button was tapped, and for whom — the design confirms first. */
 type PendingAction = {kind: 'interaction' | 'update'; poi: Poi};
 
-/**
- * Both sub-record routes are reached from a `kind` that isn't a literal, and a
- * computed discriminant widens the object past the route union. Branching here
- * keeps `name` literal at both call sites.
- */
-function subRecordRoute(
-  kind: 'interaction' | 'update',
-  personId: string,
-  personName: string,
-): PoiRoute {
-  return kind === 'interaction'
-    ? {name: 'createInteraction', personId, personName}
-    : {name: 'createUpdate', personId, personName};
-}
+/** Route name for each sub-record kind, keeping the literal types intact. */
+const SUB_RECORD_ROUTE = {
+  interaction: 'PoiCreateInteraction',
+  update: 'PoiCreateUpdate',
+} as const;
 
 const PoiScreen: React.FC = () => {
   const {data: queryPois = [], isLoading, isError, refetch} = useGetPoisQuery();
@@ -110,12 +84,11 @@ const PoiScreen: React.FC = () => {
    * useAddRequestTiles defers a tile.
    */
   const [chosenKind, setChosenKind] = useState<PoiCreateKind | null>(null);
-  /** Tab to go back to when create was opened from elsewhere and then closed. */
-  const [returnTo, setReturnTo] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [route, setRoute] = useState<PoiRoute>({name: 'list'});
-  const [toast, setToast] = useState<ToastState | null>(null);
+  const [toast, setToast] = useState<PoiToast | null>(null);
+  const navigation = useNavigation<ListNavigation>();
+  const route = useRoute<RouteProp<PoiStackParamList, 'PoiList'>>();
   const dispatch = useAppDispatch();
   const listRef = useRef<FlatList<Poi>>(null);
   const pendingCreate = useAppSelector(state => state.ui.pendingCreate);
@@ -136,42 +109,44 @@ const PoiScreen: React.FC = () => {
   useEffect(() => {
     if (pendingCreate?.target !== SCREEN.poi) return;
     const alreadyHere = pendingCreate.origin === SCREEN.poi;
-    setReturnTo(alreadyHere ? null : pendingCreate.origin);
     if (alreadyHere) {
       setChooserOpen(true);
     } else {
-      setRoute({name: 'createPerson'});
+      navigation.navigate('PoiCreatePerson', {origin: pendingCreate.origin});
     }
     dispatch(clearPendingCreate());
-  }, [dispatch, pendingCreate]);
+  }, [dispatch, navigation, pendingCreate]);
 
-  // A notification asked for one of this module's records — the navigator has
-  // since brought this screen on, so open it and spend the request.
+  // A notification asked for one of this module's records — the tab navigator
+  // has since brought this stack on, so push it and spend the request.
   useEffect(() => {
     if (pendingRecord?.target !== SCREEN.poi) return;
-    setRoute({name: 'view', id: pendingRecord.recordId});
+    navigation.navigate('PoiView', {id: pendingRecord.recordId});
     dispatch(clearPendingRecord());
-  }, [dispatch, pendingRecord]);
+  }, [dispatch, navigation, pendingRecord]);
 
-  // Create and View are full-screen pushes — the tab bar has no place there.
-  // The chooser is a sheet over the list, so it keeps the bar.
+  // The creates and detail hand a toast back on the way out — show it once,
+  // then clear the param so returning here later doesn't replay it.
+  const incomingToast = route.params?.toast;
   useEffect(() => {
-    dispatch(setTabBarHidden(route.name !== 'list'));
-    return () => {
-      dispatch(setTabBarHidden(false));
-    };
-  }, [dispatch, route.name]);
+    if (!incomingToast) return;
+    setToast(incomingToast);
+    navigation.setParams({toast: undefined});
+  }, [incomingToast, navigation]);
 
-  const handleOpenPoi = useCallback((record: Poi) => {
-    if (record.queuedOffline) {
-      Alert.alert(
-        'Still uploading',
-        "This person hasn't finished uploading yet — they'll be available to view once you're back online.",
-      );
-      return;
-    }
-    setRoute({name: 'view', id: record.id});
-  }, []);
+  const handleOpenPoi = useCallback(
+    (record: Poi) => {
+      if (record.queuedOffline) {
+        Alert.alert(
+          'Still uploading',
+          "This person hasn't finished uploading yet — they'll be available to view once you're back online.",
+        );
+        return;
+      }
+      navigation.navigate('PoiView', {id: record.id});
+    },
+    [navigation],
+  );
 
   const handleAddInteraction = useCallback((record: Poi) => {
     setPendingAction({kind: 'interaction', poi: record});
@@ -208,119 +183,6 @@ const PoiScreen: React.FC = () => {
     setSearch('');
     setFilters(EMPTY_FILTERS);
   };
-
-  /** Closing a create unsaved means the trip here never really happened. */
-  const closeCreate = () => {
-    setRoute({name: 'list'});
-    if (returnTo) {
-      dispatch(requestScreen(returnTo));
-      setReturnTo(null);
-    }
-  };
-
-  /** Shared by all three creates — only the noun and the View target differ. */
-  const reportCreated = (
-    created: {id: string; reference: string; queued: boolean},
-    noun: 'person' | 'interaction' | 'update',
-    title: string,
-    message: string,
-  ) => {
-    setRoute({name: 'list'});
-    // Submitting keeps them here: the toast's View action opens a record that
-    // only exists on this tab.
-    setReturnTo(null);
-    setToast(
-      created.queued
-        ? {
-            title: 'Saved — will upload when back online',
-            message: `This ${noun} is queued and will upload automatically once you're back online.`,
-            routeId: '',
-            variant: 'danger',
-          }
-        : {title, message, routeId: created.id},
-    );
-  };
-
-  if (route.name === 'createPerson') {
-    return (
-      <CreatePoiScreen
-        onClose={closeCreate}
-        onCreated={created =>
-          reportCreated(
-            created,
-            'person',
-            'Person submitted',
-            `${created.reference} was added to your Work Log.`,
-          )
-        }
-      />
-    );
-  }
-
-  if (route.name === 'createInteraction') {
-    return (
-      <CreateInteractionScreen
-        personId={route.personId}
-        personName={route.personName}
-        onClose={closeCreate}
-        // `created.id` is the person's — an interaction has no screen of its
-        // own, so View opens the person it was logged against.
-        onCreated={created =>
-          reportCreated(
-            created,
-            'interaction',
-            'Interaction added',
-            route.personName
-              ? `${created.reference} was logged for ${route.personName}.`
-              : `${created.reference} was logged.`,
-          )
-        }
-      />
-    );
-  }
-
-  if (route.name === 'createUpdate') {
-    return (
-      <CreateUpdateScreen
-        personId={route.personId}
-        personName={route.personName}
-        onClose={closeCreate}
-        onCreated={created =>
-          reportCreated(
-            created,
-            'update',
-            'Update added',
-            route.personName
-              ? `${created.reference} was logged for ${route.personName}.`
-              : `${created.reference} was logged.`,
-          )
-        }
-      />
-    );
-  }
-
-  if (route.name === 'view') {
-    const openFor = (kind: 'interaction' | 'update') => (person: PoiDetail) =>
-      setRoute(subRecordRoute(kind, person.id, person.name));
-
-    return (
-      <ViewPoiScreen
-        id={route.id}
-        onClose={() => setRoute({name: 'list'})}
-        onDeleted={reference => {
-          setRoute({name: 'list'});
-          setToast({
-            title: 'Person deleted',
-            message: `${reference} was removed from the POI list.`,
-            routeId: '',
-            variant: 'danger',
-          });
-        }}
-        onAddInteraction={openFor('interaction')}
-        onAddUpdate={openFor('update')}
-      />
-    );
-  }
 
   return (
     <View style={styles.root}>
@@ -463,13 +325,11 @@ const PoiScreen: React.FC = () => {
         onClose={() => setChooserOpen(false)}
         onClosed={() => {
           if (!chosenKind) return;
-          setRoute(
-            chosenKind === 'person'
-              ? {name: 'createPerson'}
-              : chosenKind === 'interaction'
-                ? {name: 'createInteraction'}
-                : {name: 'createUpdate'},
-          );
+          if (chosenKind === 'person') {
+            navigation.navigate('PoiCreatePerson');
+          } else {
+            navigation.navigate(SUB_RECORD_ROUTE[chosenKind]);
+          }
           setChosenKind(null);
         }}
       />
@@ -503,13 +363,10 @@ const PoiScreen: React.FC = () => {
         confirmTone="primary"
         onConfirm={() => {
           if (pendingAction) {
-            setRoute(
-              subRecordRoute(
-                pendingAction.kind,
-                pendingAction.poi.id,
-                pendingAction.poi.name,
-              ),
-            );
+            navigation.navigate(SUB_RECORD_ROUTE[pendingAction.kind], {
+              personId: pendingAction.poi.id,
+              personName: pendingAction.poi.name,
+            });
           }
           setPendingAction(null);
         }}
@@ -527,7 +384,7 @@ const PoiScreen: React.FC = () => {
             ? undefined
             : () => {
                 if (toast) {
-                  setRoute({name: 'view', id: toast.routeId});
+                  navigation.navigate('PoiView', {id: toast.routeId});
                 }
                 setToast(null);
               }

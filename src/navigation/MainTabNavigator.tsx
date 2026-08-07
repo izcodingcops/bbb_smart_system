@@ -47,7 +47,7 @@ import FixtureNavigator from '../screens/fixture/FixtureNavigator';
 import IncidentNavigator from '../screens/incident/IncidentNavigator';
 import DispatchNavigator from '../screens/dispatch/DispatchNavigator';
 import MapsNavigator from '../screens/maps/MapsNavigator';
-import PoiScreen from '../screens/poi/PoiScreen';
+import PoiNavigator from '../screens/poi/PoiNavigator';
 
 const {LATO} = fontFamilies;
 
@@ -61,7 +61,7 @@ const SCREEN_MAP: Record<string, React.ComponentType<any>> = {
   [SCREEN.incident]: IncidentNavigator,
   [SCREEN.dispatch]: DispatchNavigator,
   [SCREEN.maps]: MapsNavigator,
-  [SCREEN.poi]: PoiScreen,
+  [SCREEN.poi]: PoiNavigator,
 };
 
 /**
