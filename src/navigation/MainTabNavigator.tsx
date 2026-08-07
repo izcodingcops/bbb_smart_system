@@ -7,7 +7,13 @@ import {
   View,
 } from 'react-native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import {
+  BottomTabBarProps,
+  createBottomTabNavigator,
+} from '@react-navigation/bottom-tabs';
+import {useRoute} from '@react-navigation/native';
 import ScreenBackground from '../components/ScreenBackground';
+import ErrorBoundary from '../components/ErrorBoundary';
 import {useGetMenuItemsQuery} from '../graphql/features/navigation/hooks';
 import {useAppDispatch, useAppSelector} from '../redux/store';
 import {
@@ -21,6 +27,7 @@ import {SCREEN} from './screens';
 import {endShift} from '../redux/shift/slice';
 import {GetActiveProgram} from '../redux/auth/selectors';
 import {fontFamilies} from '../constants/fonts';
+import {MenuItem} from '../types/navigation';
 import {theme} from '../theme';
 import HomeScreen from '../screens/home/HomeScreen';
 import MoreSheet from '../components/MoreSheet';
@@ -44,6 +51,8 @@ import PoiScreen from '../screens/poi/PoiScreen';
 
 const {LATO} = fontFamilies;
 
+const Tab = createBottomTabNavigator();
+
 const SCREEN_MAP: Record<string, React.ComponentType<any>> = {
   [SCREEN.home]: HomeScreen,
   [SCREEN.work]: WorkScreen,
@@ -57,7 +66,8 @@ const SCREEN_MAP: Record<string, React.ComponentType<any>> = {
 
 /**
  * More rows that can't just navigate: changing either of these means ending
- * the running shift, which drops the app back into the setup flow.
+ * the running shift, which drops the app back into the setup flow. They are
+ * menu entries without screens, so they are never registered as tab routes.
  */
 const SETUP_INTENTS: Record<string, SetupIntent> = {
   ChangeProgram: 'program',
@@ -80,17 +90,70 @@ const ICON_MAP: Record<string, IconComponent> = {
   incident: AlertTriangleIcon,
 };
 
-const MainTabNavigator: React.FC = () => {
-  const {data: menuItems = [], isLoading} = useGetMenuItemsQuery();
+/**
+ * Placeholder for a menu entry this build has no screen for. Reads its own
+ * route name rather than taking a prop, so it can be registered with
+ * `component=` like every other tab instead of an inline render callback that
+ * would remount on each parent render.
+ */
+const ComingSoonTab: React.FC = () => {
+  const route = useRoute();
+  const {data: menuItems = []} = useGetMenuItemsQuery();
+  const label =
+    menuItems.find(item => item.screen_name === route.name)?.menu_name ??
+    'Coming soon';
+  return <ComingSoonScreen title={label} />;
+};
+
+interface TabBarProps extends BottomTabBarProps {
+  menuItems: MenuItem[];
+}
+
+/**
+ * The tab bar from the Ambassador mockups — pill-shaped top, layered
+ * background, upward shadow — driven by the navigator's own state rather than
+ * by a `useState` screen name.
+ *
+ * It also owns the More sheet and the end-shift confirmation, because those
+ * live in the bar, and (transitionally) the `pendingScreen` handoff: this is
+ * the only component inside the tab navigator that holds its `navigation`
+ * object. That effect goes away with the rest of the pending* machinery once
+ * every module is a stack.
+ */
+const AppTabBar: React.FC<TabBarProps> = ({state, navigation, menuItems}) => {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
-  const tabBarHidden = useAppSelector(state => state.ui.tabBarHidden);
-  const pendingScreen = useAppSelector(state => state.ui.pendingScreen);
+  const tabBarHidden = useAppSelector(s => s.ui.tabBarHidden);
+  const pendingScreen = useAppSelector(s => s.ui.pendingScreen);
   const program = GetActiveProgram();
-  const [activeScreen, setActiveScreen] = useState<string>('');
   const [moreOpen, setMoreOpen] = useState(false);
   const [queuedIntent, setQueuedIntent] = useState<SetupIntent | null>(null);
   const [pendingIntent, setPendingIntent] = useState<SetupIntent | null>(null);
+
+  const activeScreen = state.routes[state.index]?.name ?? '';
+  const registered = new Set(state.routes.map(route => route.name));
+
+  // Tab switches asked for from a screen rather than the tab bar: the trip out
+  // to a module's create flow, the trip into a record a notification points at,
+  // and the trip back when a form is closed unsaved. Opening the create or
+  // detail route is left to the module — it owns those routes — but a request
+  // naming a module this build has no screen for is dropped whole, so it can't
+  // sit in the store and fire on the next unrelated tab switch.
+  useEffect(() => {
+    if (!pendingScreen) {
+      return;
+    }
+    if (registered.has(pendingScreen)) {
+      navigation.navigate(pendingScreen);
+    } else {
+      dispatch(clearPendingCreate());
+      dispatch(clearPendingRecord());
+    }
+    dispatch(clearPendingScreen());
+    // `registered` is derived fresh each render; depending on it would re-run
+    // this on every render. The route set only changes when the menu does.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, navigation, pendingScreen]);
 
   const handleMoreSelect = (screen: string) => {
     setMoreOpen(false);
@@ -98,8 +161,8 @@ const MainTabNavigator: React.FC = () => {
     if (intent) {
       // Held until the sheet's modal is gone — see handleMoreClosed.
       setQueuedIntent(intent);
-    } else {
-      setActiveScreen(screen);
+    } else if (registered.has(screen)) {
+      navigation.navigate(screen);
     }
   };
 
@@ -122,66 +185,19 @@ const MainTabNavigator: React.FC = () => {
     }
   };
 
-  // Tab switches asked for from a screen rather than the tab bar: the trip out
-  // to a module's create flow, the trip into a record a notification points at,
-  // and the trip back when a form is closed unsaved. Opening the create or
-  // detail route is left to the module — it owns those routes — but a request
-  // naming a module this build has no screen for is dropped whole, so it can't
-  // sit in the store and fire on the next unrelated tab switch.
-  useEffect(() => {
-    if (!pendingScreen) return;
-    if (SCREEN_MAP[pendingScreen]) {
-      setActiveScreen(pendingScreen);
-    } else {
-      dispatch(clearPendingCreate());
-      dispatch(clearPendingRecord());
-    }
-    dispatch(clearPendingScreen());
-  }, [dispatch, pendingScreen]);
+  const bottomItems = menuItems.filter(item => item.position === 'bottom');
+  const moreItems = menuItems.filter(item => item.position === 'more');
+  const isMoreActive =
+    moreOpen || moreItems.some(item => item.screen_name === activeScreen);
 
-  useEffect(() => {
-    if (menuItems.length > 0 && !activeScreen) {
-      const first = menuItems.find(i => i.position === 'bottom') ?? menuItems[0];
-      if (first) setActiveScreen(first.screen_name);
-    }
-  }, [menuItems, activeScreen]);
-
-  // Briefly on show while the menu loads after a shift starts, so it uses the
-  // app's background and type rather than bare text on white.
-  if (isLoading || menuItems.length === 0) {
-    return (
-      <ScreenBackground style={styles.loadingRoot}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Getting things ready…</Text>
-      </ScreenBackground>
-    );
+  // Rendered even while hidden so the pendingScreen effect above keeps running
+  // for screens that hide the bar (a detail view opened from a notification).
+  if (tabBarHidden) {
+    return null;
   }
 
-  const bottomItems = menuItems.filter(i => i.position === 'bottom');
-  const moreItems = menuItems.filter(i => i.position === 'more');
-  const isMoreActive =
-    moreOpen || moreItems.some(i => i.screen_name === activeScreen);
-
-  const renderContent = () => {
-    const ActiveScreen = SCREEN_MAP[activeScreen];
-    if (!ActiveScreen) {
-      // Menu entry without a screen yet — show a placeholder rather than Home.
-      const label =
-        menuItems.find(i => i.screen_name === activeScreen)?.menu_name ??
-        'Coming soon';
-      return <ComingSoonScreen title={label} />;
-    }
-    return <ActiveScreen />;
-  };
-
   return (
-    <SafeAreaView
-      edges={[]}
-      style={{flex: 1, backgroundColor: theme.colors.background}}>
-      <View style={{flex: 1}}>{renderContent()}</View>
-
-      {!tabBarHidden && (
-        <>
+    <>
       {/* Tab bar — pill-shaped top, layered background, upward shadow */}
       <View
         style={{
@@ -198,20 +214,63 @@ const MainTabNavigator: React.FC = () => {
           paddingHorizontal: 16,
         }}>
         <View style={{flexDirection: 'row'}}>
-        {bottomItems.map(item => {
-          const focused = activeScreen === item.screen_name;
-          const Icon = ICON_MAP[item.menu_icon];
-          return (
+          {bottomItems.map(item => {
+            const focused = activeScreen === item.screen_name;
+            const Icon = ICON_MAP[item.menu_icon];
+            return (
+              <TouchableOpacity
+                key={item.id}
+                onPress={() => navigation.navigate(item.screen_name)}
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingTop: 6,
+                  paddingBottom: 7,
+                  paddingHorizontal: 4,
+                }}>
+                <View
+                  style={{
+                    width: 50,
+                    height: 34,
+                    borderRadius: 16,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: focused
+                      ? theme.colors.primaryLight
+                      : 'transparent',
+                  }}>
+                  {Icon ? (
+                    <Icon size={22} color={focused ? '#0066B2' : '#696969'} />
+                  ) : (
+                    <View style={{width: 22, height: 22}} />
+                  )}
+                </View>
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  style={{
+                    fontFamily: focused ? LATO.bold : LATO.regular,
+                    fontSize: 10,
+                    lineHeight: 12,
+                    color: focused ? '#0066B2' : '#696969',
+                  }}>
+                  {item.menu_name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+
+          {moreItems.length > 0 && (
             <TouchableOpacity
-              key={item.id}
-              onPress={() => setActiveScreen(item.screen_name)}
+              onPress={() => setMoreOpen(true)}
               style={{
                 flex: 1,
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 paddingTop: 6,
                 paddingBottom: 7,
-                paddingHorizontal: 4,
+                paddingHorizontal: 8,
               }}>
               <View
                 style={{
@@ -220,70 +279,28 @@ const MainTabNavigator: React.FC = () => {
                   borderRadius: 16,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: focused
+                  backgroundColor: isMoreActive
                     ? theme.colors.primaryLight
                     : 'transparent',
                 }}>
-                {Icon ? (
-                  <Icon size={22} color={focused ? '#0066B2' : '#696969'} />
-                ) : (
-                  <View style={{width: 22, height: 22}} />
-                )}
+                <GridIcon
+                  size={22}
+                  color={isMoreActive ? '#0066B2' : '#696969'}
+                />
               </View>
               <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
                 style={{
-                  fontFamily: focused ? LATO.bold : LATO.regular,
+                  fontFamily: isMoreActive ? LATO.bold : LATO.regular,
                   fontSize: 10,
                   lineHeight: 12,
-                  color: focused ? '#0066B2' : '#696969',
+                  color: isMoreActive ? '#0066B2' : '#696969',
                 }}>
-                {item.menu_name}
+                More
               </Text>
             </TouchableOpacity>
-          );
-        })}
-
-        {moreItems.length > 0 && (
-          <TouchableOpacity
-            onPress={() => setMoreOpen(true)}
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingTop: 6,
-              paddingBottom: 7,
-              paddingHorizontal: 8,
-            }}>
-            <View
-              style={{
-                width: 50,
-                height: 34,
-                borderRadius: 16,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: isMoreActive
-                  ? theme.colors.primaryLight
-                  : 'transparent',
-              }}>
-              <GridIcon size={22} color={isMoreActive ? '#0066B2' : '#696969'} />
-            </View>
-            <Text
-              style={{
-                fontFamily: isMoreActive ? LATO.bold : LATO.regular,
-                fontSize: 10,
-                lineHeight: 12,
-                color: isMoreActive ? '#0066B2' : '#696969',
-              }}>
-              More
-            </Text>
-          </TouchableOpacity>
-        )}
+          )}
         </View>
       </View>
-        </>
-      )}
 
       <MoreSheet
         visible={moreOpen}
@@ -312,6 +329,56 @@ const MainTabNavigator: React.FC = () => {
         onConfirm={handleEndShift}
         onCancel={() => setPendingIntent(null)}
       />
+    </>
+  );
+};
+
+const MainTabNavigator: React.FC = () => {
+  const {data: menuItems = [], isLoading} = useGetMenuItemsQuery();
+
+  // Briefly on show while the menu loads after a shift starts, so it uses the
+  // app's background and type rather than bare text on white.
+  if (isLoading || menuItems.length === 0) {
+    return (
+      <ScreenBackground style={styles.loadingRoot}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={styles.loadingText}>Getting things ready…</Text>
+      </ScreenBackground>
+    );
+  }
+
+  // Setup-intent rows are actions, not destinations — they stay in the More
+  // sheet but never become routes.
+  const routableItems = menuItems.filter(item => !SETUP_INTENTS[item.screen_name]);
+  const initialRouteName = (
+    routableItems.find(item => item.position === 'bottom') ?? routableItems[0]
+  )?.screen_name;
+
+  return (
+    <SafeAreaView
+      edges={[]}
+      style={{flex: 1, backgroundColor: theme.colors.background}}>
+      <Tab.Navigator
+        initialRouteName={initialRouteName}
+        backBehavior="history"
+        screenOptions={{
+          headerShown: false,
+          sceneStyle: {backgroundColor: theme.colors.background},
+        }}
+        tabBar={props => <AppTabBar {...props} menuItems={menuItems} />}>
+        {routableItems.map(item => {
+          const Screen = SCREEN_MAP[item.screen_name] ?? ComingSoonTab;
+          return (
+            <Tab.Screen key={item.id} name={item.screen_name}>
+              {() => (
+                <ErrorBoundary label={item.screen_name}>
+                  <Screen />
+                </ErrorBoundary>
+              )}
+            </Tab.Screen>
+          );
+        })}
+      </Tab.Navigator>
     </SafeAreaView>
   );
 };
