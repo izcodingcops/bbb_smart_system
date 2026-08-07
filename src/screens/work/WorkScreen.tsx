@@ -38,6 +38,7 @@ import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import {useAppDispatch, useAppSelector} from '../../redux/store';
 import {
   clearPendingCreate,
+  clearPendingRecord,
   requestScreen,
   setTabBarHidden,
 } from '../../redux/ui/slice';
@@ -111,6 +112,7 @@ const WorkScreen: React.FC = () => {
   const {queueTile, flushTile} = useAddRequestTiles(SCREEN.work);
   const dispatch = useAppDispatch();
   const pendingCreate = useAppSelector(state => state.ui.pendingCreate);
+  const pendingRecord = useAppSelector(state => state.ui.pendingRecord);
 
   // Someone asked for a Work Log create from another tab — the navigator has
   // since brought this screen on, so open create and spend the request,
@@ -121,6 +123,16 @@ const WorkScreen: React.FC = () => {
     setRoute({name: 'create'});
     dispatch(clearPendingCreate());
   }, [dispatch, pendingCreate]);
+
+  // A notification asked for a Work Log entry — the navigator has since brought
+  // this screen on, so open it and spend the request. Only Work Log arrives
+  // this way: a Maintenance or Fixture notification targets that module's own
+  // tab, not the projection of it this screen also renders.
+  useEffect(() => {
+    if (pendingRecord?.target !== SCREEN.work) return;
+    setRoute({name: 'view-worklog', id: pendingRecord.recordId});
+    dispatch(clearPendingRecord());
+  }, [dispatch, pendingRecord]);
 
   // Create and View are full-screen pushes — the tab bar has no place there.
   useEffect(() => {

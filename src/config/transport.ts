@@ -15,7 +15,8 @@ export type Feature =
   | 'incident'
   | 'dispatch'
   | 'poi'
-  | 'workLog';
+  | 'workLog'
+  | 'notification';
 
 export const API_TRANSPORT: Record<Feature, Transport> = {
   auth: 'mock',
@@ -28,6 +29,7 @@ export const API_TRANSPORT: Record<Feature, Transport> = {
   dispatch: 'mock',
   poi: 'mock',
   workLog: 'mock',
+  notification: 'mock',
 };
 
 export const GRAPHQL_ENDPOINT = 'https://REPLACE_ME/graphql';

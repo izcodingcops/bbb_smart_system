@@ -13,6 +13,7 @@ import {useAppDispatch, useAppSelector} from '../redux/store';
 import {
   SetupIntent,
   clearPendingCreate,
+  clearPendingRecord,
   clearPendingScreen,
   setSetupIntent,
 } from '../redux/ui/slice';
@@ -122,15 +123,18 @@ const MainTabNavigator: React.FC = () => {
   };
 
   // Tab switches asked for from a screen rather than the tab bar: the trip out
-  // to a module's create flow, and the trip back when that form is closed
-  // unsaved. Opening create is left to the module — it owns that route — but a
-  // request naming a module this build has no screen for is dropped whole.
+  // to a module's create flow, the trip into a record a notification points at,
+  // and the trip back when a form is closed unsaved. Opening the create or
+  // detail route is left to the module — it owns those routes — but a request
+  // naming a module this build has no screen for is dropped whole, so it can't
+  // sit in the store and fire on the next unrelated tab switch.
   useEffect(() => {
     if (!pendingScreen) return;
     if (SCREEN_MAP[pendingScreen]) {
       setActiveScreen(pendingScreen);
     } else {
       dispatch(clearPendingCreate());
+      dispatch(clearPendingRecord());
     }
     dispatch(clearPendingScreen());
   }, [dispatch, pendingScreen]);

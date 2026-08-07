@@ -10,6 +10,7 @@ interface Props {
   avatarUri?: string;
   notificationCount: number;
   isOnline: boolean;
+  onNotificationsPress: () => void;
   onAvatarPress: () => void;
 }
 
@@ -20,6 +21,7 @@ const HomeHeader: React.FC<Props> = ({
   avatarUri,
   notificationCount,
   isOnline,
+  onNotificationsPress,
   onAvatarPress,
 }) => (
   <>
@@ -33,7 +35,10 @@ const HomeHeader: React.FC<Props> = ({
           <Text style={styles.meta}>{shiftName} · Day Shift</Text>
         </View>
       </View>
-      <TouchableOpacity style={styles.bellBtn} activeOpacity={0.8}>
+      <TouchableOpacity
+        style={styles.bellBtn}
+        activeOpacity={0.8}
+        onPress={onNotificationsPress}>
         <BellIcon size={22} color="#181B1F" />
         {notificationCount > 0 ? (
           <View style={styles.badge}>

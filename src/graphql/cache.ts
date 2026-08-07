@@ -43,5 +43,8 @@ export const cache = new InMemoryCache({
     PoiInteractionFormOptions: {keyFields: false},
     PoiUpdateFormOptions: {keyFields: false},
     WorkLogEntry: {keyFields: ['id']},
+    Notification: {keyFields: ['id']},
+    // No id of its own; keep it embedded in the notification it belongs to.
+    NotificationTarget: {keyFields: false},
   },
 });

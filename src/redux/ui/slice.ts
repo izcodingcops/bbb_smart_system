@@ -17,6 +17,18 @@ export interface CreateRequest {
   origin: string;
 }
 
+/**
+ * A record open asked for from outside the module that owns it — Notifications
+ * lives on the Home tab, but every detail screen is local route state inside
+ * its own module's screen.
+ */
+export interface RecordRequest {
+  /** Screen name of the module that owns the detail view. */
+  target: string;
+  /** Record id handed to that module's detail query. */
+  recordId: string;
+}
+
 export interface UiState {
   tabBarHidden: boolean;
   setupIntent: SetupIntent | null;
@@ -24,6 +36,8 @@ export interface UiState {
   pendingScreen: string | null;
   /** Create flow the arriving module should open, spent on arrival. */
   pendingCreate: CreateRequest | null;
+  /** Record the arriving module should open, spent on arrival. */
+  pendingRecord: RecordRequest | null;
 }
 
 const initialState: UiState = {
@@ -31,6 +45,7 @@ const initialState: UiState = {
   setupIntent: null,
   pendingScreen: null,
   pendingCreate: null,
+  pendingRecord: null,
 };
 
 const uiSlice = createSlice({
@@ -50,6 +65,14 @@ const uiSlice = createSlice({
     },
     clearPendingCreate(state) {
       state.pendingCreate = null;
+    },
+    /** Switch tabs and open that module's detail view on arrival. */
+    requestRecord(state, action: PayloadAction<RecordRequest>) {
+      state.pendingScreen = action.payload.target;
+      state.pendingRecord = action.payload;
+    },
+    clearPendingRecord(state) {
+      state.pendingRecord = null;
     },
     /** Switch tabs and nothing more — how a closed create form goes back. */
     requestScreen(state, action: PayloadAction<string>) {
@@ -74,6 +97,8 @@ export const {
   setSetupIntent,
   requestCreate,
   clearPendingCreate,
+  requestRecord,
+  clearPendingRecord,
   requestScreen,
   clearPendingScreen,
 } = uiSlice.actions;

@@ -22,7 +22,12 @@ import {Incident, IncidentStatus} from '../../types/incident';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import {useAppDispatch, useAppSelector} from '../../redux/store';
-import {clearPendingCreate, requestScreen, setTabBarHidden} from '../../redux/ui/slice';
+import {
+  clearPendingCreate,
+  clearPendingRecord,
+  requestScreen,
+  setTabBarHidden,
+} from '../../redux/ui/slice';
 import {SCREEN} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {
@@ -82,6 +87,7 @@ const IncidentScreen: React.FC = () => {
   const {mutate: setStatus} = useSetIncidentStatusMutation();
   const dispatch = useAppDispatch();
   const pendingCreate = useAppSelector(state => state.ui.pendingCreate);
+  const pendingRecord = useAppSelector(state => state.ui.pendingRecord);
   const {queueTile, flushTile} = useAddRequestTiles(SCREEN.incident);
 
   // Someone asked for an incident create from another tab — the navigator
@@ -93,6 +99,14 @@ const IncidentScreen: React.FC = () => {
     setRoute({name: 'create'});
     dispatch(clearPendingCreate());
   }, [dispatch, pendingCreate]);
+
+  // A notification asked for one of this module's records — the navigator has
+  // since brought this screen on, so open it and spend the request.
+  useEffect(() => {
+    if (pendingRecord?.target !== SCREEN.incident) return;
+    setRoute({name: 'view', id: pendingRecord.recordId});
+    dispatch(clearPendingRecord());
+  }, [dispatch, pendingRecord]);
 
   // Create and View are full-screen pushes — the tab bar has no place there.
   useEffect(() => {

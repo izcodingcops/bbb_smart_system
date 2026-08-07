@@ -30,6 +30,7 @@ import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import {useAppDispatch, useAppSelector} from '../../redux/store';
 import {
   clearPendingCreate,
+  clearPendingRecord,
   requestScreen,
   setTabBarHidden,
 } from '../../redux/ui/slice';
@@ -104,6 +105,7 @@ const MaintenanceScreen: React.FC = () => {
   const {mutate: setStatus} = useSetMaintenanceStatusMutation();
   const dispatch = useAppDispatch();
   const pendingCreate = useAppSelector(state => state.ui.pendingCreate);
+  const pendingRecord = useAppSelector(state => state.ui.pendingRecord);
   const {queueTile, flushTile} = useAddRequestTiles(SCREEN.maintenance);
 
   // Someone asked for a maintenance create from another tab — the navigator
@@ -117,6 +119,14 @@ const MaintenanceScreen: React.FC = () => {
     setRoute({name: 'create'});
     dispatch(clearPendingCreate());
   }, [dispatch, pendingCreate]);
+
+  // A notification asked for one of this module's records — the navigator has
+  // since brought this screen on, so open it and spend the request.
+  useEffect(() => {
+    if (pendingRecord?.target !== SCREEN.maintenance) return;
+    setRoute({name: 'view', id: pendingRecord.recordId});
+    dispatch(clearPendingRecord());
+  }, [dispatch, pendingRecord]);
 
   // Create and View are full-screen pushes — the tab bar has no place there.
   useEffect(() => {

@@ -17,7 +17,7 @@ import {useAppDispatch} from '../../redux/store';
 import {SCREEN} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {endShift} from '../../redux/shift/slice';
-import {requestScreen} from '../../redux/ui/slice';
+import {requestScreen, setTabBarHidden} from '../../redux/ui/slice';
 import {GetActiveProgram, GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import {GetOutboxItems} from '../../redux/outbox/selectors';
@@ -26,10 +26,13 @@ import {
   useGetWorkItemsQuery,
 } from '../../graphql/features/work/hooks';
 import {useGetCheckedInEquipmentQuery} from '../../graphql/features/equipment/hooks';
+import {useUnreadNotificationCountQuery} from '../../graphql/features/notification/hooks';
+import NotificationsScreen from '../notifications/NotificationsScreen';
 import {EquipmentItem} from '../../types/equipment';
 import {theme} from '../../theme';
 
-const NOTIFICATION_COUNT = 7;
+/** Notifications is a full-screen push off the header's bell. */
+type HomeRoute = 'home' | 'notifications';
 
 const HomeScreen: React.FC = () => {
   const {user, logout} = useAuth();
@@ -51,7 +54,9 @@ const HomeScreen: React.FC = () => {
     isLoading: isEquipmentLoading,
     refetch: refetchEquipment,
   } = useGetCheckedInEquipmentQuery();
+  const {data: unreadNotifications = 0} = useUnreadNotificationCountQuery();
 
+  const [route, setRoute] = useState<HomeRoute>('home');
   const [refreshing, setRefreshing] = useState(false);
   // Single source of truth for "are we online" app-wide — see connectivity.ts.
   // This used to read a separate native NWPathMonitor signal via
@@ -74,6 +79,17 @@ const HomeScreen: React.FC = () => {
 
   useEffect(() => connectivity.onChange(setIsOnline), []);
 
+  // Notifications is a full-screen push — the tab bar has no place there. The
+  // cleanup also covers a deep link out of it: this screen unmounts when the
+  // navigator switches tabs, and the destination sets the flag again for its
+  // own detail route.
+  useEffect(() => {
+    dispatch(setTabBarHidden(route === 'notifications'));
+    return () => {
+      dispatch(setTabBarHidden(false));
+    };
+  }, [dispatch, route]);
+
   const handleEnd = useCallback(() => {
     Alert.alert('End shift', 'Are you sure you want to end your shift?', [
       {text: 'Cancel', style: 'cancel'},
@@ -84,6 +100,10 @@ const HomeScreen: React.FC = () => {
       },
     ]);
   }, [dispatch]);
+
+  const handleNotifications = useCallback(() => {
+    setRoute('notifications');
+  }, []);
 
   const handleAvatar = useCallback(() => {
     Alert.alert('Log out', 'Are you sure you want to log out?', [
@@ -116,6 +136,10 @@ const HomeScreen: React.FC = () => {
     locationTracker.syncNow();
   }, [refetchWork, refetchEquipment]);
 
+  if (route === 'notifications') {
+    return <NotificationsScreen onClose={() => setRoute('home')} />;
+  }
+
   return (
     <ScreenBackground style={styles.root}>
       <SafeAreaView style={styles.flex} edges={['top']}>
@@ -130,8 +154,9 @@ const HomeScreen: React.FC = () => {
             shiftName={shiftName}
             firstName={firstName}
             avatarUri={user?.avatar}
-            notificationCount={NOTIFICATION_COUNT}
+            notificationCount={unreadNotifications}
             isOnline={isOnline}
+            onNotificationsPress={handleNotifications}
             onAvatarPress={handleAvatar}
           />
 

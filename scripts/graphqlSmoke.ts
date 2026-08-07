@@ -18,6 +18,15 @@ const LOGIN = `
   }
 `;
 
+const NOTIFICATIONS = `
+  query N($p: ID!) {
+    notifications(programId: $p) {
+      id module title message icon createdAt unread
+      related { recordType recordId reference title }
+    }
+  }
+`;
+
 const checks: Check[] = [
   ['schema builds', () => {
     assert.ok(mockSchema.getQueryType());
@@ -1049,6 +1058,111 @@ const checks: Check[] = [
     const u = r.data.poiUpdateFormOptions;
     assert.ok(u.nextReference.startsWith('#UPD-'));
     assert.equal(u.zones.length, 6);
+  }],
+
+  // ---- Notifications ----
+  // Read state mutates the shared store, so the two mark-read checks run last.
+
+  ['notifications resolve with uppercase module enums', async () => {
+    const r: any = await run(NOTIFICATIONS, {p: 'p1'});
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.notifications.length, 12);
+    assert.ok(r.data.notifications.every((n: any) => /^[A-Z_]+$/.test(n.module)));
+    // Nullable in the SDL, so a null must survive as null rather than vanish.
+    assert.ok(r.data.notifications.some((n: any) => n.icon === null));
+    assert.ok(r.data.notifications.every((n: any) => n.icon === null || /^[A-Z]+$/.test(n.icon)));
+  }],
+
+  ['every related recordType is uppercase — the nested enum is not skipped', async () => {
+    const r: any = await run(NOTIFICATIONS, {p: 'p1'});
+    const linked = r.data.notifications.filter((n: any) => n.related);
+    assert.equal(linked.length, 8);
+    assert.ok(linked.every((n: any) => /^[A-Z_]+$/.test(n.related.recordType)));
+    // WORK_LOG is the one pair a mechanical transform would mangle.
+    assert.ok(linked.some((n: any) => n.related.recordType === 'WORK_LOG'));
+  }],
+
+  ['every deep link resolves through its own module\'s detail query', async () => {
+    const r: any = await run(NOTIFICATIONS, {p: 'p1'});
+    const DETAIL: Record<string, string> = {
+      MAINTENANCE: 'query D($id: ID!) { record: maintenanceRequest(id: $id) { id reference } }',
+      INCIDENT: 'query D($id: ID!) { record: incident(id: $id) { id reference } }',
+      FIXTURE: 'query D($id: ID!) { record: fixture(id: $id) { id reference } }',
+      POI: 'query D($id: ID!) { record: poi(id: $id) { id reference } }',
+      WORK_LOG: 'query D($id: ID!) { record: workLogEntry(id: $id) { id reference } }',
+    };
+    for (const n of r.data.notifications) {
+      if (!n.related) continue;
+      const d: any = await run(DETAIL[n.related.recordType], {id: n.related.recordId});
+      assert.equal(d.errors, undefined, `${n.id} → ${n.related.recordType}`);
+      assert.ok(d.data.record, `${n.id} points at a missing record: ${n.related.recordId}`);
+      // The reference in the copy is the reference of the record it opens.
+      assert.equal(d.data.record.reference, n.related.reference);
+      assert.ok(n.message.includes(n.related.reference));
+    }
+  }],
+
+  ['the unlinked notifications are exactly the System and Equipment ones', async () => {
+    const r: any = await run(NOTIFICATIONS, {p: 'p1'});
+    const unlinked = r.data.notifications.filter((n: any) => !n.related);
+    assert.equal(unlinked.length, 4);
+    assert.deepEqual(
+      unlinked.map((n: any) => n.module).sort(),
+      ['EQUIPMENT', 'EQUIPMENT', 'SYSTEM', 'SYSTEM'],
+    );
+  }],
+
+  ['every notification recency bucket is non-empty against the current clock', async () => {
+    const r: any = await run(NOTIFICATIONS, {p: 'p1'});
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    // Calendar days between the record's day and today; `round` absorbs the
+    // 23/25-hour days a DST boundary produces.
+    const dayIndex = (iso: string) => {
+      const d = new Date(iso);
+      d.setHours(0, 0, 0, 0);
+      return Math.round((startOfToday.getTime() - d.getTime()) / 86400000);
+    };
+    const days = r.data.notifications.map((n: any) => dayIndex(n.createdAt));
+    assert.ok(days.some((d: number) => d === 0), 'Today is empty');
+    assert.ok(days.some((d: number) => d === 1), 'Yesterday is empty');
+    assert.ok(days.some((d: number) => d > 1 && d <= 7), 'Last 7 days is empty');
+    // Nothing seeded into the future, whatever time of day this runs.
+    assert.ok(days.every((d: number) => d >= 0));
+  }],
+
+  ['unreadNotificationCount agrees with the list', async () => {
+    const r: any = await run(NOTIFICATIONS, {p: 'p1'});
+    const c: any = await run('query C($p: ID!) { unreadNotificationCount(programId: $p) }', {p: 'p1'});
+    assert.equal(c.errors, undefined);
+    assert.equal(
+      c.data.unreadNotificationCount,
+      r.data.notifications.filter((n: any) => n.unread).length,
+    );
+    assert.ok(c.data.unreadNotificationCount > 0);
+  }],
+
+  ['markNotificationRead flips one record and decrements the count', async () => {
+    const before: any = await run('query C($p: ID!) { unreadNotificationCount(programId: $p) }', {p: 'p1'});
+    const m: any = await run('mutation M($id: ID!) { markNotificationRead(id: $id) { id unread } }', {id: 'ntf_1'});
+    assert.equal(m.errors, undefined);
+    assert.equal(m.data.markNotificationRead.unread, false);
+    const after: any = await run('query C($p: ID!) { unreadNotificationCount(programId: $p) }', {p: 'p1'});
+    assert.equal(after.data.unreadNotificationCount, before.data.unreadNotificationCount - 1);
+    // Re-reading an already-read notification is a no-op, not a decrement.
+    await run('mutation M($id: ID!) { markNotificationRead(id: $id) { id } }', {id: 'ntf_1'});
+    const again: any = await run('query C($p: ID!) { unreadNotificationCount(programId: $p) }', {p: 'p1'});
+    assert.equal(again.data.unreadNotificationCount, after.data.unreadNotificationCount);
+  }],
+
+  ['markAllNotificationsRead clears the count, and an unknown id throws', async () => {
+    const m: any = await run('mutation M($p: ID!) { markAllNotificationsRead(programId: $p) { id unread } }', {p: 'p1'});
+    assert.equal(m.errors, undefined);
+    assert.ok(m.data.markAllNotificationsRead.every((n: any) => n.unread === false));
+    const c: any = await run('query C($p: ID!) { unreadNotificationCount(programId: $p) }', {p: 'p1'});
+    assert.equal(c.data.unreadNotificationCount, 0);
+    const bad: any = await run('mutation M($id: ID!) { markNotificationRead(id: $id) { id } }', {id: 'ntf_nope'});
+    assert.ok(bad.errors);
   }],
 ];
 

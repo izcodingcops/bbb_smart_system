@@ -5,6 +5,7 @@ import {fixtureTypeDefs} from './features/fixture/schema';
 import {incidentTypeDefs} from './features/incident/schema';
 import {maintenanceTypeDefs} from './features/maintenance/schema';
 import {navigationTypeDefs} from './features/navigation/schema';
+import {notificationTypeDefs} from './features/notification/schema';
 import {poiTypeDefs} from './features/poi/schema';
 import {workTypeDefs} from './features/work/schema';
 import {workLogTypeDefs} from './features/workLog/schema';
@@ -35,4 +36,5 @@ export const typeDefs = [
   dispatchTypeDefs,
   poiTypeDefs,
   workLogTypeDefs,
+  notificationTypeDefs,
 ].join('\n');
