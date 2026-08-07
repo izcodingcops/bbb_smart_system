@@ -33,11 +33,6 @@ import {
 import {WorkBucket, WorkItem, WorkStatus} from '../../types/work';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
-import {useAppDispatch, useAppSelector} from '../../redux/store';
-import {
-  clearPendingCreate,
-  clearPendingRecord,
-} from '../../redux/ui/slice';
 import {SCREEN} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {
@@ -100,31 +95,6 @@ const WorkScreen: React.FC = () => {
   const listRef = useRef<FlatList<WorkItem>>(null);
   const {mutate: setStatus} = useSetWorkItemStatusMutation();
   const {queueTile, flushTile} = useAddRequestTiles(SCREEN.work);
-  const dispatch = useAppDispatch();
-  const pendingCreate = useAppSelector(state => state.ui.pendingCreate);
-  const pendingRecord = useAppSelector(state => state.ui.pendingRecord);
-
-  // Someone asked for a Work Log create from another tab — the tab navigator
-  // has since brought this stack on, so push create and spend the request.
-  // Where they came from travels as a route param for an unsaved close.
-  useEffect(() => {
-    if (pendingCreate?.target !== SCREEN.work) return;
-    navigation.navigate('WorkLogCreate', {
-      origin:
-        pendingCreate.origin === SCREEN.work ? undefined : pendingCreate.origin,
-    });
-    dispatch(clearPendingCreate());
-  }, [dispatch, navigation, pendingCreate]);
-
-  // A notification asked for a Work Log entry — the tab navigator has since
-  // brought this stack on, so push it and spend the request. Only Work Log
-  // arrives this way: a Maintenance or Fixture notification targets that
-  // module's own tab, not the projection of it this screen also renders.
-  useEffect(() => {
-    if (pendingRecord?.target !== SCREEN.work) return;
-    navigation.navigate('WorkLogView', {id: pendingRecord.recordId});
-    dispatch(clearPendingRecord());
-  }, [dispatch, navigation, pendingRecord]);
 
   // Detail routes hand a toast back on the way out, and a delete also asks for
   // a refetch — this list mixes several sources, so no single refetchQueries

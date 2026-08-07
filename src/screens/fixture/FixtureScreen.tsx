@@ -10,8 +10,6 @@ import {useGetFixturesQuery, useSetFixtureStatusMutation} from '../../graphql/fe
 import {Fixture, FixtureStatus} from '../../types/fixture';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
-import {useAppDispatch, useAppSelector} from '../../redux/store';
-import {clearPendingCreate, clearPendingRecord} from '../../redux/ui/slice';
 import {SCREEN} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {
@@ -60,34 +58,9 @@ const FixtureScreen: React.FC = () => {
   const [toast, setToast] = useState<FixtureToast | null>(null);
   const navigation = useNavigation<ListNavigation>();
   const route = useRoute<RouteProp<FixtureStackParamList, 'FixtureList'>>();
-  const dispatch = useAppDispatch();
   const listRef = useRef<FlatList<Fixture>>(null);
   const {mutate: setStatus} = useSetFixtureStatusMutation();
-  const pendingCreate = useAppSelector(state => state.ui.pendingCreate);
-  const pendingRecord = useAppSelector(state => state.ui.pendingRecord);
   const {queueTile, flushTile} = useAddRequestTiles(SCREEN.fixture);
-
-  // Someone asked for a fixture create from another tab — the tab navigator
-  // has since brought this stack on, so push create and spend the request.
-  // Where they came from travels as a route param for an unsaved close.
-  useEffect(() => {
-    if (pendingCreate?.target !== SCREEN.fixture) return;
-    navigation.navigate('FixtureCreate', {
-      origin:
-        pendingCreate.origin === SCREEN.fixture
-          ? undefined
-          : pendingCreate.origin,
-    });
-    dispatch(clearPendingCreate());
-  }, [dispatch, navigation, pendingCreate]);
-
-  // A notification asked for one of this module's records — the tab navigator
-  // has since brought this stack on, so push it and spend the request.
-  useEffect(() => {
-    if (pendingRecord?.target !== SCREEN.fixture) return;
-    navigation.navigate('FixtureView', {id: pendingRecord.recordId});
-    dispatch(clearPendingRecord());
-  }, [dispatch, navigation, pendingRecord]);
 
   // Create and View hand a toast back on the way out — show it once, then
   // clear the param so returning here later doesn't replay it.

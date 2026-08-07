@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -16,13 +16,7 @@ import ScreenBackground from '../components/ScreenBackground';
 import ErrorBoundary from '../components/ErrorBoundary';
 import {useGetMenuItemsQuery} from '../graphql/features/navigation/hooks';
 import {useAppDispatch, useAppSelector} from '../redux/store';
-import {
-  SetupIntent,
-  clearPendingCreate,
-  clearPendingRecord,
-  clearPendingScreen,
-  setSetupIntent,
-} from '../redux/ui/slice';
+import {SetupIntent, setSetupIntent} from '../redux/ui/slice';
 import {SCREEN} from './screens';
 import {endShift} from '../redux/shift/slice';
 import {GetActiveProgram} from '../redux/auth/selectors';
@@ -142,16 +136,12 @@ interface TabBarProps extends BottomTabBarProps {
  * by a `useState` screen name.
  *
  * It also owns the More sheet and the end-shift confirmation, because those
- * live in the bar, and (transitionally) the `pendingScreen` handoff: this is
- * the only component inside the tab navigator that holds its `navigation`
- * object. That effect goes away with the rest of the pending* machinery once
- * every module is a stack.
+ * live in the bar.
  */
 const AppTabBar: React.FC<TabBarProps> = ({state, navigation, menuItems}) => {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const tabBarHidden = useAppSelector(s => s.ui.tabBarHidden);
-  const pendingScreen = useAppSelector(s => s.ui.pendingScreen);
   const program = GetActiveProgram();
   const [moreOpen, setMoreOpen] = useState(false);
   const [queuedIntent, setQueuedIntent] = useState<SetupIntent | null>(null);
@@ -159,28 +149,6 @@ const AppTabBar: React.FC<TabBarProps> = ({state, navigation, menuItems}) => {
 
   const activeScreen = state.routes[state.index]?.name ?? '';
   const registered = new Set(state.routes.map(route => route.name));
-
-  // Tab switches asked for from a screen rather than the tab bar: the trip out
-  // to a module's create flow, the trip into a record a notification points at,
-  // and the trip back when a form is closed unsaved. Opening the create or
-  // detail route is left to the module — it owns those routes — but a request
-  // naming a module this build has no screen for is dropped whole, so it can't
-  // sit in the store and fire on the next unrelated tab switch.
-  useEffect(() => {
-    if (!pendingScreen) {
-      return;
-    }
-    if (registered.has(pendingScreen)) {
-      navigation.navigate(pendingScreen);
-    } else {
-      dispatch(clearPendingCreate());
-      dispatch(clearPendingRecord());
-    }
-    dispatch(clearPendingScreen());
-    // `registered` is derived fresh each render; depending on it would re-run
-    // this on every render. The route set only changes when the menu does.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, navigation, pendingScreen]);
 
   const handleMoreSelect = (screen: string) => {
     setMoreOpen(false);
@@ -217,8 +185,6 @@ const AppTabBar: React.FC<TabBarProps> = ({state, navigation, menuItems}) => {
   const isMoreActive =
     moreOpen || moreItems.some(item => item.screen_name === activeScreen);
 
-  // Rendered even while hidden so the pendingScreen effect above keeps running
-  // for screens that hide the bar (a detail view opened from a notification).
   if (tabBarHidden) {
     return null;
   }

@@ -3,6 +3,7 @@ import {ScrollView, RefreshControl, Alert, StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+
 import ScreenBackground from '../../components/ScreenBackground';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import GradientFab from '../../components/ui/GradientFab';
@@ -16,10 +17,9 @@ import {locationTracker} from '../../utils/locationTracker';
 import {connectivity} from '../../graphql/offlineQueue/connectivity';
 import {useAuth} from '../../hooks/useAuth';
 import {useAppDispatch} from '../../redux/store';
-import {SCREEN} from '../../navigation/screens';
+import {SCREEN, TabNavigation} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {endShift} from '../../redux/shift/slice';
-import {requestScreen} from '../../redux/ui/slice';
 import {GetActiveProgram, GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import {
@@ -65,6 +65,9 @@ const HomeScreen: React.FC = () => {
   const {data: unreadNotifications = 0} = useUnreadNotificationCountQuery();
 
   const navigation = useNavigation<HomeNavigation>();
+  // "View all work" crosses to another tab, which only the parent can do.
+  const tabNavigation =
+    navigation.getParent<TabNavigation>();
   const [refreshing, setRefreshing] = useState(false);
   // Single source of truth for "are we online" app-wide — see connectivity.ts.
   // This used to read a separate native NWPathMonitor signal via
@@ -123,8 +126,8 @@ const HomeScreen: React.FC = () => {
   }, []);
 
   const handleViewAllWork = useCallback(() => {
-    dispatch(requestScreen(SCREEN.work));
-  }, [dispatch]);
+    tabNavigation?.navigate(SCREEN.work);
+  }, [tabNavigation]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);

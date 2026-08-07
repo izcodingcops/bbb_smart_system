@@ -17,11 +17,11 @@ import {
   useMarkNotificationReadMutation,
 } from '../../graphql/features/notification/hooks';
 import {AppNotification} from '../../types/notification';
-import {useAppDispatch} from '../../redux/store';
-import {requestRecord} from '../../redux/ui/slice';
+import {useNavigation} from '@react-navigation/native';
+import {TabNavigation, navigateToTarget} from '../../navigation/screens';
 import NotificationCard from './components/NotificationCard';
 import {groupNotifications} from './grouping';
-import {SCREEN_BY_RECORD_TYPE} from './targets';
+import {TARGET_BY_RECORD_TYPE} from './targets';
 import {theme} from '../../theme';
 
 interface Props {
@@ -35,7 +35,10 @@ const NotificationsScreen: React.FC<Props> = ({onClose}) => {
   const {data: notifications = [], isLoading, isError, refetch} =
     useGetNotificationsQuery();
   const [view, setView] = useState<ChipView>('all');
-  const dispatch = useAppDispatch();
+  // Notifications sits in the Home stack; its parent is the tab navigator,
+  // the only one that can cross to another module's stack.
+  const tabNavigation =
+    useNavigation().getParent<TabNavigation>();
   const {mutate: markRead} = useMarkNotificationReadMutation();
   const {mutate: markAllRead} = useMarkAllNotificationsReadMutation();
 
@@ -54,9 +57,9 @@ const NotificationsScreen: React.FC<Props> = ({onClose}) => {
 
   /**
    * The export opened a fabricated record card here. This opens the real one:
-   * mark read, then hand the module that owns it a request the navigator turns
-   * into a tab switch. A notification with nothing to open — System, and
-   * Equipment until that module exists — stops at the mark.
+   * mark read, then jump straight to the detail route in the owning module's
+   * stack. A notification with nothing to open — System, and Equipment until
+   * that module exists — stops at the mark.
    */
   const handlePress = useCallback(
     (notification: AppNotification) => {
@@ -65,14 +68,11 @@ const NotificationsScreen: React.FC<Props> = ({onClose}) => {
       }
       const related = notification.related;
       if (!related) return;
-      dispatch(
-        requestRecord({
-          target: SCREEN_BY_RECORD_TYPE[related.recordType],
-          recordId: related.recordId,
-        }),
-      );
+      navigateToTarget(tabNavigation, TARGET_BY_RECORD_TYPE[related.recordType], {
+        id: related.recordId,
+      });
     },
-    [dispatch, markRead],
+    [markRead, tabNavigation],
   );
 
   const renderItem = useCallback(
@@ -82,9 +82,9 @@ const NotificationsScreen: React.FC<Props> = ({onClose}) => {
     [handlePress],
   );
 
-  // Rendered on every branch — loading and error included. There is no
-  // BackHandler anywhere in this app, so a screen that hides the tab bar and
-  // then withholds its back button traps the user.
+  // Rendered on every branch — loading and error included. This screen hides
+  // the tab bar, so withholding its back button on a failed load would leave
+  // only the hardware/gesture back to escape with.
   const header = (
     <View style={styles.head}>
       <View style={styles.topRow}>

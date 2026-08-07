@@ -23,11 +23,6 @@ import {useGetPoisQuery} from '../../graphql/features/poi/hooks';
 import {Poi} from '../../types/poi';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
-import {useAppDispatch, useAppSelector} from '../../redux/store';
-import {
-  clearPendingCreate,
-  clearPendingRecord,
-} from '../../redux/ui/slice';
 import {SCREEN} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {
@@ -89,41 +84,13 @@ const PoiScreen: React.FC = () => {
   const [toast, setToast] = useState<PoiToast | null>(null);
   const navigation = useNavigation<ListNavigation>();
   const route = useRoute<RouteProp<PoiStackParamList, 'PoiList'>>();
-  const dispatch = useAppDispatch();
   const listRef = useRef<FlatList<Poi>>(null);
-  const pendingCreate = useAppSelector(state => state.ui.pendingCreate);
-  const pendingRecord = useAppSelector(state => state.ui.pendingRecord);
-  const {queueTile, flushTile} = useAddRequestTiles(SCREEN.poi);
-
-  // Someone asked for a POI create — the navigator has since brought this
-  // screen on, so act on the request and spend it.
-  //
-  // Where they asked from decides what opens. From another tab, the tile
-  // behaves like every other Create New tile: a full-screen Create Person
-  // covers the tab switch, so the switch is never seen and closing it returns
-  // them where they started. The three-way chooser is a bottom sheet, so it
-  // would instead leave the POI list sitting in full view behind it — the user
-  // asked to create something and would appear to have been teleported into a
-  // module. So the chooser is offered only when they were already on POI, where
-  // a sheet over the list is exactly what it looks like.
-  useEffect(() => {
-    if (pendingCreate?.target !== SCREEN.poi) return;
-    const alreadyHere = pendingCreate.origin === SCREEN.poi;
-    if (alreadyHere) {
-      setChooserOpen(true);
-    } else {
-      navigation.navigate('PoiCreatePerson', {origin: pendingCreate.origin});
-    }
-    dispatch(clearPendingCreate());
-  }, [dispatch, navigation, pendingCreate]);
-
-  // A notification asked for one of this module's records — the tab navigator
-  // has since brought this stack on, so push it and spend the request.
-  useEffect(() => {
-    if (pendingRecord?.target !== SCREEN.poi) return;
-    navigation.navigate('PoiView', {id: pendingRecord.recordId});
-    dispatch(clearPendingRecord());
-  }, [dispatch, navigation, pendingRecord]);
+  // The POI tile tapped from another tab goes straight to Create Person — a
+  // full-screen form covers the tab switch. Tapped here it opens the three-way
+  // chooser instead: it's a bottom sheet, so it would otherwise leave this list
+  // in full view behind it and read as a teleport into a module.
+  const openChooser = useCallback(() => setChooserOpen(true), []);
+  const {queueTile, flushTile} = useAddRequestTiles(SCREEN.poi, openChooser);
 
   // The creates and detail hand a toast back on the way out — show it once,
   // then clear the param so returning here later doesn't replay it.
@@ -275,9 +242,9 @@ const PoiScreen: React.FC = () => {
 
       {/*
         The FAB opens Add Requests, as it does on every other list screen —
-        the chooser is what the sheet's own POI tile leads to, via the
-        pendingCreate handoff above. Opening the chooser straight from the FAB
-        would strand the sheet on this one tab.
+        the chooser is what the sheet's own POI tile leads to, via the same-tab
+        override passed to useAddRequestTiles. Opening the chooser straight from
+        the FAB would strand the sheet on this one tab.
       */}
       <GradientFab onPress={() => setAddOpen(true)} />
 

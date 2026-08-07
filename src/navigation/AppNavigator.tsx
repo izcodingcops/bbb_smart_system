@@ -6,6 +6,7 @@ import {GetHasActiveShift} from '../redux/shift/selectors';
 import AuthNavigator from './AuthNavigator';
 import SetupNavigator from './SetupNavigator';
 import MainTabNavigator from './MainTabNavigator';
+import {linking} from './linking';
 import {theme} from '../theme';
 
 export type RootStackParamList = {
@@ -21,7 +22,11 @@ const AppNavigator: React.FC = () => {
   const hasActiveShift = GetHasActiveShift();
 
   return (
-    <NavigationContainer>
+    // A link can only resolve once the tab navigator is the mounted branch, so
+    // one arriving mid-login or mid-setup is dropped rather than queued. That
+    // matches the app's own rule: there is nothing to show a user without an
+    // active shift.
+    <NavigationContainer linking={linking}>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
