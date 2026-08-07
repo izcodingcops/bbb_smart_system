@@ -7,27 +7,31 @@ import {
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {DownloadedMap, MapCoordinate} from '../../types/maps';
 import {GetDownloadedMaps} from '../../redux/maps/selectors';
-import {mapDeleted, mapDownloaded} from '../../redux/maps/slice';
+import {mapDeleted} from '../../redux/maps/slice';
 import {useAppDispatch} from '../../redux/store';
-import {setTabBarHidden} from '../../redux/ui/slice';
 import CurrentLocationCard from './components/CurrentLocationCard';
 import DownloadedMapRow from './components/DownloadedMapRow';
 import MapDetailSheet from './components/MapDetailSheet';
-import DownloadMapScreen from './DownloadMapScreen';
+import {MapsStackParamList} from './routes';
 import {ConfirmDialog, EmptyState, SectionTitle, Toast} from '../../components/ui';
 import {MapIcon, PlusIcon} from '../../components/icons';
 import {theme} from '../../theme';
 
-/** The save flow is a full-screen push within the Maps tab. */
-type MapsRoute = {name: 'list'} | {name: 'download'};
+type ListNavigation = NativeStackNavigationProp<
+  MapsStackParamList,
+  'MapsList'
+>;
 
 const MapsScreen: React.FC = () => {
   const items = GetDownloadedMaps();
   const dispatch = useAppDispatch();
+  const navigation = useNavigation<ListNavigation>();
+  const route = useRoute<RouteProp<MapsStackParamList, 'MapsList'>>();
 
-  const [route, setRoute] = useState<MapsRoute>({name: 'list'});
   const [detailId, setDetailId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<DownloadedMap | null>(null);
   /** Held while the detail sheet dismisses — see handleSheetClosed. */
@@ -37,13 +41,15 @@ const MapsScreen: React.FC = () => {
   const [currentCoordinate, setCurrentCoordinate] =
     useState<MapCoordinate | null>(null);
 
-  // The save flow is a full-screen push — the tab bar has no place there.
+  // The save flow hands the saved map's name back on the way out — toast once,
+  // then clear the param so returning here later doesn't replay it.
+  const incomingSavedName = route.params?.savedName;
   useEffect(() => {
-    dispatch(setTabBarHidden(route.name !== 'list'));
-    return () => {
-      dispatch(setTabBarHidden(false));
-    };
-  }, [dispatch, route.name]);
+    if (!incomingSavedName) return;
+    setSavedName(incomingSavedName);
+    setToastVisible(true);
+    navigation.setParams({savedName: undefined});
+  }, [incomingSavedName, navigation]);
 
   const detailItem = useMemo(
     () => items.find(item => item.id === detailId) ?? null,
@@ -51,22 +57,8 @@ const MapsScreen: React.FC = () => {
   );
 
   const handleOpenDownload = useCallback(() => {
-    setRoute({name: 'download'});
-  }, []);
-
-  const handleCloseDownload = useCallback(() => {
-    setRoute({name: 'list'});
-  }, []);
-
-  const handleSaved = useCallback(
-    (record: DownloadedMap) => {
-      dispatch(mapDownloaded(record));
-      setRoute({name: 'list'});
-      setSavedName(record.name);
-      setToastVisible(true);
-    },
-    [dispatch],
-  );
+    navigation.navigate('MapsDownload', {initialCoordinate: currentCoordinate});
+  }, [navigation, currentCoordinate]);
 
   const handleOpenDetail = useCallback((item: DownloadedMap) => {
     setDetailId(item.id);
@@ -154,17 +146,6 @@ const MapsScreen: React.FC = () => {
     ),
     [handleOpenDownload, handleCoordinateResolved, items.length],
   );
-
-  if (route.name === 'download') {
-    return (
-      <DownloadMapScreen
-        initialCoordinate={currentCoordinate}
-        existing={items}
-        onClose={handleCloseDownload}
-        onSaved={handleSaved}
-      />
-    );
-  }
 
   return (
     <View style={styles.root}>

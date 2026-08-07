@@ -29,7 +29,7 @@ import {GetActiveProgram} from '../redux/auth/selectors';
 import {fontFamilies} from '../constants/fonts';
 import {MenuItem} from '../types/navigation';
 import {theme} from '../theme';
-import HomeScreen from '../screens/home/HomeScreen';
+import HomeNavigator from '../screens/home/HomeNavigator';
 import MoreSheet from '../components/MoreSheet';
 import {ConfirmDialog} from '../components/ui';
 import {
@@ -46,7 +46,7 @@ import WorkNavigator from '../screens/work/WorkNavigator';
 import FixtureNavigator from '../screens/fixture/FixtureNavigator';
 import IncidentNavigator from '../screens/incident/IncidentNavigator';
 import DispatchScreen from '../screens/dispatch/DispatchScreen';
-import MapsScreen from '../screens/maps/MapsScreen';
+import MapsNavigator from '../screens/maps/MapsNavigator';
 import PoiScreen from '../screens/poi/PoiScreen';
 
 const {LATO} = fontFamilies;
@@ -54,13 +54,13 @@ const {LATO} = fontFamilies;
 const Tab = createBottomTabNavigator();
 
 const SCREEN_MAP: Record<string, React.ComponentType<any>> = {
-  [SCREEN.home]: HomeScreen,
+  [SCREEN.home]: HomeNavigator,
   [SCREEN.work]: WorkNavigator,
   [SCREEN.maintenance]: MaintenanceNavigator,
   [SCREEN.fixture]: FixtureNavigator,
   [SCREEN.incident]: IncidentNavigator,
   [SCREEN.dispatch]: DispatchScreen,
-  [SCREEN.maps]: MapsScreen,
+  [SCREEN.maps]: MapsNavigator,
   [SCREEN.poi]: PoiScreen,
 };
 
