@@ -9,6 +9,7 @@ import {apolloClient} from './src/graphql/client';
 import {connectivity} from './src/graphql/offlineQueue/connectivity';
 import {flushOutbox} from './src/graphql/offlineQueue/flush';
 import AppNavigator from './src/navigation/AppNavigator';
+import ErrorBoundary from './src/components/ErrorBoundary';
 
 const Splash = () => (
   <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff'}}>
@@ -53,17 +54,19 @@ const OfflineQueueSync: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <Provider store={store}>
-      <PersistGate loading={<Splash />} persistor={persistor}>
-        <ApolloProvider client={apolloClient}>
-          <SafeAreaProvider>
-            <StatusBar barStyle="light-content" backgroundColor="#4F46E5" />
-            <OfflineQueueSync />
-            <AppNavigator />
-          </SafeAreaProvider>
-        </ApolloProvider>
-      </PersistGate>
-    </Provider>
+    <ErrorBoundary label="root">
+      <Provider store={store}>
+        <PersistGate loading={<Splash />} persistor={persistor}>
+          <ApolloProvider client={apolloClient}>
+            <SafeAreaProvider>
+              <StatusBar barStyle="light-content" backgroundColor="#4F46E5" />
+              <OfflineQueueSync />
+              <AppNavigator />
+            </SafeAreaProvider>
+          </ApolloProvider>
+        </PersistGate>
+      </Provider>
+    </ErrorBoundary>
   );
 };
 
