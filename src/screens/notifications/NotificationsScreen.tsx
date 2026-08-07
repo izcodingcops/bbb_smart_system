@@ -18,10 +18,10 @@ import {
 } from '../../graphql/features/notification/hooks';
 import {AppNotification} from '../../types/notification';
 import {useNavigation} from '@react-navigation/native';
-import {TabNavigation, navigateToTarget} from '../../navigation/screens';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {HomeStackParamList} from '../home/routes';
 import NotificationCard from './components/NotificationCard';
 import {groupNotifications} from './grouping';
-import {TARGET_BY_RECORD_TYPE} from './targets';
 import {theme} from '../../theme';
 
 interface Props {
@@ -35,10 +35,10 @@ const NotificationsScreen: React.FC<Props> = ({onClose}) => {
   const {data: notifications = [], isLoading, isError, refetch} =
     useGetNotificationsQuery();
   const [view, setView] = useState<ChipView>('all');
-  // Notifications sits in the Home stack; its parent is the tab navigator,
-  // the only one that can cross to another module's stack.
-  const tabNavigation =
-    useNavigation().getParent<TabNavigation>();
+  const navigation =
+    useNavigation<
+      NativeStackNavigationProp<HomeStackParamList, 'HomeNotifications'>
+    >();
   const {mutate: markRead} = useMarkNotificationReadMutation();
   const {mutate: markAllRead} = useMarkAllNotificationsReadMutation();
 
@@ -57,14 +57,13 @@ const NotificationsScreen: React.FC<Props> = ({onClose}) => {
 
   /**
    * The export opened a fabricated record card here. This opens the real one:
-   * mark read, then jump straight to the detail route in the owning module's
-   * stack. A notification with nothing to open — System, and Equipment until
-   * that module exists — stops at the mark.
+   * mark read, then push its detail on top of this screen. A notification with
+   * nothing to open — System, and Equipment until that module exists — stops
+   * at the mark.
    *
-   * This screen closes itself on the way out. The Home tab is a stack now and
-   * keeps whatever is on it, so leaving Notifications up would mean the next
-   * tap on Home lands back here rather than on Home — the notification has
-   * already been acted on, so it has no reason to still be there.
+   * The detail is pushed into this stack rather than onto the owning module's
+   * tab, so back returns to this list where the user came from instead of
+   * stranding them on a module list they never asked for.
    */
   const handlePress = useCallback(
     (notification: AppNotification) => {
@@ -73,12 +72,12 @@ const NotificationsScreen: React.FC<Props> = ({onClose}) => {
       }
       const related = notification.related;
       if (!related) return;
-      onClose();
-      navigateToTarget(tabNavigation, TARGET_BY_RECORD_TYPE[related.recordType], {
+      navigation.navigate('HomeRecordView', {
+        kind: related.recordType,
         id: related.recordId,
       });
     },
-    [markRead, onClose, tabNavigation],
+    [markRead, navigation],
   );
 
   const renderItem = useCallback(

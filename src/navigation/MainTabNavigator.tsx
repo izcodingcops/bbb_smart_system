@@ -11,13 +11,13 @@ import {
   BottomTabBarProps,
   createBottomTabNavigator,
 } from '@react-navigation/bottom-tabs';
-import {useRoute} from '@react-navigation/native';
+import {getFocusedRouteNameFromRoute, useRoute} from '@react-navigation/native';
 import ScreenBackground from '../components/ScreenBackground';
 import ErrorBoundary from '../components/ErrorBoundary';
 import {useGetMenuItemsQuery} from '../graphql/features/navigation/hooks';
 import {useAppDispatch} from '../redux/store';
 import {SetupIntent, setSetupIntent} from '../redux/ui/slice';
-import {SCREEN} from './screens';
+import {SCREEN, TAB_ROOT_ROUTE} from './screens';
 import {endShift} from '../redux/shift/slice';
 import {GetActiveProgram} from '../redux/auth/selectors';
 import {fontFamilies} from '../constants/fonts';
@@ -151,18 +151,27 @@ const AppTabBar: React.FC<TabBarProps> = ({state, navigation, menuItems}) => {
   const registered = new Set(state.routes.map(route => route.name));
 
   /**
-   * Hidden whenever the focused tab has pushed past its first route — every
-   * module stack keeps its list at index 0, so anything above that is a
-   * full-screen create or detail with no place for the bar.
+   * Hidden whenever the focused tab has pushed past its stack's first route —
+   * anything above it is a full-screen create or detail with no place for the
+   * bar.
    *
    * Read from navigator state rather than a redux flag written by each
-   * screen's focus effect. Those effects raced across navigators: jumping from
-   * a notification to another tab's detail fired the incoming screen's "hide"
-   * before the outgoing screen's "show" cleanup, so the bar came back over a
-   * detail screen. State can only describe one truth at a time.
+   * screen's focus effect. Those effects raced across navigators: jumping to
+   * another tab's detail fired the incoming screen's "hide" before the
+   * outgoing screen's "show" cleanup, so the bar came back over a detail.
+   *
+   * `getFocusedRouteNameFromRoute` and not `route.state.index`, because a tab
+   * that has not been mounted yet has no state to index into — it carries the
+   * pending navigation in `params` instead. Reading the index alone worked for
+   * bottom tabs (already visited, so state existed) and silently failed for
+   * every tab reached from the More sheet. This helper covers both, and
+   * returns undefined while a stack is still on its first route.
    */
-  const nestedIndex = activeRoute?.state?.index ?? 0;
-  const onPushedRoute = nestedIndex > 0;
+  const focusedRoute = activeRoute
+    ? getFocusedRouteNameFromRoute(activeRoute)
+    : undefined;
+  const onPushedRoute =
+    focusedRoute != null && focusedRoute !== TAB_ROOT_ROUTE[activeScreen];
 
   const handleMoreSelect = (screen: string) => {
     setMoreOpen(false);

@@ -47,6 +47,25 @@ export type MainTabParamList = {
 export type TabNavigation = BottomTabNavigationProp<MainTabParamList>;
 
 /**
+ * The first route in each tab's stack — the one that keeps the tab bar. Every
+ * route above it is a full-screen create or detail that hides the bar.
+ *
+ * Listed explicitly rather than inferred from the stack's index, because a tab
+ * the user has not visited yet has no navigator state to read an index from —
+ * see the tab-bar visibility check in MainTabNavigator.
+ */
+export const TAB_ROOT_ROUTE: Record<string, string> = {
+  [SCREEN.home]: 'HomeMain',
+  [SCREEN.work]: 'WorkList',
+  [SCREEN.maintenance]: 'MaintenanceList',
+  [SCREEN.fixture]: 'FixtureList',
+  [SCREEN.incident]: 'IncidentList',
+  [SCREEN.dispatch]: 'DispatchList',
+  [SCREEN.maps]: 'MapsList',
+  [SCREEN.poi]: 'PoiList',
+};
+
+/**
  * A destination in another tab: the tab route, plus the route inside that
  * tab's own stack. Both halves are needed because every module's create and
  * detail screens live in its stack, not at the tab level.

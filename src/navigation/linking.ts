@@ -28,6 +28,7 @@ export const linking: LinkingOptions<MainTabParamList> = {
         screens: {
           HomeMain: 'home',
           HomeNotifications: 'notifications',
+          HomeRecordView: 'notifications/:kind/:id',
         },
       },
       [SCREEN.work]: {
