@@ -30,6 +30,8 @@ export const offlineQueueLink = new ApolloLink((operation, forward) => {
       mutationKey: offlineQueueKey,
       variables: operation.variables,
       createdAt: new Date().toISOString(),
+      attempts: 0,
+      lastError: null,
     }),
   );
 

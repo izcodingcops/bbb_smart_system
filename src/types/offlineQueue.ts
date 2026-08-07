@@ -20,8 +20,18 @@ export interface OutboxItem {
   variables: Record<string, unknown>;
   /** ISO-8601, when it was queued — not when it eventually syncs. */
   createdAt: string;
+  /** Sync attempts made so far. Reset to 0 when the user retries. */
+  attempts: number;
+  /** Message from the most recent failed attempt, for the retry UI. */
+  lastError: string | null;
 }
 
 export interface OutboxState {
   items: OutboxItem[];
+  /**
+   * Items that exhausted MAX_SYNC_ATTEMPTS. Held out of `items` so a
+   * permanently-failing create cannot block everything queued behind it, and
+   * kept rather than dropped so the user can retry or discard it.
+   */
+  failed: OutboxItem[];
 }

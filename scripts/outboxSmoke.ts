@@ -9,6 +9,8 @@ const item: OutboxItem = {
   mutationKey: 'CREATE_WORK_LOG_ENTRY',
   variables: {programId: 'p1', input: {entryType: 'Litter Pickup'}},
   createdAt: '2026-08-03T09:00:00.000Z',
+  attempts: 0,
+  lastError: null,
 };
 
 const checks: Check[] = [
