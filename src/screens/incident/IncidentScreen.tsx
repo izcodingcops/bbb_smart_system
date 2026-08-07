@@ -1,6 +1,8 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {View, Text, FlatList, ScrollView, StyleSheet, Alert} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import {
   BackToTopPill,
@@ -25,8 +27,6 @@ import {useAppDispatch, useAppSelector} from '../../redux/store';
 import {
   clearPendingCreate,
   clearPendingRecord,
-  requestScreen,
-  setTabBarHidden,
 } from '../../redux/ui/slice';
 import {SCREEN} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
@@ -48,21 +48,14 @@ import {
   optionsForField,
 } from './filtering';
 import IncidentCard from './components/IncidentCard';
-import CreateIncidentScreen from './CreateIncidentScreen';
-import ViewIncidentScreen from './ViewIncidentScreen';
 import {usePendingIncidentItems} from './pendingIncidentItems';
+import {IncidentStackParamList, IncidentToast} from './routes';
 import {theme} from '../../theme';
 
-/** Create and View are full-screen pushes within the Incident tab. */
-type IncidentRoute = {name: 'list'} | {name: 'create'} | {name: 'view'; id: string};
-
-interface ToastState {
-  title: string;
-  message: string;
-  /** Record id used by the toast's View action. Empty when there is nowhere to go. */
-  routeId: string;
-  variant?: 'success' | 'danger';
-}
+type ListNavigation = NativeStackNavigationProp<
+  IncidentStackParamList,
+  'IncidentList'
+>;
 
 const IncidentScreen: React.FC = () => {
   const {data: queryIncidents = [], isLoading, isError, refetch} = useGetIncidentsQuery();
@@ -75,14 +68,13 @@ const IncidentScreen: React.FC = () => {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [openFilter, setOpenFilter] = useState<FilterField | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  /** Tab to go back to when create was opened from elsewhere and then closed. */
-  const [returnTo, setReturnTo] = useState<string | null>(null);
   const [completeTarget, setCompleteTarget] = useState<Incident | null>(null);
   /** Which card's inline status menu is open, if any — only one at a time. */
   const [menuIncidentId, setMenuIncidentId] = useState<string | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [route, setRoute] = useState<IncidentRoute>({name: 'list'});
-  const [toast, setToast] = useState<ToastState | null>(null);
+  const [toast, setToast] = useState<IncidentToast | null>(null);
+  const navigation = useNavigation<ListNavigation>();
+  const route = useRoute<RouteProp<IncidentStackParamList, 'IncidentList'>>();
   const listRef = useRef<FlatList<Incident>>(null);
   const {mutate: setStatus} = useSetIncidentStatusMutation();
   const dispatch = useAppDispatch();
@@ -90,31 +82,36 @@ const IncidentScreen: React.FC = () => {
   const pendingRecord = useAppSelector(state => state.ui.pendingRecord);
   const {queueTile, flushTile} = useAddRequestTiles(SCREEN.incident);
 
-  // Someone asked for an incident create from another tab — the navigator
-  // has since brought this screen on, so open create and spend the request,
-  // holding on to where they came from for an unsaved close.
+  // Someone asked for an incident create from another tab — the tab navigator
+  // has since brought this stack on, so push create and spend the request.
+  // Where they came from travels as a route param for an unsaved close.
   useEffect(() => {
     if (pendingCreate?.target !== SCREEN.incident) return;
-    setReturnTo(pendingCreate.origin === SCREEN.incident ? null : pendingCreate.origin);
-    setRoute({name: 'create'});
+    navigation.navigate('IncidentCreate', {
+      origin:
+        pendingCreate.origin === SCREEN.incident
+          ? undefined
+          : pendingCreate.origin,
+    });
     dispatch(clearPendingCreate());
-  }, [dispatch, pendingCreate]);
+  }, [dispatch, navigation, pendingCreate]);
 
-  // A notification asked for one of this module's records — the navigator has
-  // since brought this screen on, so open it and spend the request.
+  // A notification asked for one of this module's records — the tab navigator
+  // has since brought this stack on, so push it and spend the request.
   useEffect(() => {
     if (pendingRecord?.target !== SCREEN.incident) return;
-    setRoute({name: 'view', id: pendingRecord.recordId});
+    navigation.navigate('IncidentView', {id: pendingRecord.recordId});
     dispatch(clearPendingRecord());
-  }, [dispatch, pendingRecord]);
+  }, [dispatch, navigation, pendingRecord]);
 
-  // Create and View are full-screen pushes — the tab bar has no place there.
+  // Create and View hand a toast back on the way out — show it once, then
+  // clear the param so returning here later doesn't replay it.
+  const incomingToast = route.params?.toast;
   useEffect(() => {
-    dispatch(setTabBarHidden(route.name !== 'list'));
-    return () => {
-      dispatch(setTabBarHidden(false));
-    };
-  }, [dispatch, route.name]);
+    if (!incomingToast) return;
+    setToast(incomingToast);
+    navigation.setParams({toast: undefined});
+  }, [incomingToast, navigation]);
 
   // Completing can't be undone from here, so it always asks first; moving to
   // In-progress applies straight away.
@@ -143,16 +140,19 @@ const IncidentScreen: React.FC = () => {
     setMenuIncidentId(current => (current === cardId ? null : cardId));
   }, []);
 
-  const handleOpenIncident = useCallback((record: Incident) => {
-    if (record.queuedOffline) {
-      Alert.alert(
-        'Still uploading',
-        "This incident hasn't finished uploading yet — it'll be available to view once you're back online.",
-      );
-      return;
-    }
-    setRoute({name: 'view', id: record.id});
-  }, []);
+  const handleOpenIncident = useCallback(
+    (record: Incident) => {
+      if (record.queuedOffline) {
+        Alert.alert(
+          'Still uploading',
+          "This incident hasn't finished uploading yet — it'll be available to view once you're back online.",
+        );
+        return;
+      }
+      navigation.navigate('IncidentView', {id: record.id});
+    },
+    [navigation],
+  );
 
   const renderItem = useCallback(
     ({item}: {item: Incident}) => (
@@ -183,58 +183,6 @@ const IncidentScreen: React.FC = () => {
     setSearch('');
     setFilters(EMPTY_FILTERS);
   };
-
-  if (route.name === 'create') {
-    return (
-      <CreateIncidentScreen
-        onClose={() => {
-          setRoute({name: 'list'});
-          // Closed unsaved, so the trip into this module never really
-          // happened — go back where it started from.
-          if (returnTo) {
-            dispatch(requestScreen(returnTo));
-            setReturnTo(null);
-          }
-        }}
-        onCreated={created => {
-          setRoute({name: 'list'});
-          setReturnTo(null);
-          setToast(
-            created.queued
-              ? {
-                  title: 'Saved — will upload when back online',
-                  message: "This incident is queued and will upload automatically once you're back online.",
-                  routeId: '',
-                  variant: 'danger',
-                }
-              : {
-                  title: 'Incident submitted',
-                  message: `${created.reference} was added to your Work Log.`,
-                  routeId: created.id,
-                },
-          );
-        }}
-      />
-    );
-  }
-
-  if (route.name === 'view') {
-    return (
-      <ViewIncidentScreen
-        id={route.id}
-        onClose={() => setRoute({name: 'list'})}
-        onDeleted={reference => {
-          setRoute({name: 'list'});
-          setToast({
-            title: 'Incident deleted',
-            message: `${reference} was removed from your Work Log.`,
-            routeId: '',
-            variant: 'danger',
-          });
-        }}
-      />
-    );
-  }
 
   return (
     <View style={styles.root}>
@@ -370,7 +318,7 @@ const IncidentScreen: React.FC = () => {
             ? undefined
             : () => {
                 if (toast) {
-                  setRoute({name: 'view', id: toast.routeId});
+                  navigation.navigate('IncidentView', {id: toast.routeId});
                 }
                 setToast(null);
               }

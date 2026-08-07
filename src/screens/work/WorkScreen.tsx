@@ -9,11 +9,9 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
-import ViewMaintenanceScreen from '../maintenance/ViewMaintenanceScreen';
-import ViewFixtureScreen from '../fixture/ViewFixtureScreen';
-import CreateWorkLogScreen from '../workLog/CreateWorkLogScreen';
-import ViewWorkLogScreen from '../workLog/ViewWorkLogScreen';
-import {workLogCopy} from '../workLog/shiftText';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {WorkStackParamList, WorkToast} from './routes';
 import {
   BackToTopPill,
   ConfirmDialog,
@@ -39,8 +37,6 @@ import {useAppDispatch, useAppSelector} from '../../redux/store';
 import {
   clearPendingCreate,
   clearPendingRecord,
-  requestScreen,
-  setTabBarHidden,
 } from '../../redux/ui/slice';
 import {SCREEN} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
@@ -66,20 +62,16 @@ import TabSwitcher from './components/TabSwitcher';
 import {usePendingWorkLogItems} from './pendingWorkItems';
 import {theme} from '../../theme';
 
-interface ToastState {
-  title: string;
-  message: string;
-  variant?: 'success' | 'danger';
-}
+type ListNavigation = NativeStackNavigationProp<
+  WorkStackParamList,
+  'WorkList'
+>;
 
 /** Only these categories have a detail screen built; others fall back to a "coming soon" alert. */
-type DetailTarget = {category: 'Maintenance' | 'Fixture'; id: string};
-
-/** Create and Work Log's own View are full-screen pushes within the Work tab. */
-type WorkRoute =
-  | {name: 'list'}
-  | {name: 'create'}
-  | {name: 'view-worklog'; id: string};
+const DETAIL_ROUTE = {
+  Maintenance: 'WorkMaintenanceView',
+  Fixture: 'WorkFixtureView',
+} as const;
 
 const WorkScreen: React.FC = () => {
   const {
@@ -102,11 +94,9 @@ const WorkScreen: React.FC = () => {
   /** Which card's inline status menu is open, if any — only one at a time. */
   const [menuItemId, setMenuItemId] = useState<string | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [toast, setToast] = useState<ToastState | null>(null);
-  const [detail, setDetail] = useState<DetailTarget | null>(null);
-  const [route, setRoute] = useState<WorkRoute>({name: 'list'});
-  /** Tab to go back to when create was opened from elsewhere and then closed. */
-  const [returnTo, setReturnTo] = useState<string | null>(null);
+  const [toast, setToast] = useState<WorkToast | null>(null);
+  const navigation = useNavigation<ListNavigation>();
+  const route = useRoute<RouteProp<WorkStackParamList, 'WorkList'>>();
   const listRef = useRef<FlatList<WorkItem>>(null);
   const {mutate: setStatus} = useSetWorkItemStatusMutation();
   const {queueTile, flushTile} = useAddRequestTiles(SCREEN.work);
@@ -114,33 +104,43 @@ const WorkScreen: React.FC = () => {
   const pendingCreate = useAppSelector(state => state.ui.pendingCreate);
   const pendingRecord = useAppSelector(state => state.ui.pendingRecord);
 
-  // Someone asked for a Work Log create from another tab — the navigator has
-  // since brought this screen on, so open create and spend the request,
-  // holding on to where they came from for an unsaved close.
+  // Someone asked for a Work Log create from another tab — the tab navigator
+  // has since brought this stack on, so push create and spend the request.
+  // Where they came from travels as a route param for an unsaved close.
   useEffect(() => {
     if (pendingCreate?.target !== SCREEN.work) return;
-    setReturnTo(pendingCreate.origin === SCREEN.work ? null : pendingCreate.origin);
-    setRoute({name: 'create'});
+    navigation.navigate('WorkLogCreate', {
+      origin:
+        pendingCreate.origin === SCREEN.work ? undefined : pendingCreate.origin,
+    });
     dispatch(clearPendingCreate());
-  }, [dispatch, pendingCreate]);
+  }, [dispatch, navigation, pendingCreate]);
 
-  // A notification asked for a Work Log entry — the navigator has since brought
-  // this screen on, so open it and spend the request. Only Work Log arrives
-  // this way: a Maintenance or Fixture notification targets that module's own
-  // tab, not the projection of it this screen also renders.
+  // A notification asked for a Work Log entry — the tab navigator has since
+  // brought this stack on, so push it and spend the request. Only Work Log
+  // arrives this way: a Maintenance or Fixture notification targets that
+  // module's own tab, not the projection of it this screen also renders.
   useEffect(() => {
     if (pendingRecord?.target !== SCREEN.work) return;
-    setRoute({name: 'view-worklog', id: pendingRecord.recordId});
+    navigation.navigate('WorkLogView', {id: pendingRecord.recordId});
     dispatch(clearPendingRecord());
-  }, [dispatch, pendingRecord]);
+  }, [dispatch, navigation, pendingRecord]);
 
-  // Create and View are full-screen pushes — the tab bar has no place there.
+  // Detail routes hand a toast back on the way out, and a delete also asks for
+  // a refetch — this list mixes several sources, so no single refetchQueries
+  // covers it. Both params are spent on arrival so returning later doesn't
+  // replay them.
+  const {toast: incomingToast, refresh: incomingRefresh} = route.params ?? {};
   useEffect(() => {
-    dispatch(setTabBarHidden(detail !== null || route.name !== 'list'));
-    return () => {
-      dispatch(setTabBarHidden(false));
-    };
-  }, [dispatch, detail, route.name]);
+    if (!incomingToast && !incomingRefresh) return;
+    if (incomingRefresh) {
+      refetch();
+    }
+    if (incomingToast) {
+      setToast(incomingToast);
+    }
+    navigation.setParams({toast: undefined, refresh: undefined});
+  }, [incomingToast, incomingRefresh, navigation, refetch]);
 
   const handleSelectStatus = useCallback(
     async (item: WorkItem, status: WorkStatus) => {
@@ -166,24 +166,27 @@ const WorkScreen: React.FC = () => {
     setMenuItemId(current => (current === cardId ? null : cardId));
   }, []);
 
-  const handleOpenItem = useCallback((record: WorkItem) => {
-    if (record.queuedOffline) {
-      Alert.alert(
-        'Still uploading',
-        "This entry hasn't finished uploading yet — it'll be available to view once you're back online.",
-      );
-      return;
-    }
-    if (record.category === 'Maintenance' || record.category === 'Fixture') {
-      setDetail({category: record.category, id: record.id});
-      return;
-    }
-    if (record.category === 'Activity') {
-      setRoute({name: 'view-worklog', id: record.id});
-      return;
-    }
-    Alert.alert(record.reference, `${record.category} detail view is coming soon.`);
-  }, []);
+  const handleOpenItem = useCallback(
+    (record: WorkItem) => {
+      if (record.queuedOffline) {
+        Alert.alert(
+          'Still uploading',
+          "This entry hasn't finished uploading yet — it'll be available to view once you're back online.",
+        );
+        return;
+      }
+      if (record.category === 'Maintenance' || record.category === 'Fixture') {
+        navigation.navigate(DETAIL_ROUTE[record.category], {id: record.id});
+        return;
+      }
+      if (record.category === 'Activity') {
+        navigation.navigate('WorkLogView', {id: record.id});
+        return;
+      }
+      Alert.alert(record.reference, `${record.category} detail view is coming soon.`);
+    },
+    [navigation],
+  );
 
   const renderItem = useCallback(
     ({item}: {item: WorkItem}) => (
@@ -224,87 +227,6 @@ const WorkScreen: React.FC = () => {
     setSearch('');
     setFilters(EMPTY_FILTERS);
   };
-
-  if (detail?.category === 'Maintenance') {
-    return (
-      <ViewMaintenanceScreen
-        id={detail.id}
-        onClose={() => setDetail(null)}
-        onDeleted={reference => {
-          setDetail(null);
-          refetch();
-          setToast({
-            title: 'Maintenance deleted',
-            message: `${reference} was removed from your Work Log.`,
-            variant: 'danger',
-          });
-        }}
-      />
-    );
-  }
-
-  if (detail?.category === 'Fixture') {
-    return (
-      <ViewFixtureScreen
-        id={detail.id}
-        onClose={() => setDetail(null)}
-        onDeleted={reference => {
-          setDetail(null);
-          refetch();
-          setToast({
-            title: 'Fixture deleted',
-            message: `${reference} was removed from your Work Log.`,
-            variant: 'danger',
-          });
-        }}
-      />
-    );
-  }
-
-  if (route.name === 'create') {
-    return (
-      <CreateWorkLogScreen
-        onClose={() => {
-          setRoute({name: 'list'});
-          // Closed unsaved, so the trip into this module never really
-          // happened — go back where it started from.
-          if (returnTo) {
-            dispatch(requestScreen(returnTo));
-            setReturnTo(null);
-          }
-        }}
-        onCreated={created => {
-          setRoute({name: 'list'});
-          setReturnTo(null);
-          const copy = workLogCopy(created.shiftTypeName);
-          setToast(
-            created.queued
-              ? {title: copy.queuedToastTitle, message: copy.queuedToastMessage(created.entryType)}
-              : {title: copy.toastTitle, message: copy.toastMessage(created.entryType)},
-          );
-        }}
-      />
-    );
-  }
-
-  if (route.name === 'view-worklog') {
-    return (
-      <ViewWorkLogScreen
-        id={route.id}
-        onClose={() => setRoute({name: 'list'})}
-        onDeleted={(reference, shiftTypeName) => {
-          setRoute({name: 'list'});
-          refetch();
-          const copy = workLogCopy(shiftTypeName);
-          setToast({
-            title: copy.deletedToastTitle,
-            message: copy.deletedToastMessage(reference),
-            variant: 'danger',
-          });
-        }}
-      />
-    );
-  }
 
   return (
     <View style={styles.root}>

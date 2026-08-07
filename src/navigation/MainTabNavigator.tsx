@@ -41,10 +41,10 @@ import {
   WorkIcon,
 } from '../components/icons';
 import ComingSoonScreen from '../screens/ComingSoonScreen';
-import MaintenanceScreen from '../screens/maintenance/MaintenanceScreen';
-import WorkScreen from '../screens/work/WorkScreen';
+import MaintenanceNavigator from '../screens/maintenance/MaintenanceNavigator';
+import WorkNavigator from '../screens/work/WorkNavigator';
 import FixtureNavigator from '../screens/fixture/FixtureNavigator';
-import IncidentScreen from '../screens/incident/IncidentScreen';
+import IncidentNavigator from '../screens/incident/IncidentNavigator';
 import DispatchScreen from '../screens/dispatch/DispatchScreen';
 import MapsScreen from '../screens/maps/MapsScreen';
 import PoiScreen from '../screens/poi/PoiScreen';
@@ -55,10 +55,10 @@ const Tab = createBottomTabNavigator();
 
 const SCREEN_MAP: Record<string, React.ComponentType<any>> = {
   [SCREEN.home]: HomeScreen,
-  [SCREEN.work]: WorkScreen,
-  [SCREEN.maintenance]: MaintenanceScreen,
+  [SCREEN.work]: WorkNavigator,
+  [SCREEN.maintenance]: MaintenanceNavigator,
   [SCREEN.fixture]: FixtureNavigator,
-  [SCREEN.incident]: IncidentScreen,
+  [SCREEN.incident]: IncidentNavigator,
   [SCREEN.dispatch]: DispatchScreen,
   [SCREEN.maps]: MapsScreen,
   [SCREEN.poi]: PoiScreen,
