@@ -43,7 +43,7 @@ const ReportCard: React.FC<Props> = ({report, onPress}) => (
     idLabel={report.name}
     typeLabel={report.type}
     statusPill={<ScorePill score={report.score} />}
-    dateLine={formatCardDate(report.date)}
+    dateLine={formatCardDate(report.dateTime)}
     fields={[
       {label: 'Zone', value: report.zone},
       {label: 'Reviewed By', node: <PersonChip name={report.reviewedBy.name} />},

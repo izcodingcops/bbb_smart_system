@@ -205,7 +205,7 @@ function generate(
       dateTime,
       reviewedBy: {name: REVIEWERS[i % REVIEWERS.length]},
       zone: ZONES[i % ZONES.length],
-      score: [2, 3, 4, 5][i % 4],
+      score: [1, 2, 3, 5][i % 4],
       summary: GEN_SUMMARIES[i % GEN_SUMMARIES.length],
       checklist: checklist(GEN_ANSWER_SETS[i % GEN_ANSWER_SETS.length], ['', '', '', '', '']),
     };
