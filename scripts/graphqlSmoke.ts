@@ -865,6 +865,36 @@ const checks: Check[] = [
     assert.ok(afterDelete.data.dispatch.incidents.every((i: any) => i.reference !== '#IN-42986'));
   }],
 
+  ['observation reports resolve with 40 records split evenly by type', async () => {
+    const r: any = await run(
+      'query R($p: ID!) { observationReports(programId: $p) { id reference type score checklist { question answer } } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const reports = r.data.observationReports;
+    assert.equal(reports.length, 40);
+    assert.equal(reports.filter((x: any) => x.type === 'AMBASSADOR').length, 20);
+    assert.equal(reports.filter((x: any) => x.type === 'SUPERVISOR').length, 20);
+    assert.ok(reports.every((x: any) => x.checklist.length === 5));
+  }],
+
+  ['observation report detail resolves, unknown id resolves null', async () => {
+    const r: any = await run(
+      'query D($id: ID!) { observationReport(id: $id) { reference zone summary checklist { question answer note } } }',
+      {id: 'obr_2043'},
+    );
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.observationReport.reference, '#OBR-2043');
+    assert.equal(r.data.observationReport.zone, 'Downtown Louisville');
+    assert.equal(r.data.observationReport.checklist[0].answer, 'Yes');
+
+    const missing: any = await run(
+      'query D($id: ID!) { observationReport(id: $id) { reference } }',
+      {id: 'obr_does_not_exist'},
+    );
+    assert.equal(missing.data.observationReport, null);
+  }],
+
   // ---- POI ----
 
   ['poi list resolves with uppercase disposition enums', async () => {
