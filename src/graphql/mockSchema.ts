@@ -7,6 +7,7 @@ import {incidentResolvers} from './features/incident/resolvers';
 import {maintenanceResolvers} from './features/maintenance/resolvers';
 import {navigationResolvers} from './features/navigation/resolvers';
 import {notificationResolvers} from './features/notification/resolvers';
+import {observationReportResolvers} from './features/observationReport/resolvers';
 import {poiResolvers} from './features/poi/resolvers';
 import {workResolvers} from './features/work/resolvers';
 import {workLogResolvers} from './features/workLog/resolvers';
@@ -33,6 +34,7 @@ export const mockSchema = makeExecutableSchema({
       ...poiResolvers.Query,
       ...workLogResolvers.Query,
       ...notificationResolvers.Query,
+      ...observationReportResolvers.Query,
     },
     Mutation: {
       ...authResolvers.Mutation,

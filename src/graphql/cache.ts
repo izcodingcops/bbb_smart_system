@@ -46,5 +46,8 @@ export const cache = new InMemoryCache({
     Notification: {keyFields: ['id']},
     // No id of its own; keep it embedded in the notification it belongs to.
     NotificationTarget: {keyFields: false},
+    ObservationReport: {keyFields: ['id']},
+    ObservationReviewer: {keyFields: false},
+    ObservationChecklistItem: {keyFields: false},
   },
 });

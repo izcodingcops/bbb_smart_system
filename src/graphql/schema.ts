@@ -6,6 +6,7 @@ import {incidentTypeDefs} from './features/incident/schema';
 import {maintenanceTypeDefs} from './features/maintenance/schema';
 import {navigationTypeDefs} from './features/navigation/schema';
 import {notificationTypeDefs} from './features/notification/schema';
+import {observationReportTypeDefs} from './features/observationReport/schema';
 import {poiTypeDefs} from './features/poi/schema';
 import {workTypeDefs} from './features/work/schema';
 import {workLogTypeDefs} from './features/workLog/schema';
@@ -37,4 +38,5 @@ export const typeDefs = [
   poiTypeDefs,
   workLogTypeDefs,
   notificationTypeDefs,
+  observationReportTypeDefs,
 ].join('\n');
