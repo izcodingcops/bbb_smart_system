@@ -9,6 +9,7 @@ import {DispatchStackParamList} from '../screens/dispatch/routes';
 import {MapsStackParamList} from '../screens/maps/routes';
 import {HomeStackParamList} from '../screens/home/routes';
 import {ObservationReportsStackParamList} from '../screens/observationReports/routes';
+import {ReferenceDocumentsStackParamList} from '../screens/referenceDocuments/routes';
 
 /** Screen names as the menu reports them — the keys MainTabNavigator maps. */
 export const SCREEN = {
@@ -21,6 +22,7 @@ export const SCREEN = {
   maps: 'Maps',
   poi: 'Poi',
   reports: 'Reports',
+  referenceDocuments: 'ReferenceDocuments',
 } as const;
 
 /**
@@ -47,6 +49,9 @@ export type MainTabParamList = {
   [SCREEN.reports]:
     | NavigatorScreenParams<ObservationReportsStackParamList>
     | undefined;
+  [SCREEN.referenceDocuments]:
+    | NavigatorScreenParams<ReferenceDocumentsStackParamList>
+    | undefined;
 };
 
 export type TabNavigation = BottomTabNavigationProp<MainTabParamList>;
@@ -69,6 +74,7 @@ export const TAB_ROOT_ROUTE: Record<string, string> = {
   [SCREEN.maps]: 'MapsList',
   [SCREEN.poi]: 'PoiList',
   [SCREEN.reports]: 'ObservationReportsList',
+  [SCREEN.referenceDocuments]: 'ReferenceDocumentsList',
 };
 
 /**

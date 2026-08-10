@@ -49,5 +49,6 @@ export const cache = new InMemoryCache({
     ObservationReport: {keyFields: ['id']},
     ObservationReviewer: {keyFields: false},
     ObservationChecklistItem: {keyFields: false},
+    ReferenceDocument: {keyFields: ['id']},
   },
 });

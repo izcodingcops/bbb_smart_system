@@ -895,6 +895,35 @@ const checks: Check[] = [
     assert.equal(missing.data.observationReport, null);
   }],
 
+  ['reference documents resolve with 30 records', async () => {
+    const r: any = await run(
+      'query R($p: ID!) { referenceDocuments(programId: $p) { id reference entryType fixtureType fixture } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const docs = r.data.referenceDocuments;
+    assert.equal(docs.length, 30);
+    // Nullable fixture fields resolve, not stringly '—' from the mockup.
+    assert.ok(docs.some((d: any) => d.fixtureType === null));
+  }],
+
+  ['reference document detail resolves, unknown id resolves null', async () => {
+    const r: any = await run(
+      'query D($id: ID!) { referenceDocument(id: $id) { reference zone describe address } }',
+      {id: 'refdoc_107799687'},
+    );
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.referenceDocument.reference, '#107799687');
+    assert.equal(r.data.referenceDocument.zone, 'Downtown Core');
+    assert.equal(r.data.referenceDocument.address, '1701 Wynkoop St, Denver, CO 80202');
+
+    const missing: any = await run(
+      'query D($id: ID!) { referenceDocument(id: $id) { reference } }',
+      {id: 'refdoc_does_not_exist'},
+    );
+    assert.equal(missing.data.referenceDocument, null);
+  }],
+
   // ---- POI ----
 
   ['poi list resolves with uppercase disposition enums', async () => {
