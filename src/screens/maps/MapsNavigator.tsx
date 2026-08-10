@@ -43,6 +43,14 @@ const MapsNavigator: React.FC = () => (
   <Stack.Navigator
     screenOptions={{
       headerShown: false,
+      // Every route here used to be local state inside one component — an
+      // instant swap, no motion. The default push slide takes ~300ms, long
+      // enough to see this stack's flat contentStyle before the destination
+      // screen's own background (several use an SVG-gradient ScreenBackground
+      // that needs a frame to paint) catches up — a visible gray flash that
+      // never existed pre-navigation-stack. `animation: 'none'` restores the
+      // original instant feel.
+      animation: 'none',
       contentStyle: {backgroundColor: theme.colors.background},
     }}>
     <Stack.Screen name="MapsList" component={MapsScreen} />
