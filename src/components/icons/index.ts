@@ -49,6 +49,7 @@ export {default as SendIcon} from './SendIcon';
 export {default as ShieldCheckIcon} from './ShieldCheckIcon';
 export {default as SortIcon} from './SortIcon';
 export {default as SprayCanIcon} from './SprayCanIcon';
+export {default as StarIcon} from './StarIcon';
 export {default as TargetIcon} from './TargetIcon';
 export {default as ToolsIcon} from './ToolsIcon';
 export {default as TrashIcon} from './TrashIcon';
