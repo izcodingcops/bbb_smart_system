@@ -18,6 +18,8 @@ export const GET_MAINTENANCE_REQUESTS = gql`
       routedToSupervisor
       queuedOffline
       completedBy
+      assigneeKind
+      department
     }
   }
 `;
