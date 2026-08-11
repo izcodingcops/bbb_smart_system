@@ -50,6 +50,7 @@ export function usePendingMaintenanceItems(): MaintenanceRequest[] {
             completedBy: null,
             assigneeKind: 'Supervisor',
             department: null,
+            createdBy: 'You',
           };
         }),
     [outboxItems],

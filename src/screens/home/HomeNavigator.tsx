@@ -33,10 +33,14 @@ const NotificationsRoute: React.FC<NotificationsProps> = ({navigation}) => (
  * One route for every record type a notification can point at, discriminated
  * by `kind`, rather than five near-identical routes.
  *
- * These sit on top of Notifications in this stack, so back returns there and
- * the list keeps its scroll position and read/unread state. Deleting also just
- * pops back — the Notifications list holds no copy of the record to refresh,
- * and the owning module refetches from its own mutation.
+ * This route is reached two ways now: on top of Notifications (a record
+ * opened from a notification) or directly on top of Home (a card tapped on
+ * Home's Recent Work). `goBack()` returns to whichever of those actually
+ * pushed this route — a hardcoded `popTo('HomeNotifications')` would send a
+ * Home-opened record to Notifications instead of back to Home. Deleting
+ * also just goes back — neither Home nor the Notifications list holds a
+ * copy of the record to refresh, and the owning module refetches from its
+ * own mutation.
  *
  * POI's detail additionally offers "add interaction/update", which belong to
  * the POI tab's own stack; they are not reachable from here, matching how the
@@ -44,7 +48,7 @@ const NotificationsRoute: React.FC<NotificationsProps> = ({navigation}) => (
  */
 const RecordRoute: React.FC<RecordProps> = ({navigation, route}) => {
   const {kind, id} = route.params;
-  const onClose = () => navigation.popTo('HomeNotifications');
+  const onClose = () => navigation.goBack();
 
   switch (kind) {
     case 'Maintenance':

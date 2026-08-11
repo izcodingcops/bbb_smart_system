@@ -24,6 +24,7 @@ export interface MaintenanceRequest {
   completedBy: string | null;
   assigneeKind: MaintenanceAssigneeKind;
   department: string | null;
+  createdBy: string;
 }
 
 export interface MaintenanceComment {
@@ -39,7 +40,6 @@ export interface MaintenanceDetail extends MaintenanceRequest {
   ambassador: string;
   programName: string;
   programCode: string;
-  createdBy: string;
   completedOn: string | null;
   paid: boolean;
   zone: string | null;

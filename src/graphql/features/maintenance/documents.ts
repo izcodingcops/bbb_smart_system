@@ -20,6 +20,7 @@ export const GET_MAINTENANCE_REQUESTS = gql`
       completedBy
       assigneeKind
       department
+      createdBy
     }
   }
 `;

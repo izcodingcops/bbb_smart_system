@@ -77,6 +77,7 @@ export function toMaintenanceWorkItem(
       : 'Unassigned',
     assigneeInitials: request.assignee ? request.assignee.initials : '—',
     address: request.address,
+    createdBy: request.createdBy,
     bucket: isUnassigned
       ? 'unassigned'
       : request.status === 'Completed'

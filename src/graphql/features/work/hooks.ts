@@ -29,6 +29,7 @@ interface GqlWorkItem {
   disposition: string | null;
   businessName: string | null;
   quantity: string | null;
+  createdBy: string | null;
 }
 
 const STATUS: Record<GqlWorkItem['status'], WorkStatus> = {
@@ -70,6 +71,7 @@ const toWorkItem = (item: GqlWorkItem): WorkItem => ({
   disposition: item.disposition ?? undefined,
   businessName: item.businessName ?? undefined,
   quantity: item.quantity ?? undefined,
+  createdBy: item.createdBy ?? undefined,
 });
 
 const WORK_CONTEXT = {context: {feature: 'work'}};

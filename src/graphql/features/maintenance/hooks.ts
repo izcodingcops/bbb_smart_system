@@ -42,6 +42,7 @@ interface GqlMaintenanceRequest {
   completedBy: string | null;
   assigneeKind: 'SUPERVISOR' | 'DEPARTMENT';
   department: string | null;
+  createdBy: string;
 }
 
 const STATUS: Record<GqlMaintenanceRequest['status'], MaintenanceStatus> = {
@@ -77,6 +78,7 @@ const toRequest = (r: GqlMaintenanceRequest): MaintenanceRequest => ({
   completedBy: r.completedBy,
   assigneeKind: ASSIGNEE_KIND[r.assigneeKind],
   department: r.department,
+  createdBy: r.createdBy,
 });
 
 const MAINTENANCE_CONTEXT = {context: {feature: 'maintenance'}};

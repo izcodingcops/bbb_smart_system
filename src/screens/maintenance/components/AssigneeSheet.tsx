@@ -1,13 +1,19 @@
 import React, {useEffect, useState} from 'react';
-import {Alert, View, StyleSheet} from 'react-native';
-import {BottomSheet, DropdownField, PrimaryButton, SegmentedButtons} from '../../../components/ui';
+import {Alert, View, Text, TouchableOpacity, StyleSheet} from 'react-native';
+import {
+  BottomSheet,
+  DropdownField,
+  PriorityPill,
+  PrimaryButton,
+} from '../../../components/ui';
+import {UserIcon, UserPlusIcon, UsersIcon} from '../../../components/icons';
 import {useAuth} from '../../../hooks/useAuth';
 import {
   useAssignMaintenanceRequestMutation,
   useMaintenanceFormOptionsQuery,
 } from '../../../graphql/features/maintenance/hooks';
 import {MaintenanceAssigneeKind} from '../../../types/maintenance';
-import {WorkItem} from '../../../types/work';
+import {WorkItem, WorkPriority} from '../../../types/work';
 import {theme} from '../../../theme';
 
 type Mode = 'Ambassador' | 'Department' | 'Me';
@@ -17,6 +23,12 @@ const MODE_OPTIONS: {value: Mode; label: string}[] = [
   {value: 'Department', label: 'Department'},
   {value: 'Me', label: 'Me'},
 ];
+
+const PRIORITY_STYLE: Record<WorkPriority, {bg: string; fg: string}> = {
+  High: {bg: '#FFF2F0', fg: '#CF1322'},
+  Medium: {bg: '#FFFBE6', fg: '#AD8B00'},
+  Low: {bg: '#F6FFED', fg: '#389E0D'},
+};
 
 interface Props {
   /** Null when closed — also doubles as "which record this sheet targets". */
@@ -28,9 +40,10 @@ interface Props {
 
 /**
  * Supervisor-only "claim" workflow for an Unassigned maintenance card —
- * mirrors the mockup's Ambassador/Department/Me picker. Ambassadors never
- * see this: it's only ever opened from an 'unassigned'-bucket card, and
- * Ambassadors never render that bucket (their tab set has no Unassigned tab).
+ * mirrors the mockup's read-only summary + Ambassador/Department/Me picker.
+ * Ambassadors never see this: it's only ever opened from an 'unassigned'-
+ * bucket card, and Ambassadors never render that bucket (their tab set has
+ * no Unassigned tab).
  */
 const AssigneeSheet: React.FC<Props> = ({target, onClose, onAssigned}) => {
   const {user} = useAuth();
@@ -73,17 +86,83 @@ const AssigneeSheet: React.FC<Props> = ({target, onClose, onAssigned}) => {
     }
   };
 
+  const priority = PRIORITY_STYLE[target.priority];
+  const modeIcon = (forMode: Mode, color: string) => {
+    switch (forMode) {
+      case 'Ambassador':
+        return <UserPlusIcon size={21} color={color} />;
+      case 'Department':
+        return <UsersIcon size={21} color={color} />;
+      case 'Me':
+        return <UserIcon size={21} color={color} />;
+    }
+  };
+
   return (
-    <BottomSheet visible={!!target} title="Choose Assignee" onClose={onClose}>
-      <View style={styles.field}>
-        <SegmentedButtons
-          options={MODE_OPTIONS}
-          value={mode}
-          onChange={next => {
-            setMode(next as Mode);
-            setValue(null);
-          }}
+    <BottomSheet
+      visible={!!target}
+      title="Choose Assignee"
+      onClose={onClose}
+      footer={
+        <PrimaryButton
+          label="Assign Maintenance"
+          onPress={submit}
+          disabled={!canAssign}
+          style={styles.footerButton}
         />
+      }>
+      <View style={styles.summary}>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryKey}>Report ID</Text>
+          <Text style={styles.summaryValue}>{target.reference}</Text>
+        </View>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryKey}>Type</Text>
+          <Text style={styles.summaryValue}>{target.type}</Text>
+        </View>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryKey}>Priority</Text>
+          <PriorityPill label={target.priority} bg={priority.bg} fg={priority.fg} />
+        </View>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryKey}>Zone</Text>
+          <Text style={styles.summaryValue}>{target.zone}</Text>
+        </View>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryKey}>Address</Text>
+          <Text style={styles.summaryValue}>{target.address}</Text>
+        </View>
+        {target.createdBy ? (
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryKey}>Sent By</Text>
+            <Text style={styles.summaryValue}>{target.createdBy}</Text>
+          </View>
+        ) : null}
+      </View>
+
+      <Text style={styles.pickLabel}>
+        Choose Assignee <Text style={styles.required}>*</Text>
+      </Text>
+      <View style={styles.modeRow}>
+        {MODE_OPTIONS.map(option => {
+          const selected = option.value === mode;
+          const color = selected ? theme.colors.primary : theme.colors.textSecondary;
+          return (
+            <TouchableOpacity
+              key={option.value}
+              style={[styles.modeCard, selected && styles.modeCardSelected]}
+              activeOpacity={0.85}
+              onPress={() => {
+                setMode(option.value);
+                setValue(null);
+              }}>
+              {modeIcon(option.value, color)}
+              <Text style={[styles.modeLabel, selected && styles.modeLabelSelected]}>
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {mode === 'Ambassador' ? (
@@ -109,21 +188,76 @@ const AssigneeSheet: React.FC<Props> = ({target, onClose, onAssigned}) => {
           searchable
         />
       ) : null}
-
-      <View style={styles.footer}>
-        <PrimaryButton
-          label="Assign Maintenance"
-          onPress={submit}
-          disabled={!canAssign}
-        />
-      </View>
     </BottomSheet>
   );
 };
 
 const styles = StyleSheet.create({
-  field: {marginBottom: theme.spacing.md},
-  footer: {marginTop: theme.spacing.lg},
+  summary: {
+    marginBottom: theme.spacing.lg,
+    padding: theme.spacing.md,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: '#F4F5F7',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    paddingVertical: 7,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.borderLight,
+  },
+  summaryKey: {
+    width: 84,
+    fontFamily: theme.fonts.bold,
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+  },
+  summaryValue: {
+    flex: 1,
+    fontFamily: theme.fonts.bold,
+    fontSize: 13.5,
+    color: theme.colors.text,
+  },
+  pickLabel: {
+    fontFamily: theme.fonts.black,
+    fontSize: 14,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
+  },
+  required: {color: '#CF1322'},
+  modeRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: theme.spacing.md,
+  },
+  modeCard: {
+    flex: 1,
+    height: 64,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    backgroundColor: '#F4F5F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+  },
+  modeCardSelected: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primaryLight,
+  },
+  modeLabel: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 12.5,
+    color: theme.colors.textSecondary,
+  },
+  modeLabelSelected: {
+    fontFamily: theme.fonts.black,
+    color: theme.colors.primary,
+  },
+  footerButton: {flex: 1},
 });
 
 export default AssigneeSheet;

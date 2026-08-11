@@ -8,8 +8,8 @@ import {WorkBucket, WorkItem, WorkStatus} from '../../../types/work';
 import {theme} from '../../../theme';
 
 const SKELETON_CARDS = [0, 1];
-/** Home is a preview — the full list lives on the Work tab via "View All". */
-const MAX_VISIBLE = 5;
+/** Home is a glanceable preview — the full list lives on the Work tab via "View All". */
+const MAX_VISIBLE = 2;
 
 interface Props {
   items: WorkItem[];
@@ -87,22 +87,24 @@ const RecentWork: React.FC<Props> = ({
         </View>
       )}
 
-      {isLoading
-        ? SKELETON_CARDS.map(index => (
-            <RecordCardSkeleton key={index} fieldCount={3} style={styles.cardSpacing} />
-          ))
-        : visible.map(item => (
-            <WorkCard
-              key={item.id}
-              item={item}
-              compact
-              onPress={onOpenItem}
-              menuOpen={menuItemId === item.id}
-              onToggleMenu={onToggleMenu}
-              onSelectStatus={onSelectStatus}
-              onOpenAssign={onOpenAssign}
-            />
-          ))}
+      <View style={styles.cardList}>
+        {isLoading
+          ? SKELETON_CARDS.map(index => (
+              <RecordCardSkeleton key={index} fieldCount={3} />
+            ))
+          : visible.map(item => (
+              <WorkCard
+                key={item.id}
+                item={item}
+                compact
+                onPress={onOpenItem}
+                menuOpen={menuItemId === item.id}
+                onToggleMenu={onToggleMenu}
+                onSelectStatus={onSelectStatus}
+                onOpenAssign={onOpenAssign}
+              />
+            ))}
+      </View>
     </>
   );
 };
@@ -128,9 +130,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: theme.colors.white,
   },
-  // Matches WorkCard's own marginBottom, so trailing space before the next
-  // section is identical in the loading and loaded states.
-  cardSpacing: {marginBottom: theme.spacing.md},
+  cardList: {gap: theme.spacing.md},
   tabActive: {backgroundColor: '#E6F4FF'},
   tabText: {
     fontFamily: theme.fonts.bold,

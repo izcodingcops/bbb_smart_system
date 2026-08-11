@@ -31,6 +31,7 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
     assigneeKind: 'Supervisor',
     department: null,
+    createdBy: 'Marcus Webb',
   },
   {
     id: 'mt_40855',
@@ -47,6 +48,7 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
     assigneeKind: 'Supervisor',
     department: null,
+    createdBy: 'Marcus Webb',
   },
   {
     id: 'mt_40822',
@@ -63,6 +65,7 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
     assigneeKind: 'Supervisor',
     department: null,
+    createdBy: 'Alicia Reyes',
   },
   {
     id: 'mt_40810',
@@ -79,6 +82,7 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
     assigneeKind: 'Supervisor',
     department: null,
+    createdBy: 'Marcus Webb',
   },
   {
     id: 'mt_40801',
@@ -95,6 +99,7 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
     assigneeKind: 'Supervisor',
     department: null,
+    createdBy: 'Alicia Reyes',
   },
   {
     id: 'mt_40790',
@@ -111,6 +116,7 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
     assigneeKind: 'Supervisor',
     department: null,
+    createdBy: 'Alicia Reyes',
   },
   {
     id: 'mt_40777',
@@ -127,6 +133,7 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
     assigneeKind: 'Supervisor',
     department: null,
+    createdBy: 'Marcus Webb',
   },
   {
     id: 'mt_40762',
@@ -143,6 +150,7 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
     assigneeKind: 'Department',
     department: 'Facilities Team',
+    createdBy: 'Alicia Reyes',
   },
   {
     id: 'mt_40744',
@@ -159,6 +167,7 @@ const ACTIVE: MaintenanceRequest[] = [
     completedBy: null,
     assigneeKind: 'Supervisor',
     department: null,
+    createdBy: 'Marcus Webb',
   },
 ];
 
@@ -173,6 +182,7 @@ const COMPLETED_TYPES = [
 const COMPLETED_BUSINESSES = Object.keys(ADDRESSES);
 const COMPLETED_ASSIGNEES = [MARCUS, JOHN, PRIYA, ALEX];
 const COMPLETED_PRIORITIES: MaintenancePriority[] = ['Low', 'Medium', 'High'];
+const COMPLETED_CREATORS = ['Marcus Webb', 'Alicia Reyes'];
 
 function pad(value: number): string {
   return String(value).padStart(2, '0');
@@ -211,6 +221,7 @@ const COMPLETED: MaintenanceRequest[] = Array.from({length: 24}, (_, i) => {
     completedBy: assignee.name,
     assigneeKind: 'Supervisor' as const,
     department: null,
+    createdBy: COMPLETED_CREATORS[i % COMPLETED_CREATORS.length],
   };
 });
 
@@ -231,6 +242,7 @@ export const MOCK_MAINTENANCE_REQUESTS: MaintenanceRequest[] = [
     completedBy: MARCUS.name,
     assigneeKind: 'Supervisor',
     department: null,
+    createdBy: 'Alicia Reyes',
   },
   ...COMPLETED,
 ];

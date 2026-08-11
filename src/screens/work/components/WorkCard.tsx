@@ -2,7 +2,6 @@ import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {
   formatCardDate,
-  KebabMenu,
   PriorityPill,
   RecordCard,
   StatusPill,
@@ -157,8 +156,12 @@ const WorkCard: React.FC<Props> = ({
                 style={styles.chooseAssignee}
                 activeOpacity={0.85}
                 onPress={() => onOpenAssign?.(item)}>
-                <UserPlusIcon size={13} color={theme.colors.primary} />
-                <Text style={styles.chooseAssigneeText}>Choose Assignee</Text>
+                <View style={styles.chooseAssigneeAvatar}>
+                  <UserPlusIcon size={13} color={theme.colors.primary} />
+                </View>
+                <Text style={styles.chooseAssigneeText} numberOfLines={1}>
+                  Choose Assignee
+                </Text>
               </TouchableOpacity>
             ),
           },
@@ -187,15 +190,29 @@ const WorkCard: React.FC<Props> = ({
         />
       }
       kebab={
-        <KebabMenu
-          visible={actionable}
-          open={menuOpen}
-          onToggle={() => onToggleMenu(item.id)}
-          options={menuOptions}
-          onSelect={value => onSelectStatus(item, value as WorkStatus)}
-        />
+        // No separate "⋮" trigger — tapping the status pill above is the only
+        // way to open this, matching the mockup's own status-pill-only
+        // pattern (Maintenance's card keeps its kebab; this one doesn't).
+        actionable && menuOpen ? (
+          <View style={styles.statusMenu}>
+            {menuOptions.map(option => (
+              <TouchableOpacity
+                key={option.value}
+                style={styles.statusMenuRow}
+                activeOpacity={0.7}
+                onPress={() => onSelectStatus(item, option.value as WorkStatus)}>
+                <View style={[styles.statusMenuDot, {backgroundColor: option.dot}]} />
+                <Text style={styles.statusMenuLabel}>{option.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : undefined
       }
-      dateLine={`${item.bucket === 'assigned' ? 'Assigned ' : ''}${formatCardDate(item.date)}`}
+      dateLine={
+        item.bucket === 'unassigned' && item.createdBy
+          ? `${formatCardDate(item.date)} · Sent by ${item.createdBy}`
+          : `${item.bucket === 'assigned' ? 'Assigned ' : ''}${formatCardDate(item.date)}`
+      }
       badge={
         item.queuedOffline ? (
           <View style={styles.queuedRow}>
@@ -233,13 +250,64 @@ const styles = StyleSheet.create({
   chooseAssignee: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
     alignSelf: 'flex-start',
+    gap: 7,
+    height: 28,
+    paddingLeft: 3,
+    paddingRight: 11,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#99D3FF',
+    backgroundColor: theme.colors.primaryLight,
+  },
+  chooseAssigneeAvatar: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: '#99D3FF',
+    backgroundColor: theme.colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chooseAssigneeText: {
     fontFamily: theme.fonts.black,
-    fontSize: 12.5,
+    fontSize: 12,
     color: theme.colors.primary,
+  },
+  // Matches KebabMenu's own popover styling — reimplemented locally here
+  // since this card doesn't render KebabMenu's "⋮" trigger.
+  statusMenu: {
+    position: 'absolute',
+    top: 34,
+    right: 0,
+    zIndex: 20,
+    elevation: 20,
+    minWidth: 184,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.white,
+    padding: 6,
+    shadowColor: '#101828',
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.14,
+    shadowRadius: 20,
+  },
+  statusMenuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+  statusMenuDot: {width: 9, height: 9, borderRadius: 5},
+  statusMenuLabel: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 14,
+    color: theme.colors.text,
   },
 });
 

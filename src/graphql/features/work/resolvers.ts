@@ -46,6 +46,7 @@ const toWire = (item: ReturnType<typeof findWorkItem>) =>
     disposition: item.disposition ?? null,
     businessName: item.businessName ?? null,
     quantity: item.quantity ?? null,
+    createdBy: item.createdBy ?? null,
   };
 
 export const workResolvers = {
