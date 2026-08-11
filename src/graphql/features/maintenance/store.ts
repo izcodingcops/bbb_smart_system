@@ -20,6 +20,12 @@ export const DEPARTMENTS = [
   'Grounds & Maintenance',
   'Sanitation Crew',
 ];
+export const AMBASSADORS = [
+  'Marcus Bell',
+  'John Carter',
+  'Priya Shah',
+  'Alex Nguyen',
+];
 export const BUSINESS_NAMES = [
   '16th St Mall',
   'Union Station',

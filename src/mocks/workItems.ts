@@ -1,5 +1,6 @@
 import {QuickAction, WorkItem, WorkPriority} from '../types/work';
 import {WorkLogEntry} from '../types/workLog';
+import {MaintenanceRequest} from '../types/maintenance';
 import {MOCK_MAINTENANCE_REQUESTS} from './maintenance';
 import {MOCK_FIXTURES} from './fixture';
 import {MOCK_WORK_LOG_ENTRIES} from './workLog';
@@ -52,35 +53,40 @@ const FIXTURE_PRIORITIES: WorkPriority[] = ['Low', 'Medium', 'High'];
  * reshaped for the shared card. Sharing the id keeps a tap on a Work card
  * routable to the real ViewMaintenanceScreen/ViewFixtureScreen.
  */
+export function toMaintenanceWorkItem(
+  request: MaintenanceRequest,
+  index: number,
+): WorkItem {
+  const isUnassigned =
+    request.assigneeKind === 'Supervisor' &&
+    !request.assignee &&
+    request.status !== 'Completed';
+  return {
+    id: request.id,
+    reference: request.reference,
+    category: 'Maintenance',
+    status: request.status,
+    date: request.requestedAt,
+    type: request.type,
+    priority: request.priority,
+    zone: BUSINESS_ZONE[request.businessName] ?? `Zone ${(index % 5) + 1}`,
+    assignee: request.assignee
+      ? request.assignee.name
+      : request.assigneeKind === 'Department'
+      ? request.department ?? 'Department'
+      : 'Unassigned',
+    assigneeInitials: request.assignee ? request.assignee.initials : '—',
+    address: request.address,
+    bucket: isUnassigned
+      ? 'unassigned'
+      : request.status === 'Completed'
+      ? 'completed'
+      : 'assigned',
+  };
+}
+
 const MAINTENANCE_WORK_ITEMS: WorkItem[] = MOCK_MAINTENANCE_REQUESTS.map(
-  (request, index) => {
-    const isUnassigned =
-      request.assigneeKind === 'Supervisor' &&
-      !request.assignee &&
-      request.status !== 'Completed';
-    return {
-      id: request.id,
-      reference: request.reference,
-      category: 'Maintenance',
-      status: request.status,
-      date: request.requestedAt,
-      type: request.type,
-      priority: request.priority,
-      zone: BUSINESS_ZONE[request.businessName] ?? `Zone ${(index % 5) + 1}`,
-      assignee: request.assignee
-        ? request.assignee.name
-        : request.assigneeKind === 'Department'
-        ? request.department ?? 'Department'
-        : 'Unassigned',
-      assigneeInitials: request.assignee ? request.assignee.initials : '—',
-      address: request.address,
-      bucket: isUnassigned
-        ? 'unassigned'
-        : request.status === 'Completed'
-        ? 'completed'
-        : 'assigned',
-    };
-  },
+  toMaintenanceWorkItem,
 );
 
 /**

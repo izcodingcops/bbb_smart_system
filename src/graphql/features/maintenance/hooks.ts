@@ -14,6 +14,7 @@ import {
 } from '../../../types/maintenance';
 import {
   ADD_MAINTENANCE_COMMENT,
+  ASSIGN_MAINTENANCE_REQUEST,
   CREATE_MAINTENANCE_FIXTURE,
   CREATE_MAINTENANCE_REQUEST,
   DELETE_MAINTENANCE_COMMENT,
@@ -187,6 +188,15 @@ const REFRESH_DETAIL = {
   ...MAINTENANCE_CONTEXT,
   refetchQueries: ['GetMaintenanceRequests', 'GetMaintenanceRequest'],
 };
+/**
+ * Assigning a request also has to refresh Work's aggregated list (Home/Work
+ * reads `workItems`, not `maintenanceRequests`) so a claimed/reassigned
+ * request drops out of the Unassigned bucket there too.
+ */
+const REFRESH_ASSIGN = {
+  ...MAINTENANCE_CONTEXT,
+  refetchQueries: ['GetMaintenanceRequests', 'GetWorkItems'],
+};
 
 const CREATE_CONTEXT = {
   context: {feature: 'maintenance', offlineQueueKey: 'CREATE_MAINTENANCE_REQUEST'},
@@ -235,6 +245,31 @@ export function useSetMaintenanceStatusMutation() {
   const mutate = useCallback(
     async (id: string, status: MaintenanceStatus) => {
       await run({variables: {id, status: STATUS_OUT[status]}});
+    },
+    [run],
+  );
+  return {mutate, isLoading: loading};
+}
+
+export function useAssignMaintenanceRequestMutation() {
+  const [run, {loading}] = useMutation(
+    ASSIGN_MAINTENANCE_REQUEST,
+    REFRESH_ASSIGN,
+  );
+  const mutate = useCallback(
+    async (
+      id: string,
+      kind: MaintenanceAssigneeKind,
+      name: string,
+    ) => {
+      await run({
+        variables: {
+          id,
+          assigneeKind: kind === 'Department' ? 'DEPARTMENT' : 'SUPERVISOR',
+          assigneeName: kind === 'Department' ? null : name,
+          department: kind === 'Department' ? name : null,
+        },
+      });
     },
     [run],
   );

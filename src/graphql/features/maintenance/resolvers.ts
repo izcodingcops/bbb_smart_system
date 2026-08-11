@@ -8,6 +8,7 @@ import {FIXTURE_TYPES, ZONES} from '../shared/options';
 import {
   BUSINESS_NAMES,
   DEPARTMENTS,
+  AMBASSADORS,
   EQUIPMENT,
   INCIDENTS,
   MAINT_TYPES,
@@ -114,6 +115,7 @@ export const maintenanceResolvers = {
         types: MAINT_TYPES,
         zones: ZONES,
         departments: DEPARTMENTS,
+        ambassadors: AMBASSADORS,
         businessNames: BUSINESS_NAMES,
         fixtures: fixtureStore.records.map(record => record.title),
         incidents: INCIDENTS,
@@ -141,6 +143,42 @@ export const maintenanceResolvers = {
       } else {
         record.completedBy = null;
         record.completedOn = null;
+      }
+      return toWire(record);
+    },
+
+    assignMaintenanceRequest: async (
+      _: unknown,
+      args: {
+        id: string;
+        assigneeKind: string;
+        assigneeName?: string | null;
+        department?: string | null;
+      },
+    ) => {
+      await sleep();
+      const record = findRecord(args.id);
+      if (!record) {
+        throw new Error(`Unknown maintenance request: ${args.id}`);
+      }
+      record.assigneeKind = ASSIGNEE_KIND_IN[args.assigneeKind];
+      if (record.assigneeKind === 'Department') {
+        record.department = args.department ?? null;
+        record.assignee = null;
+        record.routedToSupervisor = false;
+      } else {
+        const name = args.assigneeName ?? '';
+        record.department = null;
+        record.assignee = {
+          name,
+          initials: name
+            .split(' ')
+            .filter(Boolean)
+            .map(part => part[0])
+            .join('')
+            .toUpperCase(),
+        };
+        record.routedToSupervisor = true;
       }
       return toWire(record);
     },

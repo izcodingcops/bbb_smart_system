@@ -1,6 +1,8 @@
 import {MOCK_QUICK_ACTIONS, toWorkLogWorkItem} from '../../../mocks';
+import {toMaintenanceWorkItem} from '../../../mocks/workItems';
 import {WorkStatus} from '../../../types/work';
 import {sleep} from '../../mockSession';
+import {maintenanceStore} from '../maintenance/store';
 import {workLogStore} from '../workLog/store';
 import {findWorkItem, workStore} from './store';
 
@@ -51,18 +53,24 @@ export const workResolvers = {
     // The screen buckets client-side via applyBucket, same convention as the
     // `filter: null` Fixture and Maintenance queries use.
     //
-    // Activity (Work Log) items are recomputed live from workLogStore.records
-    // rather than read from the static workStore.items snapshot: the Work Log
-    // feature's own create/update/delete mutations edit that store in place,
-    // and workStore.items was only ever seeded once at module load. Without
-    // this, a created/edited/deleted Work Log entry would never be reflected
-    // here. Maintenance and Fixture items don't get the same live treatment —
-    // that's a pre-existing gap in this aggregation, out of scope here.
+    // Activity (Work Log) and Maintenance items are recomputed live from
+    // workLogStore.records / maintenanceStore.records rather than read from
+    // the static workStore.items snapshot: their own feature mutations edit
+    // those stores in place, and workStore.items was only ever seeded once
+    // at module load. Without this, a created/edited/deleted Work Log entry
+    // or an assigned/updated Maintenance request would never be reflected
+    // here. Fixture items don't get the same live treatment — that's a
+    // pre-existing gap in this aggregation, out of scope here.
     workItems: async () => {
       await sleep();
-      const seeded = workStore.items.filter(item => item.category !== 'Activity');
+      const seeded = workStore.items.filter(
+        item => item.category !== 'Activity' && item.category !== 'Maintenance',
+      );
+      const maintenanceItems = maintenanceStore.records.map(toMaintenanceWorkItem);
       const workLogItems = workLogStore.records.map(toWorkLogWorkItem);
-      return [...seeded, ...workLogItems].map(item => toWire(item));
+      return [...seeded, ...maintenanceItems, ...workLogItems].map(item =>
+        toWire(item),
+      );
     },
 
     quickActions: async () => {

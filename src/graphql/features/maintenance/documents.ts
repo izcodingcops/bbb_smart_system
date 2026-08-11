@@ -76,6 +76,7 @@ export const GET_MAINTENANCE_FORM_OPTIONS = gql`
       types
       zones
       departments
+      ambassadors
       businessNames
       fixtures
       incidents
@@ -93,6 +94,30 @@ export const SET_MAINTENANCE_STATUS = gql`
       status
       completedBy
       completedOn
+    }
+  }
+`;
+
+export const ASSIGN_MAINTENANCE_REQUEST = gql`
+  mutation AssignMaintenanceRequest(
+    $id: ID!
+    $assigneeKind: MaintenanceAssigneeKind!
+    $assigneeName: String
+    $department: String
+  ) {
+    assignMaintenanceRequest(
+      id: $id
+      assigneeKind: $assigneeKind
+      assigneeName: $assigneeName
+      department: $department
+    ) {
+      id
+      assignee {
+        name
+        initials
+      }
+      department
+      routedToSupervisor
     }
   }
 `;

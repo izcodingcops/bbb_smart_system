@@ -77,6 +77,7 @@ export interface MaintenanceFormOptions {
   types: string[];
   zones: string[];
   departments: string[];
+  ambassadors: string[];
   businessNames: string[];
   fixtures: string[];
   incidents: string[];
