@@ -29,10 +29,12 @@ import {
 import {
   useGetQuickActionsQuery,
   useGetWorkItemsQuery,
+  useSetWorkItemStatusMutation,
 } from '../../graphql/features/work/hooks';
 import {useGetCheckedInEquipmentQuery} from '../../graphql/features/equipment/hooks';
 import {useUnreadNotificationCountQuery} from '../../graphql/features/notification/hooks';
 import {EquipmentItem} from '../../types/equipment';
+import {WorkItem, WorkStatus} from '../../types/work';
 import {HomeStackParamList} from './routes';
 import {theme} from '../../theme';
 
@@ -40,6 +42,13 @@ type HomeNavigation = NativeStackNavigationProp<
   HomeStackParamList,
   'HomeMain'
 >;
+
+/** Maps a Work item's category to the kind HomeRecordView already switches on. */
+const RECORD_KIND: Partial<Record<WorkItem['category'], 'Maintenance' | 'Fixture' | 'WorkLog'>> = {
+  Maintenance: 'Maintenance',
+  Fixture: 'Fixture',
+  Activity: 'WorkLog',
+};
 
 const HomeScreen: React.FC = () => {
   const {user, logout} = useAuth();
@@ -63,6 +72,7 @@ const HomeScreen: React.FC = () => {
     refetch: refetchEquipment,
   } = useGetCheckedInEquipmentQuery();
   const {data: unreadNotifications = 0} = useUnreadNotificationCountQuery();
+  const {mutate: setWorkItemStatus} = useSetWorkItemStatusMutation();
 
   const navigation = useNavigation<HomeNavigation>();
   // "View all work" crosses to another tab, which only the parent can do.
@@ -76,6 +86,8 @@ const HomeScreen: React.FC = () => {
   // Simulator when toggling the host Mac's network.
   const [isOnline, setIsOnline] = useState(() => connectivity.isOnline());
   const [addOpen, setAddOpen] = useState(false);
+  const [menuItemId, setMenuItemId] = useState<string | null>(null);
+  const [assignTarget, setAssignTarget] = useState<WorkItem | null>(null);
   const {queueTile, flushTile} = useAddRequestTiles(SCREEN.home);
 
   const firstName = user?.name?.split(' ')[0] ?? 'there';
@@ -129,6 +141,41 @@ const HomeScreen: React.FC = () => {
     tabNavigation?.navigate(SCREEN.work);
   }, [tabNavigation]);
 
+  const handleToggleMenu = useCallback((cardId: string) => {
+    setMenuItemId(current => (current === cardId ? null : cardId));
+  }, []);
+
+  const handleSelectStatus = useCallback(
+    async (item: WorkItem, status: WorkStatus) => {
+      setMenuItemId(null);
+      try {
+        await setWorkItemStatus(item.id, status);
+      } catch {
+        Alert.alert(
+          "Couldn't update status",
+          `${item.reference} is unchanged. Check your connection and try again.`,
+        );
+      }
+    },
+    [setWorkItemStatus],
+  );
+
+  const handleOpenItem = useCallback(
+    (item: WorkItem) => {
+      const kind = RECORD_KIND[item.category];
+      if (!kind) {
+        Alert.alert(item.reference, `${item.category} detail view is coming soon.`);
+        return;
+      }
+      navigation.navigate('HomeRecordView', {kind, id: item.id});
+    },
+    [navigation],
+  );
+
+  const handleOpenAssign = useCallback((item: WorkItem) => {
+    setAssignTarget(item);
+  }, []);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     refetchWork();
@@ -172,6 +219,11 @@ const HomeScreen: React.FC = () => {
             items={workItems}
             isLoading={isWorkLoading}
             onViewAll={handleViewAllWork}
+            onOpenItem={handleOpenItem}
+            menuItemId={menuItemId}
+            onToggleMenu={handleToggleMenu}
+            onSelectStatus={handleSelectStatus}
+            onOpenAssign={handleOpenAssign}
           />
 
           <CheckedInEquipment
