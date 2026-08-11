@@ -211,7 +211,7 @@ const HomeScreen: React.FC = () => {
             onAvatarPress={handleAvatar}
           />
 
-          <ShiftTimerCard shiftName={shiftName} onEnd={handleEnd} />
+          <ShiftTimerCard onEnd={handleEnd} />
 
           {!isOnline ? (
             <OfflineNotice
