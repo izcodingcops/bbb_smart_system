@@ -29,6 +29,8 @@ const ACTIVE: MaintenanceRequest[] = [
     routedToSupervisor: false,
     queuedOffline: false,
     completedBy: null,
+    assigneeKind: 'Supervisor',
+    department: null,
   },
   {
     id: 'mt_40855',
@@ -43,6 +45,8 @@ const ACTIVE: MaintenanceRequest[] = [
     routedToSupervisor: true,
     queuedOffline: true,
     completedBy: null,
+    assigneeKind: 'Supervisor',
+    department: null,
   },
   {
     id: 'mt_40822',
@@ -57,6 +61,8 @@ const ACTIVE: MaintenanceRequest[] = [
     routedToSupervisor: false,
     queuedOffline: false,
     completedBy: null,
+    assigneeKind: 'Supervisor',
+    department: null,
   },
   {
     id: 'mt_40810',
@@ -71,6 +77,8 @@ const ACTIVE: MaintenanceRequest[] = [
     routedToSupervisor: false,
     queuedOffline: false,
     completedBy: null,
+    assigneeKind: 'Supervisor',
+    department: null,
   },
   {
     id: 'mt_40801',
@@ -85,6 +93,8 @@ const ACTIVE: MaintenanceRequest[] = [
     routedToSupervisor: false,
     queuedOffline: false,
     completedBy: null,
+    assigneeKind: 'Supervisor',
+    department: null,
   },
   {
     id: 'mt_40790',
@@ -99,6 +109,8 @@ const ACTIVE: MaintenanceRequest[] = [
     routedToSupervisor: true,
     queuedOffline: false,
     completedBy: null,
+    assigneeKind: 'Supervisor',
+    department: null,
   },
   {
     id: 'mt_40777',
@@ -113,6 +125,8 @@ const ACTIVE: MaintenanceRequest[] = [
     routedToSupervisor: false,
     queuedOffline: false,
     completedBy: null,
+    assigneeKind: 'Supervisor',
+    department: null,
   },
   {
     id: 'mt_40762',
@@ -127,6 +141,8 @@ const ACTIVE: MaintenanceRequest[] = [
     routedToSupervisor: false,
     queuedOffline: true,
     completedBy: null,
+    assigneeKind: 'Department',
+    department: 'Facilities Team',
   },
   {
     id: 'mt_40744',
@@ -141,6 +157,8 @@ const ACTIVE: MaintenanceRequest[] = [
     routedToSupervisor: true,
     queuedOffline: false,
     completedBy: null,
+    assigneeKind: 'Supervisor',
+    department: null,
   },
 ];
 
@@ -191,6 +209,8 @@ const COMPLETED: MaintenanceRequest[] = Array.from({length: 24}, (_, i) => {
     routedToSupervisor: false,
     queuedOffline: false,
     completedBy: assignee.name,
+    assigneeKind: 'Supervisor' as const,
+    department: null,
   };
 });
 
@@ -209,6 +229,8 @@ export const MOCK_MAINTENANCE_REQUESTS: MaintenanceRequest[] = [
     routedToSupervisor: false,
     queuedOffline: false,
     completedBy: MARCUS.name,
+    assigneeKind: 'Supervisor',
+    department: null,
   },
   ...COMPLETED,
 ];

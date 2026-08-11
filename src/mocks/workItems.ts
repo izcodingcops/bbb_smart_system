@@ -53,20 +53,34 @@ const FIXTURE_PRIORITIES: WorkPriority[] = ['Low', 'Medium', 'High'];
  * routable to the real ViewMaintenanceScreen/ViewFixtureScreen.
  */
 const MAINTENANCE_WORK_ITEMS: WorkItem[] = MOCK_MAINTENANCE_REQUESTS.map(
-  (request, index) => ({
-    id: request.id,
-    reference: request.reference,
-    category: 'Maintenance',
-    status: request.status,
-    date: request.requestedAt,
-    type: request.type,
-    priority: request.priority,
-    zone: BUSINESS_ZONE[request.businessName] ?? `Zone ${(index % 5) + 1}`,
-    assignee: request.assignee ? request.assignee.name : 'Pending',
-    assigneeInitials: request.assignee ? request.assignee.initials : '—',
-    address: request.address,
-    bucket: request.status === 'Completed' ? 'completed' : 'assigned',
-  }),
+  (request, index) => {
+    const isUnassigned =
+      request.assigneeKind === 'Supervisor' &&
+      !request.assignee &&
+      request.status !== 'Completed';
+    return {
+      id: request.id,
+      reference: request.reference,
+      category: 'Maintenance',
+      status: request.status,
+      date: request.requestedAt,
+      type: request.type,
+      priority: request.priority,
+      zone: BUSINESS_ZONE[request.businessName] ?? `Zone ${(index % 5) + 1}`,
+      assignee: request.assignee
+        ? request.assignee.name
+        : request.assigneeKind === 'Department'
+        ? request.department ?? 'Department'
+        : 'Unassigned',
+      assigneeInitials: request.assignee ? request.assignee.initials : '—',
+      address: request.address,
+      bucket: isUnassigned
+        ? 'unassigned'
+        : request.status === 'Completed'
+        ? 'completed'
+        : 'assigned',
+    };
+  },
 );
 
 /**

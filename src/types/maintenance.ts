@@ -22,6 +22,8 @@ export interface MaintenanceRequest {
   routedToSupervisor: boolean;
   queuedOffline: boolean;
   completedBy: string | null;
+  assigneeKind: MaintenanceAssigneeKind;
+  department: string | null;
 }
 
 export interface MaintenanceComment {
@@ -40,8 +42,6 @@ export interface MaintenanceDetail extends MaintenanceRequest {
   createdBy: string;
   completedOn: string | null;
   paid: boolean;
-  assigneeKind: MaintenanceAssigneeKind;
-  department: string | null;
   zone: string | null;
   describeLocation: string | null;
   description: string | null;

@@ -39,6 +39,8 @@ interface GqlMaintenanceRequest {
   routedToSupervisor: boolean;
   queuedOffline: boolean;
   completedBy: string | null;
+  assigneeKind: 'SUPERVISOR' | 'DEPARTMENT';
+  department: string | null;
 }
 
 const STATUS: Record<GqlMaintenanceRequest['status'], MaintenanceStatus> = {
@@ -50,6 +52,13 @@ const PRIORITY: Record<GqlMaintenanceRequest['priority'], MaintenancePriority> =
   LOW: 'Low',
   MEDIUM: 'Medium',
   HIGH: 'High',
+};
+const ASSIGNEE_KIND: Record<
+  'SUPERVISOR' | 'DEPARTMENT',
+  MaintenanceAssigneeKind
+> = {
+  SUPERVISOR: 'Supervisor',
+  DEPARTMENT: 'Department',
 };
 
 const toRequest = (r: GqlMaintenanceRequest): MaintenanceRequest => ({
@@ -65,6 +74,8 @@ const toRequest = (r: GqlMaintenanceRequest): MaintenanceRequest => ({
   routedToSupervisor: r.routedToSupervisor,
   queuedOffline: r.queuedOffline,
   completedBy: r.completedBy,
+  assigneeKind: ASSIGNEE_KIND[r.assigneeKind],
+  department: r.department,
 });
 
 const MAINTENANCE_CONTEXT = {context: {feature: 'maintenance'}};
@@ -96,13 +107,6 @@ export function useGetMaintenanceRequestsQuery() {
   return {data: requests, isLoading: loading, isError: !!error, refetch};
 }
 
-const ASSIGNEE_KIND: Record<
-  'SUPERVISOR' | 'DEPARTMENT',
-  MaintenanceAssigneeKind
-> = {
-  SUPERVISOR: 'Supervisor',
-  DEPARTMENT: 'Department',
-};
 const STATUS_OUT: Record<MaintenanceStatus, string> = {
   Open: 'OPEN',
   'In-progress': 'IN_PROGRESS',
