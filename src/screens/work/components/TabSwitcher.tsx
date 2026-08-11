@@ -1,18 +1,23 @@
 import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
+import {UserRole} from '../../../types/auth';
 import {WorkBucket} from '../../../types/work';
 import {theme} from '../../../theme';
 
 interface Props {
   bucket: WorkBucket;
+  role: UserRole;
   assignedCount: number;
+  unassignedCount: number;
   completedCount: number;
   onChange: (bucket: WorkBucket) => void;
 }
 
 const TabSwitcher: React.FC<Props> = ({
   bucket,
+  role,
   assignedCount,
+  unassignedCount,
   completedCount,
   onChange,
 }) => {
@@ -20,6 +25,7 @@ const TabSwitcher: React.FC<Props> = ({
     const active = bucket === value;
     return (
       <TouchableOpacity
+        key={value}
         style={[styles.tab, active && styles.tabActive]}
         activeOpacity={0.85}
         onPress={() => onChange(value)}>
@@ -37,8 +43,11 @@ const TabSwitcher: React.FC<Props> = ({
 
   return (
     <View style={styles.row}>
-      {renderTab('assigned', 'Assigned Work', assignedCount)}
-      {renderTab('completed', 'Completed Work', completedCount)}
+      {renderTab('assigned', 'Assigned', assignedCount)}
+      {role === 'supervisor'
+        ? renderTab('unassigned', 'Unassigned', unassignedCount)
+        : null}
+      {renderTab('completed', 'Completed', completedCount)}
     </View>
   );
 };
