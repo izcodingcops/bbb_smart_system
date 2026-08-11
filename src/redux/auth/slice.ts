@@ -4,10 +4,15 @@ import {authApi} from '../../graphql/features/auth/hooks';
 import {authToken} from '../../graphql/authToken';
 import {apolloClient} from '../../graphql/client';
 import {locationTracker} from '../../utils/locationTracker';
-import {AuthState, LoginCredentials, User} from '../../types/auth';
+import {AuthState, GqlUserRole, LoginCredentials, User, UserRole} from '../../types/auth';
 import {initialAuthState} from './initialState';
 
 export {initialAuthState};
+
+const ROLE_IN: Record<GqlUserRole, UserRole> = {
+  AMBASSADOR: 'ambassador',
+  SUPERVISOR: 'supervisor',
+};
 
 export const login = createAsyncThunk(
   'auth/login',
@@ -30,6 +35,7 @@ export const login = createAsyncThunk(
       email: result.user.email ?? undefined,
       avatar: result.user.avatar ?? undefined,
       enableShiftEntry: result.user.enableShiftEntry,
+      role: ROLE_IN[result.user.role],
     };
 
     return {

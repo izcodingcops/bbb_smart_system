@@ -9,7 +9,7 @@ import {initialOutboxState} from './outbox/initialState';
  * changes a field. Without this, state saved by an older build rehydrates
  * missing the new keys and selectors read `undefined`.
  */
-export const PERSIST_VERSION = 4;
+export const PERSIST_VERSION = 5;
 
 export const migrations: MigrationManifest = {
   // v1: auth gained programs/activeProgramId/shiftTypes; the shift slice was
@@ -85,6 +85,24 @@ export const migrations: MigrationManifest = {
         })),
         failed: outbox.failed ?? [],
       },
+    } as unknown as PersistedState;
+  },
+
+  // v5: User gained `role`. State saved by an older build has no such field,
+  // so role-gated reads would see `undefined` instead of a valid UserRole.
+  // Default to 'ambassador' — the role every persisted session predates.
+  5: (state): PersistedState => {
+    const previous = state as Record<string, any> | undefined;
+    if (!previous) {
+      return state;
+    }
+    const user = previous.auth?.user;
+    if (!user) {
+      return previous as unknown as PersistedState;
+    }
+    return {
+      ...previous,
+      auth: {...previous.auth, user: {role: 'ambassador', ...user}},
     } as unknown as PersistedState;
   },
 };

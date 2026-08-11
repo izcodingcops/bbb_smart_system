@@ -12,7 +12,7 @@ const LOGIN = `
   mutation Login($input: LoginInput!) {
     login(input: $input) {
       __typename
-      ... on AuthSession { token user { id enableShiftEntry programs { id } } shiftTypes { id } }
+      ... on AuthSession { token user { id enableShiftEntry role programs { id } } shiftTypes { id } }
       ... on InvalidCredentials { message }
     }
   }
@@ -34,13 +34,13 @@ const checks: Check[] = [
   }],
 
   ['login rejects a bad password as a union member, not an error', async () => {
-    const r: any = await run(LOGIN, {input: {username: 'johndoe', password: 'wrong', loginType: 1}});
+    const r: any = await run(LOGIN, {input: {username: 'batman', password: 'wrong', loginType: 1}});
     assert.equal(r.errors, undefined);
     assert.equal(r.data.login.__typename, 'InvalidCredentials');
   }],
 
   ['login returns a session with programs and shift types', async () => {
-    const r: any = await run(LOGIN, {input: {username: 'johndoe', password: 'password123', loginType: 1}});
+    const r: any = await run(LOGIN, {input: {username: 'batman', password: 'Temp@123', loginType: 1}});
     assert.equal(r.errors, undefined);
     assert.equal(r.data.login.__typename, 'AuthSession');
     assert.equal(r.data.login.user.enableShiftEntry, true);
@@ -48,8 +48,15 @@ const checks: Check[] = [
     assert.ok(r.data.login.shiftTypes.length > 0);
   }],
 
+  ['login carries the user role, ambassador and supervisor alike', async () => {
+    const amb: any = await run(LOGIN, {input: {username: 'batman', password: 'Temp@123', loginType: 1}});
+    assert.equal(amb.data.login.user.role, 'AMBASSADOR');
+    const sup: any = await run(LOGIN, {input: {username: 'taz', password: 'Temp@123', loginType: 1}});
+    assert.equal(sup.data.login.user.role, 'SUPERVISOR');
+  }],
+
   ['me resolves from the bearer token', async () => {
-    const login: any = await run(LOGIN, {input: {username: 'johndoe', password: 'password123', loginType: 1}});
+    const login: any = await run(LOGIN, {input: {username: 'batman', password: 'Temp@123', loginType: 1}});
     const token = login.data.login.token;
     const me: any = await run('query Me { me { id name } }', undefined, token);
     assert.equal(me.data.me.id, '1');

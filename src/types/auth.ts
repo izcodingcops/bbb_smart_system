@@ -1,5 +1,8 @@
 import {Program, ShiftType} from './shift';
 
+export type UserRole = 'ambassador' | 'supervisor';
+export type GqlUserRole = 'AMBASSADOR' | 'SUPERVISOR';
+
 export interface User {
   id: string;
   name: string;
@@ -7,6 +10,7 @@ export interface User {
   email?: string;
   avatar?: string;
   enableShiftEntry?: boolean;
+  role: UserRole;
 }
 
 export interface Session {
@@ -42,6 +46,7 @@ export interface GqlUser {
   email: string | null;
   avatar: string | null;
   enableShiftEntry: boolean;
+  role: GqlUserRole;
   programs: Program[];
 }
 
