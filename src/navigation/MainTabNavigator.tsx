@@ -28,7 +28,6 @@ import MoreSheet from '../components/MoreSheet';
 import {ConfirmDialog} from '../components/ui';
 import {
   AlertTriangleIcon,
-  CubeIcon,
   GridIcon,
   HandymanIcon,
   HomeIcon,
