@@ -1,5 +1,6 @@
 import React, {useRef, useState} from 'react';
 import {View, Text, ScrollView, TouchableOpacity, StyleSheet} from 'react-native';
+import ScreenBackground from '../../components/ScreenBackground';
 import {
   ConfirmDialog,
   DetailField,
@@ -135,7 +136,7 @@ const ViewPoiScreen: React.FC<Props> = ({
   // hidden on this route, so a failed load with no way out would trap the user.
   if (isError || !detail) {
     return (
-      <View style={styles.root}>
+      <ScreenBackground style={styles.root}>
         <DetailTopBar title="Person" onBack={onClose} />
         <View style={styles.loading}>
           <EmptyState
@@ -146,14 +147,14 @@ const ViewPoiScreen: React.FC<Props> = ({
             onAction={refetch}
           />
         </View>
-      </View>
+      </ScreenBackground>
     );
   }
 
   // Edit replaces the detail in place, matching the design's slide-over.
   if (editing && options) {
     return (
-      <View style={styles.root}>
+      <ScreenBackground style={styles.root}>
         <PoiForm
           mode="edit"
           reference={detail.reference}
@@ -171,7 +172,7 @@ const ViewPoiScreen: React.FC<Props> = ({
           }}
           onClose={() => setEditing(false)}
         />
-      </View>
+      </ScreenBackground>
     );
   }
 
@@ -184,7 +185,7 @@ const ViewPoiScreen: React.FC<Props> = ({
   };
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground style={styles.root}>
       <DetailTopBar
         title="Person"
         reference={detail.reference}
@@ -446,17 +447,16 @@ const ViewPoiScreen: React.FC<Props> = ({
         variant={toast?.variant}
         onDismiss={() => setToast(null)}
       />
-    </View>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: theme.colors.background},
+  root: {flex: 1},
   loading: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.background,
   },
   body: {paddingBottom: 40},
   idRow: {

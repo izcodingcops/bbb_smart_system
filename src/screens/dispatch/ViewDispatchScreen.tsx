@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
+import ScreenBackground from '../../components/ScreenBackground';
 import {
   DetailField,
   DetailSection,
@@ -128,12 +129,12 @@ const ViewDispatchScreen: React.FC<Props> = ({navigation, route: navRoute}) => {
 
   if (isLoading) {
     return (
-      <View style={styles.root}>
+      <ScreenBackground style={styles.root}>
         <DetailTopBar title="Dispatch Details" onBack={onClose} />
         <View style={styles.loading}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
-      </View>
+      </ScreenBackground>
     );
   }
 
@@ -141,7 +142,7 @@ const ViewDispatchScreen: React.FC<Props> = ({navigation, route: navRoute}) => {
   // hidden on this route, so a failed load with no way out would trap the user.
   if (isError || !detail) {
     return (
-      <View style={styles.root}>
+      <ScreenBackground style={styles.root}>
         <DetailTopBar title="Dispatch Details" onBack={onClose} />
         <View style={styles.loading}>
           <EmptyState
@@ -152,7 +153,7 @@ const ViewDispatchScreen: React.FC<Props> = ({navigation, route: navRoute}) => {
             onAction={refetch}
           />
         </View>
-      </View>
+      </ScreenBackground>
     );
   }
 
@@ -167,7 +168,7 @@ const ViewDispatchScreen: React.FC<Props> = ({navigation, route: navRoute}) => {
   const rest = detail.incidents.filter(incident => incident.id !== justAdded?.id);
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground style={styles.root}>
       <DetailTopBar title="Dispatch Details" onBack={onClose} />
 
       <View style={styles.idRow}>
@@ -297,17 +298,16 @@ const ViewDispatchScreen: React.FC<Props> = ({navigation, route: navRoute}) => {
         variant={toast?.variant}
         onDismiss={() => setToast(null)}
       />
-    </View>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: theme.colors.background},
+  root: {flex: 1},
   loading: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.background,
   },
   body: {paddingBottom: 40},
   idRow: {
