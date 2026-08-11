@@ -7,6 +7,7 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import ScreenBackground from '../../components/ScreenBackground';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import GradientFab from '../../components/ui/GradientFab';
+import AssigneeSheet from '../maintenance/components/AssigneeSheet';
 import HomeHeader from './components/HomeHeader';
 import ShiftTimerCard from './components/ShiftTimerCard';
 import OfflineNotice from './components/OfflineNotice';
@@ -241,6 +242,14 @@ const HomeScreen: React.FC = () => {
           onSelect={handleAddRequest}
           onClose={() => setAddOpen(false)}
           onClosed={flushTile}
+        />
+
+        <AssigneeSheet
+          target={assignTarget}
+          onClose={() => setAssignTarget(null)}
+          onAssigned={() => {
+            refetchWork();
+          }}
         />
       </SafeAreaView>
     </ScreenBackground>

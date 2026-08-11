@@ -55,6 +55,7 @@ import {
 } from './filtering';
 import WorkCard from './components/WorkCard';
 import TabSwitcher from './components/TabSwitcher';
+import AssigneeSheet from '../maintenance/components/AssigneeSheet';
 import {usePendingWorkLogItems} from './pendingWorkItems';
 import {theme} from '../../theme';
 
@@ -87,6 +88,7 @@ const WorkScreen: React.FC = () => {
   const [openFilter, setOpenFilter] = useState<FilterField | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [completeTarget, setCompleteTarget] = useState<WorkItem | null>(null);
+  const [assignTarget, setAssignTarget] = useState<WorkItem | null>(null);
   /** Which card's inline status menu is open, if any — only one at a time. */
   const [menuItemId, setMenuItemId] = useState<string | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -167,6 +169,7 @@ const WorkScreen: React.FC = () => {
         menuOpen={menuItemId === item.id}
         onToggleMenu={handleToggleMenu}
         onSelectStatus={handleSelectStatus}
+        onOpenAssign={setAssignTarget}
       />
     ),
     [menuItemId, handleOpenItem, handleToggleMenu, handleSelectStatus],
@@ -430,6 +433,17 @@ const WorkScreen: React.FC = () => {
         }}
         onClose={() => setAddOpen(false)}
         onClosed={flushTile}
+      />
+
+      <AssigneeSheet
+        target={assignTarget}
+        onClose={() => setAssignTarget(null)}
+        onAssigned={(item, name) =>
+          setToast({
+            title: 'Maintenance assigned',
+            message: `${item.reference} is now with ${name} — moved out of Unassigned.`,
+          })
+        }
       />
     </View>
   );
