@@ -71,6 +71,7 @@ yarn-error.log
 !.claude/CLAUDE.md
 !.claude/rules/
 !.claude/skills/
+!.claude/agents/
 CLAUDE.local.md
 
 docs/superpowers/
