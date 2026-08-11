@@ -67,11 +67,13 @@ yarn-error.log
 /coverage
 
 # Claude Code
-.claude/
-CLAUDE.md
+.claude/*
+!.claude/CLAUDE.md
+!.claude/rules/
+!.claude/skills/
 CLAUDE.local.md
 
-docs/superpowers/plans/
+docs/superpowers/
 
 # Yarn
 .yarn/*
@@ -87,7 +89,6 @@ graphify-out/
 
 # git worktrees
 .worktrees/
-docs/superpowers/specs/
 
 # graphql smoke runner output
 .smoke/
