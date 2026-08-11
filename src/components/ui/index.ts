@@ -11,6 +11,7 @@ export {default as DateRangeSheet} from './DateRangeSheet';
 export {
   default as DateTimeField,
   formatCardDate,
+  formatCardDateOnly,
   formatDateTime,
   formatDateTimeOrNull,
 } from './DateTimeField';

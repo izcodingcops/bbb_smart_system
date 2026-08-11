@@ -19,7 +19,9 @@ interface Props {
   statusPill: React.ReactNode;
   /** Caller renders its own <KebabMenu>, or omits it entirely. */
   kebab?: React.ReactNode;
-  dateLine: string;
+  /** Plain text renders with the shell's own dateLine style; pass a node
+   *  (e.g. an avatar + name row) for anything richer. */
+  dateLine: React.ReactNode;
   /** A fully-formed node, e.g. Maintenance's 'Queued · offline' row. */
   badge?: React.ReactNode;
   fields: RecordCardField[];
@@ -66,7 +68,11 @@ const RecordCard: React.FC<Props> = ({
         </View>
       </View>
 
-      <Text style={styles.dateLine}>{dateLine}</Text>
+      {typeof dateLine === 'string' ? (
+        <Text style={styles.dateLine}>{dateLine}</Text>
+      ) : (
+        dateLine
+      )}
 
       {badge}
 
@@ -107,7 +113,9 @@ const RecordCard: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
   card: {gap: theme.spacing.sm},
-  cardCompact: {gap: theme.spacing.xs},
+  // Compact only tightens the outer padding (see Card.tsx) — cramming the
+  // row gap too made cards feel congested rather than just smaller.
+  cardCompact: {gap: theme.spacing.sm},
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -141,7 +149,9 @@ const styles = StyleSheet.create({
   },
   divider: {height: 1, backgroundColor: '#EEF0F2'},
   grid: {flexDirection: 'row', gap: theme.spacing.sm},
-  gridCell: {flex: 1, gap: 4},
+  // minWidth: 0 lets a cell actually shrink below its content's intrinsic
+  // width instead of overflowing the row (RN flexbox default).
+  gridCell: {flex: 1, minWidth: 0, gap: 4},
   label: {
     fontFamily: theme.fonts.bold,
     fontSize: 11,

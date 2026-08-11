@@ -55,6 +55,15 @@ export function formatCardDate(iso: string): string {
   return `${day} · ${pad(hour12)}:${pad(date.getMinutes())} ${suffix}`;
 }
 
+/** 'Jul 31, 2026' — the Unassigned-card date, deliberately without a time. */
+export function formatCardDateOnly(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 /**
  * Auto-filled from the device clock, tappable to adjust. Tapping runs the date
  * picker and then the time picker, so one field covers both halves.

@@ -2,6 +2,7 @@ import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {
   formatCardDate,
+  formatCardDateOnly,
   PriorityPill,
   RecordCard,
   StatusPill,
@@ -26,6 +27,12 @@ const STATUS_MENU_OPTIONS: {status: WorkStatus; label: string; dot: string}[] = 
   {status: 'In-progress', label: 'Move to In-progress', dot: '#AD8B00'},
   {status: 'Completed', label: 'Mark Completed', dot: '#389E0D'},
 ];
+
+/** 'Marcus Webb' -> 'MW' — for the Unassigned card's sender avatar. */
+function initialsOf(name: string): string {
+  const parts = name.split(' ').filter(Boolean);
+  return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase();
+}
 
 /** The card's "Type" row label reads differently per category, design-wise. */
 const TYPE_LABEL: Record<WorkCategory, string> = {
@@ -157,10 +164,10 @@ const WorkCard: React.FC<Props> = ({
                 activeOpacity={0.85}
                 onPress={() => onOpenAssign?.(item)}>
                 <View style={styles.chooseAssigneeAvatar}>
-                  <UserPlusIcon size={13} color={theme.colors.primary} />
+                  <UserPlusIcon size={12} color={theme.colors.primary} />
                 </View>
                 <Text style={styles.chooseAssigneeText} numberOfLines={1}>
-                  Choose Assignee
+                  Choose assignee
                 </Text>
               </TouchableOpacity>
             ),
@@ -209,9 +216,22 @@ const WorkCard: React.FC<Props> = ({
         ) : undefined
       }
       dateLine={
-        item.bucket === 'unassigned' && item.createdBy
-          ? `${formatCardDate(item.date)} · Sent by ${item.createdBy}`
-          : `${item.bucket === 'assigned' ? 'Assigned ' : ''}${formatCardDate(item.date)}`
+        item.bucket === 'unassigned' && item.createdBy ? (
+          <View style={styles.sentRow}>
+            <Text style={styles.sentDate}>{formatCardDateOnly(item.date)}</Text>
+            <Text style={styles.sentDash}>-</Text>
+            <View style={styles.sentAvatar}>
+              <Text style={styles.sentAvatarText}>
+                {initialsOf(item.createdBy)}
+              </Text>
+            </View>
+            <Text style={styles.sentName} numberOfLines={1}>
+              {item.createdBy}
+            </Text>
+          </View>
+        ) : (
+          `${item.bucket === 'assigned' ? 'Assigned ' : ''}${formatCardDate(item.date)}`
+        )
       }
       badge={
         item.queuedOffline ? (
@@ -251,10 +271,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    gap: 7,
-    height: 28,
-    paddingLeft: 3,
-    paddingRight: 11,
+    // maxWidth: '100%' + flexShrink stop this from pushing past its
+    // (flex:1, minWidth:0) grid cell — without them the pill sized to its
+    // own content and overflowed the card in a 3-column layout.
+    maxWidth: '100%',
+    flexShrink: 1,
+    gap: 5,
+    height: 26,
+    paddingLeft: 2,
+    paddingRight: 8,
     borderRadius: 999,
     borderWidth: 1,
     borderStyle: 'dashed',
@@ -262,19 +287,51 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primaryLight,
   },
   chooseAssigneeAvatar: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#99D3FF',
     backgroundColor: theme.colors.white,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   chooseAssigneeText: {
+    flexShrink: 1,
     fontFamily: theme.fonts.black,
-    fontSize: 12,
+    fontSize: 11.5,
     color: theme.colors.primary,
+  },
+  sentRow: {flexDirection: 'row', alignItems: 'center', gap: 6},
+  sentDate: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+  },
+  sentDash: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+  },
+  sentAvatar: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sentAvatarText: {
+    fontFamily: theme.fonts.black,
+    fontSize: 8,
+    color: theme.colors.white,
+  },
+  sentName: {
+    flexShrink: 1,
+    fontFamily: theme.fonts.bold,
+    fontSize: 12,
+    color: theme.colors.textMuted,
   },
   // Matches KebabMenu's own popover styling — reimplemented locally here
   // since this card doesn't render KebabMenu's "⋮" trigger.

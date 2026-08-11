@@ -55,11 +55,12 @@ const RecentWork: React.FC<Props> = ({
         <Text style={[styles.tabText, active && styles.tabTextActive]}>
           {label}
         </Text>
-        <View style={[styles.count, active && styles.countActive]}>
-          <Text style={[styles.countText, active && styles.countTextActive]}>
-            {count}
-          </Text>
-        </View>
+        {/* Only the active tab carries a count — matches the reference design. */}
+        {active ? (
+          <View style={styles.count}>
+            <Text style={styles.countText}>{count}</Text>
+          </View>
+        ) : null}
       </TouchableOpacity>
     );
   };
@@ -81,7 +82,7 @@ const RecentWork: React.FC<Props> = ({
         <View style={styles.tabs}>
           {renderTab('assigned', 'Assigned', assignedCount)}
           {role === 'supervisor'
-            ? renderTab('unassigned', 'Unassigned', unassignedCount)
+            ? renderTab('unassigned', 'Un-Assigned', unassignedCount)
             : null}
           {renderTab('completed', 'Completed', completedCount)}
         </View>
@@ -122,16 +123,20 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   tab: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: 8,
+    paddingHorizontal: theme.spacing.sm,
+    height: 40,
     borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
     backgroundColor: theme.colors.white,
   },
   cardList: {gap: theme.spacing.md},
-  tabActive: {backgroundColor: '#E6F4FF'},
+  tabActive: {borderColor: theme.colors.primary},
   tabText: {
     fontFamily: theme.fonts.bold,
     fontSize: 13,
@@ -142,18 +147,16 @@ const styles = StyleSheet.create({
     minWidth: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#EEF1F4',
+    backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
   },
-  countActive: {backgroundColor: theme.colors.primary},
   countText: {
     fontFamily: theme.fonts.black,
     fontSize: 11,
-    color: theme.colors.textSecondary,
+    color: theme.colors.white,
   },
-  countTextActive: {color: theme.colors.white},
 });
 
 export default RecentWork;
