@@ -166,11 +166,12 @@ export const theme = {
      */
     sheetFill: 'rgba(255,255,255,0.5)',
     /**
-     * Chrome buttons that need to read as solid white against the gradient —
-     * back, Edit, Add comment. Brighter than `pillFill`, which is for surfaces
-     * the background is meant to show through.
+     * Chrome buttons — back, Edit, Add comment, the Work tab switcher's active
+     * tab. A touch brighter than `pillFill` so they still read as raised
+     * controls, but translucent enough that the gradient shows through: at 0.9
+     * they rendered as flat opaque white and broke the glass effect.
      */
-    buttonFill: 'rgba(255,255,255,0.9)',
+    buttonFill: 'rgba(255,255,255,0.6)',
     navFill: 'rgba(255,255,255,0.72)',
     navBorder: 'rgba(255,255,255,0.8)',
     /**

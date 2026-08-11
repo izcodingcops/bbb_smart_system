@@ -1,5 +1,11 @@
-import React from 'react';
-import {StyleSheet, useWindowDimensions, View, ViewStyle} from 'react-native';
+import React, {useCallback, useState} from 'react';
+import {
+  LayoutChangeEvent,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+  ViewStyle,
+} from 'react-native';
 import Svg, {
   Defs,
   LinearGradient,
@@ -22,15 +28,37 @@ const {base, greenWash, blueWash} = theme.gradients.screen;
  * blue centred off the right edge, green rising from below the bottom edge.
  *
  * Transcribed from the three stacked fills on the Figma frame; the wash
- * geometry is expressed as fractions of the viewport (see `theme.gradients
- * .screen`) so it scales with the device instead of being pinned to the 392pt
- * design frame.
+ * geometry is expressed as fractions of this view's own box (see
+ * `theme.gradients.screen`) so it scales with the device instead of being
+ * pinned to the 392pt design frame.
+ *
+ * Measured with onLayout rather than `useWindowDimensions`: this view is
+ * `flex: 1` inside its parent, so on a tab screen it is roughly a tab bar
+ * shorter than the window. Sizing to the window there drew the ramp ~100pt too
+ * tall and clipped the bottom wash away entirely, which is why list and detail
+ * screens didn't match each other. Window size seeds the first frame, so
+ * nothing flashes before layout arrives.
  */
 const ScreenBackground: React.FC<Props> = ({children, style}) => {
-  const {width, height} = useWindowDimensions();
+  const window = useWindowDimensions();
+  const [size, setSize] = useState({
+    width: window.width,
+    height: window.height,
+  });
+
+  const handleLayout = useCallback((event: LayoutChangeEvent) => {
+    const {width: w, height: h} = event.nativeEvent.layout;
+    setSize(current =>
+      current.width === w && current.height === h
+        ? current
+        : {width: w, height: h},
+    );
+  }, []);
+
+  const {width, height} = size;
 
   return (
-    <View style={[styles.root, style]}>
+    <View style={[styles.root, style]} onLayout={handleLayout}>
       <Svg
         style={StyleSheet.absoluteFill}
         width={width}
