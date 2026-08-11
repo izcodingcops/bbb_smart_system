@@ -160,11 +160,15 @@ export const theme = {
     chipFill: 'rgba(255,255,255,0.5)',
     pillBorder: 'rgba(255,255,255,0.7)',
     /**
-     * Full-bleed translucent sheet behind a detail screen's sections. Subtle
-     * enough that the page gradient still tints it — which is why the lower
-     * sections read greener than the upper ones.
+     * Full-bleed fill behind a detail screen's sections.
+     *
+     * Currently transparent, under evaluation: the translucent white sheet this
+     * used to be (`rgba(255,255,255,0.5)`) was inferred from a screenshot, not
+     * read from the design, and it washed out the middle of the screen. With it
+     * off, all the tonal banding comes from the page gradient alone. Flip it
+     * back to a translucent white if the sections turn out to be filled.
      */
-    sheetFill: 'rgba(255,255,255,0.5)',
+    sheetFill: 'transparent',
     /**
      * Chrome buttons — back, Edit, Add comment, the Work tab switcher's active
      * tab. A touch brighter than `pillFill` so they still read as raised
