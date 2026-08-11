@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {
   formatCardDate,
   KebabMenu,
@@ -7,7 +7,7 @@ import {
   RecordCard,
   StatusPill,
 } from '../../../components/ui';
-import {CloudOffIcon} from '../../../components/icons';
+import {CloudOffIcon, UserPlusIcon} from '../../../components/icons';
 import {WorkCategory, WorkItem, WorkPriority, WorkStatus} from '../../../types/work';
 import {theme} from '../../../theme';
 
@@ -81,6 +81,10 @@ interface Props {
   /** Opens this card's menu, or closes it if already open. */
   onToggleMenu: (id: string) => void;
   onSelectStatus: (item: WorkItem, status: WorkStatus) => void;
+  /** Tighter padding — Home's Recent Work and the Work tab pass this. */
+  compact?: boolean;
+  /** Unassigned-bucket cards render a "Choose Assignee" button instead of a name. */
+  onOpenAssign?: (item: WorkItem) => void;
 }
 
 const WorkCard: React.FC<Props> = ({
@@ -89,6 +93,8 @@ const WorkCard: React.FC<Props> = ({
   menuOpen,
   onToggleMenu,
   onSelectStatus,
+  compact,
+  onOpenAssign,
 }) => {
   const status = STATUS_STYLE[item.status];
   const actionable = canChangeStatus(item);
@@ -126,6 +132,32 @@ const WorkCard: React.FC<Props> = ({
             ),
           },
         ]
+      : item.bucket === 'unassigned'
+      ? [
+          {label: TYPE_LABEL[item.category], value: item.type},
+          {
+            label: 'Priority',
+            node: (
+              <PriorityPill
+                label={item.priority}
+                bg={PRIORITY_STYLE[item.priority].bg}
+                fg={PRIORITY_STYLE[item.priority].fg}
+              />
+            ),
+          },
+          {
+            label: 'Assigned To',
+            node: (
+              <TouchableOpacity
+                style={styles.chooseAssignee}
+                activeOpacity={0.85}
+                onPress={() => onOpenAssign?.(item)}>
+                <UserPlusIcon size={13} color={theme.colors.primary} />
+                <Text style={styles.chooseAssigneeText}>Choose Assignee</Text>
+              </TouchableOpacity>
+            ),
+          },
+        ]
       : [
           {label: TYPE_LABEL[item.category], value: item.type},
           ...completedFields(item).map(field => ({
@@ -136,6 +168,7 @@ const WorkCard: React.FC<Props> = ({
 
   return (
     <RecordCard
+      compact={compact}
       onPress={() => onPress(item)}
       idLabel={item.reference}
       typeLabel={item.category}
@@ -191,6 +224,17 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.black,
     fontSize: 9,
     color: theme.colors.white,
+  },
+  chooseAssignee: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    alignSelf: 'flex-start',
+  },
+  chooseAssigneeText: {
+    fontFamily: theme.fonts.black,
+    fontSize: 12.5,
+    color: theme.colors.primary,
   },
 });
 
