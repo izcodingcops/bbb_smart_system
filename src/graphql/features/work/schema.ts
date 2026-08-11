@@ -13,6 +13,7 @@ export const workTypeDefs = /* GraphQL */ `
 
   enum WorkBucket {
     ASSIGNED
+    UNASSIGNED
     COMPLETED
   }
 

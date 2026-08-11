@@ -89,6 +89,7 @@ const applyInput = (record: MaintenanceDetail, input: WireInput): void => {
   record.incidents = input.incidents ?? [];
   record.pois = input.pois ?? [];
   record.equipment = input.equipment ?? [];
+  record.routedToSupervisor = record.assigneeKind === 'Supervisor';
 };
 
 export const maintenanceResolvers = {

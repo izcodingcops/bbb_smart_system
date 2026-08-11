@@ -1,6 +1,6 @@
 export type WorkStatus = 'Open' | 'In-progress' | 'Completed';
 export type WorkPriority = 'High' | 'Medium' | 'Low';
-export type WorkBucket = 'assigned' | 'completed';
+export type WorkBucket = 'assigned' | 'unassigned' | 'completed';
 export type WorkCategory = 'Maintenance' | 'Incident' | 'Fixture' | 'POI' | 'Activity';
 
 export interface WorkItem {

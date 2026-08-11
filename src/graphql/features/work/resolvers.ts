@@ -21,6 +21,7 @@ const PRIORITY: Record<string, string> = {
 };
 const BUCKET: Record<string, string> = {
   assigned: 'ASSIGNED',
+  unassigned: 'UNASSIGNED',
   completed: 'COMPLETED',
 };
 
