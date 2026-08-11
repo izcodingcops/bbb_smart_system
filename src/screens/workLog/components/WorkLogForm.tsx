@@ -7,6 +7,7 @@ import {
   Alert,
   StyleSheet,
 } from 'react-native';
+import ScreenBackground from '../../../components/ScreenBackground';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {
   ConfirmDialog,
@@ -145,7 +146,7 @@ const WorkLogForm: React.FC<Props> = ({
   };
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground style={styles.root}>
       <SafeAreaView edges={['top']} style={styles.topbar}>
         <View style={styles.topbarRow}>
           <TouchableOpacity
@@ -400,12 +401,12 @@ const WorkLogForm: React.FC<Props> = ({
         variant="danger"
         onDismiss={() => setSubmitFailed(false)}
       />
-    </View>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: theme.colors.background},
+  root: {flex: 1},
   topbar: {
     backgroundColor: theme.colors.white,
     borderBottomWidth: 1,

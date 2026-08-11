@@ -138,7 +138,7 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   // Edit replaces the detail in place, matching the design's slide-over.
   if (editing && options) {
     return (
-      <ScreenBackground style={styles.root}>
+      <View style={styles.root}>
         <MaintenanceForm
           key={options.fixtures.length}
           mode="edit"
@@ -165,7 +165,7 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
           onCreated={() => refetchOptions()}
           onClose={() => setAddFixtureOpen(false)}
         />
-      </ScreenBackground>
+      </View>
     );
   }
 

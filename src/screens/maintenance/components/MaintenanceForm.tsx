@@ -7,6 +7,7 @@ import {
   Alert,
   StyleSheet,
 } from 'react-native';
+import ScreenBackground from '../../../components/ScreenBackground';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {
   AccordionSection,
@@ -177,7 +178,7 @@ const MaintenanceForm: React.FC<Props> = ({
   };
 
   return (
-    <View style={formChrome.root}>
+    <ScreenBackground style={formChrome.root}>
       <SafeAreaView edges={['top']} style={formChrome.topbar}>
         <View style={formChrome.topbarRow}>
           <TouchableOpacity
@@ -444,7 +445,7 @@ const MaintenanceForm: React.FC<Props> = ({
         variant="danger"
         onDismiss={() => setSubmitFailed(false)}
       />
-    </View>
+    </ScreenBackground>
   );
 };
 

@@ -118,7 +118,7 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   // Edit replaces the detail in place, matching the design's slide-over.
   if (editing && options && editValues) {
     return (
-      <ScreenBackground style={styles.root}>
+      <View style={styles.root}>
         <WorkLogForm
           mode="edit"
           shiftTypeName={detail.shiftTypeName}
@@ -139,7 +139,7 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
           }}
           onClose={() => setEditing(false)}
         />
-      </ScreenBackground>
+      </View>
     );
   }
 

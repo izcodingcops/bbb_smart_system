@@ -154,7 +154,7 @@ const ViewPoiScreen: React.FC<Props> = ({
   // Edit replaces the detail in place, matching the design's slide-over.
   if (editing && options) {
     return (
-      <ScreenBackground style={styles.root}>
+      <View style={styles.root}>
         <PoiForm
           mode="edit"
           reference={detail.reference}
@@ -172,7 +172,7 @@ const ViewPoiScreen: React.FC<Props> = ({
           }}
           onClose={() => setEditing(false)}
         />
-      </ScreenBackground>
+      </View>
     );
   }
 

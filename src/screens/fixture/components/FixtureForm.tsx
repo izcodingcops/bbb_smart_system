@@ -6,6 +6,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import ScreenBackground from '../../../components/ScreenBackground';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {
   AccordionSection,
@@ -151,7 +152,7 @@ const FixtureForm: React.FC<Props> = ({
   };
 
   return (
-    <View style={formChrome.root}>
+    <ScreenBackground style={formChrome.root}>
       <SafeAreaView edges={['top']} style={formChrome.topbar}>
         <View style={formChrome.topbarRow}>
           <TouchableOpacity
@@ -356,7 +357,7 @@ const FixtureForm: React.FC<Props> = ({
         variant="danger"
         onDismiss={() => setSubmitFailed(false)}
       />
-    </View>
+    </ScreenBackground>
   );
 };
 

@@ -89,7 +89,7 @@ const ViewFixtureScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   // Edit replaces the detail in place, matching the design's slide-over.
   if (editing && options) {
     return (
-      <ScreenBackground style={styles.root}>
+      <View style={styles.root}>
         <FixtureForm
           mode="edit"
           reference={detail.reference}
@@ -107,7 +107,7 @@ const ViewFixtureScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
           }}
           onClose={() => setEditing(false)}
         />
-      </ScreenBackground>
+      </View>
     );
   }
 
