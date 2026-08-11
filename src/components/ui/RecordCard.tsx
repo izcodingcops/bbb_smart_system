@@ -53,7 +53,10 @@ const RecordCard: React.FC<Props> = ({
   compact,
 }) => {
   const body = (
-    <Card style={[styles.card, compact && styles.cardCompact]} compact={compact}>
+    <Card
+      glass
+      style={[styles.card, compact && styles.cardCompact]}
+      compact={compact}>
       <View style={styles.headerRow}>
         <View style={styles.headerLeft}>
           {leading}
@@ -112,10 +115,10 @@ const RecordCard: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
-  card: {gap: theme.spacing.sm},
+  card: {gap: 7},
   // Compact only tightens the outer padding (see Card.tsx) — cramming the
   // row gap too made cards feel congested rather than just smaller.
-  cardCompact: {gap: theme.spacing.sm},
+  cardCompact: {gap: 7},
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -128,12 +131,13 @@ const styles = StyleSheet.create({
     gap: 6,
     flexShrink: 1,
   },
-  id: {fontFamily: theme.fonts.black, fontSize: 15, color: '#181B1F'},
+  id: {fontFamily: theme.fonts.black, fontSize: 16.5, color: '#181B1F'},
   type: {
     flexShrink: 1,
     fontFamily: theme.fonts.bold,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
+    fontSize: 12,
+    letterSpacing: 0.2,
+    color: theme.colors.textOnGlassSubtle,
   },
   // Anchors KebabMenu's popover — it positions absolute against this.
   headerRight: {
@@ -144,10 +148,10 @@ const styles = StyleSheet.create({
   },
   dateLine: {
     fontFamily: theme.fonts.bold,
-    fontSize: 12,
-    color: theme.colors.textMuted,
+    fontSize: 12.5,
+    color: theme.colors.textOnGlassMuted,
   },
-  divider: {height: 1, backgroundColor: '#EEF0F2'},
+  divider: {height: 1, backgroundColor: theme.colors.dividerOnGlass},
   grid: {flexDirection: 'row', gap: theme.spacing.sm},
   // minWidth: 0 lets a cell actually shrink below its content's intrinsic
   // width instead of overflowing the row (RN flexbox default).
@@ -155,9 +159,13 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: theme.fonts.bold,
     fontSize: 11,
-    color: theme.colors.textMuted,
+    color: theme.colors.textOnGlassMuted,
   },
-  value: {fontFamily: theme.fonts.black, fontSize: 13, color: '#181B1F'},
+  value: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 13,
+    color: theme.colors.textOnGlass,
+  },
   addressBlock: {gap: 4, marginTop: theme.spacing.xs},
 });
 

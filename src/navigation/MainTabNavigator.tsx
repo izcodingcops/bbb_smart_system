@@ -218,17 +218,19 @@ const AppTabBar: React.FC<TabBarProps> = ({state, navigation, menuItems}) => {
 
   return (
     <>
-      {/* Tab bar — pill-shaped top, layered background, upward shadow */}
+      {/* Tab bar — pill-shaped top, glass fill, upward shadow.
+       *  The design's own shadow points downward (off-screen for a bottom
+       *  bar), so separation there comes from the fill and border alone. This
+       *  bar isn't floating, so it keeps an upward shadow to lift itself off
+       *  scrolling content — same list-shadow API as the glass surfaces. */}
       <View
         style={{
-          backgroundColor: '#F3F3F3',
+          backgroundColor: theme.glass.navFill,
           borderTopLeftRadius: 28,
           borderTopRightRadius: 28,
-          shadowColor: '#000000',
-          shadowOffset: {width: 0, height: -8},
-          shadowOpacity: 0.12,
-          shadowRadius: 40,
-          elevation: 16,
+          borderTopWidth: 1,
+          borderTopColor: theme.glass.navBorder,
+          boxShadow: '0px -6px 24px 0px rgba(16,24,40,0.10)',
           paddingTop: 10,
           paddingBottom: Math.max(insets.bottom, 8),
           paddingHorizontal: 16,
@@ -257,7 +259,7 @@ const AppTabBar: React.FC<TabBarProps> = ({state, navigation, menuItems}) => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor: focused
-                      ? theme.colors.primaryLight
+                      ? theme.colors.accentTint
                       : 'transparent',
                   }}>
                   {Icon ? (
@@ -300,7 +302,7 @@ const AppTabBar: React.FC<TabBarProps> = ({state, navigation, menuItems}) => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: isMoreActive
-                    ? theme.colors.primaryLight
+                    ? theme.colors.accentTint
                     : 'transparent',
                 }}>
                 <GridIcon
@@ -377,7 +379,7 @@ const MainTabNavigator: React.FC = () => {
   return (
     <SafeAreaView
       edges={[]}
-      style={{flex: 1, backgroundColor: theme.colors.background}}>
+      style={{flex: 1, backgroundColor: theme.glass.navBackdrop}}>
       <Tab.Navigator
         initialRouteName={initialRouteName}
         backBehavior="history"

@@ -1,5 +1,11 @@
 import React from 'react';
-import {View, TouchableOpacity, StyleSheet, StyleProp, ViewStyle} from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import TextField from './TextField';
 import {SearchIcon, SortIcon} from '../icons';
 import {theme} from '../../theme';
@@ -27,20 +33,22 @@ const ListSearchRow: React.FC<Props> = ({
   <View style={[styles.row, style]}>
     <TextField
       containerStyle={styles.field}
+      wrapStyle={styles.fieldWrap}
+      style={styles.fieldInput}
       placeholder={placeholder}
       value={value}
       onChangeText={onChangeText}
       autoCapitalize="none"
       autoCorrect={false}
       returnKeyType="search"
-      leadingIcon={<SearchIcon size={20} />}
+      leadingIcon={<SearchIcon size={19} />}
     />
 
     <TouchableOpacity
       style={[styles.button, sortOpen && styles.buttonActive]}
       activeOpacity={0.8}
       onPress={onOpenSort}>
-      <SortIcon size={20} color={sortOpen ? theme.colors.primary : '#475467'} />
+      <SortIcon size={22} color={sortOpen ? theme.colors.primary : '#475467'} />
     </TouchableOpacity>
   </View>
 );
@@ -53,19 +61,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
   },
   field: {flex: 1},
+  fieldWrap: {
+    height: 42,
+    borderRadius: theme.radius.glassPill,
+    borderColor: theme.glass.pillBorder,
+    backgroundColor: theme.glass.pillFill,
+    paddingHorizontal: 13,
+    ...theme.shadow.glassPill,
+  },
+  // The wrap is a fixed 42 now, so the input can't own the row's height —
+  // drop TextField's own vertical padding and let it centre instead.
+  fieldInput: {paddingVertical: 0, fontSize: 15},
   button: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+    width: 42,
+    height: 42,
+    borderRadius: theme.radius.glassPill,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.white,
+    borderColor: theme.glass.pillBorder,
+    backgroundColor: theme.glass.pillFill,
     alignItems: 'center',
     justifyContent: 'center',
+    ...theme.shadow.glassPill,
   },
   buttonActive: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primaryLight,
+    borderColor: theme.colors.accentBorder,
+    backgroundColor: theme.colors.accentTint,
   },
 });
 

@@ -1,9 +1,10 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View, Text, FlatList, ScrollView, StyleSheet, Alert} from 'react-native';
+import {Text, FlatList, ScrollView, StyleSheet, Alert} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
+import ScreenBackground from '../../components/ScreenBackground';
 import {
   BackToTopPill,
   ConfirmDialog,
@@ -171,7 +172,7 @@ const MaintenanceScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground style={styles.root}>
       <SafeAreaView edges={['top']}>
         <Text style={styles.title}>Maintenance</Text>
 
@@ -367,12 +368,12 @@ const MaintenanceScreen: React.FC = () => {
         onClose={() => setAddOpen(false)}
         onClosed={flushTile}
       />
-    </View>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: theme.colors.background},
+  root: {flex: 1},
   title: {
     fontFamily: theme.fonts.black,
     fontSize: 26,

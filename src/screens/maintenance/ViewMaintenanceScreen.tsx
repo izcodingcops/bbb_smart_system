@@ -22,6 +22,7 @@ import {
   formatDateTime,
 } from '../../components/ui';
 import {MessageSquareIcon, ToolsIcon} from '../../components/icons';
+import ScreenBackground from '../../components/ScreenBackground';
 import {
   useAddMaintenanceCommentMutation,
   useDeleteMaintenanceCommentMutation,
@@ -119,7 +120,7 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   // hidden on this route, so a failed load with no way out would trap the user.
   if (isError || !detail) {
     return (
-      <View style={styles.root}>
+      <ScreenBackground style={styles.root}>
         <DetailTopBar title="Maintenance" onBack={onClose} />
         <View style={styles.loading}>
           <EmptyState
@@ -130,14 +131,14 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
             onAction={refetch}
           />
         </View>
-      </View>
+      </ScreenBackground>
     );
   }
 
   // Edit replaces the detail in place, matching the design's slide-over.
   if (editing && options) {
     return (
-      <View style={styles.root}>
+      <ScreenBackground style={styles.root}>
         <MaintenanceForm
           key={options.fixtures.length}
           mode="edit"
@@ -164,14 +165,14 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
           onCreated={() => refetchOptions()}
           onClose={() => setAddFixtureOpen(false)}
         />
-      </View>
+      </ScreenBackground>
     );
   }
 
   const status = STATUS_STYLE[detail.status];
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground style={styles.root}>
       <DetailTopBar
         title="Maintenance"
         reference={detail.reference}
@@ -367,17 +368,16 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
         variant={toast?.variant}
         onDismiss={() => setToast(null)}
       />
-    </View>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: theme.colors.background},
+  root: {flex: 1},
   loading: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.background,
   },
   body: {paddingBottom: 40},
   idRow: {
@@ -388,8 +388,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
     paddingTop: 18,
     paddingBottom: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEF0F2',
   },
   idBig: {
     flex: 1,
@@ -406,9 +404,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: theme.radius.md,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.white,
-    ...theme.shadow.card,
+    borderColor: theme.glass.pillBorder,
+    backgroundColor: theme.glass.buttonFill,
+    ...theme.shadow.glassPill,
   },
   commentButtonText: {
     fontFamily: theme.fonts.black,

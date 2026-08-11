@@ -7,27 +7,27 @@ import Svg, {
   Rect,
   Stop,
 } from 'react-native-svg';
+import {theme} from '../theme';
 
 interface Props {
   children?: React.ReactNode;
   style?: ViewStyle;
 }
 
-// Reference frame the design blob positions were measured in.
-const FRAME_W = 392;
+const {base, greenWash, blueWash} = theme.gradients.screen;
 
 /**
- * Shared app background: a near-white diagonal base with two soft radial
- * "blobs" (blue top-left, green top-right) fading to transparent — mirroring
- * the Gradient+Blur layers from the Figma design. Positions/sizes scale with
- * the device width so the wash sits consistently across screen sizes.
+ * Shared app background for the glass design language: a vertical ramp from a
+ * cool blue at the top to a faintly green bottom, plus two elliptical washes —
+ * blue centred off the right edge, green rising from below the bottom edge.
+ *
+ * Transcribed from the three stacked fills on the Figma frame; the wash
+ * geometry is expressed as fractions of the viewport (see `theme.gradients
+ * .screen`) so it scales with the device instead of being pinned to the 392pt
+ * design frame.
  */
 const ScreenBackground: React.FC<Props> = ({children, style}) => {
   const {width, height} = useWindowDimensions();
-  const scale = width / FRAME_W;
-
-  const blue = {cx: 90 * scale, cy: 70 * scale, r: 160 * scale};
-  const green = {cx: 322 * scale, cy: 110 * scale, r: 150 * scale};
 
   return (
     <View style={[styles.root, style]}>
@@ -37,33 +37,53 @@ const ScreenBackground: React.FC<Props> = ({children, style}) => {
         height={height}
         pointerEvents="none">
         <Defs>
-          <LinearGradient id="base" x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor="#FDFDFE" />
-            <Stop offset="0.5" stopColor="#F4F6F8" />
-            <Stop offset="1" stopColor="#EEF1F4" />
+          <LinearGradient id="base" x1="0" y1="0" x2="0" y2="1">
+            {base.map(stop => (
+              <Stop
+                key={stop.offset}
+                offset={stop.offset}
+                stopColor={stop.color}
+              />
+            ))}
           </LinearGradient>
-          <RadialGradient
-            id="blue"
-            cx={blue.cx}
-            cy={blue.cy}
-            r={blue.r}
-            gradientUnits="userSpaceOnUse">
-            <Stop offset="0" stopColor="#BFE1FF" stopOpacity="1" />
-            <Stop offset="1" stopColor="#BFE1FF" stopOpacity="0" />
-          </RadialGradient>
+          {/* userSpaceOnUse rather than the default objectBoundingBox: the
+           *  washes are ellipses, and only user space lets rx/ry differ. */}
           <RadialGradient
             id="green"
-            cx={green.cx}
-            cy={green.cy}
-            r={green.r}
+            cx={greenWash.cx * width}
+            cy={greenWash.cy * height}
+            rx={greenWash.rx * width}
+            ry={greenWash.ry * height}
             gradientUnits="userSpaceOnUse">
-            <Stop offset="0" stopColor="#D7EFC6" stopOpacity="1" />
-            <Stop offset="1" stopColor="#D7EFC6" stopOpacity="0" />
+            {greenWash.stops.map(stop => (
+              <Stop
+                key={stop.offset}
+                offset={stop.offset}
+                stopColor={stop.color}
+                stopOpacity={stop.opacity}
+              />
+            ))}
+          </RadialGradient>
+          <RadialGradient
+            id="blue"
+            cx={blueWash.cx * width}
+            cy={blueWash.cy * height}
+            rx={blueWash.rx * width}
+            ry={blueWash.ry * height}
+            gradientUnits="userSpaceOnUse">
+            {blueWash.stops.map(stop => (
+              <Stop
+                key={stop.offset}
+                offset={stop.offset}
+                stopColor={stop.color}
+                stopOpacity={stop.opacity}
+              />
+            ))}
           </RadialGradient>
         </Defs>
         <Rect width={width} height={height} fill="url(#base)" />
-        <Rect width={width} height={height} fill="url(#blue)" opacity={0.6} />
-        <Rect width={width} height={height} fill="url(#green)" opacity={0.6} />
+        <Rect width={width} height={height} fill="url(#green)" />
+        <Rect width={width} height={height} fill="url(#blue)" />
       </Svg>
       {children}
     </View>

@@ -6,6 +6,12 @@ interface Props {
   children: React.ReactNode;
   /** Frosted variant used by the auth forms; solid white otherwise. */
   frosted?: boolean;
+  /**
+   * Glass variant from the current design language — a translucent vertical
+   * gradient over `ScreenBackground`, with a light border and two layered
+   * shadows. Takes precedence over `frosted`.
+   */
+  glass?: boolean;
   /** Tighter padding — Home's Recent Work and the Work tab opt in. */
   compact?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -14,12 +20,13 @@ interface Props {
 const Card: React.FC<Props> = ({
   children,
   frosted = false,
+  glass = false,
   compact = false,
   style,
 }) => (
   <View
     style={[
-      frosted ? styles.frosted : styles.solid,
+      glass ? styles.glass : frosted ? styles.frosted : styles.solid,
       compact && styles.compact,
       style,
     ]}>
@@ -39,6 +46,15 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.xl,
     padding: theme.spacing.xxl,
     ...theme.shadow.card,
+  },
+  glass: {
+    backgroundColor: theme.glass.cardFillFlat,
+    experimental_backgroundImage: theme.glass.cardFillGradient,
+    borderRadius: theme.radius.glass,
+    borderWidth: 1,
+    borderColor: theme.glass.cardBorder,
+    padding: theme.spacing.lg,
+    ...theme.shadow.glass,
   },
   compact: {padding: theme.spacing.md},
 });

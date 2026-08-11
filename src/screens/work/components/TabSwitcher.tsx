@@ -53,12 +53,17 @@ const TabSwitcher: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
+  // Track is the chip fill rather than a solid gray, so the page gradient
+  // reads through it the way the filter chips beneath it do.
   row: {
     flexDirection: 'row',
     gap: theme.spacing.sm,
-    backgroundColor: '#EAECEF',
+    backgroundColor: theme.glass.chipFill,
+    borderWidth: 1,
+    borderColor: theme.glass.pillBorder,
     borderRadius: 14,
     padding: 4,
+    ...theme.shadow.glassPill,
   },
   tab: {
     flex: 1,
@@ -69,7 +74,10 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 11,
   },
-  tabActive: {backgroundColor: theme.colors.white, ...theme.shadow.card},
+  tabActive: {
+    backgroundColor: theme.glass.buttonFill,
+    ...theme.shadow.glassPill,
+  },
   tabText: {
     fontFamily: theme.fonts.bold,
     fontSize: 13,
@@ -80,12 +88,12 @@ const styles = StyleSheet.create({
     minWidth: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#DDE1E6',
+    backgroundColor: 'rgba(255,255,255,0.75)',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
   },
-  countActive: {backgroundColor: theme.colors.primaryLight},
+  countActive: {backgroundColor: theme.colors.accentTint},
   countText: {
     fontFamily: theme.fonts.black,
     fontSize: 11,
