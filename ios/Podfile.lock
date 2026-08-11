@@ -1953,10 +1953,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNDeviceInfo (15.0.2):
-    - React-Core
-  - RNFS (2.20.0):
-    - React-Core
   - RNScreens (4.24.0):
     - hermes-engine
     - RCTRequired
@@ -2132,8 +2128,6 @@ DEPENDENCIES:
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
-  - RNDeviceInfo (from `../node_modules/react-native-device-info`)
-  - RNFS (from `../node_modules/react-native-fs`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
@@ -2298,10 +2292,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNDateTimePicker:
     :path: "../node_modules/@react-native-community/datetimepicker"
-  RNDeviceInfo:
-    :path: "../node_modules/react-native-device-info"
-  RNFS:
-    :path: "../node_modules/react-native-fs"
   RNScreens:
     :path: "../node_modules/react-native-screens"
   RNSVG:
@@ -2389,8 +2379,6 @@ SPEC CHECKSUMS:
   ReactNativeDependencies: a426db925d59248ad1b1bfd49714f7ffeb92da69
   RNCAsyncStorage: 2ad919e88b8bc2cd80e8697ce66d04d006743283
   RNDateTimePicker: 7b2738f1e595f83c14580a11c476872755c5befc
-  RNDeviceInfo: 4c852998208b60dc192ae3529e5867817719ad1e
-  RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
   RNScreens: 01b065ded2dfe7987bcce770ff3a196be417ff41
   RNSVG: 0e52210d4d43165e7e2cf9c890a9848b27e513ac
   Yoga: b1085f68c014785350a2afdc95eaef0d49f23ccb
