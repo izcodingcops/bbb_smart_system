@@ -3,6 +3,8 @@ import {RootState} from '../store';
 
 export const GetUser = () => useSelector((state: RootState) => state.auth.user);
 
+export const GetUserRole = () => useSelector((state: RootState) => state.auth.user?.role);
+
 export const GetSession = () =>
   useSelector((state: RootState) => state.auth.session);
 
