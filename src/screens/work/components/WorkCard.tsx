@@ -68,9 +68,14 @@ function completedFields(item: WorkItem): {label: string; value: string}[] {
   }
 }
 
-/** Completed is terminal — only an open or in-progress item can change status. */
+/**
+ * Completed is terminal — only an open or in-progress item can change status.
+ * An Unassigned item is also excluded: it has no assignee yet, so it's the
+ * supervisor's to route (via "Choose Assignee"), not something whose status
+ * changes from the card — same rule as MaintenanceCard's canChangeStatus.
+ */
 export function canChangeStatus(item: WorkItem): boolean {
-  return item.status !== 'Completed';
+  return item.status !== 'Completed' && item.bucket !== 'unassigned';
 }
 
 interface Props {

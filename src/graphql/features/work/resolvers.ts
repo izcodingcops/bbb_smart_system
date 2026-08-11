@@ -2,7 +2,7 @@ import {MOCK_QUICK_ACTIONS, toWorkLogWorkItem} from '../../../mocks';
 import {toMaintenanceWorkItem} from '../../../mocks/workItems';
 import {WorkStatus} from '../../../types/work';
 import {sleep} from '../../mockSession';
-import {maintenanceStore} from '../maintenance/store';
+import {findRecord as findMaintenanceRecord, maintenanceStore} from '../maintenance/store';
 import {workLogStore} from '../workLog/store';
 import {findWorkItem, workStore} from './store';
 
@@ -85,6 +85,27 @@ export const workResolvers = {
       args: {id: string; status: string},
     ) => {
       await sleep();
+      // Maintenance items are recomputed live from maintenanceStore.records
+      // (see the Query.workItems comment above) — mutating workStore.items
+      // for one would edit a copy the read path never looks at again, so the
+      // status change appears to silently revert on the next refetch. Mirror
+      // setMaintenanceStatus's own completedBy/completedOn logic exactly.
+      const maintenanceRecord = findMaintenanceRecord(args.id);
+      if (maintenanceRecord) {
+        maintenanceRecord.status = STATUS_IN[args.status];
+        if (maintenanceRecord.status === 'Completed') {
+          maintenanceRecord.completedBy =
+            maintenanceRecord.assignee?.name ?? maintenanceRecord.completedBy;
+          maintenanceRecord.completedOn = new Date().toISOString();
+        } else {
+          maintenanceRecord.completedBy = null;
+          maintenanceRecord.completedOn = null;
+        }
+        // The index only affects a zone fallback string not requested by
+        // SET_WORK_ITEM_STATUS's selection set, so 0 is safe here.
+        return toWire(toMaintenanceWorkItem(maintenanceRecord, 0));
+      }
+
       const item = findWorkItem(args.id);
       if (!item) {
         throw new Error(`Unknown work item: ${args.id}`);

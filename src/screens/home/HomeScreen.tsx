@@ -7,6 +7,7 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import ScreenBackground from '../../components/ScreenBackground';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import GradientFab from '../../components/ui/GradientFab';
+import {ConfirmDialog} from '../../components/ui';
 import AssigneeSheet from '../maintenance/components/AssigneeSheet';
 import HomeHeader from './components/HomeHeader';
 import ShiftTimerCard from './components/ShiftTimerCard';
@@ -89,6 +90,7 @@ const HomeScreen: React.FC = () => {
   const [addOpen, setAddOpen] = useState(false);
   const [menuItemId, setMenuItemId] = useState<string | null>(null);
   const [assignTarget, setAssignTarget] = useState<WorkItem | null>(null);
+  const [completeTarget, setCompleteTarget] = useState<WorkItem | null>(null);
   const {queueTile, flushTile} = useAddRequestTiles(SCREEN.home);
 
   const firstName = user?.name?.split(' ')[0] ?? 'there';
@@ -149,6 +151,10 @@ const HomeScreen: React.FC = () => {
   const handleSelectStatus = useCallback(
     async (item: WorkItem, status: WorkStatus) => {
       setMenuItemId(null);
+      if (status === 'Completed') {
+        setCompleteTarget(item);
+        return;
+      }
       try {
         await setWorkItemStatus(item.id, status);
       } catch {
@@ -247,9 +253,47 @@ const HomeScreen: React.FC = () => {
         <AssigneeSheet
           target={assignTarget}
           onClose={() => setAssignTarget(null)}
-          onAssigned={() => {
+          onAssigned={(item, name) => {
             refetchWork();
+            Alert.alert(
+              'Maintenance assigned',
+              `${item.reference} is now with ${name} — moved out of Unassigned.`,
+            );
           }}
+        />
+
+        <ConfirmDialog
+          visible={completeTarget !== null}
+          title="Mark as Completed?"
+          message={
+            completeTarget
+              ? `${completeTarget.reference} · ${completeTarget.type} will be marked Completed and appear in your synced Work Log.`
+              : ''
+          }
+          confirmLabel="Yes, complete"
+          icon="check"
+          iconTone="success"
+          confirmTone="primary"
+          onConfirm={async () => {
+            const target = completeTarget;
+            setCompleteTarget(null);
+            if (!target) {
+              return;
+            }
+            try {
+              await setWorkItemStatus(target.id, 'Completed');
+              Alert.alert(
+                'Saved to Work Log',
+                `You have successfully saved ${target.type}.`,
+              );
+            } catch {
+              Alert.alert(
+                "Couldn't complete",
+                `${target.reference} is unchanged. Check your connection and try again.`,
+              );
+            }
+          }}
+          onCancel={() => setCompleteTarget(null)}
         />
       </SafeAreaView>
     </ScreenBackground>
