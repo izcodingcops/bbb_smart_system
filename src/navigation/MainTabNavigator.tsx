@@ -32,6 +32,7 @@ import {
   GridIcon,
   HandymanIcon,
   HomeIcon,
+  UserPlusIcon,
   WorkIcon,
 } from '../components/icons';
 import ComingSoonScreen from '../screens/ComingSoonScreen';
@@ -84,7 +85,7 @@ const ICON_MAP: Record<string, IconComponent> = {
   home: HomeIcon,
   work: WorkIcon,
   maintenance: HandymanIcon,
-  fixture: CubeIcon,
+  poi: UserPlusIcon,
   incident: AlertTriangleIcon,
 };
 
