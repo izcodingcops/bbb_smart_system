@@ -1,8 +1,10 @@
 import React, {useState} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {RecordCardSkeleton, SectionTitle} from '../../../components/ui';
-import WorkCard from './WorkCard';
-import {WorkBucket, WorkItem} from '../../../types/work';
+import WorkCard from '../../work/components/WorkCard';
+import {applyBucket, applyMaintenanceOnly} from '../../work/filtering';
+import {GetUserRole} from '../../../redux/auth/selectors';
+import {WorkBucket, WorkItem, WorkStatus} from '../../../types/work';
 import {theme} from '../../../theme';
 
 const SKELETON_CARDS = [0, 1];
@@ -13,19 +15,40 @@ interface Props {
   items: WorkItem[];
   isLoading?: boolean;
   onViewAll?: () => void;
+  onOpenItem: (item: WorkItem) => void;
+  /** Which card's inline status menu is open, if any — only one at a time. */
+  menuItemId: string | null;
+  onToggleMenu: (id: string) => void;
+  onSelectStatus: (item: WorkItem, status: WorkStatus) => void;
+  onOpenAssign: (item: WorkItem) => void;
 }
 
-const RecentWork: React.FC<Props> = ({items, isLoading, onViewAll}) => {
+const RecentWork: React.FC<Props> = ({
+  items,
+  isLoading,
+  onViewAll,
+  onOpenItem,
+  menuItemId,
+  onToggleMenu,
+  onSelectStatus,
+  onOpenAssign,
+}) => {
+  const role = GetUserRole() ?? 'ambassador';
   const [tab, setTab] = useState<WorkBucket>('assigned');
 
   const assignedCount = items.filter(w => w.bucket === 'assigned').length;
+  const unassignedCount = items.filter(w => w.bucket === 'unassigned').length;
   const completedCount = items.filter(w => w.bucket === 'completed').length;
-  const visible = items.filter(w => w.bucket === tab).slice(0, MAX_VISIBLE);
+  const visible = applyMaintenanceOnly(applyBucket(items, tab), tab).slice(
+    0,
+    MAX_VISIBLE,
+  );
 
   const renderTab = (bucket: WorkBucket, label: string, count: number) => {
     const active = tab === bucket;
     return (
       <TouchableOpacity
+        key={bucket}
         style={[styles.tab, active && styles.tabActive]}
         activeOpacity={0.8}
         onPress={() => setTab(bucket)}>
@@ -53,11 +76,14 @@ const RecentWork: React.FC<Props> = ({items, isLoading, onViewAll}) => {
         }
       />
 
-      {/* Held back while loading, otherwise it flashes "Assigned Work 0". */}
+      {/* Held back while loading, otherwise it flashes "Assigned 0". */}
       {isLoading ? null : (
         <View style={styles.tabs}>
-          {renderTab('assigned', 'Assigned Work', assignedCount)}
-          {renderTab('completed', 'Completed Work', completedCount)}
+          {renderTab('assigned', 'Assigned', assignedCount)}
+          {role === 'supervisor'
+            ? renderTab('unassigned', 'Unassigned', unassignedCount)
+            : null}
+          {renderTab('completed', 'Completed', completedCount)}
         </View>
       )}
 
@@ -65,7 +91,18 @@ const RecentWork: React.FC<Props> = ({items, isLoading, onViewAll}) => {
         ? SKELETON_CARDS.map(index => (
             <RecordCardSkeleton key={index} fieldCount={3} style={styles.cardSpacing} />
           ))
-        : visible.map(item => <WorkCard key={item.id} item={item} />)}
+        : visible.map(item => (
+            <WorkCard
+              key={item.id}
+              item={item}
+              compact
+              onPress={onOpenItem}
+              menuOpen={menuItemId === item.id}
+              onToggleMenu={onToggleMenu}
+              onSelectStatus={onSelectStatus}
+              onOpenAssign={onOpenAssign}
+            />
+          ))}
     </>
   );
 };
