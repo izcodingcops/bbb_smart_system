@@ -32,6 +32,7 @@ interface Props {
   leading?: React.ReactNode;
   /** Rendered under the address block — POI's two action buttons. */
   footer?: React.ReactNode;
+  compact?: boolean;
 }
 
 const RecordCard: React.FC<Props> = ({
@@ -47,9 +48,10 @@ const RecordCard: React.FC<Props> = ({
   addressValue,
   leading,
   footer,
+  compact,
 }) => {
   const body = (
-    <Card style={styles.card}>
+    <Card style={[styles.card, compact && styles.cardCompact]} compact={compact}>
       <View style={styles.headerRow}>
         <View style={styles.headerLeft}>
           {leading}
@@ -105,6 +107,7 @@ const RecordCard: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
   card: {gap: theme.spacing.sm},
+  cardCompact: {gap: theme.spacing.xs},
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',

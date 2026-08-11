@@ -6,11 +6,23 @@ interface Props {
   children: React.ReactNode;
   /** Frosted variant used by the auth forms; solid white otherwise. */
   frosted?: boolean;
+  /** Tighter padding — Home's Recent Work and the Work tab opt in. */
+  compact?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
-const Card: React.FC<Props> = ({children, frosted = false, style}) => (
-  <View style={[frosted ? styles.frosted : styles.solid, style]}>
+const Card: React.FC<Props> = ({
+  children,
+  frosted = false,
+  compact = false,
+  style,
+}) => (
+  <View
+    style={[
+      frosted ? styles.frosted : styles.solid,
+      compact && styles.compact,
+      style,
+    ]}>
     {children}
   </View>
 );
@@ -28,6 +40,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xxl,
     ...theme.shadow.card,
   },
+  compact: {padding: theme.spacing.md},
 });
 
 export default Card;
