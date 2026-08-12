@@ -25,6 +25,9 @@ interface Props {
    */
   onClosed?: () => void;
   children: React.ReactNode;
+  /** Rendered below the scrollable body, pinned with a top divider — for a
+   *  primary action that should stay visible while the content scrolls. */
+  footer?: React.ReactNode;
 }
 
 /**
@@ -38,6 +41,7 @@ const BottomSheet: React.FC<Props> = ({
   onClose,
   onClosed,
   children,
+  footer,
 }) => {
   const [mounted, setMounted] = useState(visible);
   const [sheetHeight, setSheetHeight] = useState(400);
@@ -132,11 +136,25 @@ const BottomSheet: React.FC<Props> = ({
           <ScrollView
             contentContainerStyle={[
               styles.scroll,
-              {paddingBottom: Math.max(insets.bottom, theme.spacing.xxl)},
+              {
+                paddingBottom: footer
+                  ? theme.spacing.lg
+                  : Math.max(insets.bottom, theme.spacing.xxl),
+              },
             ]}
             showsVerticalScrollIndicator={false}>
             {children}
           </ScrollView>
+
+          {footer ? (
+            <View
+              style={[
+                styles.footer,
+                {paddingBottom: Math.max(insets.bottom, theme.spacing.lg)},
+              ]}>
+              {footer}
+            </View>
+          ) : null}
         </Animated.View>
       </View>
     </Modal>
@@ -194,6 +212,14 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   scroll: {paddingHorizontal: theme.spacing.lg},
+  footer: {
+    flexDirection: 'row',
+    gap: 11,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
 });
 
 export default BottomSheet;

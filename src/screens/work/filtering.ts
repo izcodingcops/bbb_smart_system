@@ -148,6 +148,20 @@ export function applyBucket(items: WorkItem[], bucket: WorkBucket): WorkItem[] {
   return items.filter(item => item.bucket === bucket);
 }
 
+/**
+ * Assigned and Unassigned are Maintenance-triage tabs — Completed is the only
+ * tab that aggregates every category.
+ */
+export function applyMaintenanceOnly(
+  items: WorkItem[],
+  bucket: WorkBucket,
+): WorkItem[] {
+  if (bucket === 'completed') {
+    return items;
+  }
+  return items.filter(item => item.category === 'Maintenance');
+}
+
 /** Matches reference and type only, same convention as the Maintenance list. */
 export function applySearch(items: WorkItem[], search: string): WorkItem[] {
   const query = search.trim().toLowerCase();

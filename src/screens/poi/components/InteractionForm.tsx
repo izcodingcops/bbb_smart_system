@@ -1,5 +1,6 @@
 import React, {useRef, useState} from 'react';
 import {View, Text, TouchableOpacity, ScrollView, StyleSheet} from 'react-native';
+import ScreenBackground from '../../../components/ScreenBackground';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {
   AccordionSection,
@@ -146,7 +147,7 @@ const InteractionForm: React.FC<Props> = ({
   };
 
   return (
-    <View style={formChrome.root}>
+    <ScreenBackground style={formChrome.root}>
       <SafeAreaView edges={['top']} style={formChrome.topbar}>
         <View style={formChrome.topbarRow}>
           <TouchableOpacity
@@ -349,7 +350,7 @@ const InteractionForm: React.FC<Props> = ({
         variant="danger"
         onDismiss={() => setSubmitFailed(false)}
       />
-    </View>
+    </ScreenBackground>
   );
 };
 

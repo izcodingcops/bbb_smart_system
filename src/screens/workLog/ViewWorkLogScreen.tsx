@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {View, ScrollView, Text, StyleSheet} from 'react-native';
+import ScreenBackground from '../../components/ScreenBackground';
 import {
   ConfirmDialog,
   DetailField,
@@ -95,7 +96,7 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   // hidden on this route, so a failed load with no way out would trap the user.
   if (isError || !detail) {
     return (
-      <View style={styles.root}>
+      <ScreenBackground style={styles.root}>
         <DetailTopBar title="Work Log" onBack={onClose} />
         <View style={styles.loading}>
           <EmptyState
@@ -106,7 +107,7 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
             onAction={refetch}
           />
         </View>
-      </View>
+      </ScreenBackground>
     );
   }
 
@@ -143,7 +144,7 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   }
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground style={styles.root}>
       <DetailTopBar
         title={copy.viewTitle}
         reference={detail.reference}
@@ -241,17 +242,16 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
         variant={toast?.variant}
         onDismiss={() => setToast(null)}
       />
-    </View>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: theme.colors.background},
+  root: {flex: 1},
   loading: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.background,
   },
   body: {paddingBottom: 40},
   idRow: {

@@ -99,7 +99,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.background,
   },
   backLink: {marginTop: theme.spacing.lg, padding: theme.spacing.sm},
   backLinkText: {

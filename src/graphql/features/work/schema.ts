@@ -13,6 +13,7 @@ export const workTypeDefs = /* GraphQL */ `
 
   enum WorkBucket {
     ASSIGNED
+    UNASSIGNED
     COMPLETED
   }
 
@@ -37,6 +38,8 @@ export const workTypeDefs = /* GraphQL */ `
     disposition: String
     businessName: String
     quantity: String
+    "Who created/sent the request — populated for Maintenance only."
+    createdBy: String
   }
 
   type QuickAction {

@@ -1,13 +1,13 @@
 import React from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {
   formatCardDate,
-  KebabMenu,
+  formatCardDateOnly,
   PriorityPill,
   RecordCard,
   StatusPill,
 } from '../../../components/ui';
-import {CloudOffIcon} from '../../../components/icons';
+import {CloudOffIcon, UserPlusIcon} from '../../../components/icons';
 import {WorkCategory, WorkItem, WorkPriority, WorkStatus} from '../../../types/work';
 import {theme} from '../../../theme';
 
@@ -27,6 +27,12 @@ const STATUS_MENU_OPTIONS: {status: WorkStatus; label: string; dot: string}[] = 
   {status: 'In-progress', label: 'Move to In-progress', dot: '#AD8B00'},
   {status: 'Completed', label: 'Mark Completed', dot: '#389E0D'},
 ];
+
+/** 'Marcus Webb' -> 'MW' — for the Unassigned card's sender avatar. */
+function initialsOf(name: string): string {
+  const parts = name.split(' ').filter(Boolean);
+  return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase();
+}
 
 /** The card's "Type" row label reads differently per category, design-wise. */
 const TYPE_LABEL: Record<WorkCategory, string> = {
@@ -68,9 +74,14 @@ function completedFields(item: WorkItem): {label: string; value: string}[] {
   }
 }
 
-/** Completed is terminal — only an open or in-progress item can change status. */
+/**
+ * Completed is terminal — only an open or in-progress item can change status.
+ * An Unassigned item is also excluded: it has no assignee yet, so it's the
+ * supervisor's to route (via "Choose Assignee"), not something whose status
+ * changes from the card — same rule as MaintenanceCard's canChangeStatus.
+ */
 export function canChangeStatus(item: WorkItem): boolean {
-  return item.status !== 'Completed';
+  return item.status !== 'Completed' && item.bucket !== 'unassigned';
 }
 
 interface Props {
@@ -81,6 +92,10 @@ interface Props {
   /** Opens this card's menu, or closes it if already open. */
   onToggleMenu: (id: string) => void;
   onSelectStatus: (item: WorkItem, status: WorkStatus) => void;
+  /** Tighter padding — Home's Recent Work and the Work tab pass this. */
+  compact?: boolean;
+  /** Unassigned-bucket cards render a "Choose Assignee" button instead of a name. */
+  onOpenAssign?: (item: WorkItem) => void;
 }
 
 const WorkCard: React.FC<Props> = ({
@@ -89,6 +104,8 @@ const WorkCard: React.FC<Props> = ({
   menuOpen,
   onToggleMenu,
   onSelectStatus,
+  compact,
+  onOpenAssign,
 }) => {
   const status = STATUS_STYLE[item.status];
   const actionable = canChangeStatus(item);
@@ -126,6 +143,36 @@ const WorkCard: React.FC<Props> = ({
             ),
           },
         ]
+      : item.bucket === 'unassigned'
+      ? [
+          {label: TYPE_LABEL[item.category], value: item.type},
+          {
+            label: 'Priority',
+            node: (
+              <PriorityPill
+                label={item.priority}
+                bg={PRIORITY_STYLE[item.priority].bg}
+                fg={PRIORITY_STYLE[item.priority].fg}
+              />
+            ),
+          },
+          {
+            label: 'Assigned To',
+            node: (
+              <TouchableOpacity
+                style={styles.chooseAssignee}
+                activeOpacity={0.85}
+                onPress={() => onOpenAssign?.(item)}>
+                <View style={styles.chooseAssigneeAvatar}>
+                  <UserPlusIcon size={12} color={theme.colors.primary} />
+                </View>
+                <Text style={styles.chooseAssigneeText} numberOfLines={1}>
+                  Choose assignee
+                </Text>
+              </TouchableOpacity>
+            ),
+          },
+        ]
       : [
           {label: TYPE_LABEL[item.category], value: item.type},
           ...completedFields(item).map(field => ({
@@ -136,6 +183,7 @@ const WorkCard: React.FC<Props> = ({
 
   return (
     <RecordCard
+      compact={compact}
       onPress={() => onPress(item)}
       idLabel={item.reference}
       typeLabel={item.category}
@@ -149,15 +197,42 @@ const WorkCard: React.FC<Props> = ({
         />
       }
       kebab={
-        <KebabMenu
-          visible={actionable}
-          open={menuOpen}
-          onToggle={() => onToggleMenu(item.id)}
-          options={menuOptions}
-          onSelect={value => onSelectStatus(item, value as WorkStatus)}
-        />
+        // No separate "⋮" trigger — tapping the status pill above is the only
+        // way to open this, matching the mockup's own status-pill-only
+        // pattern (Maintenance's card keeps its kebab; this one doesn't).
+        actionable && menuOpen ? (
+          <View style={styles.statusMenu}>
+            {menuOptions.map(option => (
+              <TouchableOpacity
+                key={option.value}
+                style={styles.statusMenuRow}
+                activeOpacity={0.7}
+                onPress={() => onSelectStatus(item, option.value as WorkStatus)}>
+                <View style={[styles.statusMenuDot, {backgroundColor: option.dot}]} />
+                <Text style={styles.statusMenuLabel}>{option.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : undefined
       }
-      dateLine={`${item.bucket === 'assigned' ? 'Assigned ' : ''}${formatCardDate(item.date)}`}
+      dateLine={
+        item.bucket === 'unassigned' && item.createdBy ? (
+          <View style={styles.sentRow}>
+            <Text style={styles.sentDate}>{formatCardDateOnly(item.date)}</Text>
+            <Text style={styles.sentDash}>-</Text>
+            <View style={styles.sentAvatar}>
+              <Text style={styles.sentAvatarText}>
+                {initialsOf(item.createdBy)}
+              </Text>
+            </View>
+            <Text style={styles.sentName} numberOfLines={1}>
+              {item.createdBy}
+            </Text>
+          </View>
+        ) : (
+          `${item.bucket === 'assigned' ? 'Assigned ' : ''}${formatCardDate(item.date)}`
+        )
+      }
       badge={
         item.queuedOffline ? (
           <View style={styles.queuedRow}>
@@ -191,6 +266,105 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.black,
     fontSize: 9,
     color: theme.colors.white,
+  },
+  chooseAssignee: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    // maxWidth: '100%' + flexShrink stop this from pushing past its
+    // (flex:1, minWidth:0) grid cell — without them the pill sized to its
+    // own content and overflowed the card in a 3-column layout.
+    maxWidth: '100%',
+    flexShrink: 1,
+    gap: 5,
+    height: 26,
+    paddingLeft: 2,
+    paddingRight: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#99D3FF',
+    backgroundColor: theme.colors.primaryLight,
+  },
+  chooseAssigneeAvatar: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#99D3FF',
+    backgroundColor: theme.colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  chooseAssigneeText: {
+    flexShrink: 1,
+    fontFamily: theme.fonts.black,
+    fontSize: 11.5,
+    color: theme.colors.primary,
+  },
+  sentRow: {flexDirection: 'row', alignItems: 'center', gap: 6},
+  sentDate: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+  },
+  sentDash: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+  },
+  sentAvatar: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sentAvatarText: {
+    fontFamily: theme.fonts.black,
+    fontSize: 8,
+    color: theme.colors.white,
+  },
+  sentName: {
+    flexShrink: 1,
+    fontFamily: theme.fonts.bold,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+  },
+  // Matches KebabMenu's own popover styling — reimplemented locally here
+  // since this card doesn't render KebabMenu's "⋮" trigger.
+  statusMenu: {
+    position: 'absolute',
+    top: 34,
+    right: 0,
+    zIndex: 20,
+    elevation: 20,
+    minWidth: 184,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.white,
+    padding: 6,
+    shadowColor: '#101828',
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.14,
+    shadowRadius: 20,
+  },
+  statusMenuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+  statusMenuDot: {width: 9, height: 9, borderRadius: 5},
+  statusMenuLabel: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 14,
+    color: theme.colors.text,
   },
 });
 

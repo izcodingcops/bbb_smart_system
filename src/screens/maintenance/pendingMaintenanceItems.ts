@@ -48,6 +48,9 @@ export function usePendingMaintenanceItems(): MaintenanceRequest[] {
             routedToSupervisor: true,
             queuedOffline: true,
             completedBy: null,
+            assigneeKind: 'Supervisor',
+            department: null,
+            createdBy: 'You',
           };
         }),
     [outboxItems],

@@ -8,6 +8,7 @@ const USER_FIELDS = gql`
     email
     avatar
     enableShiftEntry
+    role
     programs {
       id
       name

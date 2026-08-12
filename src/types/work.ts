@@ -1,6 +1,6 @@
 export type WorkStatus = 'Open' | 'In-progress' | 'Completed';
 export type WorkPriority = 'High' | 'Medium' | 'Low';
-export type WorkBucket = 'assigned' | 'completed';
+export type WorkBucket = 'assigned' | 'unassigned' | 'completed';
 export type WorkCategory = 'Maintenance' | 'Incident' | 'Fixture' | 'POI' | 'Activity';
 
 export interface WorkItem {
@@ -29,6 +29,9 @@ export interface WorkItem {
   disposition?: string;
   businessName?: string;
   quantity?: string;
+  /** Who created/sent the request — shown on Unassigned-bucket cards so a
+   *  supervisor knows who routed it. Only Maintenance populates this. */
+  createdBy?: string;
   /**
    * Client-only, unlike Fixture/Maintenance's server-modeled `queuedOffline`
    * field — a real Work Log record from the server is never marked queued.

@@ -5,6 +5,11 @@ import {issueToken, MockContext, sleep, userIdForToken} from '../../mockSession'
 /** Fixed code the mock treats as the "sent" OTP so the flow is testable. */
 const MOCK_RESET_CODE = '111111';
 
+const ROLE_OUT: Record<MockUser['role'], string> = {
+  ambassador: 'AMBASSADOR',
+  supervisor: 'SUPERVISOR',
+};
+
 /** The one place legacy snake_case dies. */
 function toUser(user: MockUser) {
   return {
@@ -14,6 +19,7 @@ function toUser(user: MockUser) {
     email: user.email,
     avatar: user.avatar,
     enableShiftEntry: user.enable_shift_entry,
+    role: ROLE_OUT[user.role],
     programs: user.programs,
   };
 }

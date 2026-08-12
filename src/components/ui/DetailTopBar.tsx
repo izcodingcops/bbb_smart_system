@@ -50,11 +50,10 @@ const DetailTopBar: React.FC<Props> = ({
 );
 
 const styles = StyleSheet.create({
-  bar: {
-    backgroundColor: theme.colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
+  // Transparent so the screen gradient runs behind the bar — the design has no
+  // white header band and no rule under it; the first hairline is the one below
+  // the reference/Add-comment row.
+  bar: {backgroundColor: 'transparent'},
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -66,10 +65,13 @@ const styles = StyleSheet.create({
   backButton: {
     width: 42,
     height: 42,
-    borderRadius: 13,
+    borderRadius: theme.radius.glassPill,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F0F1F4',
+    borderWidth: 1,
+    borderColor: theme.glass.pillBorder,
+    backgroundColor: theme.glass.buttonFill,
+    ...theme.shadow.glassPill,
   },
   text: {flex: 1, minWidth: 0, paddingTop: 2},
   title: {
@@ -93,9 +95,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: theme.radius.md,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.white,
-    ...theme.shadow.card,
+    borderColor: theme.glass.pillBorder,
+    backgroundColor: theme.glass.buttonFill,
+    ...theme.shadow.glassPill,
   },
   editText: {fontFamily: theme.fonts.black, fontSize: 14, color: theme.colors.text},
   deleteButton: {

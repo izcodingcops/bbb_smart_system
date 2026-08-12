@@ -66,6 +66,7 @@ export const maintenanceTypeDefs = /* GraphQL */ `
     types: [String!]!
     zones: [String!]!
     departments: [String!]!
+    ambassadors: [String!]!
     businessNames: [String!]!
     fixtures: [String!]!
     incidents: [String!]!
@@ -115,6 +116,12 @@ export const maintenanceTypeDefs = /* GraphQL */ `
     setMaintenanceStatus(
       id: ID!
       status: MaintenanceStatus!
+    ): MaintenanceRequest!
+    assignMaintenanceRequest(
+      id: ID!
+      assigneeKind: MaintenanceAssigneeKind!
+      assigneeName: String
+      department: String
     ): MaintenanceRequest!
     createMaintenanceRequest(
       programId: ID!

@@ -14,6 +14,7 @@ import {
 } from '../../../types/maintenance';
 import {
   ADD_MAINTENANCE_COMMENT,
+  ASSIGN_MAINTENANCE_REQUEST,
   CREATE_MAINTENANCE_FIXTURE,
   CREATE_MAINTENANCE_REQUEST,
   DELETE_MAINTENANCE_COMMENT,
@@ -39,6 +40,9 @@ interface GqlMaintenanceRequest {
   routedToSupervisor: boolean;
   queuedOffline: boolean;
   completedBy: string | null;
+  assigneeKind: 'SUPERVISOR' | 'DEPARTMENT';
+  department: string | null;
+  createdBy: string;
 }
 
 const STATUS: Record<GqlMaintenanceRequest['status'], MaintenanceStatus> = {
@@ -50,6 +54,13 @@ const PRIORITY: Record<GqlMaintenanceRequest['priority'], MaintenancePriority> =
   LOW: 'Low',
   MEDIUM: 'Medium',
   HIGH: 'High',
+};
+const ASSIGNEE_KIND: Record<
+  'SUPERVISOR' | 'DEPARTMENT',
+  MaintenanceAssigneeKind
+> = {
+  SUPERVISOR: 'Supervisor',
+  DEPARTMENT: 'Department',
 };
 
 const toRequest = (r: GqlMaintenanceRequest): MaintenanceRequest => ({
@@ -65,6 +76,9 @@ const toRequest = (r: GqlMaintenanceRequest): MaintenanceRequest => ({
   routedToSupervisor: r.routedToSupervisor,
   queuedOffline: r.queuedOffline,
   completedBy: r.completedBy,
+  assigneeKind: ASSIGNEE_KIND[r.assigneeKind],
+  department: r.department,
+  createdBy: r.createdBy,
 });
 
 const MAINTENANCE_CONTEXT = {context: {feature: 'maintenance'}};
@@ -96,13 +110,6 @@ export function useGetMaintenanceRequestsQuery() {
   return {data: requests, isLoading: loading, isError: !!error, refetch};
 }
 
-const ASSIGNEE_KIND: Record<
-  'SUPERVISOR' | 'DEPARTMENT',
-  MaintenanceAssigneeKind
-> = {
-  SUPERVISOR: 'Supervisor',
-  DEPARTMENT: 'Department',
-};
 const STATUS_OUT: Record<MaintenanceStatus, string> = {
   Open: 'OPEN',
   'In-progress': 'IN_PROGRESS',
@@ -183,6 +190,15 @@ const REFRESH_DETAIL = {
   ...MAINTENANCE_CONTEXT,
   refetchQueries: ['GetMaintenanceRequests', 'GetMaintenanceRequest'],
 };
+/**
+ * Assigning a request also has to refresh Work's aggregated list (Home/Work
+ * reads `workItems`, not `maintenanceRequests`) so a claimed/reassigned
+ * request drops out of the Unassigned bucket there too.
+ */
+const REFRESH_ASSIGN = {
+  ...MAINTENANCE_CONTEXT,
+  refetchQueries: ['GetMaintenanceRequests', 'GetWorkItems'],
+};
 
 const CREATE_CONTEXT = {
   context: {feature: 'maintenance', offlineQueueKey: 'CREATE_MAINTENANCE_REQUEST'},
@@ -231,6 +247,31 @@ export function useSetMaintenanceStatusMutation() {
   const mutate = useCallback(
     async (id: string, status: MaintenanceStatus) => {
       await run({variables: {id, status: STATUS_OUT[status]}});
+    },
+    [run],
+  );
+  return {mutate, isLoading: loading};
+}
+
+export function useAssignMaintenanceRequestMutation() {
+  const [run, {loading}] = useMutation(
+    ASSIGN_MAINTENANCE_REQUEST,
+    REFRESH_ASSIGN,
+  );
+  const mutate = useCallback(
+    async (
+      id: string,
+      kind: MaintenanceAssigneeKind,
+      name: string,
+    ) => {
+      await run({
+        variables: {
+          id,
+          assigneeKind: kind === 'Department' ? 'DEPARTMENT' : 'SUPERVISOR',
+          assigneeName: kind === 'Department' ? null : name,
+          department: kind === 'Department' ? name : null,
+        },
+      });
     },
     [run],
   );

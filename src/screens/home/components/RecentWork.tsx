@@ -1,42 +1,66 @@
 import React, {useState} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {RecordCardSkeleton, SectionTitle} from '../../../components/ui';
-import WorkCard from './WorkCard';
-import {WorkBucket, WorkItem} from '../../../types/work';
+import WorkCard from '../../work/components/WorkCard';
+import {applyBucket, applyMaintenanceOnly} from '../../work/filtering';
+import {GetUserRole} from '../../../redux/auth/selectors';
+import {WorkBucket, WorkItem, WorkStatus} from '../../../types/work';
 import {theme} from '../../../theme';
 
 const SKELETON_CARDS = [0, 1];
-/** Home is a preview — the full list lives on the Work tab via "View All". */
-const MAX_VISIBLE = 5;
+/** Home is a glanceable preview — the full list lives on the Work tab via "View All". */
+const MAX_VISIBLE = 2;
 
 interface Props {
   items: WorkItem[];
   isLoading?: boolean;
   onViewAll?: () => void;
+  onOpenItem: (item: WorkItem) => void;
+  /** Which card's inline status menu is open, if any — only one at a time. */
+  menuItemId: string | null;
+  onToggleMenu: (id: string) => void;
+  onSelectStatus: (item: WorkItem, status: WorkStatus) => void;
+  onOpenAssign: (item: WorkItem) => void;
 }
 
-const RecentWork: React.FC<Props> = ({items, isLoading, onViewAll}) => {
+const RecentWork: React.FC<Props> = ({
+  items,
+  isLoading,
+  onViewAll,
+  onOpenItem,
+  menuItemId,
+  onToggleMenu,
+  onSelectStatus,
+  onOpenAssign,
+}) => {
+  const role = GetUserRole() ?? 'ambassador';
   const [tab, setTab] = useState<WorkBucket>('assigned');
 
   const assignedCount = items.filter(w => w.bucket === 'assigned').length;
+  const unassignedCount = items.filter(w => w.bucket === 'unassigned').length;
   const completedCount = items.filter(w => w.bucket === 'completed').length;
-  const visible = items.filter(w => w.bucket === tab).slice(0, MAX_VISIBLE);
+  const visible = applyMaintenanceOnly(applyBucket(items, tab), tab).slice(
+    0,
+    MAX_VISIBLE,
+  );
 
   const renderTab = (bucket: WorkBucket, label: string, count: number) => {
     const active = tab === bucket;
     return (
       <TouchableOpacity
+        key={bucket}
         style={[styles.tab, active && styles.tabActive]}
         activeOpacity={0.8}
         onPress={() => setTab(bucket)}>
         <Text style={[styles.tabText, active && styles.tabTextActive]}>
           {label}
         </Text>
-        <View style={[styles.count, active && styles.countActive]}>
-          <Text style={[styles.countText, active && styles.countTextActive]}>
-            {count}
-          </Text>
-        </View>
+        {/* Only the active tab carries a count — matches the reference design. */}
+        {active ? (
+          <View style={styles.count}>
+            <Text style={styles.countText}>{count}</Text>
+          </View>
+        ) : null}
       </TouchableOpacity>
     );
   };
@@ -53,19 +77,35 @@ const RecentWork: React.FC<Props> = ({items, isLoading, onViewAll}) => {
         }
       />
 
-      {/* Held back while loading, otherwise it flashes "Assigned Work 0". */}
+      {/* Held back while loading, otherwise it flashes "Assigned 0". */}
       {isLoading ? null : (
         <View style={styles.tabs}>
-          {renderTab('assigned', 'Assigned Work', assignedCount)}
-          {renderTab('completed', 'Completed Work', completedCount)}
+          {renderTab('assigned', 'Assigned', assignedCount)}
+          {role === 'supervisor'
+            ? renderTab('unassigned', 'Un-Assigned', unassignedCount)
+            : null}
+          {renderTab('completed', 'Completed', completedCount)}
         </View>
       )}
 
-      {isLoading
-        ? SKELETON_CARDS.map(index => (
-            <RecordCardSkeleton key={index} fieldCount={3} style={styles.cardSpacing} />
-          ))
-        : visible.map(item => <WorkCard key={item.id} item={item} />)}
+      <View style={styles.cardList}>
+        {isLoading
+          ? SKELETON_CARDS.map(index => (
+              <RecordCardSkeleton key={index} fieldCount={3} />
+            ))
+          : visible.map(item => (
+              <WorkCard
+                key={item.id}
+                item={item}
+                compact
+                onPress={onOpenItem}
+                menuOpen={menuItemId === item.id}
+                onToggleMenu={onToggleMenu}
+                onSelectStatus={onSelectStatus}
+                onOpenAssign={onOpenAssign}
+              />
+            ))}
+      </View>
     </>
   );
 };
@@ -83,18 +123,20 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   tab: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: 8,
+    paddingHorizontal: theme.spacing.sm,
+    height: 40,
     borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
     backgroundColor: theme.colors.white,
   },
-  // Matches WorkCard's own marginBottom, so trailing space before the next
-  // section is identical in the loading and loaded states.
-  cardSpacing: {marginBottom: theme.spacing.md},
-  tabActive: {backgroundColor: '#E6F4FF'},
+  cardList: {gap: theme.spacing.md},
+  tabActive: {borderColor: theme.colors.primary},
   tabText: {
     fontFamily: theme.fonts.bold,
     fontSize: 13,
@@ -105,18 +147,16 @@ const styles = StyleSheet.create({
     minWidth: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#EEF1F4',
+    backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
   },
-  countActive: {backgroundColor: theme.colors.primary},
   countText: {
     fontFamily: theme.fonts.black,
     fontSize: 11,
-    color: theme.colors.textSecondary,
+    color: theme.colors.white,
   },
-  countTextActive: {color: theme.colors.white},
 });
 
 export default RecentWork;

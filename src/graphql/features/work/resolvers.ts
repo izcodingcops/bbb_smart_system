@@ -1,6 +1,8 @@
 import {MOCK_QUICK_ACTIONS, toWorkLogWorkItem} from '../../../mocks';
+import {toMaintenanceWorkItem} from '../../../mocks/workItems';
 import {WorkStatus} from '../../../types/work';
 import {sleep} from '../../mockSession';
+import {findRecord as findMaintenanceRecord, maintenanceStore} from '../maintenance/store';
 import {workLogStore} from '../workLog/store';
 import {findWorkItem, workStore} from './store';
 
@@ -21,6 +23,7 @@ const PRIORITY: Record<string, string> = {
 };
 const BUCKET: Record<string, string> = {
   assigned: 'ASSIGNED',
+  unassigned: 'UNASSIGNED',
   completed: 'COMPLETED',
 };
 
@@ -43,6 +46,7 @@ const toWire = (item: ReturnType<typeof findWorkItem>) =>
     disposition: item.disposition ?? null,
     businessName: item.businessName ?? null,
     quantity: item.quantity ?? null,
+    createdBy: item.createdBy ?? null,
   };
 
 export const workResolvers = {
@@ -50,18 +54,24 @@ export const workResolvers = {
     // The screen buckets client-side via applyBucket, same convention as the
     // `filter: null` Fixture and Maintenance queries use.
     //
-    // Activity (Work Log) items are recomputed live from workLogStore.records
-    // rather than read from the static workStore.items snapshot: the Work Log
-    // feature's own create/update/delete mutations edit that store in place,
-    // and workStore.items was only ever seeded once at module load. Without
-    // this, a created/edited/deleted Work Log entry would never be reflected
-    // here. Maintenance and Fixture items don't get the same live treatment —
-    // that's a pre-existing gap in this aggregation, out of scope here.
+    // Activity (Work Log) and Maintenance items are recomputed live from
+    // workLogStore.records / maintenanceStore.records rather than read from
+    // the static workStore.items snapshot: their own feature mutations edit
+    // those stores in place, and workStore.items was only ever seeded once
+    // at module load. Without this, a created/edited/deleted Work Log entry
+    // or an assigned/updated Maintenance request would never be reflected
+    // here. Fixture items don't get the same live treatment — that's a
+    // pre-existing gap in this aggregation, out of scope here.
     workItems: async () => {
       await sleep();
-      const seeded = workStore.items.filter(item => item.category !== 'Activity');
+      const seeded = workStore.items.filter(
+        item => item.category !== 'Activity' && item.category !== 'Maintenance',
+      );
+      const maintenanceItems = maintenanceStore.records.map(toMaintenanceWorkItem);
       const workLogItems = workLogStore.records.map(toWorkLogWorkItem);
-      return [...seeded, ...workLogItems].map(item => toWire(item));
+      return [...seeded, ...maintenanceItems, ...workLogItems].map(item =>
+        toWire(item),
+      );
     },
 
     quickActions: async () => {
@@ -76,6 +86,27 @@ export const workResolvers = {
       args: {id: string; status: string},
     ) => {
       await sleep();
+      // Maintenance items are recomputed live from maintenanceStore.records
+      // (see the Query.workItems comment above) — mutating workStore.items
+      // for one would edit a copy the read path never looks at again, so the
+      // status change appears to silently revert on the next refetch. Mirror
+      // setMaintenanceStatus's own completedBy/completedOn logic exactly.
+      const maintenanceRecord = findMaintenanceRecord(args.id);
+      if (maintenanceRecord) {
+        maintenanceRecord.status = STATUS_IN[args.status];
+        if (maintenanceRecord.status === 'Completed') {
+          maintenanceRecord.completedBy =
+            maintenanceRecord.assignee?.name ?? maintenanceRecord.completedBy;
+          maintenanceRecord.completedOn = new Date().toISOString();
+        } else {
+          maintenanceRecord.completedBy = null;
+          maintenanceRecord.completedOn = null;
+        }
+        // The index only affects a zone fallback string not requested by
+        // SET_WORK_ITEM_STATUS's selection set, so 0 is safe here.
+        return toWire(toMaintenanceWorkItem(maintenanceRecord, 0));
+      }
+
       const item = findWorkItem(args.id);
       if (!item) {
         throw new Error(`Unknown work item: ${args.id}`);

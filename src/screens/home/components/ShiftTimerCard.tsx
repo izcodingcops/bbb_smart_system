@@ -2,12 +2,12 @@ import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Svg, {Defs, RadialGradient, Rect, Stop} from 'react-native-svg';
+import {ClockIcon} from '../../../components/icons';
 import {useShiftTimer} from '../../../hooks/useShiftTimer';
 import {formatClock, formatHm, formatTimeOfDay} from '../../../utils/time';
 import {theme} from '../../../theme';
 
 interface Props {
-  shiftName: string;
   onEnd: () => void;
 }
 
@@ -15,7 +15,7 @@ interface Props {
  * Owns the once-a-second shift clock. Kept as its own component so the tick
  * re-renders only this card, not the rest of the home feed.
  */
-const ShiftTimerCard: React.FC<Props> = ({shiftName, onEnd}) => {
+const ShiftTimerCard: React.FC<Props> = ({onEnd}) => {
   const {startDate, elapsedMs, remainingMs, progress, paused, toggleBreak} =
     useShiftTimer();
 
@@ -60,12 +60,7 @@ const ShiftTimerCard: React.FC<Props> = ({shiftName, onEnd}) => {
 
         <View style={styles.inner}>
           <View style={styles.top}>
-            <View style={styles.chip}>
-              <View style={styles.greenDot} />
-              <Text style={styles.chipText} numberOfLines={1}>
-                {paused ? 'On Break' : shiftName}
-              </Text>
-            </View>
+            <Text style={styles.timer}>{formatClock(elapsedMs)}</Text>
             <View style={styles.buttons}>
               <TouchableOpacity
                 style={styles.breakBtn}
@@ -84,17 +79,19 @@ const ShiftTimerCard: React.FC<Props> = ({shiftName, onEnd}) => {
             </View>
           </View>
 
-          <Text style={styles.timer}>{formatClock(elapsedMs)}</Text>
-          <Text style={styles.started}>
-            Shift Started today · {formatTimeOfDay(startDate)}
-          </Text>
+          <View style={styles.started}>
+            <ClockIcon size={13} color="rgba(255,255,255,0.85)" />
+            <Text style={styles.startedText} numberOfLines={1}>
+              {paused ? 'On Break' : 'Shift Started today'} · {formatTimeOfDay(startDate)}
+            </Text>
+          </View>
 
           <View style={styles.track}>
             <View style={[styles.fill, {width: `${progress * 100}%`}]} />
           </View>
           <View style={styles.labels}>
             <Text style={styles.label}>{formatHm(elapsedMs)} elapsed</Text>
-            <Text style={styles.label}>{formatHm(remainingMs)} left</Text>
+            <Text style={styles.label}>{formatHm(elapsedMs + remainingMs)} shift</Text>
           </View>
         </View>
       </LinearGradient>
@@ -116,50 +113,34 @@ const styles = StyleSheet.create({
   },
   card: {borderRadius: 20, overflow: 'hidden'},
   inner: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
+    paddingHorizontal: 15,
+    paddingTop: 13,
+    paddingBottom: 14,
   },
   top: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: theme.spacing.sm,
-    marginBottom: theme.spacing.xl,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexShrink: 1,
-    gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  greenDot: {width: 8, height: 8, borderRadius: 4, backgroundColor: '#16A34A'},
-  chipText: {
-    fontFamily: theme.fonts.black,
-    fontSize: 13,
-    color: theme.colors.white,
-    flexShrink: 1,
   },
   buttons: {flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0},
   breakBtn: {
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    height: 36,
+    justifyContent: 'center',
+    borderRadius: 11,
+    paddingHorizontal: 15,
+    backgroundColor: 'rgba(255,255,255,0.16)',
   },
   breakText: {
-    fontFamily: theme.fonts.bold,
+    fontFamily: theme.fonts.black,
     fontSize: 13,
     color: theme.colors.white,
   },
   endBtn: {
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    height: 36,
+    justifyContent: 'center',
+    borderRadius: 11,
+    paddingHorizontal: 15,
     backgroundColor: theme.colors.white,
   },
   endText: {
@@ -169,30 +150,37 @@ const styles = StyleSheet.create({
   },
   timer: {
     fontFamily: theme.fonts.black,
-    fontSize: 40,
-    letterSpacing: 1,
+    fontSize: 30,
+    letterSpacing: -0.5,
     color: theme.colors.white,
+    fontVariant: ['tabular-nums'],
   },
   started: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+    marginBottom: theme.spacing.md,
+  },
+  startedText: {
+    flexShrink: 1,
     fontFamily: theme.fonts.bold,
-    fontSize: 12.5,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 6,
-    marginBottom: theme.spacing.xl,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.85)',
   },
   track: {
-    height: 6,
+    height: 5,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: 'rgba(255,255,255,0.3)',
     overflow: 'hidden',
   },
-  fill: {height: 6, borderRadius: 3, backgroundColor: theme.colors.white},
+  fill: {height: 5, borderRadius: 3, backgroundColor: theme.colors.white},
   labels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: theme.spacing.md,
+    marginTop: theme.spacing.sm,
   },
-  label: {fontFamily: theme.fonts.black, fontSize: 12.5, color: '#FFFFFF'},
+  label: {fontFamily: theme.fonts.bold, fontSize: 12.5, color: 'rgba(255,255,255,0.9)'},
 });
 
 export default ShiftTimerCard;

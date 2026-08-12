@@ -20,6 +20,7 @@ export const GET_WORK_ITEMS = gql`
       disposition
       businessName
       quantity
+      createdBy
     }
   }
 `;

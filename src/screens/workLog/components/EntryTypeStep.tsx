@@ -7,6 +7,7 @@ import {
   View,
   StyleSheet,
 } from 'react-native';
+import ScreenBackground from '../../../components/ScreenBackground';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {ArrowRightIcon, CheckIcon, SearchIcon, XIcon} from '../../../components/icons';
 import {ENTRY_TYPES} from '../../../types/workLog';
@@ -37,7 +38,7 @@ const EntryTypeStep: React.FC<Props> = ({
   );
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground style={styles.root}>
       <SafeAreaView edges={['top']} style={styles.topbar}>
         <View style={styles.topbarRow}>
           <TouchableOpacity
@@ -119,12 +120,12 @@ const EntryTypeStep: React.FC<Props> = ({
           <ArrowRightIcon size={18} color={theme.colors.white} />
         </TouchableOpacity>
       </SafeAreaView>
-    </View>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: theme.colors.background},
+  root: {flex: 1},
   topbar: {
     backgroundColor: theme.colors.white,
     borderBottomWidth: 1,

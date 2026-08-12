@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import ScreenBackground from '../../components/ScreenBackground';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -148,7 +149,7 @@ const MapsScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground style={styles.root}>
       <SafeAreaView edges={['top']}>
         <Text style={styles.title}>Maps</Text>
       </SafeAreaView>
@@ -208,12 +209,12 @@ const MapsScreen: React.FC = () => {
         message={`${savedName ?? ''} is now available offline.`}
         onDismiss={() => setToastVisible(false)}
       />
-    </View>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: theme.colors.background},
+  root: {flex: 1},
   title: {
     fontFamily: theme.fonts.black,
     fontSize: 26,

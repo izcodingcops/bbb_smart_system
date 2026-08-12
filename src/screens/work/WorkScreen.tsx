@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import ScreenBackground from '../../components/ScreenBackground';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -31,7 +32,7 @@ import {
   useSetWorkItemStatusMutation,
 } from '../../graphql/features/work/hooks';
 import {WorkBucket, WorkItem, WorkStatus} from '../../types/work';
-import {GetShiftTypes} from '../../redux/auth/selectors';
+import {GetShiftTypes, GetUserRole} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import {SCREEN} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
@@ -46,6 +47,7 @@ import {
   SortKey,
   applyBucket,
   applyFilters,
+  applyMaintenanceOnly,
   applySearch,
   applySort,
   formatFilterValue,
@@ -54,6 +56,7 @@ import {
 } from './filtering';
 import WorkCard from './components/WorkCard';
 import TabSwitcher from './components/TabSwitcher';
+import AssigneeSheet from '../maintenance/components/AssigneeSheet';
 import {usePendingWorkLogItems} from './pendingWorkItems';
 import {theme} from '../../theme';
 
@@ -86,6 +89,7 @@ const WorkScreen: React.FC = () => {
   const [openFilter, setOpenFilter] = useState<FilterField | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [completeTarget, setCompleteTarget] = useState<WorkItem | null>(null);
+  const [assignTarget, setAssignTarget] = useState<WorkItem | null>(null);
   /** Which card's inline status menu is open, if any — only one at a time. */
   const [menuItemId, setMenuItemId] = useState<string | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -166,6 +170,7 @@ const WorkScreen: React.FC = () => {
         menuOpen={menuItemId === item.id}
         onToggleMenu={handleToggleMenu}
         onSelectStatus={handleSelectStatus}
+        onOpenAssign={setAssignTarget}
       />
     ),
     [menuItemId, handleOpenItem, handleToggleMenu, handleSelectStatus],
@@ -174,9 +179,14 @@ const WorkScreen: React.FC = () => {
   const shiftTypes = GetShiftTypes();
   const shiftTypeId = GetActiveShiftTypeId();
   const shiftName = shiftTypes.find(t => t.id === shiftTypeId)?.name ?? 'Shift';
+  const role = GetUserRole() ?? 'ambassador';
 
   const assignedCount = useMemo(
     () => items.filter(i => i.bucket === 'assigned').length,
+    [items],
+  );
+  const unassignedCount = useMemo(
+    () => items.filter(i => i.bucket === 'unassigned').length,
     [items],
   );
   const completedCount = useMemo(
@@ -184,11 +194,22 @@ const WorkScreen: React.FC = () => {
     [items],
   );
 
-  const bucketItems = useMemo(() => applyBucket(items, bucket), [items, bucket]);
+  const bucketItems = useMemo(
+    () => applyMaintenanceOnly(applyBucket(items, bucket), bucket),
+    [items, bucket],
+  );
   const visible = useMemo(
     () =>
       applySort(applySearch(applyFilters(bucketItems, filters), search), sort),
     [bucketItems, filters, search, sort],
+  );
+  /** The Module chip can only ever show one value on a Maintenance-only tab. */
+  const filterFields = useMemo(
+    () =>
+      bucket === 'completed'
+        ? FILTER_FIELDS
+        : FILTER_FIELDS.filter(field => field !== 'category'),
+    [bucket],
   );
 
   const isNarrowed = search.trim().length > 0 || hasAnyFilter(filters);
@@ -199,14 +220,16 @@ const WorkScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground style={styles.root}>
       <SafeAreaView edges={['top']}>
         <Text style={styles.title}>Work</Text>
 
         <View style={styles.tabsRow}>
           <TabSwitcher
             bucket={bucket}
+            role={role}
             assignedCount={assignedCount}
+            unassignedCount={unassignedCount}
             completedCount={completedCount}
             onChange={next => {
               setBucket(next);
@@ -225,7 +248,7 @@ const WorkScreen: React.FC = () => {
       </SafeAreaView>
 
       <FilterChips
-        fields={FILTER_FIELDS}
+        fields={filterFields}
         fieldLabel={FIELD_LABEL}
         filters={filters}
         formatValue={formatFilterValue}
@@ -240,7 +263,7 @@ const WorkScreen: React.FC = () => {
           visible={visible.length}
           isNarrowed={isNarrowed}
           sortLabel={SORT_LABEL[sort]}
-          noun={bucket === 'assigned' ? 'assignments' : 'records'}
+          noun={bucket === 'completed' ? 'records' : 'assignments'}
         />
       )}
 
@@ -292,11 +315,15 @@ const WorkScreen: React.FC = () => {
                 title={
                   bucket === 'assigned'
                     ? 'No assigned work yet'
+                    : bucket === 'unassigned'
+                    ? 'No un-assigned work'
                     : 'Nothing completed yet'
                 }
                 body={
                   bucket === 'assigned'
                     ? 'Work will appear here once assigned by your supervisor.'
+                    : bucket === 'unassigned'
+                    ? 'Maintenance routed to you by ambassadors will show up here.'
                     : 'Completed work will show up here once you finish an assignment.'
                 }
               />
@@ -408,12 +435,23 @@ const WorkScreen: React.FC = () => {
         onClose={() => setAddOpen(false)}
         onClosed={flushTile}
       />
-    </View>
+
+      <AssigneeSheet
+        target={assignTarget}
+        onClose={() => setAssignTarget(null)}
+        onAssigned={(item, name) =>
+          setToast({
+            title: 'Maintenance assigned',
+            message: `${item.reference} is now with ${name} — moved out of Unassigned.`,
+          })
+        }
+      />
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: theme.colors.background},
+  root: {flex: 1},
   title: {
     fontFamily: theme.fonts.black,
     fontSize: 26,

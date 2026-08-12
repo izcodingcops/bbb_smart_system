@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
+import ScreenBackground from '../../components/ScreenBackground';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import {
@@ -99,7 +100,7 @@ const DispatchScreen: React.FC = () => {
 
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground style={styles.root}>
       <SafeAreaView edges={['top']}>
         <Text style={styles.title}>Dispatch</Text>
 
@@ -227,12 +228,12 @@ const DispatchScreen: React.FC = () => {
         onClose={() => setAddOpen(false)}
         onClosed={flushTile}
       />
-    </View>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: theme.colors.background},
+  root: {flex: 1},
   title: {
     fontFamily: theme.fonts.black,
     fontSize: 26,

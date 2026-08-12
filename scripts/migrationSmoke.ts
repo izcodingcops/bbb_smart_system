@@ -4,8 +4,8 @@ import {migrations, PERSIST_VERSION} from '../src/redux/migrations';
 type Check = [name: string, run: () => void];
 
 const checks: Check[] = [
-  ['PERSIST_VERSION is 4', () => {
-    assert.equal(PERSIST_VERSION, 4);
+  ['PERSIST_VERSION is 5', () => {
+    assert.equal(PERSIST_VERSION, 5);
   }],
 
   ['migration 2 drops the api key entirely', () => {
@@ -107,6 +107,40 @@ const checks: Check[] = [
   ['migration 3 handles undefined state without throwing', () => {
     const result = migrations[3]!(undefined as any);
     assert.equal(result, undefined);
+  }],
+
+  ['migration 5 defaults auth.user.role to ambassador', () => {
+    const input = {auth: {user: {id: 'u1', name: 'Jane'}}};
+    const result: any = migrations[5]!(input as any);
+    assert.equal(result.auth.user.role, 'ambassador');
+  }],
+
+  ['migration 5 leaves an already-present role untouched', () => {
+    const input = {auth: {user: {id: 'u1', role: 'supervisor'}}};
+    const result: any = migrations[5]!(input as any);
+    assert.equal(result.auth.user.role, 'supervisor');
+  }],
+
+  ['migration 5 leaves auth.session and other slices untouched', () => {
+    const input = {
+      auth: {session: {token: 'abc123'}, user: {id: 'u1'}},
+      shift: {isActive: true},
+    };
+    const result: any = migrations[5]!(input as any);
+    assert.deepEqual(result.auth.session, input.auth.session);
+    assert.deepEqual(result.shift, input.shift);
+  }],
+
+  ['migration 5 handles undefined state without throwing', () => {
+    const result = migrations[5]!(undefined as any);
+    assert.equal(result, undefined);
+  }],
+
+  ['migration 5 handles a missing auth.user without throwing', () => {
+    const input = {auth: {session: {token: 'abc123'}}};
+    const result: any = migrations[5]!(input as any);
+    assert.deepEqual(result.auth.session, {token: 'abc123'});
+    assert.equal(result.auth.user, undefined);
   }],
 ];
 

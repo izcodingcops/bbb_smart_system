@@ -45,11 +45,15 @@ const DetailSection: React.FC<Props> = ({
 );
 
 const styles = StyleSheet.create({
+  // Full-bleed translucent band rather than an inset card: the sections butt
+  // against each other, separated only by a hairline, and the page gradient
+  // tints each one differently down the screen.
   section: {
+    backgroundColor: theme.glass.sheetFill,
     paddingHorizontal: theme.spacing.xl,
     paddingVertical: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF0F2',
+    borderBottomColor: theme.colors.dividerOnGlass,
   },
   titleRow: {
     flexDirection: 'row',

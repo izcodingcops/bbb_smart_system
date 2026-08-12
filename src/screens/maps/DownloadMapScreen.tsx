@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
+import ScreenBackground from '../../components/ScreenBackground';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
   DownloadedMap,
@@ -305,7 +306,7 @@ const DownloadMapScreen: React.FC<Props> = ({
     : 'Move the map to adjust the pin';
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground style={styles.root}>
       <View style={styles.mapArea}>
         <MapSurface
           region={region}
@@ -508,12 +509,12 @@ const DownloadMapScreen: React.FC<Props> = ({
         onConfirm={handleConfirmSave}
         onCancel={() => setConfirmOpen(false)}
       />
-    </View>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: theme.colors.background},
+  root: {flex: 1},
   mapArea: {flex: 6},
   close: {
     position: 'absolute',

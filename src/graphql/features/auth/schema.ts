@@ -11,6 +11,11 @@ export const authTypeDefs = /* GraphQL */ `
     icon: String!
   }
 
+  enum UserRole {
+    AMBASSADOR
+    SUPERVISOR
+  }
+
   type User {
     id: ID!
     name: String!
@@ -18,6 +23,7 @@ export const authTypeDefs = /* GraphQL */ `
     email: String
     avatar: String
     enableShiftEntry: Boolean!
+    role: UserRole!
     programs: [Program!]!
   }
 

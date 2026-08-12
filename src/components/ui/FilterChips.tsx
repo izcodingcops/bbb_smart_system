@@ -85,17 +85,23 @@ function FilterChips<F extends string>({
   );
 }
 
+// The chips' glass shadow spills ~18px below them, and a ScrollView clips to
+// its own frame — so the scroller is taller than a chip and carries the gutter
+// internally, with `wrap` giving back what it added.
+const SHADOW_GUTTER = 8;
+
 const styles = StyleSheet.create({
   wrap: {
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.sm,
+    paddingTop: theme.spacing.md,
+    paddingBottom: 0,
   },
-  scroll: {flexGrow: 0, height: CHIP_HEIGHT},
+  scroll: {flexGrow: 0, height: CHIP_HEIGHT + SHADOW_GUTTER * 2},
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
     paddingHorizontal: theme.spacing.lg,
+    paddingVertical: SHADOW_GUTTER,
   },
   chip: {
     flexDirection: 'row',
@@ -103,14 +109,15 @@ const styles = StyleSheet.create({
     height: CHIP_HEIGHT,
     gap: 6,
     borderWidth: 1,
-    borderColor: theme.colors.borderLight,
-    backgroundColor: theme.colors.white,
-    borderRadius: 999,
+    borderColor: theme.glass.pillBorder,
+    backgroundColor: theme.glass.chipFill,
+    borderRadius: theme.radius.pill,
     paddingHorizontal: theme.spacing.md,
+    ...theme.shadow.glassPill,
   },
   chipActive: {
-    borderColor: '#99D3FF',
-    backgroundColor: theme.colors.primaryLight,
+    borderColor: theme.colors.accentBorder,
+    backgroundColor: theme.colors.accentTint,
   },
   chipText: {fontFamily: theme.fonts.bold, fontSize: 13, color: '#454545'},
   chipTextActive: {fontFamily: theme.fonts.black, color: theme.colors.primary},

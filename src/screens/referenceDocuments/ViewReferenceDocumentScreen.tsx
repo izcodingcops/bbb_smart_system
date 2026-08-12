@@ -1,5 +1,6 @@
 import React from 'react';
 import {View, ScrollView, StyleSheet} from 'react-native';
+import ScreenBackground from '../../components/ScreenBackground';
 import {
   DetailField,
   DetailScreenSkeleton,
@@ -39,7 +40,7 @@ const ViewReferenceDocumentScreen: React.FC<Props> = ({id, onClose}) => {
   // hidden on this route, so a failed load with no way out would trap the user.
   if (isError || !detail) {
     return (
-      <View style={styles.root}>
+      <ScreenBackground style={styles.root}>
         <DetailTopBar title="Cleaning" onBack={onClose} />
         <View style={styles.loading}>
           <EmptyState
@@ -50,12 +51,12 @@ const ViewReferenceDocumentScreen: React.FC<Props> = ({id, onClose}) => {
             onAction={refetch}
           />
         </View>
-      </View>
+      </ScreenBackground>
     );
   }
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground style={styles.root}>
       <DetailTopBar title="Cleaning" reference={detail.reference} onBack={onClose} />
 
       <ScrollView contentContainerStyle={styles.body}>
@@ -82,17 +83,16 @@ const ViewReferenceDocumentScreen: React.FC<Props> = ({id, onClose}) => {
           <DetailField label="User Location" value={detail.address} full />
         </DetailSection>
       </ScrollView>
-    </View>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: theme.colors.background},
+  root: {flex: 1},
   loading: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.background,
   },
   body: {paddingBottom: 40},
   idRow: {

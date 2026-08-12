@@ -1,5 +1,6 @@
 import React, {useCallback, useMemo, useRef, useState} from 'react';
-import {View, Text, FlatList, ScrollView, StyleSheet} from 'react-native';
+import {Text, FlatList, ScrollView, StyleSheet} from 'react-native';
+import ScreenBackground from '../../components/ScreenBackground';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -82,7 +83,7 @@ const ReferenceDocumentsScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.root}>
+    <ScreenBackground style={styles.root}>
       <SafeAreaView edges={['top']}>
         <Text style={styles.title}>Reference Documents</Text>
 
@@ -201,12 +202,12 @@ const ReferenceDocumentsScreen: React.FC = () => {
         }
         onClose={() => setOpenFilter(null)}
       />
-    </View>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: theme.colors.background},
+  root: {flex: 1},
   title: {
     fontFamily: theme.fonts.black,
     fontSize: 26,

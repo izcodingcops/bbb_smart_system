@@ -8,12 +8,11 @@ import {theme} from '../../theme';
  * copy. A form's own field-level styles stay local to it.
  */
 export const formChrome = StyleSheet.create({
-  root: {flex: 1, backgroundColor: theme.colors.background},
-  topbar: {
-    backgroundColor: theme.colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
+  // No fill of its own — every form roots in a <ScreenBackground>, so the page
+  // gradient runs the full height behind the cards and the footer.
+  root: {flex: 1},
+  // Transparent, matching DetailTopBar: no white header band, no rule under it.
+  topbar: {backgroundColor: 'transparent'},
   topbarRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -25,10 +24,13 @@ export const formChrome = StyleSheet.create({
   topbarButton: {
     width: 42,
     height: 42,
-    borderRadius: 13,
+    borderRadius: theme.radius.glassPill,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F0F1F4',
+    borderWidth: 1,
+    borderColor: theme.glass.pillBorder,
+    backgroundColor: theme.glass.buttonFill,
+    ...theme.shadow.glassPill,
   },
   topbarText: {flex: 1, minWidth: 0},
   title: {
@@ -46,16 +48,20 @@ export const formChrome = StyleSheet.create({
   bodyWrap: {flex: 1},
   body: {flex: 1},
   bodyContent: {paddingBottom: 40},
+  // Same glass card as RecordCard — inset and rounded, unlike the detail
+  // screen's full-bleed bands. See Card.tsx for why the ramp is drawn with
+  // experimental_backgroundImage rather than a LinearGradient view.
   section: {
     marginHorizontal: theme.spacing.lg,
     marginTop: 14,
     padding: theme.spacing.lg,
     paddingBottom: theme.spacing.xs,
-    borderRadius: 18,
+    borderRadius: theme.radius.glass,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.white,
-    ...theme.shadow.card,
+    borderColor: theme.glass.cardBorder,
+    backgroundColor: theme.glass.cardFillFlat,
+    experimental_backgroundImage: theme.glass.cardFillGradient,
+    ...theme.shadow.glass,
   },
   sectionTitle: {
     fontFamily: theme.fonts.black,
@@ -99,12 +105,17 @@ export const formChrome = StyleSheet.create({
     lineHeight: 20,
     color: theme.colors.text,
   },
+  // Mirrors the tab bar: pill-shaped top, glass fill, shadow pointing up so it
+  // lifts off the content scrolling beneath it.
   footer: {
     paddingHorizontal: theme.spacing.xl,
     paddingTop: 13,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     borderTopWidth: 1,
-    borderTopColor: '#EAEAEA',
-    backgroundColor: theme.colors.white,
+    borderTopColor: theme.glass.navBorder,
+    backgroundColor: theme.glass.navFill,
+    boxShadow: '0px -6px 24px 0px rgba(16,24,40,0.10)',
   },
   submit: {
     height: 54,

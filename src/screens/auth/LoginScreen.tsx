@@ -31,8 +31,8 @@ const LoginScreen: React.FC = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
 
-  const [username, setUsername] = useState('johndoe');
-  const [password, setPassword] = useState('password123');
+  const [username, setUsername] = useState('batman');
+  const [password, setPassword] = useState('Temp@123');
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({username: '', password: ''});
 

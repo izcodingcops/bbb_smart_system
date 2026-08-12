@@ -52,6 +52,10 @@ The mock schema is a genuine schema+resolver implementation (typos/wrong types f
 
 `navigation/AppNavigator.tsx` is a three-way top-level gate driven by auth/shift selectors: **Auth** (not logged in) → **Setup** (logged in, no active shift) → **Main** (logged in + active shift). `MainTabNavigator.tsx` fetches the tab list from a backend-driven menu query (`useGetMenuItemsQuery`) and builds tabs dynamically from `navigation/screens.ts`'s `SCREEN_MAP`, falling back to a "Coming Soon" placeholder for menu entries with no implemented screen yet. `linking.ts` defines a `bbb://` deep-link scheme that is not yet registered natively (inert).
 
+### User roles
+
+`UserRole` (`'ambassador' | 'supervisor'`, `src/types/auth.ts`) lives on `User`/`GqlUser`, threaded from the GraphQL `UserRole` enum (`AMBASSADOR`/`SUPERVISOR`) through `auth/resolvers.ts`'s `toUser()` and `redux/auth/slice.ts`'s `login` thunk (`ROLE_OUT`/`ROLE_IN` maps — same enum-translation convention as `observationReport`'s `TYPE_OUT`/`TYPE_IN`). Supervisor is a superset of ambassador, not a separate account silo — treat a supervisor account as having ambassador-level access plus more, not disjoint capabilities. **Nothing branches on `role` yet**: `MainTabNavigator`'s menu query and every screen currently render identically for both roles. Role-based module/screen gating is being added incrementally as each Supervisor-specific module gets ported from its design mockup. `redux/migrations.ts`'s v5 entry backfills `role: 'ambassador'` for state persisted before this field existed.
+
 ### Adding a new feature module
 
 The repo has added many structurally identical modules this way (dispatch, equipment, fixture, incident, maintenance, notification, observationReport, poi, programs, referenceDocument, workItems, workLog). The recipe:

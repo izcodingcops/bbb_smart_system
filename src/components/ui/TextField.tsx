@@ -21,6 +21,11 @@ interface Props extends TextInputProps {
   error?: string;
   centered?: boolean;
   containerStyle?: StyleProp<ViewStyle>;
+  /**
+   * Overrides the bordered box around the input — the list search rows use it
+   * to swap the solid white fill for the glass one. Forms leave it unset.
+   */
+  wrapStyle?: StyleProp<ViewStyle>;
 }
 
 const TextField: React.FC<Props> = ({
@@ -30,12 +35,13 @@ const TextField: React.FC<Props> = ({
   error,
   centered = false,
   containerStyle,
+  wrapStyle,
   style,
   ...inputProps
 }) => (
   <View style={containerStyle}>
     {label ? <Text style={styles.label}>{label}</Text> : null}
-    <View style={[styles.wrap, error ? styles.wrapError : null]}>
+    <View style={[styles.wrap, wrapStyle, error ? styles.wrapError : null]}>
       {leadingIcon}
       <TextInput
         style={[styles.input, centered && styles.inputCentered, style]}

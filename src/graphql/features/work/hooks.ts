@@ -23,12 +23,13 @@ interface GqlWorkItem {
   assignee: string;
   assigneeInitials: string;
   address: string;
-  bucket: 'ASSIGNED' | 'COMPLETED';
+  bucket: 'ASSIGNED' | 'UNASSIGNED' | 'COMPLETED';
   outcome: string | null;
   interaction: string | null;
   disposition: string | null;
   businessName: string | null;
   quantity: string | null;
+  createdBy: string | null;
 }
 
 const STATUS: Record<GqlWorkItem['status'], WorkStatus> = {
@@ -43,6 +44,7 @@ const PRIORITY: Record<GqlWorkItem['priority'], WorkPriority> = {
 };
 const BUCKET: Record<GqlWorkItem['bucket'], WorkBucket> = {
   ASSIGNED: 'assigned',
+  UNASSIGNED: 'unassigned',
   COMPLETED: 'completed',
 };
 const STATUS_OUT: Record<WorkStatus, string> = {
@@ -69,6 +71,7 @@ const toWorkItem = (item: GqlWorkItem): WorkItem => ({
   disposition: item.disposition ?? undefined,
   businessName: item.businessName ?? undefined,
   quantity: item.quantity ?? undefined,
+  createdBy: item.createdBy ?? undefined,
 });
 
 const WORK_CONTEXT = {context: {feature: 'work'}};

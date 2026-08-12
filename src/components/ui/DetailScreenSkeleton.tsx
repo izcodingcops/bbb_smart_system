@@ -1,6 +1,7 @@
 import React from 'react';
 import {View, ScrollView, StyleSheet} from 'react-native';
 import DetailTopBar from './DetailTopBar';
+import ScreenBackground from '../ScreenBackground';
 import Skeleton from './Skeleton';
 import {theme} from '../../theme';
 
@@ -28,7 +29,7 @@ const DetailScreenSkeleton: React.FC<Props> = ({
   sections,
   showCommentButton,
 }) => (
-  <View style={styles.root}>
+  <ScreenBackground style={styles.root}>
     <DetailTopBar title={title} onBack={onBack} />
 
     <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
@@ -55,11 +56,11 @@ const DetailScreenSkeleton: React.FC<Props> = ({
         </View>
       ))}
     </ScrollView>
-  </View>
+  </ScreenBackground>
 );
 
 const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: theme.colors.background},
+  root: {flex: 1},
   body: {paddingBottom: 40},
   idRow: {
     flexDirection: 'row',
@@ -69,14 +70,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
     paddingTop: 18,
     paddingBottom: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEF0F2',
   },
   section: {
+    backgroundColor: theme.glass.sheetFill,
     paddingHorizontal: theme.spacing.xl,
     paddingVertical: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF0F2',
+    borderBottomColor: theme.colors.dividerOnGlass,
   },
   sectionTitle: {marginBottom: theme.spacing.lg},
   grid: {flexDirection: 'row', flexWrap: 'wrap', rowGap: 18, columnGap: 14},
