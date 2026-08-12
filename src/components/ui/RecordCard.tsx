@@ -115,10 +115,10 @@ const RecordCard: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
-  card: {gap: 7},
-  // Compact only tightens the outer padding (see Card.tsx) — cramming the
-  // row gap too made cards feel congested rather than just smaller.
-  cardCompact: {gap: 7},
+  // Matches the source design's section spacing (.c2-sep margin: 12px 0,
+  // .c2-addr margin-top: 12px).
+  card: {gap: theme.spacing.md},
+  cardCompact: {gap: theme.spacing.md},
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -152,7 +152,8 @@ const styles = StyleSheet.create({
     color: theme.colors.textOnGlassMuted,
   },
   divider: {height: 1, backgroundColor: theme.colors.dividerOnGlass},
-  grid: {flexDirection: 'row', gap: theme.spacing.sm},
+  // .c2-fields gap: 10px in the source design.
+  grid: {flexDirection: 'row', gap: 10},
   // minWidth: 0 lets a cell actually shrink below its content's intrinsic
   // width instead of overflowing the row (RN flexbox default).
   gridCell: {flex: 1, minWidth: 0, gap: 4},
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: theme.colors.textOnGlass,
   },
-  addressBlock: {gap: 4, marginTop: theme.spacing.xs},
+  addressBlock: {gap: 4, marginTop: theme.spacing.md},
 });
 
 export default React.memo(RecordCard);

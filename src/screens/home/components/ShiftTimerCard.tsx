@@ -22,22 +22,24 @@ const ShiftTimerCard: React.FC<Props> = ({onEnd}) => {
   return (
     <View style={styles.shadow}>
       <LinearGradient
-        colors={['#1E72C4', '#0A5AAB']}
+        colors={['#1F9DFF', '#0066B2', '#014A82']}
+        locations={[0, 0.58, 1]}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
         style={styles.card}>
         {/*
          * Glow is drawn in objectBoundingBox units (cx/cy/r as 0–1 fractions of
          * this Svg) so it paints in the same first frame as the gradient above,
-         * instead of popping in after an onLayout measurement pass.
+         * instead of popping in after an onLayout measurement pass. Positions
+         * mirror the design's top-right / bottom-left radial highlights.
          */}
         <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
           <Defs>
-            <RadialGradient id="shiftGlowA" cx="0.2" cy="0.05" r="0.5">
+            <RadialGradient id="shiftGlowA" cx="0.8" cy="0.02" r="0.55">
               <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.32} />
               <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
             </RadialGradient>
-            <RadialGradient id="shiftGlowB" cx="0.92" cy="0.95" r="0.42">
+            <RadialGradient id="shiftGlowB" cx="0.08" cy="0.98" r="0.5">
               <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.14} />
               <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
             </RadialGradient>
@@ -102,7 +104,7 @@ const ShiftTimerCard: React.FC<Props> = ({onEnd}) => {
 const styles = StyleSheet.create({
   shadow: {
     borderRadius: 20,
-    shadowColor: '#0A5AAB',
+    shadowColor: '#014A82',
     shadowOffset: {width: 0, height: 12},
     shadowOpacity: 0.28,
     shadowRadius: 16,
@@ -130,6 +132,8 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     paddingHorizontal: 15,
     backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.32)',
   },
   breakText: {
     fontFamily: theme.fonts.black,
@@ -142,6 +146,7 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     paddingHorizontal: 15,
     backgroundColor: theme.colors.white,
+    boxShadow: '0px 6px 14px 0px rgba(0,40,80,0.22)',
   },
   endText: {
     fontFamily: theme.fonts.black,

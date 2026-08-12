@@ -125,14 +125,14 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: 'rgba(0,102,178,0.16)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   clearText: {
     fontFamily: theme.fonts.bold,
     fontSize: 9,
-    color: theme.colors.white,
+    color: theme.colors.primary,
   },
 });
 

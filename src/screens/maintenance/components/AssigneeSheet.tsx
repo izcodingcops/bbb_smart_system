@@ -5,6 +5,7 @@ import {
   DropdownField,
   PriorityPill,
   PrimaryButton,
+  SHEET_TINT,
 } from '../../../components/ui';
 import {UserIcon, UserPlusIcon, UsersIcon} from '../../../components/icons';
 import {useAuth} from '../../../hooks/useAuth';
@@ -15,6 +16,12 @@ import {
 import {MaintenanceAssigneeKind} from '../../../types/maintenance';
 import {WorkItem, WorkPriority} from '../../../types/work';
 import {theme} from '../../../theme';
+
+/** 'Marcus Webb' -> 'MW' — for the summary's "Sent By" avatar. */
+function initialsOf(name: string): string {
+  const parts = name.split(' ').filter(Boolean);
+  return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase();
+}
 
 type Mode = 'Ambassador' | 'Department' | 'Me';
 
@@ -103,6 +110,7 @@ const AssigneeSheet: React.FC<Props> = ({target, onClose, onAssigned}) => {
       visible={!!target}
       title="Choose Assignee"
       onClose={onClose}
+      tinted
       footer={
         <PrimaryButton
           label="Assign Maintenance"
@@ -116,26 +124,33 @@ const AssigneeSheet: React.FC<Props> = ({target, onClose, onAssigned}) => {
           <Text style={styles.summaryKey}>Report ID</Text>
           <Text style={styles.summaryValue}>{target.reference}</Text>
         </View>
-        <View style={styles.summaryRow}>
+        <View style={[styles.summaryRow, styles.summaryRowDivider]}>
           <Text style={styles.summaryKey}>Type</Text>
           <Text style={styles.summaryValue}>{target.type}</Text>
         </View>
-        <View style={styles.summaryRow}>
+        <View style={[styles.summaryRow, styles.summaryRowDivider]}>
           <Text style={styles.summaryKey}>Priority</Text>
           <PriorityPill label={target.priority} bg={priority.bg} fg={priority.fg} />
         </View>
-        <View style={styles.summaryRow}>
+        <View style={[styles.summaryRow, styles.summaryRowDivider]}>
           <Text style={styles.summaryKey}>Zone</Text>
           <Text style={styles.summaryValue}>{target.zone}</Text>
         </View>
-        <View style={styles.summaryRow}>
+        <View style={[styles.summaryRow, styles.summaryRowDivider]}>
           <Text style={styles.summaryKey}>Address</Text>
           <Text style={styles.summaryValue}>{target.address}</Text>
         </View>
         {target.createdBy ? (
-          <View style={styles.summaryRow}>
+          <View style={[styles.summaryRow, styles.summaryRowDivider]}>
             <Text style={styles.summaryKey}>Sent By</Text>
-            <Text style={styles.summaryValue}>{target.createdBy}</Text>
+            <View style={styles.person}>
+              <View style={styles.personAvatar}>
+                <Text style={styles.personAvatarText}>
+                  {initialsOf(target.createdBy)}
+                </Text>
+              </View>
+              <Text style={styles.summaryValue}>{target.createdBy}</Text>
+            </View>
           </View>
         ) : null}
       </View>
@@ -193,24 +208,30 @@ const AssigneeSheet: React.FC<Props> = ({target, onClose, onAssigned}) => {
 };
 
 const styles = StyleSheet.create({
+  // Same exact fill as the sheet itself (SHEET_TINT) — no separate card
+  // color, just a soft shadow to lift it off the sheet.
   summary: {
     marginBottom: theme.spacing.lg,
-    padding: theme.spacing.md,
+    paddingVertical: 14,
+    paddingHorizontal: theme.spacing.lg,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: '#F4F5F7',
+    backgroundColor: SHEET_TINT,
+    ...theme.shadow.card,
   },
   summaryRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
     paddingVertical: 7,
+  },
+  // All rows but the first get the divider — matches the source's `.r+.r`
+  // sibling selector, which never draws a line under the card's own top edge.
+  summaryRowDivider: {
     borderTopWidth: 1,
     borderTopColor: theme.colors.borderLight,
   },
   summaryKey: {
-    width: 84,
+    width: 96,
     fontFamily: theme.fonts.bold,
     fontSize: 12,
     color: theme.colors.textSecondary,
@@ -220,6 +241,20 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.bold,
     fontSize: 13.5,
     color: theme.colors.text,
+  },
+  person: {flexDirection: 'row', alignItems: 'center', gap: 7, flex: 1},
+  personAvatar: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  personAvatarText: {
+    fontFamily: theme.fonts.black,
+    fontSize: 9,
+    color: theme.colors.white,
   },
   pickLabel: {
     fontFamily: theme.fonts.black,
@@ -237,16 +272,17 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 64,
     borderRadius: 14,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: theme.colors.border,
-    backgroundColor: '#F4F5F7',
+    backgroundColor: SHEET_TINT,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 5,
+    ...theme.shadow.glassPill,
   },
   modeCardSelected: {
     borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primaryLight,
+    backgroundColor: theme.colors.accentTint,
   },
   modeLabel: {
     fontFamily: theme.fonts.bold,

@@ -1,5 +1,6 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
+import Card from '../../../components/ui/Card';
 import {WifiOffIcon} from '../../../components/icons';
 import {theme} from '../../../theme';
 
@@ -10,9 +11,9 @@ interface Props {
 }
 
 const OfflineNotice: React.FC<Props> = ({pendingCount, failedCount = 0}) => (
-  <View style={styles.card}>
+  <Card glass style={styles.card}>
     <View style={styles.icon}>
-      <WifiOffIcon size={20} color={theme.colors.textSecondary} />
+      <WifiOffIcon size={20} color={theme.colors.textOnGlassSubtle} />
     </View>
     <View style={styles.flex}>
       <Text style={styles.title}>It seems you're offline</Text>
@@ -28,7 +29,7 @@ const OfflineNotice: React.FC<Props> = ({pendingCount, failedCount = 0}) => (
     <View style={styles.pill}>
       <Text style={styles.pillText}>{pendingCount} Pending</Text>
     </View>
-  </View>
+  </Card>
 );
 
 /** How far the card slides up behind the shift card above it. */
@@ -40,40 +41,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.md,
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.radius.lg,
-    padding: theme.spacing.md,
     // Hides this card's top edge behind the shift card, so that card's shadow
     // lands across it. The tuck is added back as padding to keep the content
     // clear of the overlap.
     marginTop: -TUCK,
-    paddingTop: theme.spacing.md + TUCK,
+    paddingTop: theme.spacing.lg + TUCK,
     marginHorizontal: theme.spacing.lg,
-    shadowColor: '#101828',
-    shadowOffset: {width: 0, height: 6},
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    // Stays under the shift card's elevation (8) so Android keeps it behind.
-    elevation: 4,
   },
   icon: {
     width: 40,
     height: 40,
     borderRadius: theme.radius.md,
-    backgroundColor: '#E6E9ED',
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    borderWidth: 1,
+    borderColor: theme.glass.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
     fontFamily: theme.fonts.black,
     fontSize: 14,
-    color: '#181B1F',
+    color: theme.colors.textOnGlass,
     marginBottom: 2,
   },
   body: {
     fontFamily: theme.fonts.bold,
     fontSize: 12,
-    color: theme.colors.textSecondary,
+    color: theme.colors.textOnGlassMuted,
   },
   failed: {
     fontFamily: theme.fonts.bold,
@@ -82,7 +76,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   pill: {
-    backgroundColor: '#F1F3F5',
+    backgroundColor: theme.glass.chipFill,
+    borderWidth: 1,
+    borderColor: theme.glass.pillBorder,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -90,7 +86,7 @@ const styles = StyleSheet.create({
   pillText: {
     fontFamily: theme.fonts.black,
     fontSize: 12,
-    color: theme.colors.textSecondary,
+    color: theme.colors.textOnGlassSubtle,
   },
 });
 

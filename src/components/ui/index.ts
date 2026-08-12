@@ -1,7 +1,7 @@
 export {default as AccordionSection} from './AccordionSection';
 export type {AccordionSectionHandle} from './AccordionSection';
 export {default as BackToTopPill} from './BackToTopPill';
-export {default as BottomSheet} from './BottomSheet';
+export {default as BottomSheet, SHEET_TINT} from './BottomSheet';
 export {default as Card} from './Card';
 export {default as CommentList} from './CommentList';
 export type {Comment} from './CommentList';

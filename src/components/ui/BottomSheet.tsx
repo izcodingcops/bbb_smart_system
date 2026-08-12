@@ -14,6 +14,10 @@ import {
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {theme} from '../../theme';
 
+/** The `tinted` sheet fill — exported so content inside can match it exactly
+ *  (e.g. AssigneeSheet's cards) instead of layering another fill on top. */
+export const SHEET_TINT = '#F5F7FA';
+
 interface Props {
   visible: boolean;
   title: string;
@@ -28,6 +32,10 @@ interface Props {
   /** Rendered below the scrollable body, pinned with a top divider — for a
    *  primary action that should stay visible while the content scrolls. */
   footer?: React.ReactNode;
+  /** A faint tint instead of flat white, so glass-fill content inside (e.g.
+   *  AssigneeSheet's translucent cards) reads against something other than
+   *  white-on-white. Default false keeps every other sheet unchanged. */
+  tinted?: boolean;
 }
 
 /**
@@ -42,6 +50,7 @@ const BottomSheet: React.FC<Props> = ({
   onClosed,
   children,
   footer,
+  tinted = false,
 }) => {
   const [mounted, setMounted] = useState(visible);
   const [sheetHeight, setSheetHeight] = useState(400);
@@ -115,6 +124,7 @@ const BottomSheet: React.FC<Props> = ({
           }}
           style={[
             styles.sheet,
+            tinted && styles.sheetTinted,
             {
               maxHeight: windowHeight * 0.8,
               minHeight: maxHeightSeen.current,
@@ -176,6 +186,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
   },
+  sheetTinted: {backgroundColor: SHEET_TINT},
   handle: {
     alignSelf: 'center',
     width: 40,

@@ -56,7 +56,11 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
     ...theme.shadow.glass,
   },
-  compact: {padding: theme.spacing.md},
+  // The source design has no smaller card variant — Home's Recent Work reuses
+  // the same 16px-padded card as the full list — so `compact` no longer
+  // shrinks padding. Kept as a prop (harmless no-op) rather than ripping it
+  // out of every call site.
+  compact: {padding: theme.spacing.lg},
 });
 
 export default Card;
