@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   StyleSheet,
 } from 'react-native';
 import ScreenBackground from '../../../components/ScreenBackground';
+import {GetUser} from '../../../redux/auth/selectors';
+import {UserRole} from '../../../types/auth';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {
   AccordionSection,
@@ -38,7 +40,7 @@ import {
   MaintenanceFormValues,
   MaintenancePriority,
 } from '../../../types/maintenance';
-import AssigneeToggle from './AssigneeToggle';
+import AssigneeToggle, {AssigneeOption} from './AssigneeToggle';
 import {theme} from '../../../theme';
 
 /** Fallback address when a record has none — matches the design's auto-fill. */
@@ -58,10 +60,34 @@ const SECTION_TABS: SectionTabItem[] = [
   {key: 'connected', label: 'Connected'},
 ];
 
+/**
+ * Who each role may hand a request to. An ambassador routes it onward — to a
+ * supervisor for triage, or straight to a department. A supervisor assigns it
+ * to a person directly, including themselves, since a supervisor is also an
+ * ambassador.
+ */
+const ASSIGNEE_OPTIONS: Record<UserRole, AssigneeOption[]> = {
+  ambassador: [
+    {kind: 'Supervisor', label: 'Supervisor'},
+    {kind: 'Department', label: 'Department'},
+  ],
+  supervisor: [
+    {kind: 'Ambassador', label: 'Ambassador'},
+    {kind: 'Department', label: 'Department'},
+    {kind: 'Me', label: 'Me'},
+  ],
+};
+
 /** Create starts from device state; edit starts from the saved record. */
+/**
+ * `role` only affects a fresh form: a supervisor's options don't include
+ * 'Supervisor', so defaulting to it would leave nothing selected. Editing an
+ * existing record takes the kind from the record itself.
+ */
 export function buildInitialValues(
   options: MaintenanceFormOptions,
   detail?: MaintenanceDetail,
+  role: UserRole = 'ambassador',
 ): MaintenanceFormValues {
   if (detail) {
     return {
@@ -69,6 +95,10 @@ export function buildInitialValues(
       requestedAt: detail.requestedAt,
       assigneeKind: detail.assigneeKind,
       department: detail.department,
+      ambassador:
+        detail.assigneeKind === 'Ambassador' || detail.assigneeKind === 'Me'
+          ? detail.assignee?.name ?? null
+          : null,
       priority: detail.priority,
       address: detail.address,
       zone: detail.zone,
@@ -85,8 +115,9 @@ export function buildInitialValues(
   return {
     type: '',
     requestedAt: new Date().toISOString(),
-    assigneeKind: 'Supervisor',
+    assigneeKind: role === 'supervisor' ? 'Ambassador' : 'Supervisor',
     department: null,
+    ambassador: null,
     priority: 'Low',
     address: DEFAULT_ADDRESS,
     zone: options.zones[0] ?? null,
@@ -159,8 +190,18 @@ const MaintenanceForm: React.FC<Props> = ({
     value: MaintenanceFormValues[K],
   ) => setValues(current => ({...current, [key]: value}));
 
-  // Everything else is pre-seeded, so type is the only gate on submitting.
-  const canSubmit = values.type.length > 0 && !isSubmitting;
+  // The only place this module branches on role. Read here and passed down as a
+  // plain list, so AssigneeToggle stays role-agnostic.
+  const user = GetUser();
+  const role: UserRole = user?.role ?? 'ambassador';
+  const selfName = user?.name ?? '';
+  const assigneeOptions = useMemo(() => ASSIGNEE_OPTIONS[role], [role]);
+
+  // An ambassador assignment is only meaningful once someone is picked; the
+  // other kinds carry everything they need in the toggle itself.
+  const assigneeChosen =
+    values.assigneeKind !== 'Ambassador' || !!values.ambassador;
+  const canSubmit = values.type.length > 0 && assigneeChosen && !isSubmitting;
 
   const title = mode === 'create' ? 'Create Maintenance' : 'Edit Maintenance';
 
@@ -233,12 +274,22 @@ const MaintenanceForm: React.FC<Props> = ({
             <View style={formChrome.field}>
               <FieldLabel label="Choose Assignee" required />
               <AssigneeToggle
+                options={assigneeOptions}
                 value={values.assigneeKind}
                 onChange={kind => {
                   setValues(current => ({
                     ...current,
                     assigneeKind: kind,
-                    department: kind === 'Supervisor' ? null : current.department,
+                    // Drop whichever follow-up no longer applies, so a stale
+                    // pick can't be submitted under a different kind.
+                    department: kind === 'Department' ? current.department : null,
+                    // 'Me' needs no picker — it resolves to the signed-in user.
+                    ambassador:
+                      kind === 'Ambassador'
+                        ? current.ambassador
+                        : kind === 'Me'
+                          ? selfName
+                          : null,
                   }));
                 }}
               />
@@ -251,6 +302,19 @@ const MaintenanceForm: React.FC<Props> = ({
                     value={values.department}
                     onChange={next => set('department', next)}
                     searchable={false}
+                  />
+                </View>
+              ) : null}
+              {values.assigneeKind === 'Ambassador' ? (
+                <View style={styles.nested}>
+                  <DropdownField
+                    label="Ambassador"
+                    required
+                    placeholder="Select ambassador"
+                    options={options.ambassadors}
+                    value={values.ambassador}
+                    onChange={next => set('ambassador', next)}
+                    searchable
                   />
                 </View>
               ) : null}

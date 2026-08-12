@@ -40,10 +40,13 @@ interface GqlMaintenanceRequest {
   routedToSupervisor: boolean;
   queuedOffline: boolean;
   completedBy: string | null;
-  assigneeKind: 'SUPERVISOR' | 'DEPARTMENT';
+  assigneeKind: GqlAssigneeKind;
   department: string | null;
   createdBy: string;
 }
+
+/** Wire spelling of MaintenanceAssigneeKind. */
+type GqlAssigneeKind = 'SUPERVISOR' | 'DEPARTMENT' | 'AMBASSADOR' | 'ME';
 
 const STATUS: Record<GqlMaintenanceRequest['status'], MaintenanceStatus> = {
   OPEN: 'Open',
@@ -55,12 +58,18 @@ const PRIORITY: Record<GqlMaintenanceRequest['priority'], MaintenancePriority> =
   MEDIUM: 'Medium',
   HIGH: 'High',
 };
-const ASSIGNEE_KIND: Record<
-  'SUPERVISOR' | 'DEPARTMENT',
-  MaintenanceAssigneeKind
-> = {
+const ASSIGNEE_KIND: Record<GqlAssigneeKind, MaintenanceAssigneeKind> = {
   SUPERVISOR: 'Supervisor',
   DEPARTMENT: 'Department',
+  AMBASSADOR: 'Ambassador',
+  ME: 'Me',
+};
+
+const ASSIGNEE_KIND_OUT: Record<MaintenanceAssigneeKind, GqlAssigneeKind> = {
+  Supervisor: 'SUPERVISOR',
+  Department: 'DEPARTMENT',
+  Ambassador: 'AMBASSADOR',
+  Me: 'ME',
 };
 
 const toRequest = (r: GqlMaintenanceRequest): MaintenanceRequest => ({
@@ -128,7 +137,7 @@ interface GqlMaintenanceDetail extends GqlMaintenanceRequest {
   createdBy: string;
   completedOn: string | null;
   paid: boolean;
-  assigneeKind: 'SUPERVISOR' | 'DEPARTMENT';
+  assigneeKind: GqlAssigneeKind;
   department: string | null;
   zone: string | null;
   describeLocation: string | null;
@@ -165,9 +174,9 @@ const toDetail = (d: GqlMaintenanceDetail): MaintenanceDetail => ({
 const toWireInput = (values: MaintenanceFormValues) => ({
   type: values.type,
   requestedAt: values.requestedAt,
-  assigneeKind:
-    values.assigneeKind === 'Department' ? 'DEPARTMENT' : 'SUPERVISOR',
+  assigneeKind: ASSIGNEE_KIND_OUT[values.assigneeKind],
   department: values.department,
+  ambassador: values.ambassador,
   priority: PRIORITY_OUT[values.priority],
   address: values.address,
   zone: values.zone,
@@ -267,7 +276,7 @@ export function useAssignMaintenanceRequestMutation() {
       await run({
         variables: {
           id,
-          assigneeKind: kind === 'Department' ? 'DEPARTMENT' : 'SUPERVISOR',
+          assigneeKind: ASSIGNEE_KIND_OUT[kind],
           assigneeName: kind === 'Department' ? null : name,
           department: kind === 'Department' ? name : null,
         },

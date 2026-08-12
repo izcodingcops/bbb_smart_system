@@ -5,6 +5,7 @@ import {
   useMaintenanceFormOptionsQuery,
 } from '../../graphql/features/maintenance/hooks';
 import {MaintenanceFormValues} from '../../types/maintenance';
+import {GetUserRole} from '../../redux/auth/selectors';
 import MaintenanceForm, {buildInitialValues} from './components/MaintenanceForm';
 import AddFixtureSheet from './components/AddFixtureSheet';
 import {EmptyState, FormScreenSkeleton} from '../../components/ui';
@@ -22,6 +23,9 @@ const CreateMaintenanceScreen: React.FC<Props> = ({onClose, onCreated}) => {
   const {mutate: create, isLoading: isSubmitting} =
     useCreateMaintenanceRequestMutation();
   const [addFixtureOpen, setAddFixtureOpen] = useState(false);
+  // Decides which assignee options the fresh form starts on — a supervisor's
+  // list has no 'Supervisor' entry, so the default has to differ by role.
+  const role = GetUserRole() ?? 'ambassador';
 
   if (isError || (!isLoading && !options)) {
     return (
@@ -66,7 +70,7 @@ const CreateMaintenanceScreen: React.FC<Props> = ({onClose, onCreated}) => {
         mode="create"
         reference={options.nextReference}
         options={options}
-        initialValues={buildInitialValues(options)}
+        initialValues={buildInitialValues(options, undefined, role)}
         submitLabel="Submit"
         isSubmitting={isSubmitting}
         onSubmit={submit}

@@ -31,6 +31,8 @@ const PRIORITY: Record<string, string> = {
 const ASSIGNEE_KIND: Record<string, string> = {
   Supervisor: 'SUPERVISOR',
   Department: 'DEPARTMENT',
+  Ambassador: 'AMBASSADOR',
+  Me: 'ME',
 };
 
 /** Display-shape record → wire shape (enums uppercased). */
@@ -54,13 +56,31 @@ const PRIORITY_IN: Record<string, MaintenanceDetail['priority']> = {
 const ASSIGNEE_KIND_IN: Record<string, MaintenanceDetail['assigneeKind']> = {
   SUPERVISOR: 'Supervisor',
   DEPARTMENT: 'Department',
+  AMBASSADOR: 'Ambassador',
+  ME: 'Me',
 };
+
+/** 'John Carter' → 'JC', for the small avatar the cards and detail show. */
+const initialsOf = (name: string): string =>
+  name
+    .split(' ')
+    .filter(Boolean)
+    .map(part => part[0])
+    .join('')
+    .toUpperCase();
 
 interface WireInput {
   type: string;
   requestedAt: string;
   assigneeKind: string;
   department?: string | null;
+  /**
+   * Name of the person the request is assigned to, for the AMBASSADOR and ME
+   * kinds. The client supplies it in both cases — including its own user's name
+   * for ME — rather than the resolver reading it off the session, matching how
+   * the rest of this mock takes identity from the caller.
+   */
+  ambassador?: string | null;
   priority: string;
   address: string;
   zone?: string | null;
@@ -90,7 +110,20 @@ const applyInput = (record: MaintenanceDetail, input: WireInput): void => {
   record.incidents = input.incidents ?? [];
   record.pois = input.pois ?? [];
   record.equipment = input.equipment ?? [];
+  // Only a request handed to a supervisor waits for triage; the three choices a
+  // supervisor makes for themselves all land on someone directly.
   record.routedToSupervisor = record.assigneeKind === 'Supervisor';
+
+  // Assigning to a person names them on the record; routing to a supervisor or
+  // a department leaves it unassigned, same as assignMaintenanceRequest does.
+  if (record.assigneeKind === 'Ambassador' || record.assigneeKind === 'Me') {
+    const name = input.ambassador ?? '';
+    record.assignee = name ? {name, initials: initialsOf(name)} : null;
+    record.ambassador = name;
+    record.department = null;
+  } else {
+    record.assignee = null;
+  }
 };
 
 export const maintenanceResolvers = {
@@ -165,21 +198,15 @@ export const maintenanceResolvers = {
       if (record.assigneeKind === 'Department') {
         record.department = args.department ?? null;
         record.assignee = null;
-        record.routedToSupervisor = false;
       } else {
         const name = args.assigneeName ?? '';
         record.department = null;
-        record.assignee = {
-          name,
-          initials: name
-            .split(' ')
-            .filter(Boolean)
-            .map(part => part[0])
-            .join('')
-            .toUpperCase(),
-        };
-        record.routedToSupervisor = true;
+        record.assignee = {name, initials: initialsOf(name)};
       }
+      // Keyed off the kind rather than "not a department": now that a
+      // supervisor can assign to an ambassador or to themselves, those land on
+      // a person and are not awaiting triage.
+      record.routedToSupervisor = record.assigneeKind === 'Supervisor';
       return toWire(record);
     },
 
