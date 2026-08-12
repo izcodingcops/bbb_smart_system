@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Alert,
   StyleSheet,
 } from 'react-native';
 import ScreenBackground from '../../../components/ScreenBackground';
@@ -41,6 +40,7 @@ import {
   MaintenancePriority,
 } from '../../../types/maintenance';
 import AssigneeToggle, {AssigneeOption} from './AssigneeToggle';
+import ChangeLocationSheet from './ChangeLocationSheet';
 import {theme} from '../../../theme';
 
 /** Fallback address when a record has none — matches the design's auto-fill. */
@@ -144,6 +144,9 @@ interface Props {
   onClose: () => void;
   /** Fires once the Fixture sheet has closed, so a quick-create can open. */
   onAddFixture?: () => void;
+  /** Takes the address currently on the form, to seed the new incident with. */
+  onAddIncident?: (address: string) => void;
+  onAddEquipment?: () => void;
 }
 
 const MaintenanceForm: React.FC<Props> = ({
@@ -156,10 +159,13 @@ const MaintenanceForm: React.FC<Props> = ({
   onSubmit,
   onClose,
   onAddFixture,
+  onAddIncident,
+  onAddEquipment,
 }) => {
   const [values, setValues] = useState<MaintenanceFormValues>(initialValues);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [changeLocationOpen, setChangeLocationOpen] = useState(false);
   /** Set when onSubmit rejects, so the form can report it without navigating away. */
   const [submitFailed, setSubmitFailed] = useState(false);
 
@@ -366,12 +372,7 @@ const MaintenanceForm: React.FC<Props> = ({
                   <TouchableOpacity
                     style={formChrome.changeLocation}
                     activeOpacity={0.7}
-                    onPress={() =>
-                      Alert.alert(
-                        'Coming soon',
-                        'Picking a location on the map is not wired up yet.',
-                      )
-                    }>
+                    onPress={() => setChangeLocationOpen(true)}>
                     <RefreshIcon size={14} color={theme.colors.primary} />
                     <Text style={formChrome.changeLocationText}>Change Location</Text>
                   </TouchableOpacity>
@@ -433,6 +434,10 @@ const MaintenanceForm: React.FC<Props> = ({
               options={options.incidents}
               values={values.incidents}
               onChange={next => set('incidents', next)}
+              addLabel={onAddIncident ? 'Add Incident' : undefined}
+              onRequestAdd={
+                onAddIncident ? () => onAddIncident(values.address) : undefined
+              }
             />
             <MultiDropdownField
               label="Person of Interest"
@@ -447,6 +452,8 @@ const MaintenanceForm: React.FC<Props> = ({
               options={options.equipment}
               values={values.equipment}
               onChange={next => set('equipment', next)}
+              addLabel={onAddEquipment ? 'Add Equipment' : undefined}
+              onRequestAdd={onAddEquipment}
             />
           </AccordionSection>
         </ScrollView>
@@ -502,6 +509,12 @@ const MaintenanceForm: React.FC<Props> = ({
         onCancel={() => setConfirmDiscard(false)}
       />
 
+      <ChangeLocationSheet
+        visible={changeLocationOpen}
+        onSelect={next => set('address', next)}
+        onClose={() => setChangeLocationOpen(false)}
+      />
+
       <Toast
         visible={submitFailed}
         title="Couldn't save"
@@ -514,7 +527,13 @@ const MaintenanceForm: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
-  nested: {marginTop: theme.spacing.md},
+  // RN doesn't collapse margins: DropdownField carries its own bottom margin
+  // and so does the formChrome.field wrapping this, so the negative bottom
+  // cancels one of them and leaves a single gap before the next field.
+  // The nested DropdownField carries its own 16px bottom margin, which sits
+  // inside this section's own 16px one. CSS would collapse those into a single
+  // gap; RN adds them, so the negative bottom cancels the duplicate.
+  nested: {marginTop: theme.spacing.md, marginBottom: -theme.spacing.lg},
 });
 
 export default MaintenanceForm;

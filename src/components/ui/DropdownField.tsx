@@ -179,6 +179,9 @@ interface MultiProps {
   values: string[];
   onChange: (values: string[]) => void;
   searchable?: boolean;
+  /** Label for the panel's create button, e.g. 'Add Incident'. */
+  addLabel?: string;
+  onRequestAdd?: () => void;
 }
 
 /**
@@ -193,11 +196,18 @@ export const MultiDropdownField: React.FC<MultiProps> = ({
   values,
   onChange,
   searchable,
+  addLabel,
+  onRequestAdd,
 }) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const canSearch = searchable ?? options.length > SEARCH_THRESHOLD;
   const shown = filterOptions(options, query);
+
+  const close = () => {
+    setOpen(false);
+    setQuery('');
+  };
 
   const toggle = (option: string) => {
     onChange(
@@ -213,14 +223,7 @@ export const MultiDropdownField: React.FC<MultiProps> = ({
       <TouchableOpacity
         style={[styles.control, open && styles.controlOpen]}
         activeOpacity={0.85}
-        onPress={() =>
-          setOpen(current => {
-            if (current) {
-              setQuery('');
-            }
-            return !current;
-          })
-        }>
+        onPress={() => (open ? close() : setOpen(true))}>
         <Text style={[styles.value, styles.placeholder]} numberOfLines={1}>
           {placeholder}
         </Text>
@@ -248,6 +251,21 @@ export const MultiDropdownField: React.FC<MultiProps> = ({
 
       {open ? (
         <View style={styles.panel}>
+          {addLabel && onRequestAdd ? (
+            <View style={styles.panelHeader}>
+              <TouchableOpacity
+                style={styles.addButton}
+                activeOpacity={0.85}
+                onPress={() => {
+                  close();
+                  onRequestAdd();
+                }}>
+                <PlusIcon size={14} color={theme.colors.primary} />
+                <Text style={styles.addButtonText}>{addLabel}</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
           {canSearch ? (
             <View style={styles.search}>
               <SearchIcon size={17} />

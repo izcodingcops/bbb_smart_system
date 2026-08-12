@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Alert, View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {
-  AccordionSection,
   BottomSheet,
   DateTimeField,
   DropdownField,
@@ -140,7 +139,8 @@ const AddFixtureSheet: React.FC<Props> = ({
         </View>
       </View>
 
-      <AccordionSection title="Other Details" initiallyOpen>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Other Details</Text>
         <View style={styles.field}>
           <FieldLabel label="Description" />
           <TextField
@@ -157,7 +157,7 @@ const AddFixtureSheet: React.FC<Props> = ({
           uris={documents}
           onChange={setDocuments}
         />
-      </AccordionSection>
+      </View>
 
       <TouchableOpacity
         style={[styles.save, !canSave && styles.saveDisabled]}

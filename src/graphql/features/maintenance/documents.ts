@@ -194,3 +194,9 @@ export const CREATE_MAINTENANCE_FIXTURE = gql`
     createMaintenanceFixture(name: $name, fixtureType: $fixtureType)
   }
 `;
+
+export const CREATE_MAINTENANCE_EQUIPMENT = gql`
+  mutation CreateMaintenanceEquipment($name: String!) {
+    createMaintenanceEquipment(name: $name)
+  }
+`;

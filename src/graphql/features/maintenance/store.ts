@@ -34,12 +34,6 @@ export const BUSINESS_NAMES = [
   'BlockByBlock',
   'LoDo District',
 ];
-export const INCIDENTS = [
-  'Graffiti — 07/04/2026',
-  'Vandalism — 07/03/2026',
-  'Property Damage — 07/02/2026',
-  'Trespassing — 07/01/2026',
-];
 export const POIS = ['R. Blake', 'M. Ortiz', 'D. Cole', 'T. Wells', 'G. Fisher'];
 export const EQUIPMENT = [
   'Hammer',

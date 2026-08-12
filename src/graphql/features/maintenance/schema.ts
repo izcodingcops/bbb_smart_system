@@ -149,5 +149,11 @@ export const maintenanceTypeDefs = /* GraphQL */ `
     ): MaintenanceComment!
     deleteMaintenanceComment(requestId: ID!, commentId: ID!): ID!
     createMaintenanceFixture(name: String!, fixtureType: String!): String!
+    """
+    Quick-create from Connected Elements. Equipment has no writable store of
+    its own (the module is a read-only checked-in list), so this only adds the
+    name to the option list and returns it.
+    """
+    createMaintenanceEquipment(name: String!): String!
   }
 `;

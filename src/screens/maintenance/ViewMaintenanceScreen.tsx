@@ -37,7 +37,9 @@ import {
   MaintenancePriority,
   MaintenanceStatus,
 } from '../../types/maintenance';
+import AddEquipmentSheet from './components/AddEquipmentSheet';
 import AddFixtureSheet from './components/AddFixtureSheet';
+import AddIncidentSheet from './components/AddIncidentSheet';
 import MaintenanceForm, {buildInitialValues} from './components/MaintenanceForm';
 import {theme} from '../../theme';
 
@@ -83,6 +85,9 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [addFixtureOpen, setAddFixtureOpen] = useState(false);
+  const [addEquipmentOpen, setAddEquipmentOpen] = useState(false);
+  // Holds the form's current address while the sheet is up — null when closed.
+  const [incidentAddress, setIncidentAddress] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     title: string;
     message: string;
@@ -157,6 +162,8 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
           }}
           onClose={() => setEditing(false)}
           onAddFixture={() => setAddFixtureOpen(true)}
+          onAddIncident={address => setIncidentAddress(address)}
+          onAddEquipment={() => setAddEquipmentOpen(true)}
         />
 
         <AddFixtureSheet
@@ -164,6 +171,19 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
           options={options}
           onCreated={() => refetchOptions()}
           onClose={() => setAddFixtureOpen(false)}
+        />
+
+        <AddIncidentSheet
+          visible={incidentAddress !== null}
+          defaultAddress={incidentAddress ?? ''}
+          onCreated={() => refetchOptions()}
+          onClose={() => setIncidentAddress(null)}
+        />
+
+        <AddEquipmentSheet
+          visible={addEquipmentOpen}
+          onCreated={() => refetchOptions()}
+          onClose={() => setAddEquipmentOpen(false)}
         />
       </View>
     );

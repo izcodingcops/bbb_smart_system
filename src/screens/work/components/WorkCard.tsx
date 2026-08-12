@@ -130,7 +130,7 @@ const WorkCard: React.FC<Props> = ({
             ),
           },
           {
-            label: 'Assigned By',
+            label: 'Assigned To',
             node: (
               <View style={styles.assignee}>
                 <View style={styles.avatar}>
@@ -230,7 +230,7 @@ const WorkCard: React.FC<Props> = ({
             </Text>
           </View>
         ) : (
-          `${item.bucket === 'assigned' ? 'Assigned ' : ''}${formatCardDate(item.date)}`
+          formatCardDate(item.date)
         )
       }
       badge={

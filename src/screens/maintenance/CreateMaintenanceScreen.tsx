@@ -7,7 +7,9 @@ import {
 import {MaintenanceFormValues} from '../../types/maintenance';
 import {GetUserRole} from '../../redux/auth/selectors';
 import MaintenanceForm, {buildInitialValues} from './components/MaintenanceForm';
+import AddEquipmentSheet from './components/AddEquipmentSheet';
 import AddFixtureSheet from './components/AddFixtureSheet';
+import AddIncidentSheet from './components/AddIncidentSheet';
 import {EmptyState, FormScreenSkeleton} from '../../components/ui';
 import {ToolsIcon} from '../../components/icons';
 import {theme} from '../../theme';
@@ -23,6 +25,9 @@ const CreateMaintenanceScreen: React.FC<Props> = ({onClose, onCreated}) => {
   const {mutate: create, isLoading: isSubmitting} =
     useCreateMaintenanceRequestMutation();
   const [addFixtureOpen, setAddFixtureOpen] = useState(false);
+  const [addEquipmentOpen, setAddEquipmentOpen] = useState(false);
+  // Holds the form's current address while the sheet is up — null when closed.
+  const [incidentAddress, setIncidentAddress] = useState<string | null>(null);
   // Decides which assignee options the fresh form starts on — a supervisor's
   // list has no 'Supervisor' entry, so the default has to differ by role.
   const role = GetUserRole() ?? 'ambassador';
@@ -76,6 +81,8 @@ const CreateMaintenanceScreen: React.FC<Props> = ({onClose, onCreated}) => {
         onSubmit={submit}
         onClose={onClose}
         onAddFixture={() => setAddFixtureOpen(true)}
+        onAddIncident={address => setIncidentAddress(address)}
+        onAddEquipment={() => setAddEquipmentOpen(true)}
       />
 
       <AddFixtureSheet
@@ -83,6 +90,19 @@ const CreateMaintenanceScreen: React.FC<Props> = ({onClose, onCreated}) => {
         options={options}
         onCreated={() => refetch()}
         onClose={() => setAddFixtureOpen(false)}
+      />
+
+      <AddIncidentSheet
+        visible={incidentAddress !== null}
+        defaultAddress={incidentAddress ?? ''}
+        onCreated={() => refetch()}
+        onClose={() => setIncidentAddress(null)}
+      />
+
+      <AddEquipmentSheet
+        visible={addEquipmentOpen}
+        onCreated={() => refetch()}
+        onClose={() => setAddEquipmentOpen(false)}
       />
     </View>
   );

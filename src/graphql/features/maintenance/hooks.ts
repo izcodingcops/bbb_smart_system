@@ -15,6 +15,7 @@ import {
 import {
   ADD_MAINTENANCE_COMMENT,
   ASSIGN_MAINTENANCE_REQUEST,
+  CREATE_MAINTENANCE_EQUIPMENT,
   CREATE_MAINTENANCE_FIXTURE,
   CREATE_MAINTENANCE_REQUEST,
   DELETE_MAINTENANCE_COMMENT,
@@ -209,9 +210,12 @@ const REFRESH_ASSIGN = {
   refetchQueries: ['GetMaintenanceRequests', 'GetWorkItems'],
 };
 
+// 'GetWorkItems' for the same reason as REFRESH_ASSIGN: a request created
+// already-assigned (a supervisor picking an ambassador) belongs in Work's
+// aggregated list straight away.
 const CREATE_CONTEXT = {
   context: {feature: 'maintenance', offlineQueueKey: 'CREATE_MAINTENANCE_REQUEST'},
-  refetchQueries: ['GetMaintenanceRequests'],
+  refetchQueries: ['GetMaintenanceRequests', 'GetWorkItems'],
 };
 
 export function useGetMaintenanceRequestQuery(id: string) {
@@ -370,6 +374,20 @@ export function useDeleteMaintenanceCommentMutation() {
   return {
     mutate: async (requestId: string, commentId: string) => {
       await run({variables: {requestId, commentId}});
+    },
+    isLoading: loading,
+  };
+}
+
+export function useCreateMaintenanceEquipmentMutation() {
+  const [run, {loading}] = useMutation<{createMaintenanceEquipment: string}>(
+    CREATE_MAINTENANCE_EQUIPMENT,
+    MAINTENANCE_CONTEXT,
+  );
+  return {
+    mutate: async (name: string) => {
+      const result = await run({variables: {name}});
+      return result.data?.createMaintenanceEquipment ?? name;
     },
     isLoading: loading,
   };

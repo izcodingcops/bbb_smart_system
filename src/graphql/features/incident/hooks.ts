@@ -154,14 +154,19 @@ export function useGetIncidentQuery(id: string) {
   return {data: detail, isLoading: loading, isError: !!error, refetch};
 }
 
-export function useIncidentFormOptionsQuery() {
+/**
+ * `skip` is for callers mounted long before they're used — Maintenance's
+ * inline Add Incident sheet sits in the form's tree the whole time, and this
+ * is a network-only query, so it would otherwise refetch on every form open.
+ */
+export function useIncidentFormOptionsQuery(options?: {skip?: boolean}) {
   const programId = GetActiveProgramId();
   const {data, loading, error, refetch} = useQuery<{incidentFormOptions: IncidentFormOptions}>(
     GET_INCIDENT_FORM_OPTIONS,
     {
       ...INCIDENT_CONTEXT,
       variables: {programId: programId ?? ''},
-      skip: !programId,
+      skip: !programId || !!options?.skip,
       // nextReference has to be fresh on every open.
       fetchPolicy: 'network-only',
     },

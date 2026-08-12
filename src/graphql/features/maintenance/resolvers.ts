@@ -4,13 +4,13 @@ import {
   fixtureStore,
   nextReference as nextFixtureReference,
 } from '../fixture/store';
+import {incidentStore} from '../incident/store';
 import {FIXTURE_TYPES, ZONES} from '../shared/options';
 import {
   BUSINESS_NAMES,
   DEPARTMENTS,
   AMBASSADORS,
   EQUIPMENT,
-  INCIDENTS,
   MAINT_TYPES,
   POIS,
   findRecord,
@@ -59,6 +59,28 @@ const ASSIGNEE_KIND_IN: Record<string, MaintenanceDetail['assigneeKind']> = {
   AMBASSADOR: 'Ambassador',
   ME: 'Me',
 };
+
+/**
+ * Connected Elements offers incidents as labels, not ids — read live off the
+ * incident store (like `fixtures` reads the fixture store) so one quick-created
+ * from the maintenance form shows up here. Deduped because two incidents of the
+ * same type on the same day would otherwise collide as one repeated option.
+ */
+const incidentOptions = (): string[] =>
+  Array.from(
+    new Set(
+      incidentStore.records.map(record => {
+        const date = new Date(record.occurredAt);
+        return Number.isNaN(date.getTime())
+          ? record.type
+          : `${record.type} — ${date.toLocaleDateString('en-US', {
+              month: '2-digit',
+              day: '2-digit',
+              year: 'numeric',
+            })}`;
+      }),
+    ),
+  );
 
 /** 'John Carter' → 'JC', for the small avatar the cards and detail show. */
 const initialsOf = (name: string): string =>
@@ -151,7 +173,7 @@ export const maintenanceResolvers = {
         ambassadors: AMBASSADORS,
         businessNames: BUSINESS_NAMES,
         fixtures: fixtureStore.records.map(record => record.title),
-        incidents: INCIDENTS,
+        incidents: incidentOptions(),
         pois: POIS,
         equipment: EQUIPMENT,
         fixtureTypes: FIXTURE_TYPES,
@@ -355,6 +377,14 @@ export const maintenanceResolvers = {
         description: null,
         documents: [],
       });
+      return args.name;
+    },
+
+    createMaintenanceEquipment: async (_: unknown, args: {name: string}) => {
+      await sleep();
+      if (!EQUIPMENT.includes(args.name)) {
+        EQUIPMENT.unshift(args.name);
+      }
       return args.name;
     },
   },
