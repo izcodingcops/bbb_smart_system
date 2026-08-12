@@ -1,6 +1,17 @@
 export type MaintenanceStatus = 'Open' | 'In-progress' | 'Completed';
 export type MaintenancePriority = 'Low' | 'Medium' | 'High';
-export type MaintenanceAssigneeKind = 'Supervisor' | 'Department';
+/**
+ * Who a request is being handed to. Which of these a user may pick is
+ * role-gated by the form: an ambassador routes to a `Supervisor` or a
+ * `Department`; a supervisor assigns directly to an `Ambassador`, a
+ * `Department`, or themselves (`Me`) — a supervisor is an ambassador too, so
+ * self-assignment produces an ordinary assigned record.
+ */
+export type MaintenanceAssigneeKind =
+  | 'Supervisor'
+  | 'Department'
+  | 'Ambassador'
+  | 'Me';
 
 export interface MaintenanceAssignee {
   name: string;
@@ -59,6 +70,8 @@ export interface MaintenanceFormValues {
   requestedAt: string;
   assigneeKind: MaintenanceAssigneeKind;
   department: string | null;
+  /** The chosen ambassador's name; only set when `assigneeKind` is 'Ambassador'. */
+  ambassador: string | null;
   priority: MaintenancePriority;
   address: string;
   zone: string | null;

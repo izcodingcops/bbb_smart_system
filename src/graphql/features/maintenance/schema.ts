@@ -8,6 +8,8 @@ export const maintenanceTypeDefs = /* GraphQL */ `
   enum MaintenanceAssigneeKind {
     SUPERVISOR
     DEPARTMENT
+    AMBASSADOR
+    ME
   }
 
   type MaintenanceAssignee {
@@ -90,6 +92,8 @@ export const maintenanceTypeDefs = /* GraphQL */ `
     requestedAt: String!
     assigneeKind: MaintenanceAssigneeKind!
     department: String
+    "Set only when assigneeKind is AMBASSADOR."
+    ambassador: String
     priority: Priority!
     address: String!
     zone: String

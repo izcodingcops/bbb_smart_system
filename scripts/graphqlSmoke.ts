@@ -87,6 +87,64 @@ const checks: Check[] = [
     assert.ok(!Number.isNaN(Date.parse(r.data.checkedInEquipment[0].checkedInAt)), 'checkedInAt must parse as a date');
   }],
 
+  // The assignee kind is spelled in three places — the SDL enum, the resolver's
+  // two translation maps, and the hooks layer. Only the first three are
+  // reachable from here, and a missing entry fails at runtime rather than
+  // compile time, so exercise every kind end to end.
+  ['every MaintenanceAssigneeKind survives a create round-trip', async () => {
+    const create = `mutation C($p: ID!, $i: MaintenanceRequestInput!) {
+      createMaintenanceRequest(programId: $p, input: $i) {
+        reference assigneeKind department routedToSupervisor
+        assignee { name initials }
+      }
+    }`;
+    const base = {
+      type: 'Alley Cleaning',
+      requestedAt: new Date().toISOString(),
+      priority: 'LOW',
+      address: '1 Test St',
+    };
+
+    const amb: any = await run(create, {
+      p: 'p1',
+      i: {...base, assigneeKind: 'AMBASSADOR', ambassador: 'Ava Nguyen'},
+    });
+    assert.equal(amb.errors, undefined);
+    const a = amb.data.createMaintenanceRequest;
+    assert.equal(a.assigneeKind, 'AMBASSADOR');
+    // Field-by-field: graphql() returns null-prototype objects, which
+    // deepEqual rejects against a plain literal even when the values match.
+    assert.equal(a.assignee.name, 'Ava Nguyen');
+    assert.equal(a.assignee.initials, 'AN');
+    assert.equal(a.routedToSupervisor, false, 'a named assignee is not awaiting triage');
+
+    const me: any = await run(create, {
+      p: 'p1',
+      i: {...base, assigneeKind: 'ME', ambassador: 'Jane Smith'},
+    });
+    assert.equal(me.errors, undefined);
+    assert.equal(me.data.createMaintenanceRequest.assigneeKind, 'ME');
+    assert.equal(me.data.createMaintenanceRequest.assignee.name, 'Jane Smith');
+    assert.equal(me.data.createMaintenanceRequest.routedToSupervisor, false);
+
+    const sup: any = await run(create, {
+      p: 'p1',
+      i: {...base, assigneeKind: 'SUPERVISOR'},
+    });
+    assert.equal(sup.errors, undefined);
+    assert.equal(sup.data.createMaintenanceRequest.assignee, null);
+    assert.equal(sup.data.createMaintenanceRequest.routedToSupervisor, true);
+
+    const dept: any = await run(create, {
+      p: 'p1',
+      i: {...base, assigneeKind: 'DEPARTMENT', department: 'Facilities Team'},
+    });
+    assert.equal(dept.errors, undefined);
+    assert.equal(dept.data.createMaintenanceRequest.department, 'Facilities Team');
+    assert.equal(dept.data.createMaintenanceRequest.assignee, null);
+    assert.equal(dept.data.createMaintenanceRequest.routedToSupervisor, false);
+  }],
+
   ['maintenance accepts a filter argument even though the mock ignores it', async () => {
     const r: any = await run(
       'query M($p: ID!, $f: MaintenanceFilter) { maintenanceRequests(programId: $p, filter: $f) { id status priority queuedOffline } }',
