@@ -16,7 +16,7 @@ interface Props {
   onCheckIn?: (item: Equipment) => void;
 }
 
-const CheckedInEquipment: React.FC<Props> = ({items, isLoading, onViewAll, onCheckIn}) => {
+const CheckedOutEquipment: React.FC<Props> = ({items, isLoading, onViewAll, onCheckIn}) => {
   // Nothing checked in is the common case off-shift — drop the whole section
   // rather than leave a heading over empty space. Loading is exempt: the
   // empty array is just "no data yet", not "confirmed nothing checked in".
@@ -61,4 +61,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CheckedInEquipment;
+export default CheckedOutEquipment;

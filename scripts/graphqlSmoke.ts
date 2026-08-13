@@ -94,7 +94,8 @@ const checks: Check[] = [
       r.data.myEquipment.every((e: any) => !Number.isNaN(Date.parse(e.checkedOutAt))),
       'checkedOutAt must parse as a date',
     );
-    // Home renders the holder name, so it must never be null on this list.
+    // A checked-out record must always name its holder; null here means the
+    // check-out path left the record in a half-written state.
     assert.ok(r.data.myEquipment.every((e: any) => e.checkedOutBy));
   }],
 

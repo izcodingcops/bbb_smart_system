@@ -107,6 +107,18 @@ const EquipmentScreen: React.FC = () => {
     navigation.setParams({toast: undefined});
   }, [incomingToast, navigation]);
 
+  // Home's "View All" opens this screen straight on the Checked-Out tab.
+  // Applied via an effect rather than a useState initialiser because the tab
+  // stays mounted once visited — a second visit never re-runs initial state.
+  const incomingTab = route.params?.initialTab;
+  useEffect(() => {
+    if (!incomingTab) {
+      return;
+    }
+    setTab(incomingTab);
+    navigation.setParams({initialTab: undefined});
+  }, [incomingTab, navigation]);
+
   const mineEquipment = useMemo(
     () => equipment.filter(item => item.mine),
     [equipment],

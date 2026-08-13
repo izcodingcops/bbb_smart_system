@@ -14,7 +14,7 @@ import ShiftTimerCard from './components/ShiftTimerCard';
 import OfflineNotice from './components/OfflineNotice';
 import QuickActions from './components/QuickActions';
 import RecentWork from './components/RecentWork';
-import CheckedInEquipment from './components/CheckedInEquipment';
+import CheckedOutEquipment from './components/CheckedOutEquipment';
 import {locationTracker} from '../../utils/locationTracker';
 import {connectivity} from '../../graphql/offlineQueue/connectivity';
 import {useAuth} from '../../hooks/useAuth';
@@ -147,7 +147,11 @@ const HomeScreen: React.FC = () => {
   );
 
   const handleViewAllEquipment = useCallback(() => {
-    tabNavigation?.navigate(SCREEN.equipment);
+    navigateToTarget(tabNavigation, {
+      tab: SCREEN.equipment,
+      screen: 'EquipmentList',
+      params: {initialTab: 'mine'},
+    });
   }, [tabNavigation]);
 
   const handleViewAllWork = useCallback(() => {
@@ -243,7 +247,7 @@ const HomeScreen: React.FC = () => {
             onOpenAssign={handleOpenAssign}
           />
 
-          <CheckedInEquipment
+          <CheckedOutEquipment
             items={equipment}
             isLoading={isEquipmentLoading}
             onViewAll={handleViewAllEquipment}
