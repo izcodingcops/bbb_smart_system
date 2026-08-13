@@ -4,20 +4,28 @@ import {
   MOCK_EQUIPMENT_DETAIL_OVERRIDES,
 } from '../../../mocks/equipment';
 
-/** Detail-only fields for every record the overrides map doesn't cover. */
-const DETAIL_DEFAULTS = {
+/**
+ * Detail-only fields for every record the overrides map doesn't cover.
+ *
+ * A factory, not a shared object literal: spreading one literal into 25
+ * records copies the *reference* to each empty array, so every record without
+ * its own override would share one `upkeeps` array — and the next slice's
+ * `addEquipmentUpkeep` unshifts in place, which would file one record's
+ * upkeep against all of them.
+ */
+const detailDefaults = () => ({
   fuel: null as string | null,
   images: [] as string[],
   upkeeps: [] as EquipmentDetail['upkeeps'],
   incidents: [] as string[],
   personsOfInterest: [] as string[],
   maintenance: [] as string[],
-};
+});
 
 /** Seeded once per app session; mutations edit this array in place. */
 export const equipmentStore: {records: EquipmentDetail[]} = {
   records: MOCK_EQUIPMENT.map(item => ({
-    ...DETAIL_DEFAULTS,
+    ...detailDefaults(),
     ...item,
     ...MOCK_EQUIPMENT_DETAIL_OVERRIDES[item.id],
   })),
