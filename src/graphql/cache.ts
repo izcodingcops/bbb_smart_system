@@ -13,6 +13,10 @@ export const cache = new InMemoryCache({
     MenuItem: {keyFields: ['id']},
     WorkItem: {keyFields: ['id']},
     QuickAction: {keyFields: ['id']},
+    Equipment: {keyFields: ['id']},
+    EquipmentDetail: {keyFields: ['id']},
+    EquipmentUpkeep: {keyFields: ['id']},
+    // Legacy — Home's checked-in card. Removed in Task 6.
     EquipmentItem: {keyFields: ['id']},
     MaintenanceRequest: {keyFields: ['id']},
     // Assignee has no id; keep it embedded in its parent request.

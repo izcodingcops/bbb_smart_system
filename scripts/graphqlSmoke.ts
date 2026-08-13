@@ -87,6 +87,96 @@ const checks: Check[] = [
     assert.ok(!Number.isNaN(Date.parse(r.data.checkedInEquipment[0].checkedInAt)), 'checkedInAt must parse as a date');
   }],
 
+  ['equipment resolves the merged pool with uppercase enums', async () => {
+    const r: any = await run(
+      `query E($p: ID!) {
+        equipment(programId: $p) {
+          id reference serial name equipmentType category make model zone
+          program region division status createdAt unit ownership
+          checkedOutBy checkedOutAt mine queuedOffline
+        }
+      }`,
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const list = r.data.equipment;
+    assert.equal(list.length, 25);
+    assert.ok(list.every((e: any) => ['ACTIVE', 'CHECKED_OUT'].includes(e.status)));
+    assert.ok(list.every((e: any) => ['MILES', 'HOURS', 'KILOMETERS', 'NONE'].includes(e.unit)));
+    assert.ok(list.every((e: any) => ['OWNED', 'LEASED', 'RENTED', 'LOANED'].includes(e.ownership)));
+    // id, reference and serial are three different strings on every record.
+    assert.ok(list.every((e: any) => e.id !== e.reference && e.reference !== e.serial && e.id !== e.serial));
+    assert.equal(list.filter((e: any) => e.mine).length, 5);
+    assert.equal(list.filter((e: any) => e.status === 'CHECKED_OUT').length, 7);
+    // Active records carry no holder; checked-out records always do.
+    assert.ok(list.every((e: any) => (e.status === 'ACTIVE') === (e.checkedOutBy === null)));
+  }],
+
+  ['every equipment Date Range bucket is non-empty against the current clock', async () => {
+    const r: any = await run('query E($p: ID!) { equipment(programId: $p) { createdAt } }', {p: 'p1'});
+    const dates: string[] = r.data.equipment.map((e: any) => e.createdAt);
+    for (const option of DATE_RANGE_OPTIONS) {
+      if (option.value === 'custom') {
+        continue;
+      }
+      assert.ok(
+        dates.some(d => matchesDateRange(d, option.value)),
+        `${option.label} is empty`,
+      );
+    }
+  }],
+
+  ['equipmentDetail resolves every section, and an unknown id resolves null', async () => {
+    const r: any = await run(
+      `query D($id: ID!) {
+        equipmentDetail(id: $id) {
+          id reference serial fuel images upkeeps { id upkeepType occurredAt vendor cost currentUsage zone description }
+          incidents personsOfInterest maintenance
+        }
+      }`,
+      {id: 'eq_4352'},
+    );
+    assert.equal(r.errors, undefined);
+    const d = r.data.equipmentDetail;
+    assert.equal(d.reference, '#4352');
+    assert.equal(d.serial, 'werrtyui');
+    assert.equal(d.upkeeps.length, 2);
+    // Newest first — the detail's Upkeep tab renders them in array order.
+    assert.equal(d.upkeeps[0].upkeepType, 'Body Work');
+    assert.deepEqual(d.maintenance, ['#MT-4460 — Light Out']);
+    // Nullable-in-SDL list fields still come back as arrays, never null.
+    assert.ok(Array.isArray(d.images) && Array.isArray(d.personsOfInterest));
+
+    const bare: any = await run(
+      'query D($id: ID!) { equipmentDetail(id: $id) { id upkeeps { id } images } }',
+      {id: 'eq_4331'},
+    );
+    assert.deepEqual(bare.data.equipmentDetail.upkeeps, []);
+    assert.deepEqual(bare.data.equipmentDetail.images, []);
+
+    const missing: any = await run(
+      'query D($id: ID!) { equipmentDetail(id: $id) { id } }',
+      {id: 'nope'},
+    );
+    assert.equal(missing.errors, undefined);
+    assert.equal(missing.data.equipmentDetail, null);
+  }],
+
+  ['equipmentByCode matches on serial or reference, with or without the hash', async () => {
+    const q = 'query C($p: ID!, $c: String!) { equipmentByCode(programId: $p, code: $c) { id serial reference } }';
+    const bySerial: any = await run(q, {p: 'p1', c: 'SN-4341-BX'});
+    assert.equal(bySerial.data.equipmentByCode.id, 'eq_4341');
+    const lower: any = await run(q, {p: 'p1', c: 'sn-4341-bx'});
+    assert.equal(lower.data.equipmentByCode.id, 'eq_4341');
+    const byRef: any = await run(q, {p: 'p1', c: '#4341'});
+    assert.equal(byRef.data.equipmentByCode.id, 'eq_4341');
+    const bare: any = await run(q, {p: 'p1', c: '4341'});
+    assert.equal(bare.data.equipmentByCode.id, 'eq_4341');
+    const missing: any = await run(q, {p: 'p1', c: '9021'});
+    assert.equal(missing.errors, undefined);
+    assert.equal(missing.data.equipmentByCode, null);
+  }],
+
   // The assignee kind is spelled in three places — the SDL enum, the resolver's
   // two translation maps, and the hooks layer. Only the first three are
   // reachable from here, and a missing entry fails at runtime rather than
