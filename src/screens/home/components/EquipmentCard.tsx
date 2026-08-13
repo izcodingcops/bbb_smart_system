@@ -2,7 +2,7 @@ import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {Card} from '../../../components/ui';
 import {BoxIcon, ClockIcon, RadioIcon} from '../../../components/icons';
-import {EquipmentItem, EquipmentStatus} from '../../../types/equipment';
+import {CheckedInStatus, EquipmentItem} from '../../../types/equipment';
 import {theme} from '../../../theme';
 
 type IconComponent = React.FC<{size?: number; color?: string}>;
@@ -12,7 +12,7 @@ const ICON_MAP: Record<string, IconComponent> = {
   tool: BoxIcon,
 };
 
-const STATUS_STYLE: Record<EquipmentStatus, {bg: string; fg: string}> = {
+const STATUS_STYLE: Record<CheckedInStatus, {bg: string; fg: string}> = {
   Active: {bg: '#DCFCE7', fg: '#16A34A'},
   Overdue: {bg: '#FEF3C7', fg: '#B45309'},
 };

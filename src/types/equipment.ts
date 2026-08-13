@@ -1,16 +1,81 @@
-export type EquipmentStatus = 'Active' | 'Overdue';
+export type EquipmentStatus = 'Active' | 'Checked-Out';
+export type EquipmentOwnership = 'Owned' | 'Leased' | 'Rented' | 'Loaned';
+export type EquipmentUnit = 'Miles' | 'Hours' | 'Kilometers' | 'None';
+
+/**
+ * Three distinct strings, all `string`, all displayed or matched somewhere:
+ * `id` routes, `reference` shows in the detail identifier row and in dialog
+ * copy, `serial` is the card headline and what a QR code encodes. The mocks
+ * give all three visibly different values so a swap shows up on screen.
+ */
+export interface Equipment {
+  id: string;
+  reference: string;
+  serial: string;
+  name: string;
+  equipmentType: string;
+  category: string;
+  make: string;
+  model: string;
+  zone: string;
+  program: string;
+  region: string;
+  division: string;
+  status: EquipmentStatus;
+  /** ISO-8601. The card's date row, and what Date Range filters on. */
+  createdAt: string;
+  acquiredAt: string | null;
+  unit: EquipmentUnit;
+  /** 'Beg. Miles/Hours' on the detail screen. */
+  beginningUsage: string | null;
+  year: string | null;
+  ownership: EquipmentOwnership;
+  description: string | null;
+  /** Display name of the holder; null when Active. 'Me' is resolved at the card. */
+  checkedOutBy: string | null;
+  checkedOutAt: string | null;
+  /**
+   * Stored, not derived. The source mockup carries the same flag on its own
+   * records, and deriving it from a name comparison would break the moment a
+   * check-out mutation writes a real user's name instead of the seed's.
+   */
+  mine: boolean;
+  queuedOffline: boolean;
+}
+
+export interface EquipmentUpkeep {
+  id: string;
+  upkeepType: string;
+  /** ISO-8601. */
+  occurredAt: string;
+  vendor: string | null;
+  cost: string | null;
+  currentUsage: string | null;
+  zone: string | null;
+  description: string | null;
+}
+
+export interface EquipmentDetail extends Equipment {
+  /** 'Vehicle is on' — Gas | Electricity. Null for non-vehicles. */
+  fuel: string | null;
+  images: string[];
+  upkeeps: EquipmentUpkeep[];
+  incidents: string[];
+  personsOfInterest: string[];
+  maintenance: string[];
+}
+
+/* --- Legacy: Home's "Checked-In Equipment" card. Deleted in Task 6. ------ */
+
+export type CheckedInStatus = 'Active' | 'Overdue';
 
 export interface EquipmentItem {
-  id: string; // asset tag, e.g. '#RDO-4471'
-  name: string; // e.g. 'Two-Way Radio'
-  category: string; // e.g. 'Communication'
-  /** Human-readable check-in time, e.g. '7:05 AM'. */
+  id: string;
+  name: string;
+  category: string;
   checkedInAt: string;
-  status: EquipmentStatus;
-  /** Key into the card's icon map; unknown keys fall back to a generic one. */
+  status: CheckedInStatus;
   icon: string;
-  /** Fill behind the icon. */
   tint: string;
-  /** Icon stroke, normally a deeper shade of the tint. */
   iconColor: string;
 }

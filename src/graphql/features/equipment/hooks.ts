@@ -1,7 +1,7 @@
 import {useMemo} from 'react';
 import {useQuery} from '@apollo/client/react';
 import {GetActiveProgramId} from '../../../redux/auth/selectors';
-import {EquipmentItem, EquipmentStatus} from '../../../types/equipment';
+import {CheckedInStatus, EquipmentItem} from '../../../types/equipment';
 import {formatTimeOfDay} from '../../../utils/time';
 import {GET_CHECKED_IN_EQUIPMENT} from './documents';
 
@@ -17,7 +17,7 @@ interface GqlEquipmentItem {
   iconColor: string;
 }
 
-const STATUS: Record<GqlEquipmentItem['status'], EquipmentStatus> = {
+const STATUS: Record<GqlEquipmentItem['status'], CheckedInStatus> = {
   ACTIVE: 'Active',
   OVERDUE: 'Overdue',
 };
