@@ -1,20 +1,28 @@
 import {useMemo} from 'react';
-import {useQuery} from '@apollo/client/react';
+import {useMutation, useQuery} from '@apollo/client/react';
 import {GetActiveProgramId} from '../../../redux/auth/selectors';
 import {
+  CheckInEquipmentValues,
+  CheckOutEquipmentValues,
   Equipment,
   EquipmentDetail,
+  EquipmentFormOptions,
   EquipmentOwnership,
   EquipmentStatus,
   EquipmentUnit,
   EquipmentUpkeep,
+  EquipmentUpkeepValues,
 } from '../../../types/equipment';
 // GET_EQUIPMENT_BY_CODE is deliberately not imported here — the document
 // exists for slice 4's scanner, and importing it now would trip lint's
 // unused-import rule.
 import {
+  ADD_EQUIPMENT_UPKEEP,
+  CHECK_IN_EQUIPMENT,
+  CHECK_OUT_EQUIPMENT,
   GET_EQUIPMENT,
   GET_EQUIPMENT_DETAIL,
+  GET_EQUIPMENT_FORM_OPTIONS,
   GET_MY_EQUIPMENT,
 } from './documents';
 
@@ -176,4 +184,112 @@ export function useGetEquipmentDetailQuery(id: string) {
   );
 
   return {data: detail, isLoading: loading, isError: !!error, refetch};
+}
+
+/** The mock store mutates in place, so refetch rather than patch the cache. */
+const REFETCH = ['GetEquipment', 'GetMyEquipment', 'GetEquipmentDetail'];
+
+export function useEquipmentFormOptionsQuery() {
+  const {data, loading, error, refetch} = useQuery<{
+    equipmentFormOptions: EquipmentFormOptions;
+  }>(GET_EQUIPMENT_FORM_OPTIONS, EQUIPMENT_CONTEXT);
+  return {
+    data: data?.equipmentFormOptions ?? null,
+    isLoading: loading,
+    isError: !!error,
+    refetch,
+  };
+}
+
+export function useCheckOutEquipmentMutation() {
+  const [run, {loading}] = useMutation<{
+    checkOutEquipment: {id: string; reference: string};
+  }>(CHECK_OUT_EQUIPMENT, {...EQUIPMENT_CONTEXT, refetchQueries: REFETCH});
+  return {
+    mutate: async (id: string, values: CheckOutEquipmentValues) => {
+      const result = await run({
+        variables: {
+          input: {
+            id,
+            occurredAt: values.occurredAt,
+            hasAbnormality: values.hasAbnormality,
+            abnormality: values.hasAbnormality ? values.abnormality : null,
+            description: values.description,
+            images: values.images,
+          },
+        },
+      });
+      const newId = result.data?.checkOutEquipment.id ?? '';
+      return {
+        id: newId,
+        reference: result.data?.checkOutEquipment.reference ?? '',
+        // offlineQueueLink stamps queued ids with this prefix (link.ts) —
+        // same convention useCreateFixtureMutation already uses.
+        queued: newId.startsWith('outbox_'),
+      };
+    },
+    isLoading: loading,
+  };
+}
+
+export function useCheckInEquipmentMutation() {
+  const [run, {loading}] = useMutation<{
+    checkInEquipment: {id: string; reference: string};
+  }>(CHECK_IN_EQUIPMENT, {...EQUIPMENT_CONTEXT, refetchQueries: REFETCH});
+  return {
+    mutate: async (id: string, values: CheckInEquipmentValues) => {
+      const result = await run({
+        variables: {
+          input: {
+            id,
+            occurredAt: values.occurredAt,
+            currentUsage: values.currentUsage,
+            hasAbnormality: values.hasAbnormality,
+            abnormality: values.hasAbnormality ? values.abnormality : null,
+            description: values.description,
+            images: values.images,
+          },
+        },
+      });
+      const newId = result.data?.checkInEquipment.id ?? '';
+      return {
+        id: newId,
+        reference: result.data?.checkInEquipment.reference ?? '',
+        queued: newId.startsWith('outbox_'),
+      };
+    },
+    isLoading: loading,
+  };
+}
+
+export function useAddEquipmentUpkeepMutation() {
+  const [run, {loading}] = useMutation<{
+    addEquipmentUpkeep: {id: string; reference: string};
+  }>(ADD_EQUIPMENT_UPKEEP, {...EQUIPMENT_CONTEXT, refetchQueries: REFETCH});
+  return {
+    mutate: async (id: string, values: EquipmentUpkeepValues) => {
+      const result = await run({
+        variables: {
+          input: {
+            id,
+            upkeepType: values.upkeepType,
+            occurredAt: values.occurredAt,
+            vendor: values.vendor,
+            currentUsage: values.currentUsage,
+            cost: values.cost,
+            zone: values.zone,
+            description: values.description,
+            images: values.images,
+          },
+        },
+      });
+      const newId = result.data?.addEquipmentUpkeep.id ?? '';
+      return {
+        id: newId,
+        reference: result.data?.addEquipmentUpkeep.reference ?? '',
+        queued: newId.startsWith('outbox_'),
+      };
+    },
+    isLoading: loading,
+  };
 }

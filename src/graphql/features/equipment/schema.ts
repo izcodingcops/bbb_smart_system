@@ -100,6 +100,46 @@ export const equipmentTypeDefs = /* GraphQL */ `
     maintenance: [String!]!
   }
 
+  type EquipmentFormOptions {
+    upkeepTypes: [String!]!
+    abnormalities: [String!]!
+    zones: [String!]!
+  }
+
+  input CheckOutEquipmentInput {
+    id: ID!
+    "ISO-8601."
+    occurredAt: String!
+    hasAbnormality: Boolean!
+    abnormality: String
+    description: String
+    images: [String!]
+  }
+
+  input CheckInEquipmentInput {
+    id: ID!
+    "ISO-8601."
+    occurredAt: String!
+    currentUsage: String!
+    hasAbnormality: Boolean!
+    abnormality: String
+    description: String
+    images: [String!]
+  }
+
+  input AddEquipmentUpkeepInput {
+    id: ID!
+    upkeepType: String!
+    "ISO-8601."
+    occurredAt: String!
+    vendor: String!
+    currentUsage: String!
+    cost: String!
+    zone: String
+    description: String
+    images: [String!]
+  }
+
   extend type Query {
     equipment(programId: ID!): [Equipment!]!
     "Only the records held by the signed-in user. Home reads this one."
@@ -107,5 +147,12 @@ export const equipmentTypeDefs = /* GraphQL */ `
     equipmentDetail(id: ID!): EquipmentDetail
     "Resolves a scanned QR payload or typed number against serial or reference."
     equipmentByCode(programId: ID!, code: String!): Equipment
+    equipmentFormOptions: EquipmentFormOptions!
+  }
+
+  extend type Mutation {
+    checkOutEquipment(input: CheckOutEquipmentInput!): EquipmentDetail!
+    checkInEquipment(input: CheckInEquipmentInput!): EquipmentDetail!
+    addEquipmentUpkeep(input: AddEquipmentUpkeepInput!): EquipmentDetail!
   }
 `;

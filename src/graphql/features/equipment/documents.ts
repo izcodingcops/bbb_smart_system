@@ -43,25 +43,29 @@ export const GET_MY_EQUIPMENT = gql`
   }
 `;
 
+const EQUIPMENT_DETAIL_FIELDS = `
+  ${EQUIPMENT_FIELDS}
+  fuel
+  images
+  upkeeps {
+    id
+    upkeepType
+    occurredAt
+    vendor
+    cost
+    currentUsage
+    zone
+    description
+  }
+  incidents
+  personsOfInterest
+  maintenance
+`;
+
 export const GET_EQUIPMENT_DETAIL = gql`
   query GetEquipmentDetail($id: ID!) {
     equipmentDetail(id: $id) {
-      ${EQUIPMENT_FIELDS}
-      fuel
-      images
-      upkeeps {
-        id
-        upkeepType
-        occurredAt
-        vendor
-        cost
-        currentUsage
-        zone
-        description
-      }
-      incidents
-      personsOfInterest
-      maintenance
+      ${EQUIPMENT_DETAIL_FIELDS}
     }
   }
 `;
@@ -70,6 +74,40 @@ export const GET_EQUIPMENT_BY_CODE = gql`
   query GetEquipmentByCode($programId: ID!, $code: String!) {
     equipmentByCode(programId: $programId, code: $code) {
       ${EQUIPMENT_FIELDS}
+    }
+  }
+`;
+
+export const GET_EQUIPMENT_FORM_OPTIONS = gql`
+  query GetEquipmentFormOptions {
+    equipmentFormOptions {
+      upkeepTypes
+      abnormalities
+      zones
+    }
+  }
+`;
+
+export const CHECK_OUT_EQUIPMENT = gql`
+  mutation CheckOutEquipment($input: CheckOutEquipmentInput!) {
+    checkOutEquipment(input: $input) {
+      ${EQUIPMENT_DETAIL_FIELDS}
+    }
+  }
+`;
+
+export const CHECK_IN_EQUIPMENT = gql`
+  mutation CheckInEquipment($input: CheckInEquipmentInput!) {
+    checkInEquipment(input: $input) {
+      ${EQUIPMENT_DETAIL_FIELDS}
+    }
+  }
+`;
+
+export const ADD_EQUIPMENT_UPKEEP = gql`
+  mutation AddEquipmentUpkeep($input: AddEquipmentUpkeepInput!) {
+    addEquipmentUpkeep(input: $input) {
+      ${EQUIPMENT_DETAIL_FIELDS}
     }
   }
 `;

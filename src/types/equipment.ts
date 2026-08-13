@@ -64,3 +64,42 @@ export interface EquipmentDetail extends Equipment {
   personsOfInterest: string[];
   maintenance: string[];
 }
+
+export interface CheckOutEquipmentValues {
+  /** ISO-8601. */
+  occurredAt: string;
+  hasAbnormality: boolean;
+  /** Required when `hasAbnormality`; null otherwise. */
+  abnormality: string | null;
+  description: string;
+  images: string[];
+}
+
+export interface CheckInEquipmentValues {
+  /** ISO-8601. */
+  occurredAt: string;
+  /** Free text — 'hours, miles' per the form's own question. */
+  currentUsage: string;
+  hasAbnormality: boolean;
+  abnormality: string | null;
+  description: string;
+  images: string[];
+}
+
+export interface EquipmentUpkeepValues {
+  upkeepType: string;
+  /** ISO-8601. */
+  occurredAt: string;
+  vendor: string;
+  currentUsage: string;
+  cost: string;
+  zone: string | null;
+  description: string;
+  images: string[];
+}
+
+export interface EquipmentFormOptions {
+  upkeepTypes: string[];
+  abnormalities: string[];
+  zones: string[];
+}

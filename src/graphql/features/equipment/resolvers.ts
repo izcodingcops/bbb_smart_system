@@ -2,6 +2,44 @@ import {EquipmentDetail} from '../../../types/equipment';
 import {sleep} from '../../mockSession';
 import {equipmentStore, findByCode, findRecord} from './store';
 
+/**
+ * The create flow's list, not the hub mockup's — the hub ships real-world test
+ * data ('12 Dec', '16 Jan Test Pre') that would look like a bug in the app.
+ */
+const UPKEEP_TYPES = [
+  'Oil Change',
+  'Tire Replacement',
+  'Battery Service',
+  'Body Work',
+  'Drive Train Repair',
+  'Brake Service',
+  'Software Update',
+  'Inspection',
+  'Cleaning',
+  'Other',
+];
+
+const ABNORMALITIES = [
+  'Scratch / Dent',
+  'Mechanical Issue',
+  'Missing Part',
+  'Screen/Display Damage',
+  'Electrical Fault',
+  'Fluid Leak',
+  'Other',
+];
+
+/** Counter for upkeep ids; the store has no reference sequence for them. */
+let upkeepSeq = 0;
+
+function mustFind(id: string) {
+  const record = findRecord(id);
+  if (!record) {
+    throw new Error(`Equipment ${id} not found`);
+  }
+  return record;
+}
+
 const STATUS_OUT = {
   Active: 'ACTIVE',
   'Checked-Out': 'CHECKED_OUT',
@@ -73,6 +111,84 @@ export const equipmentResolvers = {
       await sleep();
       const record = findByCode(code);
       return record ? toWire(record) : null;
+    },
+
+    equipmentFormOptions: async () => {
+      await sleep();
+      return {
+        upkeepTypes: UPKEEP_TYPES,
+        abnormalities: ABNORMALITIES,
+        zones: Array.from(
+          new Set(equipmentStore.records.map(r => r.zone)),
+        ).sort(),
+      };
+    },
+  },
+
+  Mutation: {
+    checkOutEquipment: async (
+      _: unknown,
+      {input}: {input: {id: string; occurredAt: string}},
+    ) => {
+      await sleep();
+      const record = mustFind(input.id);
+      record.status = 'Checked-Out';
+      // 'You' is the holder convention across this app's mocks — see
+      // src/mocks/fixture.ts's YOU. Keeps seeded records and freshly
+      // checked-out ones reading identically.
+      record.checkedOutBy = 'You';
+      record.checkedOutAt = input.occurredAt;
+      record.mine = true;
+      return toDetailWire(record);
+    },
+
+    checkInEquipment: async (
+      _: unknown,
+      {input}: {input: {id: string}},
+    ) => {
+      await sleep();
+      const record = mustFind(input.id);
+      record.status = 'Active';
+      record.checkedOutBy = null;
+      record.checkedOutAt = null;
+      record.mine = false;
+      return toDetailWire(record);
+    },
+
+    addEquipmentUpkeep: async (
+      _: unknown,
+      {
+        input,
+      }: {
+        input: {
+          id: string;
+          upkeepType: string;
+          occurredAt: string;
+          vendor: string;
+          currentUsage: string;
+          cost: string;
+          zone: string | null;
+          description: string | null;
+        };
+      },
+    ) => {
+      await sleep();
+      const record = mustFind(input.id);
+      upkeepSeq += 1;
+      // Unshift, not push — the detail screen renders upkeeps newest-first in
+      // array order. Safe in place: each record owns its own array (store.ts's
+      // detailDefaults() is a factory precisely so this cannot cross-file).
+      record.upkeeps.unshift({
+        id: `up_new_${upkeepSeq}`,
+        upkeepType: input.upkeepType,
+        occurredAt: input.occurredAt,
+        vendor: input.vendor || null,
+        cost: input.cost || null,
+        currentUsage: input.currentUsage || null,
+        zone: input.zone || null,
+        description: input.description || null,
+      });
+      return toDetailWire(record);
     },
   },
 };

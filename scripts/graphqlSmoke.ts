@@ -189,6 +189,109 @@ const checks: Check[] = [
     assert.equal(missing.data.equipmentByCode, null);
   }],
 
+  ['equipment form options resolve', async () => {
+    const r: any = await run(
+      'query O { equipmentFormOptions { upkeepTypes abnormalities zones } }',
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.equipmentFormOptions;
+    assert.equal(o.upkeepTypes.length, 10);
+    assert.ok(o.upkeepTypes.includes('Oil Change'));
+    // The hub mockup's own list is test data ('12 Dec', '16 Jan Test Pre');
+    // the create flow's list is the real one.
+    assert.ok(!o.upkeepTypes.some((t: string) => t === '12 Dec'));
+    assert.equal(o.abnormalities.length, 7);
+    assert.ok(o.zones.length > 0);
+  }],
+
+  ['checkOutEquipment takes custody and checkInEquipment releases it', async () => {
+    const q = 'query D($id: ID!) { equipmentDetail(id: $id) { id status mine checkedOutBy checkedOutAt } }';
+    const before: any = await run(q, {id: 'eq_4341'});
+    assert.equal(before.data.equipmentDetail.status, 'ACTIVE');
+    assert.equal(before.data.equipmentDetail.mine, false);
+    assert.equal(before.data.equipmentDetail.checkedOutBy, null);
+
+    const out: any = await run(
+      `mutation C($input: CheckOutEquipmentInput!) {
+        checkOutEquipment(input: $input) { id reference status mine checkedOutBy checkedOutAt }
+      }`,
+      {input: {id: 'eq_4341', occurredAt: '2026-08-13T09:00:00', hasAbnormality: false, abnormality: null, description: '', images: []}},
+    );
+    assert.equal(out.errors, undefined);
+    assert.equal(out.data.checkOutEquipment.status, 'CHECKED_OUT');
+    assert.equal(out.data.checkOutEquipment.mine, true);
+    assert.equal(out.data.checkOutEquipment.checkedOutBy, 'You');
+    assert.equal(out.data.checkOutEquipment.checkedOutAt, '2026-08-13T09:00:00');
+    assert.equal(out.data.checkOutEquipment.reference, '#4341');
+
+    // It now shows up on the custody list.
+    const mine: any = await run('query M($p: ID!) { myEquipment(programId: $p) { id } }', {p: 'p1'});
+    assert.ok(mine.data.myEquipment.some((e: any) => e.id === 'eq_4341'));
+
+    const back: any = await run(
+      `mutation I($input: CheckInEquipmentInput!) {
+        checkInEquipment(input: $input) { id status mine checkedOutBy checkedOutAt }
+      }`,
+      {input: {id: 'eq_4341', occurredAt: '2026-08-13T17:00:00', currentUsage: '120', hasAbnormality: false, abnormality: null, description: '', images: []}},
+    );
+    assert.equal(back.errors, undefined);
+    assert.equal(back.data.checkInEquipment.status, 'ACTIVE');
+    assert.equal(back.data.checkInEquipment.mine, false);
+    assert.equal(back.data.checkInEquipment.checkedOutBy, null);
+    assert.equal(back.data.checkInEquipment.checkedOutAt, null);
+
+    const after: any = await run('query M($p: ID!) { myEquipment(programId: $p) { id } }', {p: 'p1'});
+    assert.ok(!after.data.myEquipment.some((e: any) => e.id === 'eq_4341'));
+  }],
+
+  ['addEquipmentUpkeep files newest-first against one record only', async () => {
+    const m = `mutation U($input: AddEquipmentUpkeepInput!) {
+      addEquipmentUpkeep(input: $input) { id upkeeps { id upkeepType vendor cost currentUsage zone description occurredAt } }
+    }`;
+    const r: any = await run(m, {
+      input: {
+        id: 'eq_4337', upkeepType: 'Battery Service', occurredAt: '2026-08-13T10:00:00',
+        vendor: 'Denver Fleet Services', currentUsage: '9,140', cost: '$88.00',
+        zone: 'Zone 2', description: 'Replaced the battery pack.', images: [],
+      },
+    });
+    assert.equal(r.errors, undefined);
+    const list = r.data.addEquipmentUpkeep.upkeeps;
+    assert.equal(list.length, 1);
+    assert.equal(list[0].upkeepType, 'Battery Service');
+    assert.ok(list[0].id.length > 0);
+
+    // Second entry lands on top, not appended.
+    const again: any = await run(m, {
+      input: {
+        id: 'eq_4337', upkeepType: 'Inspection', occurredAt: '2026-08-13T14:00:00',
+        vendor: 'Alkota', currentUsage: '9,150', cost: '$20.00',
+        zone: null, description: '', images: [],
+      },
+    });
+    assert.equal(again.data.addEquipmentUpkeep.upkeeps.length, 2);
+    assert.equal(again.data.addEquipmentUpkeep.upkeeps[0].upkeepType, 'Inspection');
+    assert.notEqual(
+      again.data.addEquipmentUpkeep.upkeeps[0].id,
+      again.data.addEquipmentUpkeep.upkeeps[1].id,
+    );
+
+    // The store's per-record arrays are independent — a sibling stays empty.
+    const other: any = await run(
+      'query D($id: ID!) { equipmentDetail(id: $id) { upkeeps { id } } }',
+      {id: 'eq_4339'},
+    );
+    assert.deepEqual(other.data.equipmentDetail.upkeeps, []);
+  }],
+
+  ['custody mutations reject an unknown id', async () => {
+    const r: any = await run(
+      'mutation C($input: CheckOutEquipmentInput!) { checkOutEquipment(input: $input) { id } }',
+      {input: {id: 'nope', occurredAt: '2026-08-13T09:00:00', hasAbnormality: false, abnormality: null, description: '', images: []}},
+    );
+    assert.ok(r.errors, 'an unknown id must throw, not resolve null');
+  }],
+
   // The assignee kind is spelled in three places — the SDL enum, the resolver's
   // two translation maps, and the hooks layer. Only the first three are
   // reachable from here, and a missing entry fails at runtime rather than
