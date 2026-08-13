@@ -17,9 +17,9 @@ interface Props {
 }
 
 const CheckedOutEquipment: React.FC<Props> = ({items, isLoading, onViewAll, onCheckIn}) => {
-  // Nothing checked in is the common case off-shift — drop the whole section
+  // Nothing checked out is the common case off-shift — drop the whole section
   // rather than leave a heading over empty space. Loading is exempt: the
-  // empty array is just "no data yet", not "confirmed nothing checked in".
+  // empty array is just "no data yet", not "confirmed nothing checked out".
   if (!isLoading && items.length === 0) {
     return null;
   }
