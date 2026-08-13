@@ -285,11 +285,26 @@ const checks: Check[] = [
   }],
 
   ['custody mutations reject an unknown id', async () => {
-    const r: any = await run(
+    // Asserting on the message, not merely on `errors` being present: a
+    // missing mutation also populates `errors`, so a bare truthiness check
+    // would keep passing if the resolvers were unwired.
+    const out: any = await run(
       'mutation C($input: CheckOutEquipmentInput!) { checkOutEquipment(input: $input) { id } }',
       {input: {id: 'nope', occurredAt: '2026-08-13T09:00:00', hasAbnormality: false, abnormality: null, description: '', images: []}},
     );
-    assert.ok(r.errors, 'an unknown id must throw, not resolve null');
+    assert.match(out.errors?.[0]?.message ?? '', /unknown equipment/i);
+
+    const back: any = await run(
+      'mutation I($input: CheckInEquipmentInput!) { checkInEquipment(input: $input) { id } }',
+      {input: {id: 'nope', occurredAt: '2026-08-13T09:00:00', currentUsage: '1', hasAbnormality: false, abnormality: null, description: '', images: []}},
+    );
+    assert.match(back.errors?.[0]?.message ?? '', /unknown equipment/i);
+
+    const up: any = await run(
+      'mutation U($input: AddEquipmentUpkeepInput!) { addEquipmentUpkeep(input: $input) { id } }',
+      {input: {id: 'nope', upkeepType: 'Inspection', occurredAt: '2026-08-13T09:00:00', vendor: 'V', currentUsage: '1', cost: '$1.00', zone: null, description: '', images: []}},
+    );
+    assert.match(up.errors?.[0]?.message ?? '', /unknown equipment/i);
   }],
 
   // The assignee kind is spelled in three places — the SDL enum, the resolver's

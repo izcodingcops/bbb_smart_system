@@ -35,7 +35,7 @@ let upkeepSeq = 0;
 function mustFind(id: string) {
   const record = findRecord(id);
   if (!record) {
-    throw new Error(`Equipment ${id} not found`);
+    throw new Error(`Unknown equipment: ${id}`);
   }
   return record;
 }
@@ -126,6 +126,10 @@ export const equipmentResolvers = {
   },
 
   Mutation: {
+    // The SDL's CheckOutEquipmentInput also carries hasAbnormality,
+    // abnormality, description and images — the source mockup collects them
+    // but its own store discards them too, and Equipment has no field to
+    // hold them. Narrowing the param type here documents that on purpose.
     checkOutEquipment: async (
       _: unknown,
       {input}: {input: {id: string; occurredAt: string}},
@@ -142,6 +146,9 @@ export const equipmentResolvers = {
       return toDetailWire(record);
     },
 
+    // Same deliberate omission as checkOutEquipment: CheckInEquipmentInput's
+    // hasAbnormality, abnormality, description and images are accepted by
+    // the SDL but have nowhere to land on Equipment, so they're dropped here.
     checkInEquipment: async (
       _: unknown,
       {input}: {input: {id: string}},
@@ -155,6 +162,9 @@ export const equipmentResolvers = {
       return toDetailWire(record);
     },
 
+    // AddEquipmentUpkeepInput also carries images — accepted by the SDL, but
+    // EquipmentUpkeep has no field to store them, so this drops them like
+    // the source mockup's own store does.
     addEquipmentUpkeep: async (
       _: unknown,
       {
