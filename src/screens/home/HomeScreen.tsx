@@ -19,7 +19,7 @@ import {locationTracker} from '../../utils/locationTracker';
 import {connectivity} from '../../graphql/offlineQueue/connectivity';
 import {useAuth} from '../../hooks/useAuth';
 import {useAppDispatch} from '../../redux/store';
-import {SCREEN, TabNavigation} from '../../navigation/screens';
+import {SCREEN, TabNavigation, navigateToTarget} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {endShift} from '../../redux/shift/slice';
 import {GetActiveProgram, GetShiftTypes} from '../../redux/auth/selectors';
@@ -33,9 +33,9 @@ import {
   useGetWorkItemsQuery,
   useSetWorkItemStatusMutation,
 } from '../../graphql/features/work/hooks';
-import {useGetCheckedInEquipmentQuery} from '../../graphql/features/equipment/hooks';
+import {useGetMyEquipmentQuery} from '../../graphql/features/equipment/hooks';
 import {useUnreadNotificationCountQuery} from '../../graphql/features/notification/hooks';
-import {EquipmentItem} from '../../types/equipment';
+import {Equipment} from '../../types/equipment';
 import {WorkItem, WorkStatus} from '../../types/work';
 import {HomeStackParamList} from './routes';
 import {theme} from '../../theme';
@@ -72,7 +72,7 @@ const HomeScreen: React.FC = () => {
     data: equipment = [],
     isLoading: isEquipmentLoading,
     refetch: refetchEquipment,
-  } = useGetCheckedInEquipmentQuery();
+  } = useGetMyEquipmentQuery();
   const {data: unreadNotifications = 0} = useUnreadNotificationCountQuery();
   const {mutate: setWorkItemStatus} = useSetWorkItemStatusMutation();
 
@@ -135,10 +135,20 @@ const HomeScreen: React.FC = () => {
     [queueTile],
   );
 
-  // Placeholder — the checkout flow has no screen yet.
-  const handleCheckout = useCallback((item: EquipmentItem) => {
-    Alert.alert('Coming soon', `Checking out ${item.name} is not wired up yet.`);
-  }, []);
+  const handleCheckIn = useCallback(
+    (item: Equipment) => {
+      navigateToTarget(tabNavigation, {
+        tab: SCREEN.equipment,
+        screen: 'EquipmentView',
+        params: {id: item.id},
+      });
+    },
+    [tabNavigation],
+  );
+
+  const handleViewAllEquipment = useCallback(() => {
+    tabNavigation?.navigate(SCREEN.equipment);
+  }, [tabNavigation]);
 
   const handleViewAllWork = useCallback(() => {
     tabNavigation?.navigate(SCREEN.work);
@@ -236,7 +246,8 @@ const HomeScreen: React.FC = () => {
           <CheckedInEquipment
             items={equipment}
             isLoading={isEquipmentLoading}
-            onCheckout={handleCheckout}
+            onViewAll={handleViewAllEquipment}
+            onCheckIn={handleCheckIn}
           />
         </ScrollView>
 

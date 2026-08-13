@@ -64,18 +64,3 @@ export interface EquipmentDetail extends Equipment {
   personsOfInterest: string[];
   maintenance: string[];
 }
-
-/* --- Legacy: Home's "Checked-In Equipment" card. Deleted in Task 6. ------ */
-
-export type CheckedInStatus = 'Active' | 'Overdue';
-
-export interface EquipmentItem {
-  id: string;
-  name: string;
-  category: string;
-  checkedInAt: string;
-  status: CheckedInStatus;
-  icon: string;
-  tint: string;
-  iconColor: string;
-}

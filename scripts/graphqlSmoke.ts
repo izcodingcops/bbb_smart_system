@@ -81,10 +81,21 @@ const checks: Check[] = [
     assert.ok(r.data.quickActions.length > 0);
   }],
 
-  ['equipment returns ISO timestamps', async () => {
-    const r: any = await run('query E($p: ID!) { checkedInEquipment(programId: $p) { id checkedInAt status } }', {p: 'p1'});
+  ['myEquipment returns only the signed-in user\'s custody', async () => {
+    const r: any = await run(
+      'query M($p: ID!) { myEquipment(programId: $p) { id mine status checkedOutBy checkedOutAt } }',
+      {p: 'p1'},
+    );
     assert.equal(r.errors, undefined);
-    assert.ok(!Number.isNaN(Date.parse(r.data.checkedInEquipment[0].checkedInAt)), 'checkedInAt must parse as a date');
+    assert.equal(r.data.myEquipment.length, 5);
+    assert.ok(r.data.myEquipment.every((e: any) => e.mine === true));
+    assert.ok(r.data.myEquipment.every((e: any) => e.status === 'CHECKED_OUT'));
+    assert.ok(
+      r.data.myEquipment.every((e: any) => !Number.isNaN(Date.parse(e.checkedOutAt))),
+      'checkedOutAt must parse as a date',
+    );
+    // Home renders the holder name, so it must never be null on this list.
+    assert.ok(r.data.myEquipment.every((e: any) => e.checkedOutBy));
   }],
 
   ['equipment resolves the merged pool with uppercase enums', async () => {

@@ -107,27 +107,5 @@ export const equipmentTypeDefs = /* GraphQL */ `
     equipmentDetail(id: ID!): EquipmentDetail
     "Resolves a scanned QR payload or typed number against serial or reference."
     equipmentByCode(programId: ID!, code: String!): Equipment
-
-    "Legacy — Home's checked-in card. Removed in Task 6."
-    checkedInEquipment(programId: ID!): [EquipmentItem!]!
-  }
-
-  "Legacy — Home's checked-in card. Removed in Task 6."
-  type EquipmentItem {
-    id: ID!
-    assetTag: String!
-    name: String!
-    category: String!
-    checkedInAt: String!
-    status: LegacyEquipmentStatus!
-    icon: String!
-    tint: String!
-    iconColor: String!
-  }
-
-  "Legacy — Home's checked-in card. Removed in Task 6."
-  enum LegacyEquipmentStatus {
-    ACTIVE
-    OVERDUE
   }
 `;

@@ -1,5 +1,4 @@
 import {EquipmentDetail} from '../../../types/equipment';
-import {MOCK_CHECKED_IN_EQUIPMENT} from '../../../mocks/equipment';
 import {sleep} from '../../mockSession';
 import {equipmentStore, findByCode, findRecord} from './store';
 
@@ -52,8 +51,6 @@ function toDetailWire(record: EquipmentDetail) {
   };
 }
 
-const LEGACY_STATUS: Record<string, string> = {Active: 'ACTIVE', Overdue: 'OVERDUE'};
-
 export const equipmentResolvers = {
   Query: {
     equipment: async () => {
@@ -76,22 +73,6 @@ export const equipmentResolvers = {
       await sleep();
       const record = findByCode(code);
       return record ? toWire(record) : null;
-    },
-
-    /** Legacy — Home's checked-in card. Removed in Task 6. */
-    checkedInEquipment: async () => {
-      await sleep();
-      return MOCK_CHECKED_IN_EQUIPMENT.map(item => ({
-        id: item.id,
-        assetTag: item.id,
-        name: item.name,
-        category: item.category,
-        checkedInAt: item.checkedInAt,
-        status: LEGACY_STATUS[item.status],
-        icon: item.icon,
-        tint: item.tint,
-        iconColor: item.iconColor,
-      }));
     },
   },
 };

@@ -4,18 +4,15 @@ import {GetActiveProgramId} from '../../../redux/auth/selectors';
 import {
   Equipment,
   EquipmentDetail,
-  EquipmentItem,
   EquipmentOwnership,
   EquipmentStatus,
   EquipmentUnit,
   EquipmentUpkeep,
 } from '../../../types/equipment';
-import {formatTimeOfDay} from '../../../utils/time';
 // GET_EQUIPMENT_BY_CODE is deliberately not imported here — the document
 // exists for slice 4's scanner, and importing it now would trip lint's
 // unused-import rule.
 import {
-  GET_CHECKED_IN_EQUIPMENT,
   GET_EQUIPMENT,
   GET_EQUIPMENT_DETAIL,
   GET_MY_EQUIPMENT,
@@ -179,46 +176,4 @@ export function useGetEquipmentDetailQuery(id: string) {
   );
 
   return {data: detail, isLoading: loading, isError: !!error, refetch};
-}
-
-/* --- Legacy: Home's checked-in card. Deleted in Task 6. ------------------ */
-
-interface GqlEquipmentItem {
-  id: string;
-  assetTag: string;
-  name: string;
-  category: string;
-  checkedInAt: string;
-  status: 'ACTIVE' | 'OVERDUE';
-  icon: string;
-  tint: string;
-  iconColor: string;
-}
-
-export function useGetCheckedInEquipmentQuery() {
-  const programId = GetActiveProgramId();
-  const {data, loading, error, refetch} = useQuery<{
-    checkedInEquipment: GqlEquipmentItem[];
-  }>(GET_CHECKED_IN_EQUIPMENT, {
-    ...EQUIPMENT_CONTEXT,
-    variables: {programId: programId ?? ''},
-    skip: !programId,
-  });
-
-  const items = useMemo<EquipmentItem[]>(
-    () =>
-      (data?.checkedInEquipment ?? []).map(item => ({
-        id: item.assetTag,
-        name: item.name,
-        category: item.category,
-        checkedInAt: formatTimeOfDay(new Date(item.checkedInAt)),
-        status: item.status === 'OVERDUE' ? 'Overdue' : 'Active',
-        icon: item.icon,
-        tint: item.tint,
-        iconColor: item.iconColor,
-      })),
-    [data],
-  );
-
-  return {data: items, isLoading: loading, isError: !!error, refetch};
 }

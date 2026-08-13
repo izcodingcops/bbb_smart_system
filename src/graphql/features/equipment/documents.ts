@@ -73,20 +73,3 @@ export const GET_EQUIPMENT_BY_CODE = gql`
     }
   }
 `;
-
-/** Legacy — Home's checked-in card. Removed in Task 6. */
-export const GET_CHECKED_IN_EQUIPMENT = gql`
-  query GetCheckedInEquipment($programId: ID!) {
-    checkedInEquipment(programId: $programId) {
-      id
-      assetTag
-      name
-      category
-      checkedInAt
-      status
-      icon
-      tint
-      iconColor
-    }
-  }
-`;
