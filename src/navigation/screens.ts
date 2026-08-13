@@ -10,6 +10,7 @@ import {MapsStackParamList} from '../screens/maps/routes';
 import {HomeStackParamList} from '../screens/home/routes';
 import {ObservationReportsStackParamList} from '../screens/observationReports/routes';
 import {ReferenceDocumentsStackParamList} from '../screens/referenceDocuments/routes';
+import {EquipmentStackParamList} from '../screens/equipment/routes';
 
 /** Screen names as the menu reports them — the keys MainTabNavigator maps. */
 export const SCREEN = {
@@ -19,6 +20,7 @@ export const SCREEN = {
   fixture: 'Fixture',
   incident: 'Incidents',
   dispatch: 'Dispatch',
+  equipment: 'Equipment',
   maps: 'Maps',
   poi: 'Poi',
   reports: 'Reports',
@@ -44,6 +46,9 @@ export type MainTabParamList = {
   [SCREEN.fixture]: NavigatorScreenParams<FixtureStackParamList> | undefined;
   [SCREEN.incident]: NavigatorScreenParams<IncidentStackParamList> | undefined;
   [SCREEN.dispatch]: NavigatorScreenParams<DispatchStackParamList> | undefined;
+  [SCREEN.equipment]:
+    | NavigatorScreenParams<EquipmentStackParamList>
+    | undefined;
   [SCREEN.maps]: NavigatorScreenParams<MapsStackParamList> | undefined;
   [SCREEN.poi]: NavigatorScreenParams<PoiStackParamList> | undefined;
   [SCREEN.reports]:
@@ -71,6 +76,7 @@ export const TAB_ROOT_ROUTE: Record<string, string> = {
   [SCREEN.fixture]: 'FixtureList',
   [SCREEN.incident]: 'IncidentList',
   [SCREEN.dispatch]: 'DispatchList',
+  [SCREEN.equipment]: 'EquipmentList',
   [SCREEN.maps]: 'MapsList',
   [SCREEN.poi]: 'PoiList',
   [SCREEN.reports]: 'ObservationReportsList',
