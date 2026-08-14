@@ -1,5 +1,13 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Alert, FlatList, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {
+  Alert,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -19,7 +27,7 @@ import {
   SingleSelectSheet,
   Toast,
 } from '../../components/ui';
-import {BoxIcon} from '../../components/icons';
+import {BoxIcon, CameraIcon} from '../../components/icons';
 import {useGetEquipmentQuery} from '../../graphql/features/equipment/hooks';
 import {Equipment} from '../../types/equipment';
 import {GetShiftTypes} from '../../redux/auth/selectors';
@@ -266,15 +274,27 @@ const EquipmentScreen: React.FC = () => {
         <Text style={styles.title}>Equipment</Text>
 
         <View style={styles.segmentRow}>
-          <SegmentedButtons
-            options={TABS}
-            value={tab}
-            onChange={next => {
-              setTab(next as Tab);
-              setOpenFilter(null);
-              setSortOpen(false);
-            }}
-          />
+          <View style={styles.segmentFill}>
+            <SegmentedButtons
+              options={TABS}
+              value={tab}
+              onChange={next => {
+                setTab(next as Tab);
+                setOpenFilter(null);
+                setSortOpen(false);
+              }}
+            />
+          </View>
+          {/* Sits beside the segmented control, as in the source mockup's
+              `segHTML` (equipment-hub.js:262). */}
+          <TouchableOpacity
+            style={styles.scanButton}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Scan equipment QR"
+            onPress={() => navigation.navigate('EquipmentScan')}>
+            <CameraIcon size={24} color="#2B3038" />
+          </TouchableOpacity>
         </View>
 
         <ListSearchRow
@@ -461,8 +481,25 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.md,
   },
   segmentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
+  },
+  segmentFill: {flex: 1},
+  // Square, and the same height as the segmented control beside it — the
+  // mockup's 52px assumes its own taller segment row.
+  scanButton: {
+    width: 44,
+    height: 44,
+    borderRadius: theme.radius.glassPill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: theme.glass.pillBorder,
+    backgroundColor: theme.glass.pillFill,
+    ...theme.shadow.glassPill,
   },
   listContent: {
     paddingHorizontal: theme.spacing.lg,

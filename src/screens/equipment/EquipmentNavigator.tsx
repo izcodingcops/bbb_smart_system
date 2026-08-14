@@ -10,6 +10,7 @@ import ViewEquipmentScreen from './ViewEquipmentScreen';
 import CheckOutEquipmentScreen from './CheckOutEquipmentScreen';
 import CheckInEquipmentScreen from './CheckInEquipmentScreen';
 import AddUpkeepScreen from './AddUpkeepScreen';
+import ScanEquipmentScreen from './ScanEquipmentScreen';
 import {theme} from '../../theme';
 
 const Stack = createNativeStackNavigator<EquipmentStackParamList>();
@@ -31,6 +32,7 @@ type AddUpkeepProps = NativeStackScreenProps<
   EquipmentStackParamList,
   'EquipmentAddUpkeep'
 >;
+type ScanProps = NativeStackScreenProps<EquipmentStackParamList, 'EquipmentScan'>;
 
 const CreateRoute: React.FC<CreateProps> = ({navigation}) => (
   <CreateEquipmentScreen
@@ -163,6 +165,35 @@ const AddUpkeepRoute: React.FC<AddUpkeepProps> = ({navigation, route}) => (
   />
 );
 
+const ScanRoute: React.FC<ScanProps> = ({navigation}) => (
+  <ScanEquipmentScreen
+    onClose={() => navigation.goBack()}
+    // `replace`, not `navigate`: backing out of the custody form should land
+    // on the hub, not on a live camera preview that would re-scan the same
+    // code the moment it came back into view.
+    onResolved={equipment =>
+      navigation.replace(
+        equipment.mine ? 'EquipmentCheckIn' : 'EquipmentCheckOut',
+        // `id`, never `serial` or `reference` — all three are strings, so the
+        // compiler cannot catch a swap here.
+        {id: equipment.id},
+      )
+    }
+    onAlreadyCheckedOut={equipment =>
+      navigation.popTo('EquipmentList', {
+        toast: {
+          title: 'Already checked out',
+          message: `${equipment.name} (${equipment.reference}) already checked out.`,
+          // Held by somebody else, so there is no form to offer — the toast
+          // just warns and dismisses.
+          routeId: '',
+          variant: 'danger',
+        },
+      })
+    }
+  />
+);
+
 const EquipmentNavigator: React.FC = () => (
   <Stack.Navigator
     screenOptions={{
@@ -179,6 +210,7 @@ const EquipmentNavigator: React.FC = () => (
     <Stack.Screen name="EquipmentCheckOut" component={CheckOutRoute} />
     <Stack.Screen name="EquipmentCheckIn" component={CheckInRoute} />
     <Stack.Screen name="EquipmentAddUpkeep" component={AddUpkeepRoute} />
+    <Stack.Screen name="EquipmentScan" component={ScanRoute} />
   </Stack.Navigator>
 );
 

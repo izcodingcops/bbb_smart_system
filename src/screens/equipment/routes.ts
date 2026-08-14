@@ -14,4 +14,5 @@ export type EquipmentStackParamList = {
   EquipmentCheckIn: {id: string};
   /** `origin` decides where a successful submit pops back to — see EquipmentNavigator. */
   EquipmentAddUpkeep: {id: string; origin: 'list' | 'detail'};
+  EquipmentScan: undefined;
 };
