@@ -17,6 +17,12 @@ export const cache = new InMemoryCache({
     EquipmentDetail: {keyFields: ['id']},
     EquipmentUpkeep: {keyFields: ['id']},
     EquipmentFormOptions: {keyFields: false},
+    // Taxonomy nodes are value objects with no id — without keyFields: false
+    // Apollo would warn and could merge two same-named nodes sitting under
+    // different branches of the Category → Type → Make tree.
+    EquipmentCategoryOption: {keyFields: false},
+    EquipmentTypeOption: {keyFields: false},
+    EquipmentMakeOption: {keyFields: false},
     MaintenanceRequest: {keyFields: ['id']},
     // Assignee has no id; keep it embedded in its parent request.
     MaintenanceAssignee: {keyFields: false},

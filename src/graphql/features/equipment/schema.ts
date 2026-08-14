@@ -100,10 +100,58 @@ export const equipmentTypeDefs = /* GraphQL */ `
     maintenance: [String!]!
   }
 
+  "Suffixed 'Option' throughout: a bare 'EquipmentType' would read as the record's own equipmentType field."
+  type EquipmentMakeOption {
+    name: String!
+    models: [String!]!
+  }
+
+  type EquipmentTypeOption {
+    name: String!
+    makes: [EquipmentMakeOption!]!
+  }
+
+  type EquipmentCategoryOption {
+    name: String!
+    types: [EquipmentTypeOption!]!
+  }
+
   type EquipmentFormOptions {
     upkeepTypes: [String!]!
     abnormalities: [String!]!
     zones: [String!]!
+    "The reference the create form shows before the record exists, e.g. '#4366'."
+    nextReference: String!
+    "Dependent Category → Type → Make → Model tree."
+    categories: [EquipmentCategoryOption!]!
+    ownerships: [EquipmentOwnership!]!
+    units: [EquipmentUnit!]!
+    fuels: [String!]!
+    incidents: [String!]!
+    personsOfInterest: [String!]!
+    maintenance: [String!]!
+  }
+
+  input EquipmentInput {
+    serial: String!
+    name: String!
+    "ISO-8601."
+    acquiredAt: String!
+    category: String!
+    equipmentType: String!
+    make: String!
+    model: String!
+    unit: EquipmentUnit!
+    ownership: EquipmentOwnership!
+    fuel: String
+    year: String
+    beginningUsage: String
+    zone: String
+    description: String
+    images: [String!]
+    incidents: [String!]
+    personsOfInterest: [String!]
+    maintenance: [String!]
   }
 
   input CheckOutEquipmentInput {
@@ -151,6 +199,11 @@ export const equipmentTypeDefs = /* GraphQL */ `
   }
 
   extend type Mutation {
+    "programId mirrors createFixture / createPoi — a real gateway scopes the new record by it."
+    createEquipment(programId: ID!, input: EquipmentInput!): EquipmentDetail!
+    updateEquipment(id: ID!, input: EquipmentInput!): EquipmentDetail!
+    "Returns the deleted id."
+    deleteEquipment(id: ID!): ID!
     checkOutEquipment(input: CheckOutEquipmentInput!): EquipmentDetail!
     checkInEquipment(input: CheckInEquipmentInput!): EquipmentDetail!
     addEquipmentUpkeep(input: AddEquipmentUpkeepInput!): EquipmentDetail!

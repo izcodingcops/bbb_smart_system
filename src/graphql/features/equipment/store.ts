@@ -60,3 +60,32 @@ export function nextReference(): string {
   }, 0);
   return `#${max + 1}`;
 }
+
+/**
+ * One past the highest existing numeric id suffix. Every seeded id is
+ * `eq_<number>` (src/mocks/equipment.ts), matching that record's reference
+ * number — this keeps the convention rather than inventing a new prefix.
+ * Derived from the ids, not from `nextReference()`, so the two sequences
+ * cannot drift if a record is ever seeded with mismatched values.
+ */
+export function nextEquipmentId(): string {
+  const max = equipmentStore.records.reduce((acc, r) => {
+    const n = Number(r.id.replace('eq_', ''));
+    return Number.isFinite(n) && n > acc ? n : acc;
+  }, 0);
+  return `eq_${max + 1}`;
+}
+
+/** Newest first — created records must sort to the top of the list. */
+export function insertRecord(record: EquipmentDetail): void {
+  equipmentStore.records.unshift(record);
+}
+
+export function removeRecord(id: string): boolean {
+  const index = equipmentStore.records.findIndex(r => r.id === id);
+  if (index < 0) {
+    return false;
+  }
+  equipmentStore.records.splice(index, 1);
+  return true;
+}

@@ -84,7 +84,46 @@ export const GET_EQUIPMENT_FORM_OPTIONS = gql`
       upkeepTypes
       abnormalities
       zones
+      nextReference
+      categories {
+        name
+        types {
+          name
+          makes {
+            name
+            models
+          }
+        }
+      }
+      ownerships
+      units
+      fuels
+      incidents
+      personsOfInterest
+      maintenance
     }
+  }
+`;
+
+export const CREATE_EQUIPMENT = gql`
+  mutation CreateEquipment($programId: ID!, $input: EquipmentInput!) {
+    createEquipment(programId: $programId, input: $input) {
+      ${EQUIPMENT_DETAIL_FIELDS}
+    }
+  }
+`;
+
+export const UPDATE_EQUIPMENT = gql`
+  mutation UpdateEquipment($id: ID!, $input: EquipmentInput!) {
+    updateEquipment(id: $id, input: $input) {
+      ${EQUIPMENT_DETAIL_FIELDS}
+    }
+  }
+`;
+
+export const DELETE_EQUIPMENT = gql`
+  mutation DeleteEquipment($id: ID!) {
+    deleteEquipment(id: $id)
   }
 `;
 

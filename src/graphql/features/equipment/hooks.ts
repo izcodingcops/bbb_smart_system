@@ -5,8 +5,10 @@ import {
   CheckInEquipmentValues,
   CheckOutEquipmentValues,
   Equipment,
+  EquipmentCategoryOption,
   EquipmentDetail,
   EquipmentFormOptions,
+  EquipmentFormValues,
   EquipmentOwnership,
   EquipmentStatus,
   EquipmentUnit,
@@ -20,10 +22,13 @@ import {
   ADD_EQUIPMENT_UPKEEP,
   CHECK_IN_EQUIPMENT,
   CHECK_OUT_EQUIPMENT,
+  CREATE_EQUIPMENT,
+  DELETE_EQUIPMENT,
   GET_EQUIPMENT,
   GET_EQUIPMENT_DETAIL,
   GET_EQUIPMENT_FORM_OPTIONS,
   GET_MY_EQUIPMENT,
+  UPDATE_EQUIPMENT,
 } from './documents';
 
 export const EQUIPMENT_CONTEXT = {context: {feature: 'equipment'}};
@@ -47,6 +52,62 @@ const UNIT: Record<WireUnit, EquipmentUnit> = {
   HOURS: 'Hours',
   KILOMETERS: 'Kilometers',
   NONE: 'None',
+};
+
+// The outbound direction, for EquipmentInput. Both dropdowns hold the display
+// value, so every submit passes through here.
+const OWNERSHIP_OUT: Record<EquipmentOwnership, WireOwnership> = {
+  Owned: 'OWNED',
+  Leased: 'LEASED',
+  Rented: 'RENTED',
+  Loaned: 'LOANED',
+};
+const UNIT_OUT: Record<EquipmentUnit, WireUnit> = {
+  Miles: 'MILES',
+  Hours: 'HOURS',
+  Kilometers: 'KILOMETERS',
+  None: 'NONE',
+};
+
+/**
+ * A blank optional text field is absent, not an empty string. Same helper,
+ * same trimming, as poi/hooks.ts.
+ */
+const orNull = (value: string): string | null => value.trim() || null;
+
+/**
+ * Form values → EquipmentInput, shared by create and update so the two can't
+ * drift.
+ *
+ * Ownership and Unit are required by the form, so its submit gate blocks a
+ * blank one before this runs. Throwing rather than substituting a default
+ * keeps a regression visible as a failed submit instead of a record quietly
+ * saved as 'Owned' / 'None'.
+ */
+const toWireInput = (values: EquipmentFormValues) => {
+  if (!values.ownership || !values.unit) {
+    throw new Error('Ownership Status and Unit are required.');
+  }
+  return {
+    serial: values.serial,
+    name: values.name,
+    acquiredAt: values.acquiredAt,
+    category: values.category,
+    equipmentType: values.equipmentType,
+    make: values.make,
+    model: values.model,
+    unit: UNIT_OUT[values.unit],
+    ownership: OWNERSHIP_OUT[values.ownership],
+    fuel: values.fuel,
+    year: orNull(values.year),
+    beginningUsage: orNull(values.beginningUsage),
+    zone: values.zone,
+    description: orNull(values.description),
+    images: values.images,
+    incidents: values.incidents,
+    personsOfInterest: values.personsOfInterest,
+    maintenance: values.maintenance,
+  };
 };
 
 export interface GqlEquipment {
@@ -203,15 +264,116 @@ const ADD_UPKEEP_CONTEXT = {
   context: {feature: 'equipment', offlineQueueKey: 'ADD_EQUIPMENT_UPKEEP'},
 };
 
+const CREATE_CONTEXT = {
+  context: {feature: 'equipment', offlineQueueKey: 'CREATE_EQUIPMENT'},
+};
+
+/**
+ * The options payload as it arrives. `ownerships` and `units` are the wire
+ * enums here — mapping them back to the display union below is what keeps the
+ * form's dropdowns from showing 'OWNED', and what keeps the value they hand
+ * back valid on the way out through `toWireInput`.
+ */
+interface GqlEquipmentFormOptions {
+  upkeepTypes: string[];
+  abnormalities: string[];
+  zones: string[];
+  nextReference: string;
+  categories: EquipmentCategoryOption[];
+  ownerships: WireOwnership[];
+  units: WireUnit[];
+  fuels: string[];
+  incidents: string[];
+  personsOfInterest: string[];
+  maintenance: string[];
+}
+
 export function useEquipmentFormOptionsQuery() {
   const {data, loading, error, refetch} = useQuery<{
-    equipmentFormOptions: EquipmentFormOptions;
+    equipmentFormOptions: GqlEquipmentFormOptions;
   }>(GET_EQUIPMENT_FORM_OPTIONS, EQUIPMENT_CONTEXT);
+
+  // Memoised: the payload now carries a nested taxonomy tree, and a fresh
+  // object each render would churn the form's derived option lists — which
+  // the accordions key off, so they'd re-open on every keystroke.
+  const options = useMemo<EquipmentFormOptions | null>(() => {
+    const o = data?.equipmentFormOptions;
+    if (!o) {
+      return null;
+    }
+    return {
+      upkeepTypes: o.upkeepTypes,
+      abnormalities: o.abnormalities,
+      zones: o.zones,
+      nextReference: o.nextReference,
+      categories: o.categories,
+      ownerships: o.ownerships.map(v => OWNERSHIP[v]),
+      units: o.units.map(v => UNIT[v]),
+      fuels: o.fuels,
+      incidents: o.incidents,
+      personsOfInterest: o.personsOfInterest,
+      maintenance: o.maintenance,
+    };
+  }, [data]);
+
+  return {data: options, isLoading: loading, isError: !!error, refetch};
+}
+
+export function useCreateEquipmentMutation() {
+  const programId = GetActiveProgramId();
+  const [run, {loading}] = useMutation<{
+    createEquipment: {id: string; reference: string};
+  }>(CREATE_EQUIPMENT, {
+    ...CREATE_CONTEXT,
+    refetchQueries: ['GetEquipment', 'GetMyEquipment'],
+  });
   return {
-    data: data?.equipmentFormOptions ?? null,
+    mutate: async (values: EquipmentFormValues) => {
+      const result = await run({
+        variables: {programId: programId ?? '', input: toWireInput(values)},
+      });
+      const id = result.data?.createEquipment.id ?? '';
+      return {
+        id,
+        reference: result.data?.createEquipment.reference ?? '',
+        // offlineQueueLink stamps queued ids with this prefix (link.ts) —
+        // the same convention the three custody hooks already use.
+        queued: id.startsWith('outbox_'),
+      };
+    },
     isLoading: loading,
-    isError: !!error,
-    refetch,
+  };
+}
+
+// Update and delete carry no offlineQueueKey, so they simply reject when
+// offline — matching useUpdatePoiMutation / useDeletePoiMutation. Queuing an
+// edit against a record that may itself still be queued is a sequencing
+// problem this module isn't solving.
+export function useUpdateEquipmentMutation() {
+  const [run, {loading}] = useMutation(UPDATE_EQUIPMENT, {
+    ...EQUIPMENT_CONTEXT,
+    refetchQueries: REFETCH,
+  });
+  return {
+    mutate: async (id: string, values: EquipmentFormValues) => {
+      await run({variables: {id, input: toWireInput(values)}});
+    },
+    isLoading: loading,
+  };
+}
+
+// Delete fires from the detail screen as it unmounts, so 'GetEquipmentDetail'
+// is left out — naming it would only earn Apollo's inactive-query warning.
+export function useDeleteEquipmentMutation() {
+  const [run, {loading}] = useMutation(DELETE_EQUIPMENT, {
+    ...EQUIPMENT_CONTEXT,
+    refetchQueries: ['GetEquipment', 'GetMyEquipment'],
+  });
+  return {
+    mutate: async (id: string) => {
+      await run({variables: {id}});
+    },
+    isLoading: loading,
   };
 }
 
