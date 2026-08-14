@@ -14,6 +14,7 @@ import {
   ADD_EQUIPMENT_UPKEEP,
   CHECK_IN_EQUIPMENT,
   CHECK_OUT_EQUIPMENT,
+  CREATE_EQUIPMENT,
 } from '../features/equipment/documents';
 
 interface OfflineMutationEntry {
@@ -100,6 +101,22 @@ export const OFFLINE_MUTATIONS: Record<OfflineMutationKey, OfflineMutationEntry>
     refetchQueries: ['GetPois', 'GetPoi'],
     buildOptimisticData: localId => ({
       addPoiUpdate: {__typename: 'PoiUpdate', id: localId, reference: 'Pending'},
+    }),
+  },
+  // Unlike the three custody mutations below, a queued create has no record
+  // yet — 'GetEquipmentDetail' is left out because there is no detail screen
+  // for a row that doesn't exist. usePendingEquipmentItems projects the
+  // placeholder into the list until this syncs.
+  CREATE_EQUIPMENT: {
+    document: CREATE_EQUIPMENT,
+    feature: 'equipment',
+    refetchQueries: ['GetEquipment', 'GetMyEquipment'],
+    buildOptimisticData: localId => ({
+      createEquipment: {
+        __typename: 'EquipmentDetail',
+        id: localId,
+        reference: 'Pending',
+      },
     }),
   },
   CHECK_OUT_EQUIPMENT: {

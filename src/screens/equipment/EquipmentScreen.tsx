@@ -49,7 +49,10 @@ import {
   optionsForField,
 } from './filtering';
 import EquipmentCard from './components/EquipmentCard';
-import {useQueuedEquipmentIds} from './pendingEquipmentItems';
+import {
+  usePendingEquipmentItems,
+  useQueuedEquipmentIds,
+} from './pendingEquipmentItems';
 import {EquipmentStackParamList, EquipmentToast} from './routes';
 import {theme} from '../../theme';
 
@@ -68,6 +71,7 @@ const TABS = [
 const EquipmentScreen: React.FC = () => {
   const {data: queryEquipment = [], isLoading, isError, refetch} = useGetEquipmentQuery();
   const queuedEquipmentIds = useQueuedEquipmentIds();
+  const pendingEquipment = usePendingEquipmentItems();
 
   // A queued custody mutation (check-out/check-in/add upkeep) targets a
   // record that already exists in the list — unlike a queued create there's
@@ -75,7 +79,7 @@ const EquipmentScreen: React.FC = () => {
   // show the queued badge while the record still reads correctly. Memoized
   // so the array keeps a stable identity (and skips a new array entirely
   // when nothing is queued) for the memoized cards downstream.
-  const equipment = useMemo(
+  const knownEquipment = useMemo(
     () =>
       queuedEquipmentIds.size === 0
         ? queryEquipment
@@ -83,6 +87,18 @@ const EquipmentScreen: React.FC = () => {
             queuedEquipmentIds.has(item.id) ? {...item, queuedOffline: true} : item,
           ),
     [queryEquipment, queuedEquipmentIds],
+  );
+
+  // A queued create has no record to mark, so it's prepended as a synthetic
+  // row instead — the same shape FixtureScreen uses. It only ever joins the
+  // All pool: `mine` below reads off the real records, because a record that
+  // hasn't been created yet cannot be checked out to anyone.
+  const equipment = useMemo(
+    () =>
+      pendingEquipment.length === 0
+        ? knownEquipment
+        : [...pendingEquipment, ...knownEquipment],
+    [pendingEquipment, knownEquipment],
   );
 
   const [tab, setTab] = useState<Tab>('all');
@@ -131,8 +147,8 @@ const EquipmentScreen: React.FC = () => {
   }, [incomingTab, navigation]);
 
   const mineEquipment = useMemo(
-    () => equipment.filter(item => item.mine),
-    [equipment],
+    () => knownEquipment.filter(item => item.mine),
+    [knownEquipment],
   );
 
   const pool = tab === 'all' ? equipment : mineEquipment;
