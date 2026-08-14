@@ -109,6 +109,10 @@ export const CREATE_TARGET_BY_TILE: Record<string, ModuleTarget> = {
   // chooser to open over it, wherever the tile was tapped from.
   poi: {tab: SCREEN.poi, screen: 'PoiList', params: {openChooser: true}},
   work_log: {tab: SCREEN.work, screen: 'WorkLogCreate'},
+  // The only route to Add Equipment: the Equipment hub's own FAB opens the
+  // shared Add Requests sheet rather than a module-local create action, so
+  // without this entry the screen is unreachable from anywhere.
+  equipment: {tab: SCREEN.equipment, screen: 'EquipmentCreate'},
 };
 
 export const createTargetForTile = (tileId: string): ModuleTarget | null =>
