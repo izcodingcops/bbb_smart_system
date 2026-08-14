@@ -1,13 +1,11 @@
 import React, {useState} from 'react';
-import {ScrollView, Text, TouchableOpacity, View, StyleSheet} from 'react-native';
+import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import ScreenBackground from '../../components/ScreenBackground';
 import {
   ConfirmDialog,
   DateTimeField,
-  DetailTopBar,
   DropdownField,
-  EmptyState,
   FieldLabel,
   FormScreenSkeleton,
   SectionTabItem,
@@ -17,7 +15,7 @@ import {
   UploadField,
   formChrome,
 } from '../../components/ui';
-import {BoxIcon, XIcon} from '../../components/icons';
+import {XIcon} from '../../components/icons';
 import {useSectionScrollTabs} from '../../hooks/useSectionScrollTabs';
 import {useFormDiscardState} from '../../hooks/useFormDiscardState';
 import {
@@ -26,7 +24,8 @@ import {
   useGetEquipmentDetailQuery,
 } from '../../graphql/features/equipment/hooks';
 import EquipmentSummaryCard from './components/EquipmentSummaryCard';
-import {theme} from '../../theme';
+import EquipmentFormError from './components/EquipmentFormError';
+import {equipmentFormChrome} from './equipmentFormChrome';
 
 /** Section jump tabs, in the order the sections actually appear on screen. */
 const SECTION_TABS: SectionTabItem[] = [
@@ -155,23 +154,9 @@ const AddUpkeepScreen: React.FC<Props> = ({id, onClose, onDone}) => {
     );
   }
 
-  // The close affordance renders above this branch on purpose — the tab bar
-  // is hidden on this route, so a failed load with no way out would trap the
-  // user. There is no BackHandler anywhere in this app.
   if (isError || !detail || !options) {
     return (
-      <ScreenBackground style={styles.root}>
-        <DetailTopBar title="Upkeep" onBack={onClose} />
-        <View style={styles.errorWrap}>
-          <EmptyState
-            icon={<BoxIcon size={28} color={theme.colors.primary} />}
-            title="Couldn't load this equipment"
-            body="Something went wrong fetching it. Check your connection and try again."
-            actionLabel="Retry"
-            onAction={retry}
-          />
-        </View>
-      </ScreenBackground>
+      <EquipmentFormError title="Upkeep" onClose={onClose} onRetry={retry} />
     );
   }
 
@@ -229,7 +214,7 @@ const AddUpkeepScreen: React.FC<Props> = ({id, onClose, onDone}) => {
           onMomentumScrollEnd={handleMomentumScrollEnd}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}>
-          <View style={styles.summaryWrap}>
+          <View style={equipmentFormChrome.summaryWrap}>
             <EquipmentSummaryCard equipment={detail} showCheckedOut />
           </View>
 
@@ -345,7 +330,7 @@ const AddUpkeepScreen: React.FC<Props> = ({id, onClose, onDone}) => {
         message={
           <Text>
             Log this upkeep record against{' '}
-            <Text style={styles.bold}>
+            <Text style={equipmentFormChrome.bold}>
               {detail.equipmentType} {detail.reference}
             </Text>
             .
@@ -379,12 +364,5 @@ const AddUpkeepScreen: React.FC<Props> = ({id, onClose, onDone}) => {
     </ScreenBackground>
   );
 };
-
-const styles = StyleSheet.create({
-  root: {flex: 1},
-  errorWrap: {flex: 1, justifyContent: 'center'},
-  summaryWrap: {marginHorizontal: theme.spacing.lg, marginTop: 14},
-  bold: {fontFamily: theme.fonts.black},
-});
 
 export default AddUpkeepScreen;

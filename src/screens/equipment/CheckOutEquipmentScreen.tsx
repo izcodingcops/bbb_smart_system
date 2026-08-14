@@ -1,12 +1,10 @@
 import React, {useState} from 'react';
-import {ScrollView, Text, TouchableOpacity, View, StyleSheet} from 'react-native';
+import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import ScreenBackground from '../../components/ScreenBackground';
 import {
   ConfirmDialog,
   DateTimeField,
-  DetailTopBar,
-  EmptyState,
   FieldLabel,
   FormScreenSkeleton,
   TextField,
@@ -14,7 +12,7 @@ import {
   UploadField,
   formChrome,
 } from '../../components/ui';
-import {BoxIcon, XIcon} from '../../components/icons';
+import {XIcon} from '../../components/icons';
 import {useFormDiscardState} from '../../hooks/useFormDiscardState';
 import {
   useCheckOutEquipmentMutation,
@@ -22,8 +20,9 @@ import {
   useGetEquipmentDetailQuery,
 } from '../../graphql/features/equipment/hooks';
 import EquipmentSummaryCard from './components/EquipmentSummaryCard';
+import EquipmentFormError from './components/EquipmentFormError';
 import AbnormalityBlock from './components/AbnormalityBlock';
-import {theme} from '../../theme';
+import {equipmentFormChrome} from './equipmentFormChrome';
 
 interface Props {
   id: string;
@@ -118,23 +117,13 @@ const CheckOutEquipmentScreen: React.FC<Props> = ({id, onClose, onDone}) => {
     );
   }
 
-  // The close affordance renders above this branch on purpose — the tab bar
-  // is hidden on this route, so a failed load with no way out would trap the
-  // user. There is no BackHandler anywhere in this app.
   if (isError || !detail || !options) {
     return (
-      <ScreenBackground style={styles.root}>
-        <DetailTopBar title="Add Check-Out" onBack={onClose} />
-        <View style={styles.errorWrap}>
-          <EmptyState
-            icon={<BoxIcon size={28} color={theme.colors.primary} />}
-            title="Couldn't load this equipment"
-            body="Something went wrong fetching it. Check your connection and try again."
-            actionLabel="Retry"
-            onAction={retry}
-          />
-        </View>
-      </ScreenBackground>
+      <EquipmentFormError
+        title="Add Check-Out"
+        onClose={onClose}
+        onRetry={retry}
+      />
     );
   }
 
@@ -180,7 +169,7 @@ const CheckOutEquipmentScreen: React.FC<Props> = ({id, onClose, onDone}) => {
           contentContainerStyle={formChrome.bodyContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
-          <View style={styles.summaryWrap}>
+          <View style={equipmentFormChrome.summaryWrap}>
             <EquipmentSummaryCard equipment={detail} />
           </View>
 
@@ -245,7 +234,7 @@ const CheckOutEquipmentScreen: React.FC<Props> = ({id, onClose, onDone}) => {
         message={
           <Text>
             Check out{' '}
-            <Text style={styles.bold}>
+            <Text style={equipmentFormChrome.bold}>
               {detail.equipmentType} {detail.reference}
             </Text>{' '}
             to you? It will appear in your Checked-Out tab.
@@ -279,12 +268,5 @@ const CheckOutEquipmentScreen: React.FC<Props> = ({id, onClose, onDone}) => {
     </ScreenBackground>
   );
 };
-
-const styles = StyleSheet.create({
-  root: {flex: 1},
-  errorWrap: {flex: 1, justifyContent: 'center'},
-  summaryWrap: {marginHorizontal: theme.spacing.lg, marginTop: 14},
-  bold: {fontFamily: theme.fonts.black},
-});
 
 export default CheckOutEquipmentScreen;
