@@ -60,6 +60,17 @@ const ViewRoute: React.FC<ViewProps> = ({navigation, route}) => (
   <ViewEquipmentScreen
     id={route.params.id}
     onClose={() => navigation.popTo('EquipmentList')}
+    onDeleted={reference =>
+      navigation.popTo('EquipmentList', {
+        toast: {
+          title: 'Equipment deleted',
+          message: `${reference} was removed from the equipment list.`,
+          // The record is gone, so there is nothing for View to open.
+          routeId: '',
+          variant: 'danger',
+        },
+      })
+    }
     onCheckOut={() => navigation.navigate('EquipmentCheckOut', {id: route.params.id})}
     onCheckIn={() => navigation.navigate('EquipmentCheckIn', {id: route.params.id})}
     onAddUpkeep={() =>

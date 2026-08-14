@@ -4,19 +4,27 @@ import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import ScreenBackground from '../../components/ScreenBackground';
 import {
+  ConfirmDialog,
   DetailField,
   DetailScreenSkeleton,
   DetailSection,
   DetailTopBar,
-  EmptyState,
   StatusPill,
+  Toast,
   detailGrid,
   formatDateTimeOrNull,
 } from '../../components/ui';
-import {BoxIcon, CloudOffIcon} from '../../components/icons';
-import {useGetEquipmentDetailQuery} from '../../graphql/features/equipment/hooks';
+import {CloudOffIcon} from '../../components/icons';
+import {
+  useDeleteEquipmentMutation,
+  useEquipmentFormOptionsQuery,
+  useGetEquipmentDetailQuery,
+  useUpdateEquipmentMutation,
+} from '../../graphql/features/equipment/hooks';
 import {EquipmentStatus} from '../../types/equipment';
 import EquipmentDetailTabs from './components/EquipmentDetailTabs';
+import EquipmentForm, {buildInitialValues} from './components/EquipmentForm';
+import EquipmentFormError from './components/EquipmentFormError';
 import UpkeepList from './components/UpkeepList';
 import {useQueuedEquipmentIds} from './pendingEquipmentItems';
 import {EquipmentStackParamList} from './routes';
@@ -35,6 +43,8 @@ const DETAIL_TABS = [
 interface Props {
   id: string;
   onClose: () => void;
+  /** Fires after the record is gone, so the list can pop back and toast. */
+  onDeleted: (reference: string) => void;
   onCheckOut: (id: string) => void;
   onCheckIn: (id: string) => void;
   onAddUpkeep: (id: string) => void;
@@ -43,15 +53,26 @@ interface Props {
 const ViewEquipmentScreen: React.FC<Props> = ({
   id,
   onClose,
+  onDeleted,
   onCheckOut,
   onCheckIn,
   onAddUpkeep,
 }) => {
-  // Every hook runs before the early returns below — the loading, error and
-  // loaded branches must not change hook order between renders.
+  // Every hook runs before the early returns below — the loading, error,
+  // editing and loaded branches must not change hook order between renders.
   const {data: detail, isLoading, isError, refetch} = useGetEquipmentDetailQuery(id);
   const queuedEquipmentIds = useQueuedEquipmentIds();
   const [tab, setTab] = useState('equipment');
+  const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [toast, setToast] = useState<{
+    title: string;
+    message: string;
+    variant?: 'success' | 'danger';
+  } | null>(null);
+  const {data: options} = useEquipmentFormOptionsQuery();
+  const {mutate: update, isLoading: isUpdating} = useUpdateEquipmentMutation();
+  const {mutate: remove} = useDeleteEquipmentMutation();
   const route = useRoute<RouteProp<EquipmentStackParamList, 'EquipmentView'>>();
   const navigation =
     useNavigation<NativeStackNavigationProp<EquipmentStackParamList, 'EquipmentView'>>();
@@ -84,23 +105,39 @@ const ViewEquipmentScreen: React.FC<Props> = ({
     );
   }
 
-  // The back button renders above this branch on purpose — the tab bar is
-  // hidden on this route, so a failed load with no way out would trap the
-  // user. There is no BackHandler anywhere in this app.
+  // Shares the three form screens' failed-load branch — it already carries the
+  // back affordance this route needs, the tab bar being hidden here.
   if (isError || !detail) {
     return (
-      <ScreenBackground style={styles.root}>
-        <DetailTopBar title="Equipment" onBack={onClose} />
-        <View style={styles.errorWrap}>
-          <EmptyState
-            icon={<BoxIcon size={28} color={theme.colors.primary} />}
-            title="Couldn't load this equipment"
-            body="Something went wrong fetching it. Check your connection and try again."
-            actionLabel="Retry"
-            onAction={refetch}
-          />
-        </View>
-      </ScreenBackground>
+      <EquipmentFormError title="Equipment" onClose={onClose} onRetry={refetch} />
+    );
+  }
+
+  // Edit replaces the detail body in place rather than pushing a route,
+  // matching ViewPoiScreen. Guarded on `options` so a tap landing before the
+  // dropdown contents arrive falls through to the detail instead of rendering
+  // a form with empty pickers.
+  if (editing && options) {
+    return (
+      <View style={styles.root}>
+        <EquipmentForm
+          mode="edit"
+          reference={detail.reference}
+          options={options}
+          initialValues={buildInitialValues(options, detail)}
+          submitLabel="Update"
+          isSubmitting={isUpdating}
+          onSubmit={async values => {
+            await update(detail.id, values);
+            setEditing(false);
+            setToast({
+              title: 'Equipment updated',
+              message: `${detail.reference} was saved successfully.`,
+            });
+          }}
+          onClose={() => setEditing(false)}
+        />
+      </View>
     );
   }
 
@@ -178,7 +215,22 @@ const ViewEquipmentScreen: React.FC<Props> = ({
 
   return (
     <ScreenBackground style={styles.root}>
-      <DetailTopBar title="Equipment" reference={detail.serial} onBack={onClose} />
+      <DetailTopBar
+        title="Equipment"
+        reference={detail.serial}
+        onBack={onClose}
+        /*
+         * Both are omitted outright while queued, not rendered disabled: the
+         * record's local state is stale until the outbox drains, an edit would
+         * be written over by the syncing mutation, and a delete would strand
+         * that mutation to dead-letter silently — nothing in this app surfaces
+         * outbox.failed. A greyed Edit with no explanation reads as a bug,
+         * whereas the "Queued · offline" chip below already says why the
+         * actions are gone.
+         */
+        onEdit={queued ? undefined : () => setEditing(true)}
+        onDelete={queued ? undefined : () => setConfirmDelete(true)}
+      />
 
       <ScrollView
         contentContainerStyle={styles.body}
@@ -259,13 +311,46 @@ const ViewEquipmentScreen: React.FC<Props> = ({
           </>
         )}
       </ScrollView>
+
+      <ConfirmDialog
+        visible={confirmDelete}
+        icon="warning"
+        iconTone="danger"
+        confirmTone="danger"
+        title="Delete this equipment?"
+        message={`Equipment ${detail.reference} will be permanently deleted. This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={async () => {
+          try {
+            await remove(detail.id);
+            setConfirmDelete(false);
+            // The reference, not the id — the list's toast displays it.
+            onDeleted(detail.reference);
+          } catch {
+            setConfirmDelete(false);
+            setToast({
+              title: "Couldn't delete",
+              message: `${detail.reference} is still there. Check your connection and try again.`,
+              variant: 'danger',
+            });
+          }
+        }}
+        onCancel={() => setConfirmDelete(false)}
+      />
+
+      <Toast
+        visible={toast !== null}
+        title={toast?.title ?? ''}
+        message={toast?.message ?? ''}
+        variant={toast?.variant}
+        onDismiss={() => setToast(null)}
+      />
     </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
   root: {flex: 1},
-  errorWrap: {flex: 1, justifyContent: 'center'},
   body: {paddingBottom: theme.spacing.xxl},
   idRow: {
     paddingHorizontal: theme.spacing.lg,
