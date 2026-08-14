@@ -20,6 +20,7 @@ export {default as EditIcon} from './EditIcon';
 export {default as ElevatorIcon} from './ElevatorIcon';
 export {default as EyeIcon} from './EyeIcon';
 export {default as FileTextIcon} from './FileTextIcon';
+export {default as FlashIcon} from './FlashIcon';
 export {default as GeneralIcon} from './GeneralIcon';
 export {default as GlobeIcon} from './GlobeIcon';
 export {default as GridIcon} from './GridIcon';
