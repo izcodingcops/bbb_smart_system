@@ -1,5 +1,5 @@
-import {useMemo} from 'react';
-import {useMutation, useQuery} from '@apollo/client/react';
+import {useCallback, useMemo} from 'react';
+import {useLazyQuery, useMutation, useQuery} from '@apollo/client/react';
 import {GetActiveProgramId} from '../../../redux/auth/selectors';
 import {
   CheckInEquipmentValues,
@@ -15,9 +15,6 @@ import {
   EquipmentUpkeep,
   EquipmentUpkeepValues,
 } from '../../../types/equipment';
-// GET_EQUIPMENT_BY_CODE is deliberately not imported here — the document
-// exists for slice 4's scanner, and importing it now would trip lint's
-// unused-import rule.
 import {
   ADD_EQUIPMENT_UPKEEP,
   CHECK_IN_EQUIPMENT,
@@ -25,6 +22,7 @@ import {
   CREATE_EQUIPMENT,
   DELETE_EQUIPMENT,
   GET_EQUIPMENT,
+  GET_EQUIPMENT_BY_CODE,
   GET_EQUIPMENT_DETAIL,
   GET_EQUIPMENT_FORM_OPTIONS,
   GET_MY_EQUIPMENT,
@@ -245,6 +243,52 @@ export function useGetEquipmentDetailQuery(id: string) {
   );
 
   return {data: detail, isLoading: loading, isError: !!error, refetch};
+}
+
+/**
+ * Look a record up by its serial or reference. Lazy, not a `useQuery`: the
+ * code arrives from a QR scan or a typed entry, never from render.
+ *
+ * Apollo Client 4 keeps `variables` and `context` on the execute call rather
+ * than on the hook options — `useLazyQuery.Options` declares neither, and
+ * anything passed there is silently dropped. Hence `EQUIPMENT_CONTEXT` is
+ * spread into `run()`, not into the hook.
+ *
+ * A miss resolves to `null` rather than throwing: "no equipment with that
+ * number" is an ordinary outcome the caller renders as inline copy. A
+ * transport failure still rejects, so a caller that can go offline should
+ * await this inside a try/catch.
+ */
+export function useEquipmentByCodeLazy() {
+  const programId = GetActiveProgramId();
+  const [run, {loading}] = useLazyQuery<{
+    equipmentByCode: GqlEquipment | null;
+  }>(GET_EQUIPMENT_BY_CODE, {
+    // A scan has to reflect the record's *current* custody state. Served from
+    // cache, a record someone checked out two minutes ago still reads 'Active'
+    // and routes the scanner into a Check-Out form that will fail.
+    fetchPolicy: 'network-only',
+  });
+
+  // The sibling query hooks express this as `skip: !programId`; useLazyQuery
+  // has no `skip`, so the same guard sits at the top of `lookup` — with no
+  // active program there is nothing to search, and it reads as a miss.
+  const lookup = useCallback(
+    async (code: string): Promise<Equipment | null> => {
+      if (!programId) {
+        return null;
+      }
+      const result = await run({
+        ...EQUIPMENT_CONTEXT,
+        variables: {programId, code},
+      });
+      const record = result.data?.equipmentByCode;
+      return record ? toEquipmentFromWire(record) : null;
+    },
+    [programId, run],
+  );
+
+  return {lookup, isLoading: loading};
 }
 
 /** The mock store mutates in place, so refetch rather than patch the cache. */
