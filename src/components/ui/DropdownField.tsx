@@ -59,6 +59,13 @@ interface Props {
   /** Label for the panel's create button, e.g. 'Add Fixture'. */
   addLabel?: string;
   onRequestAdd?: () => void;
+  /**
+   * Greys the control and blocks opening — for a dependent field whose parent
+   * has not been chosen yet.
+   */
+  disabled?: boolean;
+  /** Muted line under the control, e.g. 'Select a category first.' */
+  helperText?: string;
 }
 
 /**
@@ -75,11 +82,18 @@ const DropdownField: React.FC<Props> = ({
   searchable,
   addLabel,
   onRequestAdd,
+  disabled = false,
+  helperText,
 }) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const canSearch = searchable ?? options.length > SEARCH_THRESHOLD;
   const shown = filterOptions(options, query);
+
+  // Derived rather than an effect: a field that becomes disabled while its
+  // panel is open (its parent was changed) collapses on the same render,
+  // with no in-between frame showing options it can no longer accept.
+  const isOpen = open && !disabled;
 
   const close = () => {
     setOpen(false);
@@ -90,9 +104,14 @@ const DropdownField: React.FC<Props> = ({
     <View style={styles.field}>
       <FieldLabel label={label} required={required} />
       <TouchableOpacity
-        style={[styles.control, open && styles.controlOpen]}
+        style={[
+          styles.control,
+          isOpen && styles.controlOpen,
+          disabled && styles.controlDisabled,
+        ]}
         activeOpacity={0.85}
-        onPress={() => (open ? close() : setOpen(true))}>
+        disabled={disabled}
+        onPress={() => (isOpen ? close() : setOpen(true))}>
         <Text
           style={[styles.value, !value && styles.placeholder]}
           numberOfLines={1}>
@@ -101,12 +120,14 @@ const DropdownField: React.FC<Props> = ({
               of the placeholder the adjacent style is already greying. */}
           {value || placeholder}
         </Text>
-        <View style={open ? styles.chevOpen : undefined}>
+        <View style={isOpen ? styles.chevOpen : undefined}>
           <ChevronDownIcon size={19} />
         </View>
       </TouchableOpacity>
 
-      {open ? (
+      {helperText ? <Text style={styles.help}>{helperText}</Text> : null}
+
+      {isOpen ? (
         <View style={styles.panel}>
           {addLabel && onRequestAdd ? (
             <View style={styles.panelHeader}>
@@ -335,6 +356,18 @@ const styles = StyleSheet.create({
   controlOpen: {
     borderColor: '#99D3FF',
     backgroundColor: theme.colors.white,
+  },
+  // The same 0.45 every other disabled affordance in this app uses (the
+  // equipment detail screen's id-row actions, the equipment card's buttons)
+  // rather than a new disabled token.
+  controlDisabled: {opacity: 0.45},
+  // Matches DateTimeField's own `help` line, so a form mixing the two reads
+  // as one control set.
+  help: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 12.5,
+    color: theme.colors.textMuted,
+    marginTop: 7,
   },
   chevOpen: {transform: [{rotate: '180deg'}]},
   value: {
