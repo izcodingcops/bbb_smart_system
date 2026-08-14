@@ -291,7 +291,16 @@ interface GqlEquipmentFormOptions {
 export function useEquipmentFormOptionsQuery() {
   const {data, loading, error, refetch} = useQuery<{
     equipmentFormOptions: GqlEquipmentFormOptions;
-  }>(GET_EQUIPMENT_FORM_OPTIONS, EQUIPMENT_CONTEXT);
+  }>(GET_EQUIPMENT_FORM_OPTIONS, {
+    ...EQUIPMENT_CONTEXT,
+    // `nextReference` has to be fresh on every open, same as POI's own form
+    // options query. Served from cache, the create form's header and its
+    // confirm dialog would keep naming the reference the *previous* create
+    // already consumed, while the record is saved — and the toast reported —
+    // under the next one. `zones` and `categories` go stale the same way once
+    // a create introduces a new value.
+    fetchPolicy: 'network-only',
+  });
 
   // Memoised: the payload now carries a nested taxonomy tree, and a fresh
   // object each render would churn the form's derived option lists — which

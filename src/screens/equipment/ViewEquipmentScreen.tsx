@@ -9,6 +9,7 @@ import {
   DetailScreenSkeleton,
   DetailSection,
   DetailTopBar,
+  FormScreenSkeleton,
   StatusPill,
   Toast,
   detailGrid,
@@ -70,7 +71,11 @@ const ViewEquipmentScreen: React.FC<Props> = ({
     message: string;
     variant?: 'success' | 'danger';
   } | null>(null);
-  const {data: options} = useEquipmentFormOptionsQuery();
+  const {
+    data: options,
+    isLoading: optionsLoading,
+    refetch: refetchOptions,
+  } = useEquipmentFormOptionsQuery();
   const {mutate: update, isLoading: isUpdating} = useUpdateEquipmentMutation();
   const {mutate: remove} = useDeleteEquipmentMutation();
   const route = useRoute<RouteProp<EquipmentStackParamList, 'EquipmentView'>>();
@@ -114,9 +119,27 @@ const ViewEquipmentScreen: React.FC<Props> = ({
   }
 
   // Edit replaces the detail body in place rather than pushing a route,
-  // matching ViewPoiScreen. Guarded on `options` so a tap landing before the
-  // dropdown contents arrive falls through to the detail instead of rendering
-  // a form with empty pickers.
+  // matching ViewPoiScreen. The options query is fetched network-only and is
+  // not what gates the skeleton above, so it can still be in flight — or have
+  // failed — when Edit is tapped. Both get their own branch: falling through
+  // to the detail instead would swallow the tap silently, leaving a live
+  // button that does nothing and, on an errored query, never will.
+  if (editing && !options) {
+    return optionsLoading ? (
+      <FormScreenSkeleton
+        title="Edit Equipment"
+        onClose={() => setEditing(false)}
+        sectionRowCounts={[9, 6, 3]}
+      />
+    ) : (
+      <EquipmentFormError
+        title="Edit Equipment"
+        onClose={() => setEditing(false)}
+        onRetry={refetchOptions}
+      />
+    );
+  }
+
   if (editing && options) {
     return (
       <View style={styles.root}>
@@ -321,13 +344,17 @@ const ViewEquipmentScreen: React.FC<Props> = ({
         message={`Equipment ${detail.reference} will be permanently deleted. This action cannot be undone.`}
         confirmLabel="Delete"
         onConfirm={async () => {
+          // Closed before the await, not after: ConfirmDialog has no busy
+          // state, so leaving it up for the round-trip lets a second tap fire
+          // a second delete. The retry throws on the now-missing record and
+          // reports "is still there" while the first call is already
+          // navigating away.
+          setConfirmDelete(false);
           try {
             await remove(detail.id);
-            setConfirmDelete(false);
             // The reference, not the id — the list's toast displays it.
             onDeleted(detail.reference);
           } catch {
-            setConfirmDelete(false);
             setToast({
               title: "Couldn't delete",
               message: `${detail.reference} is still there. Check your connection and try again.`,

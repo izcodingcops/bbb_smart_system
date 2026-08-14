@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -95,10 +95,21 @@ const DropdownField: React.FC<Props> = ({
   // with no in-between frame showing options it can no longer accept.
   const isOpen = open && !disabled;
 
-  const close = () => {
+  const close = useCallback(() => {
     setOpen(false);
     setQuery('');
-  };
+  }, []);
+
+  // The derivation above only hides the panel; `open` stays true underneath.
+  // Without this the field springs back open by itself the moment its parent
+  // re-enables it — open Make's panel, change Category (clearing Type, which
+  // disables Make), then pick a new Type, and Make's panel reappears
+  // unbidden, shoving the fields below it down the screen.
+  useEffect(() => {
+    if (disabled) {
+      close();
+    }
+  }, [disabled, close]);
 
   return (
     <View style={styles.field}>
