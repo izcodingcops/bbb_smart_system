@@ -164,7 +164,7 @@ const EXPLICIT: Equipment[] = [
     name: 'Saw Kit 9',
     equipmentType: 'Chainsaw',
     category: 'Landscape Power Tool',
-    make: 'Dewalt',
+    make: 'DeWalt',
     model: '1500',
     zone: 'Zone 4',
     ...TRAINING,

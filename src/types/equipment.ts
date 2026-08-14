@@ -98,8 +98,62 @@ export interface EquipmentUpkeepValues {
   images: string[];
 }
 
+export interface EquipmentMakeOption {
+  name: string;
+  models: string[];
+}
+export interface EquipmentTypeOption {
+  name: string;
+  makes: EquipmentMakeOption[];
+}
+export interface EquipmentCategoryOption {
+  name: string;
+  types: EquipmentTypeOption[];
+}
+
+/**
+ * What the create/edit form collects. `acquiredAt` is required by the form
+ * even though the record's field is nullable — every seeded record predates
+ * the form.
+ *
+ * `unit` and `ownership` carry `| ''` because `DropdownField` seeds an unset
+ * value with `''`. They are narrowed at submit, where both are required.
+ */
+export interface EquipmentFormValues {
+  serial: string;
+  name: string;
+  /** ISO-8601. */
+  acquiredAt: string;
+  category: string;
+  equipmentType: string;
+  make: string;
+  model: string;
+  unit: EquipmentUnit | '';
+  ownership: EquipmentOwnership | '';
+  fuel: string | null;
+  year: string;
+  /** The mockup's 'Miles/Hours' field. */
+  beginningUsage: string;
+  zone: string | null;
+  description: string;
+  images: string[];
+  incidents: string[];
+  personsOfInterest: string[];
+  maintenance: string[];
+}
+
 export interface EquipmentFormOptions {
   upkeepTypes: string[];
   abnormalities: string[];
   zones: string[];
+  /** Reference the create form shows before the record exists, e.g. '#4366'. */
+  nextReference: string;
+  /** Dependent Category → Type → Make → Model tree. */
+  categories: EquipmentCategoryOption[];
+  ownerships: EquipmentOwnership[];
+  units: EquipmentUnit[];
+  fuels: string[];
+  incidents: string[];
+  personsOfInterest: string[];
+  maintenance: string[];
 }
