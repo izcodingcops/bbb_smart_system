@@ -1,5 +1,5 @@
 import React, {useCallback, useState} from 'react';
-import {Alert, ScrollView, Text, TouchableOpacity, View, StyleSheet} from 'react-native';
+import {ScrollView, Text, TouchableOpacity, View, StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import ScreenBackground from '../../components/ScreenBackground';
 import {
@@ -9,8 +9,8 @@ import {
   EmptyState,
   FieldLabel,
   FormScreenSkeleton,
-  PrimaryButton,
   TextField,
+  Toast,
   UploadField,
   formChrome,
 } from '../../components/ui';
@@ -48,7 +48,7 @@ const CheckOutEquipmentScreen: React.FC<Props> = ({id, onClose, onDone}) => {
   const {mutate: checkOut, isLoading: isSubmitting} = useCheckOutEquipmentMutation();
 
   const [occurredAt, setOccurredAt] = useState(() => new Date().toISOString());
-  const [hasAbnormality, setHasAbnormality] = useState<boolean>(false);
+  const [hasAbnormality, setHasAbnormality] = useState<boolean | null>(null);
   const [abnormality, setAbnormality] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [images, setImages] = useState<string[]>([]);
@@ -57,6 +57,8 @@ const CheckOutEquipmentScreen: React.FC<Props> = ({id, onClose, onDone}) => {
   const [touched, setTouched] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  /** Set when checkOut rejects, so the form can report it without navigating away. */
+  const [submitFailed, setSubmitFailed] = useState(false);
 
   const handleClose = useCallback(() => {
     if (touched) {
@@ -139,24 +141,22 @@ const CheckOutEquipmentScreen: React.FC<Props> = ({id, onClose, onDone}) => {
     );
   }
 
-  const canSubmit = !isSubmitting && !(hasAbnormality && !abnormality);
+  const canSubmit =
+    !isSubmitting && hasAbnormality !== null && !(hasAbnormality && !abnormality);
 
   const runSubmit = async () => {
     setConfirmSubmit(false);
     try {
       const result = await checkOut(id, {
         occurredAt,
-        hasAbnormality,
+        hasAbnormality: hasAbnormality === true,
         abnormality,
         description,
         images,
       });
       onDone(result.reference, result.queued);
     } catch {
-      Alert.alert(
-        "Couldn't check out equipment",
-        'Something went wrong. Check your connection and try again.',
-      );
+      setSubmitFailed(true);
     }
   };
 
@@ -230,11 +230,13 @@ const CheckOutEquipmentScreen: React.FC<Props> = ({id, onClose, onDone}) => {
       </View>
 
       <SafeAreaView edges={['bottom']} style={formChrome.footer}>
-        <PrimaryButton
-          label="Check-Out Equipment"
-          onPress={() => setConfirmSubmit(true)}
+        <TouchableOpacity
+          style={[formChrome.submit, !canSubmit && formChrome.submitDisabled]}
+          activeOpacity={0.9}
           disabled={!canSubmit}
-        />
+          onPress={() => setConfirmSubmit(true)}>
+          <Text style={formChrome.submitText}>Check-Out Equipment</Text>
+        </TouchableOpacity>
       </SafeAreaView>
 
       <ConfirmDialog
@@ -271,6 +273,14 @@ const CheckOutEquipmentScreen: React.FC<Props> = ({id, onClose, onDone}) => {
           onClose();
         }}
         onCancel={() => setConfirmDiscard(false)}
+      />
+
+      <Toast
+        visible={submitFailed}
+        title="Couldn't save"
+        message="Something went wrong checking out this equipment. Check your connection and try again."
+        variant="danger"
+        onDismiss={() => setSubmitFailed(false)}
       />
     </ScreenBackground>
   );
