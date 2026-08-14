@@ -150,7 +150,10 @@ export function optionsForField(
     return DATE_RANGE_OPTIONS;
   }
   const read = VALUE_OF[field];
-  const values = Array.from(new Set(items.map(read))).sort();
+  // Blanks are dropped rather than offered as an unlabelled row. Zone is
+  // optional on the create form and stores as '' when unset, and '' sorts
+  // first — so an empty row would sit at the top of the sheet.
+  const values = Array.from(new Set(items.map(read).filter(Boolean))).sort();
   return values.map(value => ({value, label: value}));
 }
 

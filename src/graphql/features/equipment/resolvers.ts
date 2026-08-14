@@ -307,8 +307,12 @@ export const equipmentResolvers = {
       return {
         upkeepTypes: UPKEEP_TYPES,
         abnormalities: ABNORMALITIES,
+        // Blanks are filtered out: Zone is optional on the create form, and
+        // applyInput stores an unset one as '' because Equipment.zone is
+        // non-null. Without this, the first record saved without a zone puts
+        // an empty, blank-looking row at the top of the Zone dropdown.
         zones: Array.from(
-          new Set(equipmentStore.records.map(r => r.zone)),
+          new Set(equipmentStore.records.map(r => r.zone).filter(Boolean)),
         ).sort(),
         nextReference: nextReference(),
         categories: buildCategoryTree(),
