@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {ScrollView, RefreshControl, Alert, StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
@@ -34,6 +34,7 @@ import {
   useSetWorkItemStatusMutation,
 } from '../../graphql/features/work/hooks';
 import {useGetMyEquipmentQuery} from '../../graphql/features/equipment/hooks';
+import {useQueuedEquipmentIds} from '../equipment/pendingEquipmentItems';
 import {useUnreadNotificationCountQuery} from '../../graphql/features/notification/hooks';
 import {Equipment} from '../../types/equipment';
 import {WorkItem, WorkStatus} from '../../types/work';
@@ -69,10 +70,25 @@ const HomeScreen: React.FC = () => {
   const {data: quickActions = [], isLoading: isQuickActionsLoading} =
     useGetQuickActionsQuery();
   const {
-    data: equipment = [],
+    data: queryEquipment = [],
     isLoading: isEquipmentLoading,
     refetch: refetchEquipment,
   } = useGetMyEquipmentQuery();
+  const queuedEquipmentIds = useQueuedEquipmentIds();
+  // A queued custody mutation (e.g. Check-In) for one of these rows hasn't
+  // synced yet, so the query's own `queuedOffline` field is stale — mark the
+  // matching row here so the card can disable its Check-In button and show
+  // the queued state, same as the equipment hub's list card
+  // (src/screens/equipment/EquipmentScreen.tsx).
+  const equipment = useMemo(
+    () =>
+      queuedEquipmentIds.size === 0
+        ? queryEquipment
+        : queryEquipment.map(item =>
+            queuedEquipmentIds.has(item.id) ? {...item, queuedOffline: true} : item,
+          ),
+    [queryEquipment, queuedEquipmentIds],
+  );
   const {data: unreadNotifications = 0} = useUnreadNotificationCountQuery();
   const {mutate: setWorkItemStatus} = useSetWorkItemStatusMutation();
 

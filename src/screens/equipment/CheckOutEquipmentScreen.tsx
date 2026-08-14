@@ -28,7 +28,7 @@ import {theme} from '../../theme';
 interface Props {
   id: string;
   onClose: () => void;
-  onDone: (reference: string, queued: boolean) => void;
+  onDone: (queued: boolean) => void;
 }
 
 const CheckOutEquipmentScreen: React.FC<Props> = ({id, onClose, onDone}) => {
@@ -151,7 +151,7 @@ const CheckOutEquipmentScreen: React.FC<Props> = ({id, onClose, onDone}) => {
         description,
         images,
       });
-      onDone(result.reference, result.queued);
+      onDone(result.queued);
     } catch {
       setSubmitFailed(true);
     }

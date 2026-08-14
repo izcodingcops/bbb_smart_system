@@ -13,11 +13,12 @@ import {
   detailGrid,
   formatDateTimeOrNull,
 } from '../../components/ui';
-import {BoxIcon} from '../../components/icons';
+import {BoxIcon, CloudOffIcon} from '../../components/icons';
 import {useGetEquipmentDetailQuery} from '../../graphql/features/equipment/hooks';
 import {EquipmentStatus} from '../../types/equipment';
 import EquipmentDetailTabs from './components/EquipmentDetailTabs';
 import UpkeepList from './components/UpkeepList';
+import {useQueuedEquipmentIds} from './pendingEquipmentItems';
 import {EquipmentStackParamList} from './routes';
 import {theme} from '../../theme';
 
@@ -49,6 +50,7 @@ const ViewEquipmentScreen: React.FC<Props> = ({
   // Every hook runs before the early returns below — the loading, error and
   // loaded branches must not change hook order between renders.
   const {data: detail, isLoading, isError, refetch} = useGetEquipmentDetailQuery(id);
+  const queuedEquipmentIds = useQueuedEquipmentIds();
   const [tab, setTab] = useState('equipment');
   const route = useRoute<RouteProp<EquipmentStackParamList, 'EquipmentView'>>();
   const navigation =
@@ -103,6 +105,12 @@ const ViewEquipmentScreen: React.FC<Props> = ({
   }
 
   const status = STATUS_STYLE[detail.status];
+  // A queued custody mutation (check-out/check-in/add upkeep) for this record
+  // hasn't synced yet, so `detail.mine`/`detail.status` are stale — firing
+  // another custody action here would queue a second mutation on top of the
+  // first with no feedback to the user. Mirrors EquipmentCard's list-row
+  // treatment (src/screens/equipment/components/EquipmentCard.tsx).
+  const queued = queuedEquipmentIds.has(detail.id);
 
   const basicDetails = (
     <DetailSection title="Basic Details">
@@ -177,26 +185,47 @@ const ViewEquipmentScreen: React.FC<Props> = ({
         showsVerticalScrollIndicator={false}>
         <View style={styles.idRow}>
           <Text style={styles.idBig}>{detail.reference}</Text>
+          {queued ? (
+            <View style={styles.queuedRow}>
+              <CloudOffIcon size={13} color="#C26401" />
+              <Text style={styles.queuedText}>Queued · offline</Text>
+            </View>
+          ) : null}
           <View style={styles.idActions}>
             {detail.mine ? (
               <>
                 <TouchableOpacity
-                  style={[styles.idAction, styles.idActionGhost]}
+                  style={[
+                    styles.idAction,
+                    styles.idActionGhost,
+                    queued && styles.idActionDisabled,
+                  ]}
                   activeOpacity={0.85}
+                  disabled={queued}
                   onPress={() => onAddUpkeep(detail.id)}>
                   <Text style={styles.idActionGhostText}>Add Upkeep</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.idAction, styles.idActionSolid]}
+                  style={[
+                    styles.idAction,
+                    styles.idActionSolid,
+                    queued && styles.idActionDisabled,
+                  ]}
                   activeOpacity={0.85}
+                  disabled={queued}
                   onPress={() => onCheckIn(detail.id)}>
                   <Text style={styles.idActionSolidText}>Check-In</Text>
                 </TouchableOpacity>
               </>
             ) : detail.status === 'Active' ? (
               <TouchableOpacity
-                style={[styles.idAction, styles.idActionSolid]}
+                style={[
+                  styles.idAction,
+                  styles.idActionSolid,
+                  queued && styles.idActionDisabled,
+                ]}
                 activeOpacity={0.85}
+                disabled={queued}
                 onPress={() => onCheckOut(detail.id)}>
                 <Text style={styles.idActionSolidText}>Check-Out Equipment</Text>
               </TouchableOpacity>
@@ -251,6 +280,8 @@ const styles = StyleSheet.create({
     color: theme.colors.textOnGlass,
   },
   idActions: {flexDirection: 'row', gap: theme.spacing.sm},
+  queuedRow: {flexDirection: 'row', alignItems: 'center', gap: 5},
+  queuedText: {fontFamily: theme.fonts.black, fontSize: 12, color: '#C26401'},
   idAction: {
     flex: 1,
     height: 42,
@@ -258,6 +289,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: theme.radius.md,
   },
+  idActionDisabled: {opacity: 0.45},
   idActionGhost: {
     borderWidth: 1.5,
     borderColor: theme.colors.accentBorder,

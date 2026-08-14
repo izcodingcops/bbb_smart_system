@@ -43,7 +43,7 @@ const CheckOutRoute: React.FC<CheckOutProps> = ({navigation, route}) => (
   <CheckOutEquipmentScreen
     id={route.params.id}
     onClose={() => navigation.goBack()}
-    onDone={(reference, queued) =>
+    onDone={queued =>
       navigation.popTo('EquipmentList', {
         toast: queued
           ? {

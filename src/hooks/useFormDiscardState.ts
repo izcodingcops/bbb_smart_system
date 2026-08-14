@@ -38,7 +38,6 @@ export function useFormDiscardState(onClose: () => void) {
   }, [onClose]);
 
   return {
-    touched,
     setTouched,
     confirmSubmit,
     setConfirmSubmit,

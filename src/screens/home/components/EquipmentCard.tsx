@@ -1,7 +1,7 @@
 import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {Card, formatCardDate} from '../../../components/ui';
-import {BoxIcon, CubeIcon, RadioIcon, ToolsIcon} from '../../../components/icons';
+import {BoxIcon, CloudOffIcon, CubeIcon, RadioIcon, ToolsIcon} from '../../../components/icons';
 import {Equipment} from '../../../types/equipment';
 import {theme} from '../../../theme';
 
@@ -34,6 +34,11 @@ interface Props {
 const EquipmentCard: React.FC<Props> = ({item, onCheckIn}) => {
   const visual = CATEGORY_VISUAL[item.category] ?? GENERIC;
   const {Icon} = visual;
+  // A queued Check-In for this record hasn't synced yet, so firing another
+  // custody action here would queue a second mutation on top of the first
+  // with no feedback to the user. Mirrors the equipment hub's list card
+  // (src/screens/equipment/components/EquipmentCard.tsx).
+  const queued = item.queuedOffline;
 
   return (
     <Card style={styles.card}>
@@ -51,14 +56,22 @@ const EquipmentCard: React.FC<Props> = ({item, onCheckIn}) => {
             <Text style={styles.id}>{item.reference}</Text>
           </View>
           <Text style={styles.category}>{item.category}</Text>
-          <Text style={styles.time}>
-            {item.checkedOutAt ? `Out ${formatCardDate(item.checkedOutAt)}` : 'Out'}
-          </Text>
+          {queued ? (
+            <View style={styles.queuedRow}>
+              <CloudOffIcon size={12} color="#C26401" />
+              <Text style={styles.queuedText}>Queued · offline</Text>
+            </View>
+          ) : (
+            <Text style={styles.time}>
+              {item.checkedOutAt ? `Out ${formatCardDate(item.checkedOutAt)}` : 'Out'}
+            </Text>
+          )}
         </View>
 
         <TouchableOpacity
-          style={styles.checkIn}
+          style={[styles.checkIn, queued && styles.checkInDisabled]}
           activeOpacity={0.8}
+          disabled={queued}
           onPress={() => onCheckIn?.(item)}>
           <Text style={styles.checkInText}>Check-In</Text>
         </TouchableOpacity>
@@ -100,6 +113,8 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     color: theme.colors.textSecondary,
   },
+  queuedRow: {flexDirection: 'row', alignItems: 'center', gap: 5},
+  queuedText: {fontFamily: theme.fonts.black, fontSize: 12, color: '#C26401'},
   checkIn: {
     borderWidth: 1.5,
     borderColor: theme.colors.primary,
@@ -107,6 +122,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: 9,
   },
+  checkInDisabled: {opacity: 0.45},
   checkInText: {
     fontFamily: theme.fonts.black,
     fontSize: 13.5,

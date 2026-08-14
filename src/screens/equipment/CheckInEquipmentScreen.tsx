@@ -124,7 +124,7 @@ const CheckInEquipmentScreen: React.FC<Props> = ({id, onClose, onDone}) => {
       <FormScreenSkeleton
         title="Check-in"
         onClose={onClose}
-        sectionRowCounts={[4]}
+        sectionRowCounts={[5]}
       />
     );
   }
