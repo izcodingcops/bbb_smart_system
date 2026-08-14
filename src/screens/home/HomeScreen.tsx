@@ -139,7 +139,7 @@ const HomeScreen: React.FC = () => {
     (item: Equipment) => {
       navigateToTarget(tabNavigation, {
         tab: SCREEN.equipment,
-        screen: 'EquipmentView',
+        screen: 'EquipmentCheckIn',
         params: {id: item.id},
       });
     },

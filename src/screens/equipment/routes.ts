@@ -10,4 +10,5 @@ export type EquipmentStackParamList = {
   EquipmentList: {toast?: EquipmentToast; initialTab?: 'all' | 'mine'} | undefined;
   EquipmentView: {id: string};
   EquipmentCheckOut: {id: string};
+  EquipmentCheckIn: {id: string};
 };

@@ -148,7 +148,10 @@ const EquipmentScreen: React.FC = () => {
       navigation.navigate('EquipmentCheckOut', {id: record.id}),
     [navigation],
   );
-  const handleCheckIn = useCallback(() => comingSoon('Check-In'), []);
+  const handleCheckIn = useCallback(
+    (record: Equipment) => navigation.navigate('EquipmentCheckIn', {id: record.id}),
+    [navigation],
+  );
   const handleAddUpkeep = useCallback(() => comingSoon('Add Upkeep'), []);
 
   const renderItem = useCallback(

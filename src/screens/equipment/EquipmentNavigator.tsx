@@ -8,6 +8,7 @@ import {EquipmentStackParamList} from './routes';
 import EquipmentScreen from './EquipmentScreen';
 import ViewEquipmentScreen from './ViewEquipmentScreen';
 import CheckOutEquipmentScreen from './CheckOutEquipmentScreen';
+import CheckInEquipmentScreen from './CheckInEquipmentScreen';
 import {theme} from '../../theme';
 
 const Stack = createNativeStackNavigator<EquipmentStackParamList>();
@@ -17,11 +18,15 @@ type CheckOutProps = NativeStackScreenProps<
   EquipmentStackParamList,
   'EquipmentCheckOut'
 >;
+type CheckInProps = NativeStackScreenProps<
+  EquipmentStackParamList,
+  'EquipmentCheckIn'
+>;
 
 /**
  * Slice 1 is the read surface — the three custody actions land in slice 2,
  * which replaces these placeholders with navigation to their forms one at a
- * time. Check-In and Add Upkeep are still coming.
+ * time. Add Upkeep is still coming.
  */
 const comingSoon = (action: string) =>
   Alert.alert(action, 'This is coming in the next update.');
@@ -31,7 +36,7 @@ const ViewRoute: React.FC<ViewProps> = ({navigation, route}) => (
     id={route.params.id}
     onClose={() => navigation.popTo('EquipmentList')}
     onCheckOut={() => navigation.navigate('EquipmentCheckOut', {id: route.params.id})}
-    onCheckIn={() => comingSoon('Check-In')}
+    onCheckIn={() => navigation.navigate('EquipmentCheckIn', {id: route.params.id})}
     onAddUpkeep={() => comingSoon('Add Upkeep')}
   />
 );
@@ -60,6 +65,30 @@ const CheckOutRoute: React.FC<CheckOutProps> = ({navigation, route}) => (
   />
 );
 
+const CheckInRoute: React.FC<CheckInProps> = ({navigation, route}) => (
+  <CheckInEquipmentScreen
+    id={route.params.id}
+    onClose={() => navigation.goBack()}
+    onDone={(equipmentType, reference, queued) =>
+      navigation.popTo('EquipmentList', {
+        toast: queued
+          ? {
+              title: 'Saved — will upload when back online',
+              message:
+                "This check-in is queued and will apply automatically once you're back online.",
+              routeId: '',
+              variant: 'danger',
+            }
+          : {
+              title: 'Equipment checked in',
+              message: `${equipmentType} ${reference} was checked in and removed from your list.`,
+              routeId: '',
+            },
+      })
+    }
+  />
+);
+
 const EquipmentNavigator: React.FC = () => (
   <Stack.Navigator
     screenOptions={{
@@ -73,6 +102,7 @@ const EquipmentNavigator: React.FC = () => (
     <Stack.Screen name="EquipmentList" component={EquipmentScreen} />
     <Stack.Screen name="EquipmentView" component={ViewRoute} />
     <Stack.Screen name="EquipmentCheckOut" component={CheckOutRoute} />
+    <Stack.Screen name="EquipmentCheckIn" component={CheckInRoute} />
   </Stack.Navigator>
 );
 
