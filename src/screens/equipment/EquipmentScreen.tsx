@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Alert, FlatList, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {FlatList, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -63,13 +63,6 @@ const TABS = [
   {value: 'all', label: 'All Equipment'},
   {value: 'mine', label: 'Checked-Out'},
 ];
-
-/**
- * Slice 1 is the read surface — the three custody actions land in slice 2.
- * Kept in one place so slice 2 replaces a single call site per action.
- */
-const comingSoon = (action: string) =>
-  Alert.alert(action, 'This is coming in the next update.');
 
 const EquipmentScreen: React.FC = () => {
   const {data: equipment = [], isLoading, isError, refetch} = useGetEquipmentQuery();
@@ -152,7 +145,11 @@ const EquipmentScreen: React.FC = () => {
     (record: Equipment) => navigation.navigate('EquipmentCheckIn', {id: record.id}),
     [navigation],
   );
-  const handleAddUpkeep = useCallback(() => comingSoon('Add Upkeep'), []);
+  const handleAddUpkeep = useCallback(
+    (record: Equipment) =>
+      navigation.navigate('EquipmentAddUpkeep', {id: record.id, origin: 'list'}),
+    [navigation],
+  );
 
   const renderItem = useCallback(
     ({item}: {item: Equipment}) => (

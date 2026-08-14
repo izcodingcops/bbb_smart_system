@@ -1,5 +1,7 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {ScrollView, Text, TouchableOpacity, View, StyleSheet} from 'react-native';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import ScreenBackground from '../../components/ScreenBackground';
 import {
   DetailField,
@@ -16,6 +18,7 @@ import {useGetEquipmentDetailQuery} from '../../graphql/features/equipment/hooks
 import {EquipmentStatus} from '../../types/equipment';
 import EquipmentDetailTabs from './components/EquipmentDetailTabs';
 import UpkeepList from './components/UpkeepList';
+import {EquipmentStackParamList} from './routes';
 import {theme} from '../../theme';
 
 const STATUS_STYLE: Record<EquipmentStatus, {bg: string; fg: string}> = {
@@ -47,6 +50,23 @@ const ViewEquipmentScreen: React.FC<Props> = ({
   // loaded branches must not change hook order between renders.
   const {data: detail, isLoading, isError, refetch} = useGetEquipmentDetailQuery(id);
   const [tab, setTab] = useState('equipment');
+  const route = useRoute<RouteProp<EquipmentStackParamList, 'EquipmentView'>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<EquipmentStackParamList, 'EquipmentView'>>();
+
+  // Add Upkeep hands this screen an initial tab when it pops back here after
+  // a successful submit. Applied via an effect rather than a useState
+  // initialiser because this screen stays mounted underneath the form —
+  // a second visit would never re-run initial state. Mirrors EquipmentScreen's
+  // own initialTab handling.
+  const incomingTab = route.params?.initialTab;
+  useEffect(() => {
+    if (!incomingTab) {
+      return;
+    }
+    setTab(incomingTab);
+    navigation.setParams({initialTab: undefined});
+  }, [incomingTab, navigation]);
 
   if (isLoading) {
     return (

@@ -1,5 +1,4 @@
 import React from 'react';
-import {Alert} from 'react-native';
 import {
   createNativeStackNavigator,
   NativeStackScreenProps,
@@ -9,6 +8,7 @@ import EquipmentScreen from './EquipmentScreen';
 import ViewEquipmentScreen from './ViewEquipmentScreen';
 import CheckOutEquipmentScreen from './CheckOutEquipmentScreen';
 import CheckInEquipmentScreen from './CheckInEquipmentScreen';
+import AddUpkeepScreen from './AddUpkeepScreen';
 import {theme} from '../../theme';
 
 const Stack = createNativeStackNavigator<EquipmentStackParamList>();
@@ -22,14 +22,10 @@ type CheckInProps = NativeStackScreenProps<
   EquipmentStackParamList,
   'EquipmentCheckIn'
 >;
-
-/**
- * Slice 1 is the read surface — the three custody actions land in slice 2,
- * which replaces these placeholders with navigation to their forms one at a
- * time. Add Upkeep is still coming.
- */
-const comingSoon = (action: string) =>
-  Alert.alert(action, 'This is coming in the next update.');
+type AddUpkeepProps = NativeStackScreenProps<
+  EquipmentStackParamList,
+  'EquipmentAddUpkeep'
+>;
 
 const ViewRoute: React.FC<ViewProps> = ({navigation, route}) => (
   <ViewEquipmentScreen
@@ -37,7 +33,9 @@ const ViewRoute: React.FC<ViewProps> = ({navigation, route}) => (
     onClose={() => navigation.popTo('EquipmentList')}
     onCheckOut={() => navigation.navigate('EquipmentCheckOut', {id: route.params.id})}
     onCheckIn={() => navigation.navigate('EquipmentCheckIn', {id: route.params.id})}
-    onAddUpkeep={() => comingSoon('Add Upkeep')}
+    onAddUpkeep={() =>
+      navigation.navigate('EquipmentAddUpkeep', {id: route.params.id, origin: 'detail'})
+    }
   />
 );
 
@@ -89,6 +87,42 @@ const CheckInRoute: React.FC<CheckInProps> = ({navigation, route}) => (
   />
 );
 
+const AddUpkeepRoute: React.FC<AddUpkeepProps> = ({navigation, route}) => (
+  <AddUpkeepScreen
+    id={route.params.id}
+    onClose={() => navigation.goBack()}
+    onDone={(equipmentType, reference, queued) => {
+      if (queued) {
+        navigation.popTo('EquipmentList', {
+          toast: {
+            title: 'Saved — will upload when back online',
+            message:
+              "This upkeep is queued and will apply automatically once you're back online.",
+            routeId: '',
+            variant: 'danger',
+          },
+        });
+        return;
+      }
+      // Opened from the detail screen: switch it to the Upkeep tab instead
+      // of surfacing a toast, matching the source mockup's behaviour.
+      // Opened from a list card: there's no detail screen underneath to
+      // switch tabs on, so pop to the list with the success toast instead.
+      if (route.params.origin === 'detail') {
+        navigation.popTo('EquipmentView', {id: route.params.id, initialTab: 'upkeep'});
+        return;
+      }
+      navigation.popTo('EquipmentList', {
+        toast: {
+          title: 'Upkeep added',
+          message: `Upkeep record saved for ${equipmentType} ${reference}.`,
+          routeId: route.params.id,
+        },
+      });
+    }}
+  />
+);
+
 const EquipmentNavigator: React.FC = () => (
   <Stack.Navigator
     screenOptions={{
@@ -103,6 +137,7 @@ const EquipmentNavigator: React.FC = () => (
     <Stack.Screen name="EquipmentView" component={ViewRoute} />
     <Stack.Screen name="EquipmentCheckOut" component={CheckOutRoute} />
     <Stack.Screen name="EquipmentCheckIn" component={CheckInRoute} />
+    <Stack.Screen name="EquipmentAddUpkeep" component={AddUpkeepRoute} />
   </Stack.Navigator>
 );
 

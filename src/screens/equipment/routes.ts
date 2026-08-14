@@ -8,7 +8,9 @@ export interface EquipmentToast {
 
 export type EquipmentStackParamList = {
   EquipmentList: {toast?: EquipmentToast; initialTab?: 'all' | 'mine'} | undefined;
-  EquipmentView: {id: string};
+  EquipmentView: {id: string; initialTab?: 'equipment' | 'upkeep'};
   EquipmentCheckOut: {id: string};
   EquipmentCheckIn: {id: string};
+  /** `origin` decides where a successful submit pops back to — see EquipmentNavigator. */
+  EquipmentAddUpkeep: {id: string; origin: 'list' | 'detail'};
 };
