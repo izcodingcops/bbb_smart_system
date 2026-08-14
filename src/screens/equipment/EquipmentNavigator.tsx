@@ -5,6 +5,7 @@ import {
 } from '@react-navigation/native-stack';
 import {EquipmentStackParamList} from './routes';
 import EquipmentScreen from './EquipmentScreen';
+import CreateEquipmentScreen from './CreateEquipmentScreen';
 import ViewEquipmentScreen from './ViewEquipmentScreen';
 import CheckOutEquipmentScreen from './CheckOutEquipmentScreen';
 import CheckInEquipmentScreen from './CheckInEquipmentScreen';
@@ -13,6 +14,10 @@ import {theme} from '../../theme';
 
 const Stack = createNativeStackNavigator<EquipmentStackParamList>();
 
+type CreateProps = NativeStackScreenProps<
+  EquipmentStackParamList,
+  'EquipmentCreate'
+>;
 type ViewProps = NativeStackScreenProps<EquipmentStackParamList, 'EquipmentView'>;
 type CheckOutProps = NativeStackScreenProps<
   EquipmentStackParamList,
@@ -26,6 +31,30 @@ type AddUpkeepProps = NativeStackScreenProps<
   EquipmentStackParamList,
   'EquipmentAddUpkeep'
 >;
+
+const CreateRoute: React.FC<CreateProps> = ({navigation}) => (
+  <CreateEquipmentScreen
+    onClose={() => navigation.popTo('EquipmentList')}
+    onCreated={created =>
+      navigation.popTo('EquipmentList', {
+        toast: created.queued
+          ? {
+              title: 'Saved — will upload when back online',
+              message:
+                "This equipment is queued and will be added automatically once you're back online.",
+              // The record has no server id yet, so there is nothing to open.
+              routeId: '',
+              variant: 'danger',
+            }
+          : {
+              title: 'Equipment added',
+              message: `${created.reference} was added to the equipment list.`,
+              routeId: created.id,
+            },
+      })
+    }
+  />
+);
 
 const ViewRoute: React.FC<ViewProps> = ({navigation, route}) => (
   <ViewEquipmentScreen
@@ -134,6 +163,7 @@ const EquipmentNavigator: React.FC = () => (
       contentStyle: {backgroundColor: theme.colors.background},
     }}>
     <Stack.Screen name="EquipmentList" component={EquipmentScreen} />
+    <Stack.Screen name="EquipmentCreate" component={CreateRoute} />
     <Stack.Screen name="EquipmentView" component={ViewRoute} />
     <Stack.Screen name="EquipmentCheckOut" component={CheckOutRoute} />
     <Stack.Screen name="EquipmentCheckIn" component={CheckInRoute} />

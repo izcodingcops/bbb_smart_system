@@ -8,6 +8,7 @@ export interface EquipmentToast {
 
 export type EquipmentStackParamList = {
   EquipmentList: {toast?: EquipmentToast; initialTab?: 'all' | 'mine'} | undefined;
+  EquipmentCreate: undefined;
   EquipmentView: {id: string; initialTab?: 'equipment' | 'upkeep'};
   EquipmentCheckOut: {id: string};
   EquipmentCheckIn: {id: string};
