@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {FlatList, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {Alert, FlatList, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -166,9 +166,28 @@ const EquipmentScreen: React.FC = () => {
     return applySort(applySearch(filtered, search), sort);
   }, [tab, equipment, mineEquipment, allFilters, mineFilters, search, sort]);
 
+  // Keyed on the synthetic rows specifically, not on `queuedOffline`: a row
+  // carrying a queued *custody* mutation has a real record behind it and its
+  // detail screen already handles the queued state. A queued *create* has no
+  // record to fetch, so opening it would land on "Couldn't load this
+  // equipment". Same guard, same copy shape, as Fixture and POI.
+  const pendingIds = useMemo(
+    () => new Set(pendingEquipment.map(item => item.id)),
+    [pendingEquipment],
+  );
+
   const handleOpen = useCallback(
-    (record: Equipment) => navigation.navigate('EquipmentView', {id: record.id}),
-    [navigation],
+    (record: Equipment) => {
+      if (pendingIds.has(record.id)) {
+        Alert.alert(
+          'Still uploading',
+          "This equipment hasn't finished uploading yet — it'll be available to view once you're back online.",
+        );
+        return;
+      }
+      navigation.navigate('EquipmentView', {id: record.id});
+    },
+    [navigation, pendingIds],
   );
   const handleCheckOut = useCallback(
     (record: Equipment) =>
