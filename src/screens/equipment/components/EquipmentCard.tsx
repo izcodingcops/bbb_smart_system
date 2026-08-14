@@ -1,7 +1,7 @@
 import React, {useCallback} from 'react';
 import {Text, TouchableOpacity, View, StyleSheet} from 'react-native';
 import {RecordCard, StatusPill, formatCardDate, formatCardDateOnly} from '../../../components/ui';
-import {CalendarIcon, ClockIcon, LogInIcon, LogOutIcon} from '../../../components/icons';
+import {CalendarIcon, ClockIcon, CloudOffIcon, LogInIcon, LogOutIcon} from '../../../components/icons';
 import {Equipment, EquipmentStatus} from '../../../types/equipment';
 import {theme} from '../../../theme';
 
@@ -49,6 +49,10 @@ const EquipmentCard: React.FC<Props> = ({
   const checkedOut = equipment.status === 'Checked-Out';
   const showCustodyRow = variant === 'mine' || checkedOut;
   const status = STATUS_STYLE[equipment.status];
+  // A queued custody mutation hasn't synced yet, so the local record's
+  // status/mine fields are stale — firing another custody action here would
+  // queue a second mutation on top of the first with no feedback to the user.
+  const actionable = !equipment.queuedOffline;
 
   const dateLine = (
     <View style={styles.dateRow}>
@@ -65,15 +69,17 @@ const EquipmentCard: React.FC<Props> = ({
     variant === 'mine' ? (
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.action, styles.actionGhost]}
+          style={[styles.action, styles.actionGhost, !actionable && styles.actionDisabled]}
           activeOpacity={0.85}
+          disabled={!actionable}
           onPress={handleAddUpkeep}>
           <ClockIcon size={15} color={theme.colors.primary} />
           <Text style={styles.actionGhostText}>Add Upkeep</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.action, styles.actionSolid]}
+          style={[styles.action, styles.actionSolid, !actionable && styles.actionDisabled]}
           activeOpacity={0.85}
+          disabled={!actionable}
           onPress={handleCheckIn}>
           <LogInIcon size={15} color={theme.colors.white} />
           <Text style={styles.actionSolidText}>Check-In</Text>
@@ -82,8 +88,9 @@ const EquipmentCard: React.FC<Props> = ({
     ) : checkedOut ? null : (
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.action, styles.actionSolid]}
+          style={[styles.action, styles.actionSolid, !actionable && styles.actionDisabled]}
           activeOpacity={0.85}
+          disabled={!actionable}
           onPress={handleCheckOut}>
           <LogOutIcon size={15} color={theme.colors.white} />
           <Text style={styles.actionSolidText}>Check-Out Equipment</Text>
@@ -101,6 +108,14 @@ const EquipmentCard: React.FC<Props> = ({
         )
       }
       dateLine={dateLine}
+      badge={
+        equipment.queuedOffline ? (
+          <View style={styles.queuedRow}>
+            <CloudOffIcon size={13} color="#C26401" />
+            <Text style={styles.queued}>Queued · offline</Text>
+          </View>
+        ) : undefined
+      }
       fields={[
         {label: 'Name', value: equipment.name},
         {label: 'Type', value: equipment.equipmentType},
@@ -135,6 +150,8 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     color: theme.colors.textOnGlassMuted,
   },
+  queuedRow: {flexDirection: 'row', alignItems: 'center', gap: 5},
+  queued: {fontFamily: theme.fonts.black, fontSize: 12, color: '#C26401'},
   footer: {flexDirection: 'row', gap: theme.spacing.sm},
   action: {
     flex: 1,
@@ -161,6 +178,7 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     color: theme.colors.white,
   },
+  actionDisabled: {opacity: 0.45},
 });
 
 export default React.memo(EquipmentCard);
