@@ -10,7 +10,10 @@ export type OfflineMutationKey =
   | 'CREATE_INCIDENT'
   | 'CREATE_POI'
   | 'ADD_POI_INTERACTION'
-  | 'ADD_POI_UPDATE';
+  | 'ADD_POI_UPDATE'
+  | 'CHECK_OUT_EQUIPMENT'
+  | 'CHECK_IN_EQUIPMENT'
+  | 'ADD_EQUIPMENT_UPKEEP';
 
 export interface OutboxItem {
   /** Locally generated when queued (`outbox_...`) — never a server id. */

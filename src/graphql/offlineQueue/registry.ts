@@ -10,6 +10,11 @@ import {
   ADD_POI_UPDATE,
   CREATE_POI,
 } from '../features/poi/documents';
+import {
+  ADD_EQUIPMENT_UPKEEP,
+  CHECK_IN_EQUIPMENT,
+  CHECK_OUT_EQUIPMENT,
+} from '../features/equipment/documents';
 
 interface OfflineMutationEntry {
   document: DocumentNode;
@@ -95,6 +100,42 @@ export const OFFLINE_MUTATIONS: Record<OfflineMutationKey, OfflineMutationEntry>
     refetchQueries: ['GetPois', 'GetPoi'],
     buildOptimisticData: localId => ({
       addPoiUpdate: {__typename: 'PoiUpdate', id: localId, reference: 'Pending'},
+    }),
+  },
+  CHECK_OUT_EQUIPMENT: {
+    document: CHECK_OUT_EQUIPMENT,
+    feature: 'equipment',
+    refetchQueries: ['GetEquipment', 'GetMyEquipment', 'GetEquipmentDetail'],
+    buildOptimisticData: localId => ({
+      checkOutEquipment: {
+        __typename: 'EquipmentDetail',
+        id: localId,
+        reference: 'Pending',
+      },
+    }),
+  },
+  CHECK_IN_EQUIPMENT: {
+    document: CHECK_IN_EQUIPMENT,
+    feature: 'equipment',
+    refetchQueries: ['GetEquipment', 'GetMyEquipment', 'GetEquipmentDetail'],
+    buildOptimisticData: localId => ({
+      checkInEquipment: {
+        __typename: 'EquipmentDetail',
+        id: localId,
+        reference: 'Pending',
+      },
+    }),
+  },
+  ADD_EQUIPMENT_UPKEEP: {
+    document: ADD_EQUIPMENT_UPKEEP,
+    feature: 'equipment',
+    refetchQueries: ['GetEquipment', 'GetMyEquipment', 'GetEquipmentDetail'],
+    buildOptimisticData: localId => ({
+      addEquipmentUpkeep: {
+        __typename: 'EquipmentDetail',
+        id: localId,
+        reference: 'Pending',
+      },
     }),
   },
 };

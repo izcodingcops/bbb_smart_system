@@ -189,6 +189,20 @@ export function useGetEquipmentDetailQuery(id: string) {
 /** The mock store mutates in place, so refetch rather than patch the cache. */
 const REFETCH = ['GetEquipment', 'GetMyEquipment', 'GetEquipmentDetail'];
 
+// Each custody mutation gets its own context (rather than reusing
+// EQUIPMENT_CONTEXT) so it carries the offlineQueueKey offlineQueueLink
+// needs to intercept it while offline — see fixture/hooks.ts's CREATE_CONTEXT
+// for the same pattern. Queries stay on the plain EQUIPMENT_CONTEXT.
+const CHECK_OUT_CONTEXT = {
+  context: {feature: 'equipment', offlineQueueKey: 'CHECK_OUT_EQUIPMENT'},
+};
+const CHECK_IN_CONTEXT = {
+  context: {feature: 'equipment', offlineQueueKey: 'CHECK_IN_EQUIPMENT'},
+};
+const ADD_UPKEEP_CONTEXT = {
+  context: {feature: 'equipment', offlineQueueKey: 'ADD_EQUIPMENT_UPKEEP'},
+};
+
 export function useEquipmentFormOptionsQuery() {
   const {data, loading, error, refetch} = useQuery<{
     equipmentFormOptions: EquipmentFormOptions;
@@ -204,7 +218,7 @@ export function useEquipmentFormOptionsQuery() {
 export function useCheckOutEquipmentMutation() {
   const [run, {loading}] = useMutation<{
     checkOutEquipment: {id: string; reference: string};
-  }>(CHECK_OUT_EQUIPMENT, {...EQUIPMENT_CONTEXT, refetchQueries: REFETCH});
+  }>(CHECK_OUT_EQUIPMENT, {...CHECK_OUT_CONTEXT, refetchQueries: REFETCH});
   return {
     mutate: async (id: string, values: CheckOutEquipmentValues) => {
       const result = await run({
@@ -235,7 +249,7 @@ export function useCheckOutEquipmentMutation() {
 export function useCheckInEquipmentMutation() {
   const [run, {loading}] = useMutation<{
     checkInEquipment: {id: string; reference: string};
-  }>(CHECK_IN_EQUIPMENT, {...EQUIPMENT_CONTEXT, refetchQueries: REFETCH});
+  }>(CHECK_IN_EQUIPMENT, {...CHECK_IN_CONTEXT, refetchQueries: REFETCH});
   return {
     mutate: async (id: string, values: CheckInEquipmentValues) => {
       const result = await run({
@@ -265,7 +279,7 @@ export function useCheckInEquipmentMutation() {
 export function useAddEquipmentUpkeepMutation() {
   const [run, {loading}] = useMutation<{
     addEquipmentUpkeep: {id: string; reference: string};
-  }>(ADD_EQUIPMENT_UPKEEP, {...EQUIPMENT_CONTEXT, refetchQueries: REFETCH});
+  }>(ADD_EQUIPMENT_UPKEEP, {...ADD_UPKEEP_CONTEXT, refetchQueries: REFETCH});
   return {
     mutate: async (id: string, values: EquipmentUpkeepValues) => {
       const result = await run({

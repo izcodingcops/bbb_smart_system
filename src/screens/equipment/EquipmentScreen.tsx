@@ -49,6 +49,7 @@ import {
   optionsForField,
 } from './filtering';
 import EquipmentCard from './components/EquipmentCard';
+import {useQueuedEquipmentIds} from './pendingEquipmentItems';
 import {EquipmentStackParamList, EquipmentToast} from './routes';
 import {theme} from '../../theme';
 
@@ -65,7 +66,24 @@ const TABS = [
 ];
 
 const EquipmentScreen: React.FC = () => {
-  const {data: equipment = [], isLoading, isError, refetch} = useGetEquipmentQuery();
+  const {data: queryEquipment = [], isLoading, isError, refetch} = useGetEquipmentQuery();
+  const queuedEquipmentIds = useQueuedEquipmentIds();
+
+  // A queued custody mutation (check-out/check-in/add upkeep) targets a
+  // record that already exists in the list — unlike a queued create there's
+  // nothing to prepend. Mark the matching row queuedOffline so its card can
+  // show the queued badge while the record still reads correctly. Memoized
+  // so the array keeps a stable identity (and skips a new array entirely
+  // when nothing is queued) for the memoized cards downstream.
+  const equipment = useMemo(
+    () =>
+      queuedEquipmentIds.size === 0
+        ? queryEquipment
+        : queryEquipment.map(item =>
+            queuedEquipmentIds.has(item.id) ? {...item, queuedOffline: true} : item,
+          ),
+    [queryEquipment, queuedEquipmentIds],
+  );
 
   const [tab, setTab] = useState<Tab>('all');
 
