@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useState} from 'react';
 import {ScrollView, Text, TouchableOpacity, View, StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import ScreenBackground from '../../components/ScreenBackground';
@@ -19,6 +19,7 @@ import {
 } from '../../components/ui';
 import {BoxIcon, XIcon} from '../../components/icons';
 import {useSectionScrollTabs} from '../../hooks/useSectionScrollTabs';
+import {useFormDiscardState} from '../../hooks/useFormDiscardState';
 import {
   useAddEquipmentUpkeepMutation,
   useEquipmentFormOptionsQuery,
@@ -69,13 +70,17 @@ const AddUpkeepScreen: React.FC<Props> = ({id, onClose, onDone}) => {
   const [zone, setZone] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [images, setImages] = useState<string[]>([]);
-  // Set the first time the user changes any field — an untouched form can
-  // close directly, a touched one confirms the discard first.
-  const [touched, setTouched] = useState(false);
-  const [confirmSubmit, setConfirmSubmit] = useState(false);
-  const [confirmDiscard, setConfirmDiscard] = useState(false);
-  /** Set when addUpkeep rejects, so the form can report it without navigating away. */
-  const [submitFailed, setSubmitFailed] = useState(false);
+  const {
+    setTouched,
+    confirmSubmit,
+    setConfirmSubmit,
+    confirmDiscard,
+    setConfirmDiscard,
+    submitFailed,
+    setSubmitFailed,
+    handleClose,
+    confirmDiscardAndClose,
+  } = useFormDiscardState(onClose);
 
   const {
     scrollRef,
@@ -87,14 +92,6 @@ const AddUpkeepScreen: React.FC<Props> = ({id, onClose, onDone}) => {
     handleMomentumScrollEnd,
     handleTabSelect,
   } = useSectionScrollTabs({sectionKeys: SECTION_TABS.map(tab => tab.key)});
-
-  const handleClose = useCallback(() => {
-    if (touched) {
-      setConfirmDiscard(true);
-    } else {
-      onClose();
-    }
-  }, [touched, onClose]);
 
   const handleUpkeepTypeChange = (value: string) => {
     setUpkeepType(value);
@@ -368,10 +365,7 @@ const AddUpkeepScreen: React.FC<Props> = ({id, onClose, onDone}) => {
         message="You have unsaved details. If you leave now, everything you entered will be lost."
         confirmLabel="Discard"
         cancelLabel="Keep editing"
-        onConfirm={() => {
-          setConfirmDiscard(false);
-          onClose();
-        }}
+        onConfirm={confirmDiscardAndClose}
         onCancel={() => setConfirmDiscard(false)}
       />
 

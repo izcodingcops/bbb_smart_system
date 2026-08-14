@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useState} from 'react';
 import {ScrollView, Text, TouchableOpacity, View, StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import ScreenBackground from '../../components/ScreenBackground';
@@ -15,6 +15,7 @@ import {
   formChrome,
 } from '../../components/ui';
 import {BoxIcon, XIcon} from '../../components/icons';
+import {useFormDiscardState} from '../../hooks/useFormDiscardState';
 import {
   useCheckOutEquipmentMutation,
   useEquipmentFormOptionsQuery,
@@ -52,21 +53,17 @@ const CheckOutEquipmentScreen: React.FC<Props> = ({id, onClose, onDone}) => {
   const [abnormality, setAbnormality] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [images, setImages] = useState<string[]>([]);
-  // Set the first time the user changes any field — an untouched form can
-  // close directly, a touched one confirms the discard first.
-  const [touched, setTouched] = useState(false);
-  const [confirmSubmit, setConfirmSubmit] = useState(false);
-  const [confirmDiscard, setConfirmDiscard] = useState(false);
-  /** Set when checkOut rejects, so the form can report it without navigating away. */
-  const [submitFailed, setSubmitFailed] = useState(false);
-
-  const handleClose = useCallback(() => {
-    if (touched) {
-      setConfirmDiscard(true);
-    } else {
-      onClose();
-    }
-  }, [touched, onClose]);
+  const {
+    setTouched,
+    confirmSubmit,
+    setConfirmSubmit,
+    confirmDiscard,
+    setConfirmDiscard,
+    submitFailed,
+    setSubmitFailed,
+    handleClose,
+    confirmDiscardAndClose,
+  } = useFormDiscardState(onClose);
 
   const handleDateChange = (iso: string) => {
     setOccurredAt(iso);
@@ -268,10 +265,7 @@ const CheckOutEquipmentScreen: React.FC<Props> = ({id, onClose, onDone}) => {
         message="You have unsaved details. If you leave now, everything you entered will be lost."
         confirmLabel="Discard"
         cancelLabel="Keep editing"
-        onConfirm={() => {
-          setConfirmDiscard(false);
-          onClose();
-        }}
+        onConfirm={confirmDiscardAndClose}
         onCancel={() => setConfirmDiscard(false)}
       />
 
