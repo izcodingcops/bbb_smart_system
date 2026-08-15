@@ -4,22 +4,22 @@ import {SectionTitle} from '../../../components/ui';
 import {ArrowRightIcon} from '../../../components/icons';
 import EquipmentCard from './EquipmentCard';
 import EquipmentCardSkeleton from './EquipmentCardSkeleton';
-import {EquipmentItem} from '../../../types/equipment';
+import {Equipment} from '../../../types/equipment';
 import {theme} from '../../../theme';
 
 const SKELETON_CARDS = [0, 1];
 
 interface Props {
-  items: EquipmentItem[];
+  items: Equipment[];
   isLoading?: boolean;
   onViewAll?: () => void;
-  onCheckout?: (item: EquipmentItem) => void;
+  onCheckIn?: (item: Equipment) => void;
 }
 
-const CheckedInEquipment: React.FC<Props> = ({items, isLoading, onViewAll, onCheckout}) => {
-  // Nothing checked in is the common case off-shift — drop the whole section
+const CheckedOutEquipment: React.FC<Props> = ({items, isLoading, onViewAll, onCheckIn}) => {
+  // Nothing checked out is the common case off-shift — drop the whole section
   // rather than leave a heading over empty space. Loading is exempt: the
-  // empty array is just "no data yet", not "confirmed nothing checked in".
+  // empty array is just "no data yet", not "confirmed nothing checked out".
   if (!isLoading && items.length === 0) {
     return null;
   }
@@ -27,7 +27,7 @@ const CheckedInEquipment: React.FC<Props> = ({items, isLoading, onViewAll, onChe
   return (
     <>
       <SectionTitle
-        title="Checked-In Equipment"
+        title="Checked-Out Equipment"
         style={styles.title}
         action={
           <TouchableOpacity
@@ -44,7 +44,7 @@ const CheckedInEquipment: React.FC<Props> = ({items, isLoading, onViewAll, onChe
         {isLoading
           ? SKELETON_CARDS.map(index => <EquipmentCardSkeleton key={index} />)
           : items.map(item => (
-              <EquipmentCard key={item.id} item={item} onCheckout={onCheckout} />
+              <EquipmentCard key={item.id} item={item} onCheckIn={onCheckIn} />
             ))}
       </View>
     </>
@@ -61,4 +61,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CheckedInEquipment;
+export default CheckedOutEquipment;

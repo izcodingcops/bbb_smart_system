@@ -1,36 +1,50 @@
 import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
-import {Card} from '../../../components/ui';
-import {BoxIcon, ClockIcon, RadioIcon} from '../../../components/icons';
-import {EquipmentItem, EquipmentStatus} from '../../../types/equipment';
+import {Card, formatCardDate} from '../../../components/ui';
+import {BoxIcon, CloudOffIcon, CubeIcon, RadioIcon, ToolsIcon} from '../../../components/icons';
+import {Equipment} from '../../../types/equipment';
 import {theme} from '../../../theme';
 
 type IconComponent = React.FC<{size?: number; color?: string}>;
 
-const ICON_MAP: Record<string, IconComponent> = {
-  radio: RadioIcon,
-  tool: BoxIcon,
-};
+interface Visual {
+  Icon: IconComponent;
+  tint: string;
+  color: string;
+}
 
-const STATUS_STYLE: Record<EquipmentStatus, {bg: string; fg: string}> = {
-  Active: {bg: '#DCFCE7', fg: '#16A34A'},
-  Overdue: {bg: '#FEF3C7', fg: '#B45309'},
+/** Keyed by category; anything unlisted falls back to GENERIC. */
+const GENERIC: Visual = {Icon: BoxIcon, tint: '#EEF2FF', color: '#2B4ACB'};
+
+const CATEGORY_VISUAL: Record<string, Visual> = {
+  'Communication Device': {Icon: RadioIcon, tint: '#EDE9FE', color: '#6D4AFF'},
+  'Cleaning Equipment': {Icon: ToolsIcon, tint: '#DCEBFF', color: '#0066B2'},
+  'Power Wash Truck': {Icon: ToolsIcon, tint: '#DCEBFF', color: '#0066B2'},
+  'Landscape Power Tool': {Icon: ToolsIcon, tint: '#FEF3C7', color: '#B45309'},
+  'Power Tool': {Icon: ToolsIcon, tint: '#FEF3C7', color: '#B45309'},
+  Vehicle: {Icon: CubeIcon, tint: '#DCFCE7', color: '#16A34A'},
+  Bicycle: {Icon: CubeIcon, tint: '#DCFCE7', color: '#16A34A'},
 };
 
 interface Props {
-  item: EquipmentItem;
-  onCheckout?: (item: EquipmentItem) => void;
+  item: Equipment;
+  onCheckIn?: (item: Equipment) => void;
 }
 
-const EquipmentCard: React.FC<Props> = ({item, onCheckout}) => {
-  const Icon = ICON_MAP[item.icon] ?? BoxIcon;
-  const status = STATUS_STYLE[item.status];
+const EquipmentCard: React.FC<Props> = ({item, onCheckIn}) => {
+  const visual = CATEGORY_VISUAL[item.category] ?? GENERIC;
+  const {Icon} = visual;
+  // A queued Check-In for this record hasn't synced yet, so firing another
+  // custody action here would queue a second mutation on top of the first
+  // with no feedback to the user. Mirrors the equipment hub's list card
+  // (src/screens/equipment/components/EquipmentCard.tsx).
+  const queued = item.queuedOffline;
 
   return (
     <Card style={styles.card}>
       <View style={styles.row}>
-        <View style={[styles.iconTile, {backgroundColor: item.tint}]}>
-          <Icon size={22} color={item.iconColor} />
+        <View style={[styles.iconTile, {backgroundColor: visual.tint}]}>
+          <Icon size={22} color={visual.color} />
         </View>
 
         <View style={styles.info}>
@@ -39,28 +53,28 @@ const EquipmentCard: React.FC<Props> = ({item, onCheckout}) => {
             <Text style={styles.name} numberOfLines={1}>
               {item.name}
             </Text>
-            <Text style={styles.id}>{item.id}</Text>
+            <Text style={styles.id}>{item.reference}</Text>
           </View>
           <Text style={styles.category}>{item.category}</Text>
-          <View style={styles.timeRow}>
-            <ClockIcon size={14} color={theme.colors.textMuted} />
-            <Text style={styles.time}>In {item.checkedInAt}</Text>
-          </View>
+          {queued ? (
+            <View style={styles.queuedRow}>
+              <CloudOffIcon size={12} color="#C26401" />
+              <Text style={styles.queuedText}>Queued · offline</Text>
+            </View>
+          ) : (
+            <Text style={styles.time}>
+              {item.checkedOutAt ? `Out ${formatCardDate(item.checkedOutAt)}` : 'Out'}
+            </Text>
+          )}
         </View>
 
-        <View style={styles.right}>
-          <View style={[styles.badge, {backgroundColor: status.bg}]}>
-            <Text style={[styles.badgeText, {color: status.fg}]}>
-              {item.status}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.checkout}
-            activeOpacity={0.8}
-            onPress={() => onCheckout?.(item)}>
-            <Text style={styles.checkoutText}>Checkout</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.checkIn, queued && styles.checkInDisabled]}
+          activeOpacity={0.8}
+          disabled={queued}
+          onPress={() => onCheckIn?.(item)}>
+          <Text style={styles.checkInText}>Check-In</Text>
+        </TouchableOpacity>
       </View>
     </Card>
   );
@@ -68,7 +82,7 @@ const EquipmentCard: React.FC<Props> = ({item, onCheckout}) => {
 
 const styles = StyleSheet.create({
   card: {marginBottom: theme.spacing.md},
-  row: {flexDirection: 'row', gap: theme.spacing.md},
+  row: {flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md},
   iconTile: {
     width: 44,
     height: 44,
@@ -76,7 +90,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  info: {flex: 1, justifyContent: 'space-between'},
+  info: {flex: 1, gap: 2},
   nameRow: {flexDirection: 'row', alignItems: 'center', gap: 6},
   name: {
     flexShrink: 1,
@@ -93,31 +107,23 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.bold,
     fontSize: 13,
     color: theme.colors.textSecondary,
-    marginTop: 2,
-  },
-  timeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: theme.spacing.sm,
   },
   time: {
     fontFamily: theme.fonts.bold,
     fontSize: 12.5,
     color: theme.colors.textSecondary,
   },
-  right: {alignItems: 'flex-end', justifyContent: 'space-between'},
-  badge: {borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5},
-  badgeText: {fontFamily: theme.fonts.black, fontSize: 12},
-  checkout: {
+  queuedRow: {flexDirection: 'row', alignItems: 'center', gap: 5},
+  queuedText: {fontFamily: theme.fonts.black, fontSize: 12, color: '#C26401'},
+  checkIn: {
     borderWidth: 1.5,
     borderColor: theme.colors.primary,
     borderRadius: theme.radius.md,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: 9,
-    marginTop: theme.spacing.md,
   },
-  checkoutText: {
+  checkInDisabled: {opacity: 0.45},
+  checkInText: {
     fontFamily: theme.fonts.black,
     fontSize: 13.5,
     color: theme.colors.primary,

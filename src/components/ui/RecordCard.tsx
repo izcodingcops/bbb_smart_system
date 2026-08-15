@@ -14,7 +14,8 @@ export interface RecordCardField {
 interface Props {
   onPress?: () => void;
   idLabel: string;
-  typeLabel: string;
+  /** Omitted by Equipment, whose card header is the serial alone. */
+  typeLabel?: string;
   /** Caller renders its own <StatusPill>, so it owns the color/transition policy. */
   statusPill: React.ReactNode;
   /** Caller renders its own <KebabMenu>, or omits it entirely. */
@@ -25,6 +26,8 @@ interface Props {
   /** A fully-formed node, e.g. Maintenance's 'Queued · offline' row. */
   badge?: React.ReactNode;
   fields: RecordCardField[];
+  /** A second field grid under the first — Equipment's custody row. */
+  secondaryFields?: RecordCardField[];
   addressLabel?: string;
   addressValue?: string;
   /**
@@ -46,6 +49,7 @@ const RecordCard: React.FC<Props> = ({
   dateLine,
   badge,
   fields,
+  secondaryFields,
   addressLabel,
   addressValue,
   leading,
@@ -61,9 +65,11 @@ const RecordCard: React.FC<Props> = ({
         <View style={styles.headerLeft}>
           {leading}
           <Text style={styles.id}>{idLabel}</Text>
-          <Text style={styles.type} numberOfLines={1}>
-            {typeLabel}
-          </Text>
+          {typeLabel ? (
+            <Text style={styles.type} numberOfLines={1}>
+              {typeLabel}
+            </Text>
+          ) : null}
         </View>
         <View style={styles.headerRight}>
           {statusPill}
@@ -81,18 +87,22 @@ const RecordCard: React.FC<Props> = ({
 
       <View style={styles.divider} />
 
-      <View style={styles.grid}>
-        {fields.map(field => (
-          <View key={field.label} style={styles.gridCell}>
-            <Text style={styles.label}>{field.label}</Text>
-            {field.node ?? (
-              <Text style={styles.value} numberOfLines={1}>
-                {field.value}
-              </Text>
-            )}
+      {[fields, secondaryFields].map((row, rowIndex) =>
+        row && row.length > 0 ? (
+          <View key={rowIndex} style={styles.grid}>
+            {row.map(field => (
+              <View key={field.label} style={styles.gridCell}>
+                <Text style={styles.label}>{field.label}</Text>
+                {field.node ?? (
+                  <Text style={styles.value} numberOfLines={1}>
+                    {field.value}
+                  </Text>
+                )}
+              </View>
+            ))}
           </View>
-        ))}
-      </View>
+        ) : null,
+      )}
 
       {addressLabel && addressValue ? (
         <View style={styles.addressBlock}>

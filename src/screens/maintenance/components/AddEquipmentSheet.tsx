@@ -13,9 +13,10 @@ interface Props {
 
 /**
  * Adds a piece of equipment to Connected Elements without leaving the form.
- * Only a name: the Equipment module is a read-only checked-in list with no
- * writable store, so anything else collected here would be discarded. Per the
- * no-nesting rule, an inline create never offers its own Connected Elements.
+ * Only a name: this feeds Maintenance's own equipment option list, which is
+ * deliberately separate from the Equipment module's record store, so fields
+ * beyond the name would have nowhere to go. Per the no-nesting rule, an
+ * inline create never offers its own Connected Elements.
  */
 const AddEquipmentSheet: React.FC<Props> = ({visible, onCreated, onClose}) => {
   const [name, setName] = useState('');

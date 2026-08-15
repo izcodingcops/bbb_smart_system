@@ -27,6 +27,42 @@ const NOTIFICATIONS = `
   }
 `;
 
+const EQUIPMENT_DETAIL_SHAPE = `
+  id reference serial name equipmentType category make model zone
+  program region division
+  status createdAt acquiredAt unit beginningUsage year ownership
+  description checkedOutBy checkedOutAt mine queuedOffline
+  fuel images incidents personsOfInterest maintenance
+  upkeeps { id }
+`;
+
+const EQUIPMENT_INPUT = {
+  serial: 'SN-SMOKE-01',
+  name: 'Smoke Test Van',
+  acquiredAt: '2026-08-01T09:00:00',
+  category: 'Vehicle',
+  equipmentType: 'Van',
+  make: 'Ford',
+  model: 'Transit 250',
+  unit: 'MILES',
+  ownership: 'LEASED',
+  fuel: 'Gas',
+  year: '2024',
+  beginningUsage: '1,200',
+  zone: 'Zone 3',
+  description: 'Created by the smoke script.',
+  images: [],
+  incidents: ['Graffiti — 07/04/2026'],
+  personsOfInterest: [],
+  maintenance: [],
+};
+
+/**
+ * Shared by the create → update → delete checks below, which run in order
+ * against the same in-memory store and hand the record along between them.
+ */
+let smokeEquipmentId = '';
+
 const checks: Check[] = [
   ['schema builds', () => {
     assert.ok(mockSchema.getQueryType());
@@ -81,10 +117,465 @@ const checks: Check[] = [
     assert.ok(r.data.quickActions.length > 0);
   }],
 
-  ['equipment returns ISO timestamps', async () => {
-    const r: any = await run('query E($p: ID!) { checkedInEquipment(programId: $p) { id checkedInAt status } }', {p: 'p1'});
+  ['myEquipment returns only the signed-in user\'s custody', async () => {
+    const r: any = await run(
+      'query M($p: ID!) { myEquipment(programId: $p) { id mine status checkedOutBy checkedOutAt } }',
+      {p: 'p1'},
+    );
     assert.equal(r.errors, undefined);
-    assert.ok(!Number.isNaN(Date.parse(r.data.checkedInEquipment[0].checkedInAt)), 'checkedInAt must parse as a date');
+    assert.equal(r.data.myEquipment.length, 5);
+    assert.ok(r.data.myEquipment.every((e: any) => e.mine === true));
+    assert.ok(r.data.myEquipment.every((e: any) => e.status === 'CHECKED_OUT'));
+    assert.ok(
+      r.data.myEquipment.every((e: any) => !Number.isNaN(Date.parse(e.checkedOutAt))),
+      'checkedOutAt must parse as a date',
+    );
+    // A checked-out record must always name its holder; null here means the
+    // check-out path left the record in a half-written state.
+    assert.ok(r.data.myEquipment.every((e: any) => e.checkedOutBy));
+  }],
+
+  ['equipment resolves the merged pool with uppercase enums', async () => {
+    const r: any = await run(
+      `query E($p: ID!) {
+        equipment(programId: $p) {
+          id reference serial name equipmentType category make model zone
+          program region division status createdAt unit ownership
+          checkedOutBy checkedOutAt mine queuedOffline
+        }
+      }`,
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const list = r.data.equipment;
+    assert.equal(list.length, 25);
+    assert.ok(list.every((e: any) => ['ACTIVE', 'CHECKED_OUT'].includes(e.status)));
+    assert.ok(list.every((e: any) => ['MILES', 'HOURS', 'KILOMETERS', 'NONE'].includes(e.unit)));
+    assert.ok(list.every((e: any) => ['OWNED', 'LEASED', 'RENTED', 'LOANED'].includes(e.ownership)));
+    // id, reference and serial are three different strings on every record.
+    assert.ok(list.every((e: any) => e.id !== e.reference && e.reference !== e.serial && e.id !== e.serial));
+    assert.equal(list.filter((e: any) => e.mine).length, 5);
+    assert.equal(list.filter((e: any) => e.status === 'CHECKED_OUT').length, 7);
+    // Active records carry no holder; checked-out records always do.
+    assert.ok(list.every((e: any) => (e.status === 'ACTIVE') === (e.checkedOutBy === null)));
+  }],
+
+  ['every equipment Date Range bucket is non-empty against the current clock', async () => {
+    const r: any = await run('query E($p: ID!) { equipment(programId: $p) { createdAt } }', {p: 'p1'});
+    const dates: string[] = r.data.equipment.map((e: any) => e.createdAt);
+    for (const option of DATE_RANGE_OPTIONS) {
+      if (option.value === 'custom') {
+        continue;
+      }
+      assert.ok(
+        dates.some(d => matchesDateRange(d, option.value)),
+        `${option.label} is empty`,
+      );
+    }
+  }],
+
+  ['equipmentDetail resolves every section, and an unknown id resolves null', async () => {
+    const r: any = await run(
+      `query D($id: ID!) {
+        equipmentDetail(id: $id) {
+          id reference serial fuel images upkeeps { id upkeepType occurredAt vendor cost currentUsage zone description }
+          incidents personsOfInterest maintenance
+        }
+      }`,
+      {id: 'eq_4352'},
+    );
+    assert.equal(r.errors, undefined);
+    const d = r.data.equipmentDetail;
+    assert.equal(d.reference, '#4352');
+    assert.equal(d.serial, 'werrtyui');
+    assert.equal(d.upkeeps.length, 2);
+    // Newest first — the detail's Upkeep tab renders them in array order.
+    assert.equal(d.upkeeps[0].upkeepType, 'Body Work');
+    assert.deepEqual(d.maintenance, ['#MT-4460 — Light Out']);
+    // Nullable-in-SDL list fields still come back as arrays, never null.
+    assert.ok(Array.isArray(d.images) && Array.isArray(d.personsOfInterest));
+
+    const bare: any = await run(
+      'query D($id: ID!) { equipmentDetail(id: $id) { id upkeeps { id } images } }',
+      {id: 'eq_4331'},
+    );
+    assert.deepEqual(bare.data.equipmentDetail.upkeeps, []);
+    assert.deepEqual(bare.data.equipmentDetail.images, []);
+
+    const missing: any = await run(
+      'query D($id: ID!) { equipmentDetail(id: $id) { id } }',
+      {id: 'nope'},
+    );
+    assert.equal(missing.errors, undefined);
+    assert.equal(missing.data.equipmentDetail, null);
+  }],
+
+  ['equipmentByCode matches on serial or reference, with or without the hash', async () => {
+    const q = 'query C($p: ID!, $c: String!) { equipmentByCode(programId: $p, code: $c) { id serial reference } }';
+    const bySerial: any = await run(q, {p: 'p1', c: 'SN-4341-BX'});
+    assert.equal(bySerial.data.equipmentByCode.id, 'eq_4341');
+    const lower: any = await run(q, {p: 'p1', c: 'sn-4341-bx'});
+    assert.equal(lower.data.equipmentByCode.id, 'eq_4341');
+    const byRef: any = await run(q, {p: 'p1', c: '#4341'});
+    assert.equal(byRef.data.equipmentByCode.id, 'eq_4341');
+    const bare: any = await run(q, {p: 'p1', c: '4341'});
+    assert.equal(bare.data.equipmentByCode.id, 'eq_4341');
+    const missing: any = await run(q, {p: 'p1', c: '9021'});
+    assert.equal(missing.errors, undefined);
+    assert.equal(missing.data.equipmentByCode, null);
+  }],
+
+  ['equipment form options resolve', async () => {
+    const r: any = await run(
+      'query O { equipmentFormOptions { upkeepTypes abnormalities zones } }',
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.equipmentFormOptions;
+    assert.equal(o.upkeepTypes.length, 10);
+    assert.ok(o.upkeepTypes.includes('Oil Change'));
+    // The hub mockup's own list is test data ('12 Dec', '16 Jan Test Pre');
+    // the create flow's list is the real one.
+    assert.ok(!o.upkeepTypes.some((t: string) => t === '12 Dec'));
+    assert.equal(o.abnormalities.length, 7);
+    assert.ok(o.zones.length > 0);
+  }],
+
+  ['checkOutEquipment takes custody and checkInEquipment releases it', async () => {
+    const q = 'query D($id: ID!) { equipmentDetail(id: $id) { id status mine checkedOutBy checkedOutAt } }';
+    const before: any = await run(q, {id: 'eq_4341'});
+    assert.equal(before.data.equipmentDetail.status, 'ACTIVE');
+    assert.equal(before.data.equipmentDetail.mine, false);
+    assert.equal(before.data.equipmentDetail.checkedOutBy, null);
+
+    const out: any = await run(
+      `mutation C($input: CheckOutEquipmentInput!) {
+        checkOutEquipment(input: $input) { id reference status mine checkedOutBy checkedOutAt }
+      }`,
+      {input: {id: 'eq_4341', occurredAt: '2026-08-13T09:00:00', hasAbnormality: false, abnormality: null, description: '', images: []}},
+    );
+    assert.equal(out.errors, undefined);
+    assert.equal(out.data.checkOutEquipment.status, 'CHECKED_OUT');
+    assert.equal(out.data.checkOutEquipment.mine, true);
+    assert.equal(out.data.checkOutEquipment.checkedOutBy, 'You');
+    assert.equal(out.data.checkOutEquipment.checkedOutAt, '2026-08-13T09:00:00');
+    assert.equal(out.data.checkOutEquipment.reference, '#4341');
+
+    // It now shows up on the custody list.
+    const mine: any = await run('query M($p: ID!) { myEquipment(programId: $p) { id } }', {p: 'p1'});
+    assert.ok(mine.data.myEquipment.some((e: any) => e.id === 'eq_4341'));
+
+    const back: any = await run(
+      `mutation I($input: CheckInEquipmentInput!) {
+        checkInEquipment(input: $input) { id status mine checkedOutBy checkedOutAt }
+      }`,
+      {input: {id: 'eq_4341', occurredAt: '2026-08-13T17:00:00', currentUsage: '120', hasAbnormality: false, abnormality: null, description: '', images: []}},
+    );
+    assert.equal(back.errors, undefined);
+    assert.equal(back.data.checkInEquipment.status, 'ACTIVE');
+    assert.equal(back.data.checkInEquipment.mine, false);
+    assert.equal(back.data.checkInEquipment.checkedOutBy, null);
+    assert.equal(back.data.checkInEquipment.checkedOutAt, null);
+
+    const after: any = await run('query M($p: ID!) { myEquipment(programId: $p) { id } }', {p: 'p1'});
+    assert.ok(!after.data.myEquipment.some((e: any) => e.id === 'eq_4341'));
+  }],
+
+  ['addEquipmentUpkeep files newest-first against one record only', async () => {
+    const m = `mutation U($input: AddEquipmentUpkeepInput!) {
+      addEquipmentUpkeep(input: $input) { id upkeeps { id upkeepType vendor cost currentUsage zone description occurredAt } }
+    }`;
+    const r: any = await run(m, {
+      input: {
+        id: 'eq_4337', upkeepType: 'Battery Service', occurredAt: '2026-08-13T10:00:00',
+        vendor: 'Denver Fleet Services', currentUsage: '9,140', cost: '$88.00',
+        zone: 'Zone 2', description: 'Replaced the battery pack.', images: [],
+      },
+    });
+    assert.equal(r.errors, undefined);
+    const list = r.data.addEquipmentUpkeep.upkeeps;
+    assert.equal(list.length, 1);
+    assert.equal(list[0].upkeepType, 'Battery Service');
+    assert.ok(list[0].id.length > 0);
+
+    // Second entry lands on top, not appended.
+    const again: any = await run(m, {
+      input: {
+        id: 'eq_4337', upkeepType: 'Inspection', occurredAt: '2026-08-13T14:00:00',
+        vendor: 'Alkota', currentUsage: '9,150', cost: '$20.00',
+        zone: null, description: '', images: [],
+      },
+    });
+    assert.equal(again.data.addEquipmentUpkeep.upkeeps.length, 2);
+    assert.equal(again.data.addEquipmentUpkeep.upkeeps[0].upkeepType, 'Inspection');
+    assert.notEqual(
+      again.data.addEquipmentUpkeep.upkeeps[0].id,
+      again.data.addEquipmentUpkeep.upkeeps[1].id,
+    );
+
+    // The store's per-record arrays are independent — a sibling stays empty.
+    const other: any = await run(
+      'query D($id: ID!) { equipmentDetail(id: $id) { upkeeps { id } } }',
+      {id: 'eq_4339'},
+    );
+    assert.deepEqual(other.data.equipmentDetail.upkeeps, []);
+  }],
+
+  ['custody mutations reject an unknown id', async () => {
+    // Asserting on the message, not merely on `errors` being present: a
+    // missing mutation also populates `errors`, so a bare truthiness check
+    // would keep passing if the resolvers were unwired.
+    const out: any = await run(
+      'mutation C($input: CheckOutEquipmentInput!) { checkOutEquipment(input: $input) { id } }',
+      {input: {id: 'nope', occurredAt: '2026-08-13T09:00:00', hasAbnormality: false, abnormality: null, description: '', images: []}},
+    );
+    assert.match(out.errors?.[0]?.message ?? '', /unknown equipment/i);
+
+    const back: any = await run(
+      'mutation I($input: CheckInEquipmentInput!) { checkInEquipment(input: $input) { id } }',
+      {input: {id: 'nope', occurredAt: '2026-08-13T09:00:00', currentUsage: '1', hasAbnormality: false, abnormality: null, description: '', images: []}},
+    );
+    assert.match(back.errors?.[0]?.message ?? '', /unknown equipment/i);
+
+    const up: any = await run(
+      'mutation U($input: AddEquipmentUpkeepInput!) { addEquipmentUpkeep(input: $input) { id } }',
+      {input: {id: 'nope', upkeepType: 'Inspection', occurredAt: '2026-08-13T09:00:00', vendor: 'V', currentUsage: '1', cost: '$1.00', zone: null, description: '', images: []}},
+    );
+    assert.match(up.errors?.[0]?.message ?? '', /unknown equipment/i);
+  }],
+
+  ['createEquipment adds an active, unheld record to the top of the pool', async () => {
+    const before: any = await run(
+      'query E($p: ID!) { equipment(programId: $p) { id reference } }',
+      {p: 'p1'},
+    );
+    const seen = new Set(before.data.equipment.map((e: any) => e.reference));
+
+    const r: any = await run(
+      `mutation C($p: ID!, $i: EquipmentInput!) {
+        createEquipment(programId: $p, input: $i) { ${EQUIPMENT_DETAIL_SHAPE} }
+      }`,
+      {p: 'p1', i: EQUIPMENT_INPUT},
+    );
+    assert.equal(r.errors, undefined);
+    const created = r.data.createEquipment;
+    smokeEquipmentId = created.id;
+
+    // A fresh reference, not a reused one, and an id on the store's own
+    // `eq_<n>` convention rather than a new prefix.
+    assert.ok(!seen.has(created.reference));
+    assert.match(created.reference, /^#\d+$/);
+    assert.match(created.id, /^eq_\d+$/);
+
+    // Custody state is the resolver's, not the form's.
+    assert.equal(created.status, 'ACTIVE');
+    assert.equal(created.mine, false);
+    assert.equal(created.checkedOutBy, null);
+    assert.equal(created.checkedOutAt, null);
+    assert.equal(created.queuedOffline, false);
+    assert.deepEqual(created.upkeeps, []);
+
+    // Every input field lands, enums included.
+    assert.equal(created.serial, 'SN-SMOKE-01');
+    assert.equal(created.name, 'Smoke Test Van');
+    assert.equal(created.acquiredAt, '2026-08-01T09:00:00');
+    assert.equal(created.category, 'Vehicle');
+    assert.equal(created.equipmentType, 'Van');
+    assert.equal(created.make, 'Ford');
+    assert.equal(created.model, 'Transit 250');
+    assert.equal(created.unit, 'MILES');
+    assert.equal(created.ownership, 'LEASED');
+    assert.equal(created.fuel, 'Gas');
+    assert.equal(created.year, '2024');
+    assert.equal(created.beginningUsage, '1,200');
+    assert.equal(created.zone, 'Zone 3');
+    assert.deepEqual(created.incidents, ['Graffiti — 07/04/2026']);
+
+    // The org triple is resolved by the gateway, never sent by the form.
+    assert.ok(created.program.length > 0);
+    assert.ok(created.region.length > 0);
+    assert.ok(created.division.length > 0);
+
+    const after: any = await run(
+      'query E($p: ID!) { equipment(programId: $p) { id } }',
+      {p: 'p1'},
+    );
+    assert.equal(after.data.equipment.length, before.data.equipment.length + 1);
+    assert.equal(after.data.equipment[0].id, created.id);
+  }],
+
+  ['updateEquipment rewrites the form fields and leaves custody state alone', async () => {
+    // Put the record into custody with an upkeep filed against it first —
+    // those are exactly the fields an edit must not clobber.
+    const out: any = await run(
+      `mutation C($input: CheckOutEquipmentInput!) {
+        checkOutEquipment(input: $input) { id status mine checkedOutBy }
+      }`,
+      {input: {id: smokeEquipmentId, occurredAt: '2026-08-14T08:00:00', hasAbnormality: false, abnormality: null, description: '', images: []}},
+    );
+    assert.equal(out.data.checkOutEquipment.status, 'CHECKED_OUT');
+    await run(
+      'mutation U($input: AddEquipmentUpkeepInput!) { addEquipmentUpkeep(input: $input) { id } }',
+      {input: {id: smokeEquipmentId, upkeepType: 'Inspection', occurredAt: '2026-08-14T09:00:00', vendor: 'V', currentUsage: '1,300', cost: '$10.00', zone: null, description: '', images: []}},
+    );
+
+    const before: any = await run(
+      `query D($id: ID!) { equipmentDetail(id: $id) { ${EQUIPMENT_DETAIL_SHAPE} } }`,
+      {id: smokeEquipmentId},
+    );
+    const was = before.data.equipmentDetail;
+
+    const r: any = await run(
+      `mutation U($id: ID!, $i: EquipmentInput!) {
+        updateEquipment(id: $id, input: $i) { ${EQUIPMENT_DETAIL_SHAPE} }
+      }`,
+      {
+        id: smokeEquipmentId,
+        i: {
+          ...EQUIPMENT_INPUT,
+          serial: 'SN-SMOKE-02',
+          name: 'Smoke Test Van (edited)',
+          category: 'Power Tool',
+          equipmentType: 'Drill',
+          make: 'DeWalt',
+          model: 'DCD791',
+          unit: 'HOURS',
+          ownership: 'OWNED',
+          fuel: null,
+          year: null,
+          beginningUsage: null,
+          zone: null,
+          description: null,
+          incidents: [],
+          maintenance: ['#MT-4460 — Light Out'],
+        },
+      },
+    );
+    assert.equal(r.errors, undefined);
+    const now = r.data.updateEquipment;
+
+    // The form's own fields change, nullables included.
+    assert.equal(now.serial, 'SN-SMOKE-02');
+    assert.equal(now.name, 'Smoke Test Van (edited)');
+    assert.equal(now.category, 'Power Tool');
+    assert.equal(now.equipmentType, 'Drill');
+    assert.equal(now.make, 'DeWalt');
+    assert.equal(now.model, 'DCD791');
+    assert.equal(now.unit, 'HOURS');
+    assert.equal(now.ownership, 'OWNED');
+    assert.equal(now.fuel, null);
+    assert.equal(now.year, null);
+    assert.equal(now.beginningUsage, null);
+    assert.equal(now.description, null);
+    assert.deepEqual(now.incidents, []);
+    assert.deepEqual(now.maintenance, ['#MT-4460 — Light Out']);
+
+    // Everything the form does not own survives untouched. Clobbering `mine`
+    // here would silently return a held record to the available pool.
+    assert.equal(now.id, was.id);
+    assert.equal(now.reference, was.reference);
+    assert.equal(now.createdAt, was.createdAt);
+    assert.equal(now.status, 'CHECKED_OUT');
+    assert.equal(now.mine, true);
+    assert.equal(now.checkedOutBy, 'You');
+    assert.equal(now.checkedOutAt, was.checkedOutAt);
+    assert.equal(now.queuedOffline, false);
+    assert.equal(now.upkeeps.length, 1);
+
+    const missing: any = await run(
+      'mutation U($id: ID!, $i: EquipmentInput!) { updateEquipment(id: $id, input: $i) { id } }',
+      {id: 'nope', i: EQUIPMENT_INPUT},
+    );
+    assert.match(missing.errors?.[0]?.message ?? '', /unknown equipment/i);
+  }],
+
+  ['deleteEquipment removes the record, and deleting it twice throws', async () => {
+    const before: any = await run(
+      'query E($p: ID!) { equipment(programId: $p) { id } }',
+      {p: 'p1'},
+    );
+
+    const r: any = await run(
+      'mutation D($id: ID!) { deleteEquipment(id: $id) }',
+      {id: smokeEquipmentId},
+    );
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.deleteEquipment, smokeEquipmentId);
+
+    const after: any = await run(
+      'query E($p: ID!) { equipment(programId: $p) { id } }',
+      {p: 'p1'},
+    );
+    assert.equal(after.data.equipment.length, before.data.equipment.length - 1);
+    assert.ok(!after.data.equipment.some((e: any) => e.id === smokeEquipmentId));
+
+    const gone: any = await run(
+      'query D($id: ID!) { equipmentDetail(id: $id) { id } }',
+      {id: smokeEquipmentId},
+    );
+    assert.equal(gone.data.equipmentDetail, null);
+
+    const twice: any = await run(
+      'mutation D($id: ID!) { deleteEquipment(id: $id) }',
+      {id: smokeEquipmentId},
+    );
+    assert.match(twice.errors?.[0]?.message ?? '', /unknown equipment/i);
+  }],
+
+  ['the form options taxonomy merges the store into the static mockup tree', async () => {
+    const r: any = await run(`query O {
+      equipmentFormOptions {
+        nextReference
+        categories { name types { name makes { name models } } }
+        fuels incidents personsOfInterest maintenance
+      }
+    }`);
+    assert.equal(r.errors, undefined);
+    const o = r.data.equipmentFormOptions;
+
+    assert.match(o.nextReference, /^#\d+$/);
+    assert.deepEqual(o.fuels, ['Gas', 'Electricity']);
+    assert.ok(o.incidents.length > 0);
+    assert.ok(o.personsOfInterest.length > 0);
+    assert.ok(o.maintenance.length > 0);
+
+    // The static mockup tree is present…
+    const vehicle = o.categories.find((c: any) => c.name === 'Vehicle');
+    assert.ok(vehicle);
+    assert.ok(vehicle.types.some((t: any) => t.name === 'Van'));
+
+    // …and so is a category that exists only in the seeded store. Without the
+    // merge, opening Edit on eq_4339 would show a Category the dropdown
+    // cannot represent and blank its own type/make/model on first touch.
+    const bicycle = o.categories.find((c: any) => c.name === 'Bicycle');
+    assert.ok(bicycle, 'Bicycle is seeded in the store but absent from the taxonomy');
+    const type = bicycle.types.find((t: any) => t.name === 'Info-Trike');
+    assert.ok(type, 'the store record\'s own type is missing under Bicycle');
+    const make = type.makes.find((m: any) => m.name === 'Trek');
+    assert.ok(make, 'the store record\'s own make is missing under Info-Trike');
+    // Exactly its own model: 'Trek' also sits under Vehicle → E-Bike with a
+    // different model list, and the two branches must not bleed together.
+    assert.deepEqual(make.models, ['ATLV']);
+
+    // Alphabetical at every level, so merged entries interleave rather than
+    // trailing the static ones.
+    const names = o.categories.map((c: any) => c.name);
+    assert.deepEqual(names, [...names].sort((a: string, b: string) => a.localeCompare(b)));
+
+    // The 'Dewalt' / 'DeWalt' split in the mocks is normalised — one make.
+    const powerTool = o.categories.find((c: any) => c.name === 'Power Tool');
+    const drill = powerTool.types.find((t: any) => t.name === 'Drill');
+    assert.ok(!drill.makes.some((m: any) => m.name === 'Dewalt'));
+  }],
+
+  ['the form options ownership and unit lists come back as wire enums', async () => {
+    const r: any = await run(
+      'query O { equipmentFormOptions { ownerships units } }',
+    );
+    assert.equal(r.errors, undefined);
+    // Uppercasing happens in the resolver, nowhere else — hooks.ts maps these
+    // back to the display union before the dropdowns ever see them.
+    assert.deepEqual(r.data.equipmentFormOptions.ownerships, ['OWNED', 'LEASED', 'RENTED', 'LOANED']);
+    assert.deepEqual(r.data.equipmentFormOptions.units, ['MILES', 'HOURS', 'KILOMETERS', 'NONE']);
   }],
 
   // The assignee kind is spelled in three places — the SDL enum, the resolver's

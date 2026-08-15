@@ -4,6 +4,7 @@ import BottomSheet from './ui/BottomSheet';
 import {
   AlertTriangleIcon,
   BoxIcon,
+  CubeIcon,
   LogInIcon,
   LogOutIcon,
   SprayCanIcon,
@@ -35,6 +36,11 @@ const SECTIONS: {key: string; title: string; tiles: AddRequestTile[]}[] = [
       {id: 'fixture', label: 'Fixture', Icon: BoxIcon},
       {id: 'incident', label: 'Incident', Icon: AlertTriangleIcon},
       {id: 'poi', label: 'POI', Icon: UserPlusIcon},
+      // CubeIcon rather than BoxIcon: the sheet already spends BoxIcon on
+      // Fixture, and two identical glyphs in one grid read as a mistake. The
+      // source mockup pairs them the other way round (i-cube Fixture, i-box
+      // Equipment) — not worth churning Fixture's established icon over.
+      {id: 'equipment', label: 'Equipment', Icon: CubeIcon},
     ],
   },
   {

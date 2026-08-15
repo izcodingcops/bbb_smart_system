@@ -46,6 +46,8 @@ export type {SectionTabItem} from './SectionTabs';
 export {default as SectionTitle} from './SectionTitle';
 export {default as SegmentedButtons} from './SegmentedButtons';
 export type {SegmentOption} from './SegmentedButtons';
+export {default as SegmentedTabs} from './SegmentedTabs';
+export type {SegmentedTabItem} from './SegmentedTabs';
 export {default as SingleSelectSheet} from './SingleSelectSheet';
 export type {SelectOption} from './SingleSelectSheet';
 export {default as StatusPill} from './StatusPill';

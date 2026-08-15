@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {ScrollView, RefreshControl, Alert, StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
@@ -14,12 +14,12 @@ import ShiftTimerCard from './components/ShiftTimerCard';
 import OfflineNotice from './components/OfflineNotice';
 import QuickActions from './components/QuickActions';
 import RecentWork from './components/RecentWork';
-import CheckedInEquipment from './components/CheckedInEquipment';
+import CheckedOutEquipment from './components/CheckedOutEquipment';
 import {locationTracker} from '../../utils/locationTracker';
 import {connectivity} from '../../graphql/offlineQueue/connectivity';
 import {useAuth} from '../../hooks/useAuth';
 import {useAppDispatch} from '../../redux/store';
-import {SCREEN, TabNavigation} from '../../navigation/screens';
+import {SCREEN, TabNavigation, navigateToTarget} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {endShift} from '../../redux/shift/slice';
 import {GetActiveProgram, GetShiftTypes} from '../../redux/auth/selectors';
@@ -33,9 +33,10 @@ import {
   useGetWorkItemsQuery,
   useSetWorkItemStatusMutation,
 } from '../../graphql/features/work/hooks';
-import {useGetCheckedInEquipmentQuery} from '../../graphql/features/equipment/hooks';
+import {useGetMyEquipmentQuery} from '../../graphql/features/equipment/hooks';
+import {useQueuedEquipmentIds} from '../equipment/pendingEquipmentItems';
 import {useUnreadNotificationCountQuery} from '../../graphql/features/notification/hooks';
-import {EquipmentItem} from '../../types/equipment';
+import {Equipment} from '../../types/equipment';
 import {WorkItem, WorkStatus} from '../../types/work';
 import {HomeStackParamList} from './routes';
 import {theme} from '../../theme';
@@ -69,10 +70,25 @@ const HomeScreen: React.FC = () => {
   const {data: quickActions = [], isLoading: isQuickActionsLoading} =
     useGetQuickActionsQuery();
   const {
-    data: equipment = [],
+    data: queryEquipment = [],
     isLoading: isEquipmentLoading,
     refetch: refetchEquipment,
-  } = useGetCheckedInEquipmentQuery();
+  } = useGetMyEquipmentQuery();
+  const queuedEquipmentIds = useQueuedEquipmentIds();
+  // A queued custody mutation (e.g. Check-In) for one of these rows hasn't
+  // synced yet, so the query's own `queuedOffline` field is stale — mark the
+  // matching row here so the card can disable its Check-In button and show
+  // the queued state, same as the equipment hub's list card
+  // (src/screens/equipment/EquipmentScreen.tsx).
+  const equipment = useMemo(
+    () =>
+      queuedEquipmentIds.size === 0
+        ? queryEquipment
+        : queryEquipment.map(item =>
+            queuedEquipmentIds.has(item.id) ? {...item, queuedOffline: true} : item,
+          ),
+    [queryEquipment, queuedEquipmentIds],
+  );
   const {data: unreadNotifications = 0} = useUnreadNotificationCountQuery();
   const {mutate: setWorkItemStatus} = useSetWorkItemStatusMutation();
 
@@ -135,10 +151,24 @@ const HomeScreen: React.FC = () => {
     [queueTile],
   );
 
-  // Placeholder — the checkout flow has no screen yet.
-  const handleCheckout = useCallback((item: EquipmentItem) => {
-    Alert.alert('Coming soon', `Checking out ${item.name} is not wired up yet.`);
-  }, []);
+  const handleCheckIn = useCallback(
+    (item: Equipment) => {
+      navigateToTarget(tabNavigation, {
+        tab: SCREEN.equipment,
+        screen: 'EquipmentCheckIn',
+        params: {id: item.id},
+      });
+    },
+    [tabNavigation],
+  );
+
+  const handleViewAllEquipment = useCallback(() => {
+    navigateToTarget(tabNavigation, {
+      tab: SCREEN.equipment,
+      screen: 'EquipmentList',
+      params: {initialTab: 'mine'},
+    });
+  }, [tabNavigation]);
 
   const handleViewAllWork = useCallback(() => {
     tabNavigation?.navigate(SCREEN.work);
@@ -233,10 +263,11 @@ const HomeScreen: React.FC = () => {
             onOpenAssign={handleOpenAssign}
           />
 
-          <CheckedInEquipment
+          <CheckedOutEquipment
             items={equipment}
             isLoading={isEquipmentLoading}
-            onCheckout={handleCheckout}
+            onViewAll={handleViewAllEquipment}
+            onCheckIn={handleCheckIn}
           />
         </ScrollView>
 
