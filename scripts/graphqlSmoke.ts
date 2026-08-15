@@ -170,7 +170,8 @@ const checks: Check[] = [
     const r: any = await run(
       `query D($id: ID!) { maintenanceRequest(id: $id) {
         reference type status priority completedBy completedOn
-        ambassador programName programCode createdBy paid assigneeKind department
+        assignee { name initials }
+        programName programCode createdBy paid assigneeKind department
         address zone describeLocation description documents
         fixture incidents pois equipment
         comments { id createdAt text edited images }
@@ -181,7 +182,12 @@ const checks: Check[] = [
     const d = r.data.maintenanceRequest;
     assert.equal(d.completedBy, 'Marcus Bell');
     assert.equal(d.paid, true);
-    assert.equal(d.assigneeKind, 'SUPERVISOR');
+    // The detail screen's "Assigned To" reads these two, and the mock keeps
+    // the kind in step with the assignee rather than recording how the record
+    // originally arrived — see the invariant note in src/mocks/maintenance.ts.
+    assert.equal(d.assigneeKind, 'AMBASSADOR');
+    assert.equal(d.assignee.name, 'Marcus Bell');
+    assert.equal(d.department, null);
     assert.ok(Array.isArray(d.comments));
     assert.ok(d.comments.length >= 1);
     const missing: any = await run(

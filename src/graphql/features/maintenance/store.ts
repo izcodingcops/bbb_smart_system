@@ -44,7 +44,6 @@ export const EQUIPMENT = [
 ];
 
 const DETAIL_DEFAULTS = {
-  ambassador: 'Tom Lee',
   programName: 'Louisville KY Training',
   programCode: 'BBB 0000',
   createdBy: 'David',

@@ -14,7 +14,18 @@ const JOHN = {name: 'John Carter', initials: 'JC'};
 const PRIYA = {name: 'Priya Shah', initials: 'PS'};
 const ALEX = {name: 'Alex Nguyen', initials: 'AN'};
 
-/** The 9 records the design screenshots pin exact values for. */
+/**
+ * `assigneeKind` tracks where a record stands *now*, so it must agree with
+ * `assignee`/`department`: 'Ambassador' (or 'Me') wherever someone is named,
+ * 'Department' where one is, and 'Supervisor' only while a record is still
+ * awaiting triage with `assignee: null` and `routedToSupervisor: true`. The
+ * resolvers re-derive `routedToSupervisor` from the kind on every write, so a
+ * record carrying both a name and 'Supervisor' flips to "routed to supervisor"
+ * the first time it's edited — and the edit form, reading 'Supervisor' as
+ * unassigned, then clears the assignee.
+ *
+ * The 9 records the design screenshots pin exact values for.
+ */
 const ACTIVE: MaintenanceRequest[] = [
   {
     id: 'mt_40877',
@@ -29,7 +40,7 @@ const ACTIVE: MaintenanceRequest[] = [
     routedToSupervisor: false,
     queuedOffline: false,
     completedBy: null,
-    assigneeKind: 'Supervisor',
+    assigneeKind: 'Ambassador',
     department: null,
     createdBy: 'Marcus Webb',
   },
@@ -63,7 +74,7 @@ const ACTIVE: MaintenanceRequest[] = [
     routedToSupervisor: false,
     queuedOffline: false,
     completedBy: null,
-    assigneeKind: 'Supervisor',
+    assigneeKind: 'Ambassador',
     department: null,
     createdBy: 'Alicia Reyes',
   },
@@ -80,7 +91,7 @@ const ACTIVE: MaintenanceRequest[] = [
     routedToSupervisor: false,
     queuedOffline: false,
     completedBy: null,
-    assigneeKind: 'Supervisor',
+    assigneeKind: 'Ambassador',
     department: null,
     createdBy: 'Marcus Webb',
   },
@@ -97,7 +108,7 @@ const ACTIVE: MaintenanceRequest[] = [
     routedToSupervisor: false,
     queuedOffline: false,
     completedBy: null,
-    assigneeKind: 'Supervisor',
+    assigneeKind: 'Ambassador',
     department: null,
     createdBy: 'Alicia Reyes',
   },
@@ -131,7 +142,7 @@ const ACTIVE: MaintenanceRequest[] = [
     routedToSupervisor: false,
     queuedOffline: false,
     completedBy: null,
-    assigneeKind: 'Supervisor',
+    assigneeKind: 'Ambassador',
     department: null,
     createdBy: 'Marcus Webb',
   },
@@ -219,7 +230,7 @@ const COMPLETED: MaintenanceRequest[] = Array.from({length: 24}, (_, i) => {
     routedToSupervisor: false,
     queuedOffline: false,
     completedBy: assignee.name,
-    assigneeKind: 'Supervisor' as const,
+    assigneeKind: 'Ambassador' as const,
     department: null,
     createdBy: COMPLETED_CREATORS[i % COMPLETED_CREATORS.length],
   };
@@ -240,7 +251,7 @@ export const MOCK_MAINTENANCE_REQUESTS: MaintenanceRequest[] = [
     routedToSupervisor: false,
     queuedOffline: false,
     completedBy: MARCUS.name,
-    assigneeKind: 'Supervisor',
+    assigneeKind: 'Ambassador',
     department: null,
     createdBy: 'Alicia Reyes',
   },

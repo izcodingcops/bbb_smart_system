@@ -1,6 +1,6 @@
 import {QuickAction, WorkItem, WorkPriority} from '../types/work';
 import {WorkLogEntry} from '../types/workLog';
-import {MaintenanceRequest} from '../types/maintenance';
+import {MaintenanceRequest, isUnassignedMaintenance} from '../types/maintenance';
 import {MOCK_MAINTENANCE_REQUESTS} from './maintenance';
 import {MOCK_FIXTURES} from './fixture';
 import {MOCK_WORK_LOG_ENTRIES} from './workLog';
@@ -57,10 +57,7 @@ export function toMaintenanceWorkItem(
   request: MaintenanceRequest,
   index: number,
 ): WorkItem {
-  const isUnassigned =
-    request.assigneeKind === 'Supervisor' &&
-    !request.assignee &&
-    request.status !== 'Completed';
+  const isUnassigned = isUnassignedMaintenance(request);
   return {
     id: request.id,
     reference: request.reference,

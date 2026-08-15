@@ -14,7 +14,7 @@ import {
   useMaintenanceFormOptionsQuery,
 } from '../../../graphql/features/maintenance/hooks';
 import {MaintenanceAssigneeKind} from '../../../types/maintenance';
-import {WorkItem, WorkPriority} from '../../../types/work';
+import {WorkPriority} from '../../../types/work';
 import {theme} from '../../../theme';
 
 /** 'Marcus Webb' -> 'MW' — for the summary's "Sent By" avatar. */
@@ -37,20 +37,38 @@ const PRIORITY_STYLE: Record<WorkPriority, {bg: string; fg: string}> = {
   Low: {bg: '#F6FFED', fg: '#389E0D'},
 };
 
+/**
+ * The read-only summary this sheet shows, structurally rather than by naming
+ * one record type — it is opened both from a Work card (`WorkItem`) and from
+ * the maintenance detail screen (`MaintenanceDetail`), and both satisfy this.
+ * `zone` is nullable because a maintenance record's own zone often is, where
+ * a Work card always carries the synthesized one.
+ */
+export interface AssignTarget {
+  id: string;
+  reference: string;
+  type: string;
+  priority: WorkPriority;
+  zone: string | null;
+  address: string;
+  createdBy?: string | null;
+}
+
 interface Props {
   /** Null when closed — also doubles as "which record this sheet targets". */
-  target: WorkItem | null;
+  target: AssignTarget | null;
   onClose: () => void;
   /** Fired after a successful assign, so the caller can toast. */
-  onAssigned: (item: WorkItem, label: string) => void;
+  onAssigned: (item: AssignTarget, label: string) => void;
 }
 
 /**
- * Supervisor-only "claim" workflow for an Unassigned maintenance card —
+ * Supervisor-only "claim" workflow for an Unassigned maintenance record —
  * mirrors the mockup's read-only summary + Ambassador/Department/Me picker.
- * Ambassadors never see this: it's only ever opened from an 'unassigned'-
- * bucket card, and Ambassadors never render that bucket (their tab set has
- * no Unassigned tab).
+ * Ambassadors must never reach it: from a card that's structural (they have no
+ * Unassigned tab to open one from), but the detail screen renders for both
+ * roles, so its own `role === 'supervisor'` gate is load-bearing — don't drop
+ * it on the assumption this sheet is unreachable by construction.
  */
 const AssigneeSheet: React.FC<Props> = ({target, onClose, onAssigned}) => {
   const {user} = useAuth();
@@ -78,8 +96,12 @@ const AssigneeSheet: React.FC<Props> = ({target, onClose, onAssigned}) => {
     if (!canAssign) {
       return;
     }
+    // `assigneeKind` describes where the record stands *now*, not how it first
+    // arrived — collapsing Ambassador/Me into 'Supervisor' left an assigned
+    // record still reading as awaiting triage, and the edit form (which treats
+    // 'Supervisor' as unassigned) then silently cleared the assignee on save.
     const kind: MaintenanceAssigneeKind =
-      mode === 'Department' ? 'Department' : 'Supervisor';
+      mode === 'Department' ? 'Department' : mode === 'Me' ? 'Me' : 'Ambassador';
     const name = mode === 'Me' ? user?.name ?? 'You' : value ?? '';
     try {
       await assign(target.id, kind, name);
@@ -134,7 +156,7 @@ const AssigneeSheet: React.FC<Props> = ({target, onClose, onAssigned}) => {
         </View>
         <View style={[styles.summaryRow, styles.summaryRowDivider]}>
           <Text style={styles.summaryKey}>Zone</Text>
-          <Text style={styles.summaryValue}>{target.zone}</Text>
+          <Text style={styles.summaryValue}>{target.zone || 'N/A'}</Text>
         </View>
         <View style={[styles.summaryRow, styles.summaryRowDivider]}>
           <Text style={styles.summaryKey}>Address</Text>

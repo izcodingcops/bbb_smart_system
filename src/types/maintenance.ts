@@ -46,9 +46,24 @@ export interface MaintenanceComment {
   images: string[];
 }
 
+/**
+ * Still awaiting a supervisor's triage: an ambassador routed it upward and
+ * nobody has been named yet. Shared by the Work tab's Unassigned bucket and
+ * the detail screen's "Choose assignee" affordance so the two can never
+ * disagree about which records are claimable.
+ */
+export function isUnassignedMaintenance(
+  record: Pick<MaintenanceRequest, 'assignee' | 'assigneeKind' | 'status'>,
+): boolean {
+  return (
+    record.assigneeKind === 'Supervisor' &&
+    !record.assignee &&
+    record.status !== 'Completed'
+  );
+}
+
 /** Everything the View/Edit screens show beyond the list card. */
 export interface MaintenanceDetail extends MaintenanceRequest {
-  ambassador: string;
   programName: string;
   programCode: string;
   completedOn: string | null;
