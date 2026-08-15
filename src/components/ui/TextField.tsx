@@ -69,16 +69,20 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: theme.spacing.sm,
   },
+  // The design gives text inputs, dropdowns and textareas one shared field
+  // token — `--field-bg: #f4f5f7`, on a 1.5px `--border` outline — so a form
+  // mixing a TextField and a DropdownField reads as one control set. This
+  // used to be white on a near-invisible #EEF0F2 outline, which made the
+  // dropdowns beside it look like the odd ones out when in fact they were the
+  // only ones following the design.
   wrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    // Lighter than theme.colors.border, so a white-filled field doesn't read
-    // as gray from its outline alone.
-    borderColor: '#EEF0F2',
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
     borderRadius: theme.radius.md,
     paddingHorizontal: theme.spacing.md,
-    backgroundColor: theme.colors.white,
+    backgroundColor: '#F4F5F7',
   },
   wrapError: {
     borderColor: theme.colors.error,
