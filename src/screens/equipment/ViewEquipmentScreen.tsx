@@ -243,16 +243,17 @@ const ViewEquipmentScreen: React.FC<Props> = ({
         reference={detail.serial}
         onBack={onClose}
         /*
-         * Both are omitted outright while queued, not rendered disabled: the
-         * record's local state is stale until the outbox drains, an edit would
-         * be written over by the syncing mutation, and a delete would strand
-         * that mutation to dead-letter silently — nothing in this app surfaces
-         * outbox.failed. A greyed Edit with no explanation reads as a bug,
-         * whereas the "Queued · offline" chip below already says why the
-         * actions are gone.
+         * `onEdit` / `onDelete` are deliberately not passed, so neither button
+         * renders. Equipment is admin-managed: the owner asked for both
+         * actions off the detail screen.
+         *
+         * The machinery behind them is intact but unreachable — the `editing`
+         * branch above, the delete ConfirmDialog below, and
+         * useUpdateEquipmentMutation / useDeleteEquipmentMutation. Restoring
+         * the surface is re-adding these two props; the previous wiring gated
+         * both on `queued`, since a queued record's local state is stale and
+         * deleting it would strand that mutation to dead-letter silently.
          */
-        onEdit={queued ? undefined : () => setEditing(true)}
-        onDelete={queued ? undefined : () => setConfirmDelete(true)}
       />
 
       <ScrollView
