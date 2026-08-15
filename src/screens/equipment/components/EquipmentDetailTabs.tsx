@@ -14,9 +14,14 @@ interface Props {
 }
 
 /**
- * The detail screen's Equipment / Upkeep panel switcher. Two tabs only, so it
- * fills the row rather than scrolling horizontally the way POI's three-way
- * switcher does.
+ * The detail screen's Equipment / Upkeep panel switcher — the design's
+ * `.vtabs` + `.stb`: a plain row of self-contained outlined pills that fill
+ * solid primary when active. Deliberately NOT the segmented track the hub
+ * uses (`SegmentedTabs`); the design uses the two shapes for two different
+ * jobs, and this screen had them the wrong way round.
+ *
+ * Pills size to their own labels rather than splitting the row, so a long
+ * label like 'Equipment Details' isn't squeezed to fit an equal column.
  */
 const EquipmentDetailTabs: React.FC<Props> = ({tabs, activeKey, onSelect}) => (
   <View style={styles.row}>
@@ -38,33 +43,27 @@ const EquipmentDetailTabs: React.FC<Props> = ({tabs, activeKey, onSelect}) => (
 );
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-    backgroundColor: theme.glass.chipFill,
-    borderWidth: 1,
-    borderColor: theme.glass.pillBorder,
-    borderRadius: 14,
-    padding: 4,
-    ...theme.shadow.glassPill,
-  },
+  row: {flexDirection: 'row', gap: theme.spacing.sm},
   tab: {
-    flex: 1,
-    height: 40,
+    height: 36,
+    paddingHorizontal: 15,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 11,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.white,
   },
   tabActive: {
-    backgroundColor: theme.glass.buttonFill,
-    ...theme.shadow.glassPill,
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   label: {
     fontFamily: theme.fonts.bold,
     fontSize: 13,
     color: theme.colors.textSecondary,
   },
-  labelActive: {color: theme.colors.primary, fontFamily: theme.fonts.black},
+  labelActive: {color: theme.colors.white, fontFamily: theme.fonts.black},
 });
 
 export default EquipmentDetailTabs;
