@@ -21,7 +21,12 @@ import {
   Toast,
   formatDateTime,
 } from '../../components/ui';
-import {MessageSquareIcon, ToolsIcon} from '../../components/icons';
+import {
+  MessageSquareIcon,
+  ToolsIcon,
+  UserPlusIcon,
+  UsersIcon,
+} from '../../components/icons';
 import ScreenBackground from '../../components/ScreenBackground';
 import {
   useAddMaintenanceCommentMutation,
@@ -36,7 +41,10 @@ import {
   MaintenanceComment,
   MaintenancePriority,
   MaintenanceStatus,
+  isUnassignedMaintenance,
 } from '../../types/maintenance';
+import {GetUserRole} from '../../redux/auth/selectors';
+import AssigneeSheet, {AssignTarget} from './components/AssigneeSheet';
 import AddEquipmentSheet from './components/AddEquipmentSheet';
 import AddFixtureSheet from './components/AddFixtureSheet';
 import AddIncidentSheet from './components/AddIncidentSheet';
@@ -54,17 +62,6 @@ const PRIORITY_STYLE: Record<MaintenancePriority, {bg: string; fg: string}> = {
   Medium: {bg: '#FFFBE6', fg: '#AD8B00'},
   Low: {bg: '#F6FFED', fg: '#389E0D'},
 };
-
-/** 'Tom Lee' → 'TL', for the small avatar next to a plain name field. */
-function initialsOf(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .map(word => word[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 interface Props {
   id: string;
@@ -84,6 +81,9 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
     useState<MaintenanceComment | null>(null);
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  /** Non-null while the Choose Assignee sheet is up — supervisors only. */
+  const [assignTarget, setAssignTarget] = useState<AssignTarget | null>(null);
+  const role = GetUserRole() ?? 'ambassador';
   const [addFixtureOpen, setAddFixtureOpen] = useState(false);
   const [addEquipmentOpen, setAddEquipmentOpen] = useState(false);
   // Holds the form's current address while the sheet is up — null when closed.
@@ -190,6 +190,9 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   }
 
   const status = STATUS_STYLE[detail.status];
+  // Exactly the records Work's Unassigned tab lists, and only a supervisor can
+  // clear one — an ambassador routes work upward, never onto a named person.
+  const canAssign = role === 'supervisor' && isUnassignedMaintenance(detail);
 
   return (
     <ScreenBackground style={styles.root}>
@@ -202,30 +205,62 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
       />
 
       <ScrollView contentContainerStyle={styles.body}>
+        {/* Wraps rather than squeezing: the reference plus both chips overflow
+            392pt, so on an unassigned record the actions drop to their own line
+            instead of the labels truncating. */}
         <View style={styles.idRow}>
           <Text style={styles.idBig}>{detail.reference}</Text>
-          <TouchableOpacity
-            style={styles.commentButton}
-            activeOpacity={0.85}
-            onPress={() => {
-              setEditingComment(null);
-              setCommentSheetOpen(true);
-            }}>
-            <MessageSquareIcon size={17} />
-            <Text style={styles.commentButtonText}>Add comment</Text>
-          </TouchableOpacity>
+          <View style={styles.idActions}>
+            {canAssign ? (
+              <TouchableOpacity
+                style={styles.assignButton}
+                activeOpacity={0.85}
+                onPress={() => setAssignTarget(detail)}>
+                <UserPlusIcon size={17} color={theme.colors.primary} />
+                <Text style={styles.assignButtonText}>Choose assignee</Text>
+              </TouchableOpacity>
+            ) : null}
+            <TouchableOpacity
+              style={styles.commentButton}
+              activeOpacity={0.85}
+              onPress={() => {
+                setEditingComment(null);
+                setCommentSheetOpen(true);
+              }}>
+              <MessageSquareIcon size={17} />
+              <Text style={styles.commentButtonText}>Add comment</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <DetailSection title="Basic Details">
-          <DetailField label="Ambassador">
-            <View style={styles.withAvatar}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {initialsOf(detail.ambassador)}
-                </Text>
+          {/* Branch on `assignee` before `assigneeKind`: the kind records the
+              routing choice and can lag behind a record that already has
+              someone on it. Order mirrors toMaintenanceWorkItem's own assignee
+              fallback so the card and this screen can never disagree. */}
+          <DetailField label="Assigned To">
+            {detail.assignee ? (
+              <View style={styles.withAvatar}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {detail.assignee.initials}
+                  </Text>
+                </View>
+                <Text style={styles.fieldValue}>{detail.assignee.name}</Text>
               </View>
-              <Text style={styles.fieldValue}>{detail.ambassador}</Text>
-            </View>
+            ) : detail.department ? (
+              <View style={styles.withAvatar}>
+                {/* A glyph, not initials — a department isn't a person. */}
+                <View style={styles.departmentAvatar}>
+                  <UsersIcon size={15} color={theme.colors.primary} />
+                </View>
+                <Text style={styles.fieldValue}>{detail.department}</Text>
+              </View>
+            ) : (
+              <Text style={[styles.fieldValue, styles.fieldValueEmpty]}>
+                Unassigned
+              </Text>
+            )}
           </DetailField>
           <DetailField label="Type" value={detail.type} />
           <DetailField label="Program Name">
@@ -381,6 +416,21 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
         onCancel={() => setConfirmDelete(false)}
       />
 
+      <AssigneeSheet
+        target={assignTarget}
+        onClose={() => setAssignTarget(null)}
+        onAssigned={(item, name) => {
+          // REFRESH_ASSIGN deliberately omits the detail query — it also fires
+          // from Work and Home, where that query isn't mounted. Refetching here
+          // keeps the omission without leaving this screen stale.
+          refetch();
+          setToast({
+            title: 'Maintenance assigned',
+            message: `${item.reference} is now with ${name} — moved out of Unassigned.`,
+          });
+        }}
+      />
+
       <Toast
         visible={toast !== null}
         title={toast?.title ?? ''}
@@ -402,19 +452,40 @@ const styles = StyleSheet.create({
   body: {paddingBottom: 40},
   idRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 14,
+    gap: 10,
     paddingHorizontal: theme.spacing.xl,
     paddingTop: 18,
     paddingBottom: theme.spacing.lg,
   },
   idBig: {
-    flex: 1,
+    // Shrink rather than grow: with `flex: 1` a wrapped action row would leave
+    // the reference stretched across a line of its own dead space.
+    flexShrink: 1,
     fontFamily: theme.fonts.black,
     fontSize: 25,
     letterSpacing: -0.5,
     color: theme.colors.text,
+  },
+  idActions: {flexDirection: 'row', alignItems: 'center', gap: 8},
+  assignButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    height: 40,
+    paddingHorizontal: 14,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: theme.colors.accentBorder,
+    backgroundColor: theme.colors.accentTint,
+  },
+  assignButtonText: {
+    fontFamily: theme.fonts.black,
+    fontSize: 14,
+    color: theme.colors.primary,
   },
   commentButton: {
     flexDirection: 'row',
@@ -459,6 +530,16 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.black,
     fontSize: 10,
     color: theme.colors.white,
+  },
+  departmentAvatar: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: theme.colors.accentBorder,
+    backgroundColor: theme.colors.accentTint,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   thumbs: {flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginTop: 2},
   thumb: {

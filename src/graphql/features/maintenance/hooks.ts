@@ -132,7 +132,6 @@ const PRIORITY_OUT: Record<MaintenancePriority, string> = {
 };
 
 interface GqlMaintenanceDetail extends GqlMaintenanceRequest {
-  ambassador: string;
   programName: string;
   programCode: string;
   createdBy: string;
@@ -153,7 +152,6 @@ interface GqlMaintenanceDetail extends GqlMaintenanceRequest {
 
 const toDetail = (d: GqlMaintenanceDetail): MaintenanceDetail => ({
   ...toRequest(d),
-  ambassador: d.ambassador,
   programName: d.programName,
   programCode: d.programCode,
   createdBy: d.createdBy,

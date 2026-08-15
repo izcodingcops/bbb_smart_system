@@ -141,7 +141,6 @@ const applyInput = (record: MaintenanceDetail, input: WireInput): void => {
   if (record.assigneeKind === 'Ambassador' || record.assigneeKind === 'Me') {
     const name = input.ambassador ?? '';
     record.assignee = name ? {name, initials: initialsOf(name)} : null;
-    record.ambassador = name;
     record.department = null;
   } else {
     record.assignee = null;
@@ -252,7 +251,6 @@ export const maintenanceResolvers = {
         routedToSupervisor: true,
         queuedOffline: false,
         completedBy: null,
-        ambassador: 'Tom Lee',
         programName: 'Louisville KY Training',
         programCode: 'BBB 0000',
         createdBy: 'Tom Lee',

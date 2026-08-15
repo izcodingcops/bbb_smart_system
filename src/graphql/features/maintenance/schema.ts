@@ -44,7 +44,6 @@ export const maintenanceTypeDefs = /* GraphQL */ `
     completedBy: String
 
     "Detail-only fields — null on list queries that don't select them."
-    ambassador: String
     programName: String
     programCode: String
     createdBy: String

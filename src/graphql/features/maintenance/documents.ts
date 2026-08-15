@@ -43,7 +43,6 @@ export const GET_MAINTENANCE_REQUEST = gql`
       routedToSupervisor
       queuedOffline
       completedBy
-      ambassador
       programName
       programCode
       createdBy
@@ -119,6 +118,10 @@ export const ASSIGN_MAINTENANCE_REQUEST = gql`
       }
       department
       routedToSupervisor
+      # Mutated by the resolver and selected by both maintenance queries — without
+      # it here the normalized entity keeps its pre-assign kind, and the detail
+      # screen's "Assigned To" branch reads a stale value.
+      assigneeKind
     }
   }
 `;
