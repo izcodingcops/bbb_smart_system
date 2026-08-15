@@ -23,11 +23,11 @@ import {
   ListSummary,
   MultiSelectSheet,
   RecordCardSkeleton,
-  SegmentedButtons,
+  SegmentedTabs,
   SingleSelectSheet,
   Toast,
 } from '../../components/ui';
-import {BoxIcon, CameraIcon} from '../../components/icons';
+import {BoxIcon, ScanIcon} from '../../components/icons';
 import {useGetEquipmentQuery} from '../../graphql/features/equipment/hooks';
 import {Equipment} from '../../types/equipment';
 import {GetShiftTypes} from '../../redux/auth/selectors';
@@ -72,8 +72,8 @@ type ListNavigation = NativeStackNavigationProp<
 type Tab = 'all' | 'mine';
 
 const TABS = [
-  {value: 'all', label: 'All Equipment'},
-  {value: 'mine', label: 'Checked-Out'},
+  {key: 'all', label: 'All Equipment'},
+  {key: 'mine', label: 'Checked-Out'},
 ];
 
 const EquipmentScreen: React.FC = () => {
@@ -275,10 +275,13 @@ const EquipmentScreen: React.FC = () => {
 
         <View style={styles.segmentRow}>
           <View style={styles.segmentFill}>
-            <SegmentedButtons
-              options={TABS}
-              value={tab}
-              onChange={next => {
+            {/* The design's `.wm-seg` — one track, active tab lifted out in
+                white — which is the same control Work's bucket switcher uses,
+                not the separate outlined pills of `SegmentedButtons`. */}
+            <SegmentedTabs
+              tabs={TABS}
+              activeKey={tab}
+              onSelect={next => {
                 setTab(next as Tab);
                 setOpenFilter(null);
                 setSortOpen(false);
@@ -293,7 +296,7 @@ const EquipmentScreen: React.FC = () => {
             accessibilityRole="button"
             accessibilityLabel="Scan equipment QR"
             onPress={() => navigation.navigate('EquipmentScan')}>
-            <CameraIcon size={24} color="#2B3038" />
+            <ScanIcon size={24} color="#2B3038" />
           </TouchableOpacity>
         </View>
 
@@ -491,9 +494,11 @@ const styles = StyleSheet.create({
   // Square, and the same height as the segmented control beside it — the
   // mockup's 52px assumes its own taller segment row.
   scanButton: {
-    width: 44,
-    height: 44,
-    borderRadius: theme.radius.glassPill,
+    // 48 to match the segmented track's own height (4 + 40 + 4), so the two
+    // line up. It was 44 against the old separate-pill control.
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,

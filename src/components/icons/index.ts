@@ -45,6 +45,7 @@ export {default as PlusIcon} from './PlusIcon';
 export {default as RadioIcon} from './RadioIcon';
 export {default as RefreshIcon} from './RefreshIcon';
 export {default as SafetyIcon} from './SafetyIcon';
+export {default as ScanIcon} from './ScanIcon';
 export {default as SearchIcon} from './SearchIcon';
 export {default as SendIcon} from './SendIcon';
 export {default as ShieldCheckIcon} from './ShieldCheckIcon';
