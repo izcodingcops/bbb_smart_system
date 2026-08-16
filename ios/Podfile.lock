@@ -2045,6 +2045,12 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - VisionCamera (4.7.3):
+    - VisionCamera/Core (= 4.7.3)
+    - VisionCamera/React (= 4.7.3)
+  - VisionCamera/Core (4.7.3)
+  - VisionCamera/React (4.7.3):
+    - React-Core
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -2130,6 +2136,7 @@ DEPENDENCIES:
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
+  - VisionCamera (from `../node_modules/react-native-vision-camera`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 EXTERNAL SOURCES:
@@ -2296,6 +2303,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-screens"
   RNSVG:
     :path: "../node_modules/react-native-svg"
+  VisionCamera:
+    :path: "../node_modules/react-native-vision-camera"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -2381,8 +2390,9 @@ SPEC CHECKSUMS:
   RNDateTimePicker: 7b2738f1e595f83c14580a11c476872755c5befc
   RNScreens: 01b065ded2dfe7987bcce770ff3a196be417ff41
   RNSVG: 0e52210d4d43165e7e2cf9c890a9848b27e513ac
+  VisionCamera: 7187b3dac1ff3071234ead959ce311875748e14f
   Yoga: b1085f68c014785350a2afdc95eaef0d49f23ccb
 
 PODFILE CHECKSUM: e56c67e4c0aaa67ea65dfc9bf647a41e7ce434a4
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2
