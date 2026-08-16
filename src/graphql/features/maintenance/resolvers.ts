@@ -1,18 +1,16 @@
 import {MaintenanceDetail} from '../../../types/maintenance';
 import {sleep} from '../../mockSession';
-import {
-  fixtureStore,
-  nextReference as nextFixtureReference,
-} from '../fixture/store';
+import {fixtureStore} from '../fixture/store';
+import {equipmentStore} from '../equipment/store';
 import {incidentStore} from '../incident/store';
-import {FIXTURE_TYPES, ZONES} from '../shared/options';
+import {poiStore} from '../poi/store';
+import {ZONES} from '../shared/options';
+import {incidentConnectedLabel} from './connectedLabels';
 import {
   BUSINESS_NAMES,
   DEPARTMENTS,
   AMBASSADORS,
-  EQUIPMENT,
   MAINT_TYPES,
-  POIS,
   findRecord,
   maintenanceStore,
   nextReference,
@@ -69,18 +67,29 @@ const ASSIGNEE_KIND_IN: Record<string, MaintenanceDetail['assigneeKind']> = {
 const incidentOptions = (): string[] =>
   Array.from(
     new Set(
-      incidentStore.records.map(record => {
-        const date = new Date(record.occurredAt);
-        return Number.isNaN(date.getTime())
-          ? record.type
-          : `${record.type} — ${date.toLocaleDateString('en-US', {
-              month: '2-digit',
-              day: '2-digit',
-              year: 'numeric',
-            })}`;
-      }),
+      incidentStore.records.map(record =>
+        incidentConnectedLabel(record.type, record.occurredAt),
+      ),
     ),
   );
+
+/**
+ * Persons of interest are offered as names, read live off the POI store — the
+ * same one-source-of-truth rule `fixtures` and `incidents` follow — so someone
+ * quick-created from the maintenance form shows up here. Deduped because two
+ * people can share a name and would otherwise collide as one repeated option.
+ */
+const poiOptions = (): string[] =>
+  Array.from(new Set(poiStore.records.map(record => record.name)));
+
+/**
+ * Equipment is offered by name, read live off the Equipment store. This used to
+ * be a static list private to this module, on the reasoning that a name was all
+ * Connected Elements could create; now that "Add Equipment" opens the Equipment
+ * module's own create form, the two have to be the same set of records.
+ */
+const equipmentOptions = (): string[] =>
+  Array.from(new Set(equipmentStore.records.map(record => record.name)));
 
 /** 'John Carter' → 'JC', for the small avatar the cards and detail show. */
 const initialsOf = (name: string): string =>
@@ -173,9 +182,8 @@ export const maintenanceResolvers = {
         businessNames: BUSINESS_NAMES,
         fixtures: fixtureStore.records.map(record => record.title),
         incidents: incidentOptions(),
-        pois: POIS,
-        equipment: EQUIPMENT,
-        fixtureTypes: FIXTURE_TYPES,
+        pois: poiOptions(),
+        equipment: equipmentOptions(),
       };
     },
   },
@@ -352,38 +360,10 @@ export const maintenanceResolvers = {
       return args.commentId;
     },
 
-    createMaintenanceFixture: async (
-      _: unknown,
-      args: {name: string; fixtureType: string},
-    ) => {
-      await sleep();
-      const reference = nextFixtureReference();
-      fixtureStore.records.unshift({
-        id: `fx_${reference.replace('#FX-', '')}`,
-        reference,
-        title: args.name,
-        fixtureType: args.fixtureType,
-        zone: '',
-        status: 'Active',
-        createdBy: {name: 'You', initials: 'YO'},
-        queuedOffline: false,
-        createdAt: new Date().toISOString(),
-        address: '',
-        describeLocation: null,
-        latitude: '30.673854',
-        longitude: '73.673854',
-        description: null,
-        documents: [],
-      });
-      return args.name;
-    },
-
-    createMaintenanceEquipment: async (_: unknown, args: {name: string}) => {
-      await sleep();
-      if (!EQUIPMENT.includes(args.name)) {
-        EQUIPMENT.unshift(args.name);
-      }
-      return args.name;
-    },
+    // createMaintenanceFixture / createMaintenanceEquipment used to live here,
+    // backing two cut-down "quick create" sheets. Connected Elements now opens
+    // the Fixture and Equipment modules' own create forms, which write real
+    // records through their own mutations, so both are gone rather than left as
+    // a second way to create a half-populated one.
   },
 };

@@ -12,8 +12,17 @@ import {theme} from '../../theme';
 
 interface Props {
   onClose: () => void;
-  /** Fires with the new record's id, reference and queued state once created. */
-  onCreated: (created: {id: string; reference: string; queued: boolean}) => void;
+  /**
+   * Fires with the new record's id, reference, name and queued state once
+   * created. `name` is what Maintenance selects when it opens this form to
+   * fill its Equipment field.
+   */
+  onCreated: (created: {
+    id: string;
+    reference: string;
+    name: string;
+    queued: boolean;
+  }) => void;
 }
 
 const CreateEquipmentScreen: React.FC<Props> = ({onClose, onCreated}) => {

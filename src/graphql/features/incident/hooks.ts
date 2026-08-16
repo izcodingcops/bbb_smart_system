@@ -159,14 +159,14 @@ export function useGetIncidentQuery(id: string) {
  * inline Add Incident sheet sits in the form's tree the whole time, and this
  * is a network-only query, so it would otherwise refetch on every form open.
  */
-export function useIncidentFormOptionsQuery(options?: {skip?: boolean}) {
+export function useIncidentFormOptionsQuery() {
   const programId = GetActiveProgramId();
   const {data, loading, error, refetch} = useQuery<{incidentFormOptions: IncidentFormOptions}>(
     GET_INCIDENT_FORM_OPTIONS,
     {
       ...INCIDENT_CONTEXT,
       variables: {programId: programId ?? ''},
-      skip: !programId || !!options?.skip,
+      skip: !programId,
       // nextReference has to be fresh on every open.
       fetchPolicy: 'network-only',
     },
@@ -294,6 +294,12 @@ export function useCreateIncidentMutation() {
       return {
         id,
         reference: result.data?.createIncident.reference ?? '',
+        // Echoed back as submitted so a caller that opened this form to fill
+        // another module's field can label the result. Maintenance's Connected
+        // Elements builds its own '{type} — MM/DD/YYYY' option string from
+        // these two, rather than this hook knowing that format.
+        incidentType: values.incidentType,
+        occurredAt: values.occurredAt,
         // offlineQueueLink stamps queued ids with this prefix.
         queued: id.startsWith('outbox_'),
       };

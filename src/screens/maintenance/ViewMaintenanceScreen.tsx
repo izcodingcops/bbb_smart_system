@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -45,10 +45,13 @@ import {
 } from '../../types/maintenance';
 import {GetUserRole} from '../../redux/auth/selectors';
 import AssigneeSheet, {AssignTarget} from './components/AssigneeSheet';
-import AddEquipmentSheet from './components/AddEquipmentSheet';
-import AddFixtureSheet from './components/AddFixtureSheet';
-import AddIncidentSheet from './components/AddIncidentSheet';
-import MaintenanceForm, {buildInitialValues} from './components/MaintenanceForm';
+import ConnectedElementCreateOverlay, {
+  useConnectedElementCreate,
+} from './components/ConnectedElementCreateOverlay';
+import MaintenanceForm, {
+  buildInitialValues,
+  MaintenanceFormHandle,
+} from './components/MaintenanceForm';
 import {theme} from '../../theme';
 
 const STATUS_STYLE: Record<MaintenanceStatus, {bg: string; fg: string}> = {
@@ -84,10 +87,9 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   /** Non-null while the Choose Assignee sheet is up — supervisors only. */
   const [assignTarget, setAssignTarget] = useState<AssignTarget | null>(null);
   const role = GetUserRole() ?? 'ambassador';
-  const [addFixtureOpen, setAddFixtureOpen] = useState(false);
-  const [addEquipmentOpen, setAddEquipmentOpen] = useState(false);
-  // Holds the form's current address while the sheet is up — null when closed.
-  const [incidentAddress, setIncidentAddress] = useState<string | null>(null);
+  // Lets each create form select what it just made, without remounting the
+  // form and discarding the user's unsaved edits.
+  const formRef = useRef<MaintenanceFormHandle>(null);
   const [toast, setToast] = useState<{
     title: string;
     message: string;
@@ -101,6 +103,7 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   const {mutate: update, isLoading: isUpdating} =
     useUpdateMaintenanceRequestMutation();
   const {mutate: remove} = useDeleteMaintenanceRequestMutation();
+  const connectedCreate = useConnectedElementCreate(formRef, refetchOptions);
 
   if (isLoading) {
     // Matches the loaded screen's own sections: Basic Details (10 fields),
@@ -145,7 +148,7 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
     return (
       <View style={styles.root}>
         <MaintenanceForm
-          key={options.fixtures.length}
+          ref={formRef}
           mode="edit"
           reference={detail.reference}
           options={options}
@@ -161,30 +164,10 @@ const ViewMaintenanceScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
             });
           }}
           onClose={() => setEditing(false)}
-          onAddFixture={() => setAddFixtureOpen(true)}
-          onAddIncident={address => setIncidentAddress(address)}
-          onAddEquipment={() => setAddEquipmentOpen(true)}
+          {...connectedCreate.formProps}
         />
 
-        <AddFixtureSheet
-          visible={addFixtureOpen}
-          options={options}
-          onCreated={() => refetchOptions()}
-          onClose={() => setAddFixtureOpen(false)}
-        />
-
-        <AddIncidentSheet
-          visible={incidentAddress !== null}
-          defaultAddress={incidentAddress ?? ''}
-          onCreated={() => refetchOptions()}
-          onClose={() => setIncidentAddress(null)}
-        />
-
-        <AddEquipmentSheet
-          visible={addEquipmentOpen}
-          onCreated={() => refetchOptions()}
-          onClose={() => setAddEquipmentOpen(false)}
-        />
+        <ConnectedElementCreateOverlay {...connectedCreate.overlayProps} />
       </View>
     );
   }

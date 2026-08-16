@@ -12,8 +12,17 @@ import {theme} from '../../theme';
 
 interface Props {
   onClose: () => void;
-  /** Fires with the new record's id, reference and queued state once created. */
-  onCreated: (created: {id: string; reference: string; queued: boolean}) => void;
+  /**
+   * Fires with the new record's id, reference, title and queued state once
+   * created. `title` is what Maintenance selects when it opens this form to
+   * fill its Fixture Name field.
+   */
+  onCreated: (created: {
+    id: string;
+    reference: string;
+    title: string;
+    queued: boolean;
+  }) => void;
 }
 
 const CreateFixtureScreen: React.FC<Props> = ({onClose, onCreated}) => {

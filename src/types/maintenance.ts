@@ -111,5 +111,4 @@ export interface MaintenanceFormOptions {
   incidents: string[];
   pois: string[];
   equipment: string[];
-  fixtureTypes: string[];
 }

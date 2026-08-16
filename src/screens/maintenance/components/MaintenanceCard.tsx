@@ -73,7 +73,8 @@ const MaintenanceCard: React.FC<Props> = ({
     <RecordCard
       onPress={() => onPress(request)}
       idLabel={request.reference}
-      typeLabel={request.type}
+      // No header type label: Type is a field row below, the way WorkCard
+      // shows it, and rendering it in both places would just repeat it.
       statusPill={
         <StatusPill
           label={request.status}
@@ -104,7 +105,10 @@ const MaintenanceCard: React.FC<Props> = ({
         ) : undefined
       }
       fields={[
-        {label: 'Business Name', value: request.businessName},
+        // Type, not Business Name: Work and Maintenance cards lead with the
+        // same field so the two lists read alike. Business Name stays on the
+        // detail screen and in the filters.
+        {label: 'Type', value: request.type},
         {
           label: 'Priority',
           node: (

@@ -3,7 +3,7 @@ import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {
   useCreatePoiMutation,
   usePoiFormOptionsQuery,
-  PoiCreateResult,
+  PersonCreateResult,
 } from '../../graphql/features/poi/hooks';
 import {PoiFormValues} from '../../types/poi';
 import PoiForm, {buildInitialValues} from './components/PoiForm';
@@ -13,7 +13,7 @@ import {theme} from '../../theme';
 
 interface Props {
   onClose: () => void;
-  onCreated: (created: PoiCreateResult) => void;
+  onCreated: (created: PersonCreateResult) => void;
 }
 
 const CreatePoiScreen: React.FC<Props> = ({onClose, onCreated}) => {

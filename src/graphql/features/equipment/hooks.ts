@@ -389,6 +389,10 @@ export function useCreateEquipmentMutation() {
       return {
         id,
         reference: result.data?.createEquipment.reference ?? '',
+        // The name as submitted. Maintenance's Connected Elements lists
+        // equipment by name, so a caller that opened this form to fill that
+        // field can select the result without re-reading the store.
+        name: values.name,
         // offlineQueueLink stamps queued ids with this prefix (link.ts) —
         // the same convention the three custody hooks already use.
         queued: id.startsWith('outbox_'),

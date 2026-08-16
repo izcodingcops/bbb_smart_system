@@ -1,4 +1,11 @@
-import React, {useMemo, useRef, useState} from 'react';
+import React, {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   View,
   Text,
@@ -132,6 +139,24 @@ export function buildInitialValues(
   };
 }
 
+/** The Connected Elements fields that hold a list rather than a single value. */
+type MultiSelectKey = 'incidents' | 'pois' | 'equipment';
+
+/**
+ * Lets the screen hosting this form select something a quick-create sheet just
+ * made ("Save & Select"). It goes through a ref rather than a controlled
+ * `values` prop so the form keeps owning its own state — remounting it with new
+ * initial values would throw away everything else the user had typed.
+ */
+export interface MaintenanceFormHandle {
+  /** Replaces the chosen fixture — the field holds one at a time. */
+  selectFixture: (name: string) => void;
+  /** Appends to the multi-selects, ignoring a value that's already chosen. */
+  addIncident: (label: string) => void;
+  addPoi: (name: string) => void;
+  addEquipment: (name: string) => void;
+}
+
 interface Props {
   mode: 'create' | 'edit';
   /** Display reference shown under the title, e.g. '#MT-40891'. */
@@ -146,10 +171,11 @@ interface Props {
   onAddFixture?: () => void;
   /** Takes the address currently on the form, to seed the new incident with. */
   onAddIncident?: (address: string) => void;
+  onAddPoi?: () => void;
   onAddEquipment?: () => void;
 }
 
-const MaintenanceForm: React.FC<Props> = ({
+const MaintenanceForm = forwardRef<MaintenanceFormHandle, Props>(({
   mode,
   reference,
   options,
@@ -160,8 +186,9 @@ const MaintenanceForm: React.FC<Props> = ({
   onClose,
   onAddFixture,
   onAddIncident,
+  onAddPoi,
   onAddEquipment,
-}) => {
+}, ref) => {
   const [values, setValues] = useState<MaintenanceFormValues>(initialValues);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -195,6 +222,29 @@ const MaintenanceForm: React.FC<Props> = ({
     key: K,
     value: MaintenanceFormValues[K],
   ) => setValues(current => ({...current, [key]: value}));
+
+  // Guarded against duplicates: the option lists are plain strings, so adding
+  // the same name twice would render two identical chips the user can't tell
+  // apart, and submit it twice.
+  const appendTo = useCallback((key: MultiSelectKey, value: string) => {
+    setValues(current =>
+      current[key].includes(value)
+        ? current
+        : {...current, [key]: [...current[key], value]},
+    );
+  }, []);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      selectFixture: (name: string) =>
+        setValues(current => ({...current, fixture: name})),
+      addIncident: (label: string) => appendTo('incidents', label),
+      addPoi: (name: string) => appendTo('pois', name),
+      addEquipment: (name: string) => appendTo('equipment', name),
+    }),
+    [appendTo],
+  );
 
   // The only place this module branches on role. Read here and passed down as a
   // plain list, so AssigneeToggle stays role-agnostic.
@@ -445,6 +495,8 @@ const MaintenanceForm: React.FC<Props> = ({
               options={options.pois}
               values={values.pois}
               onChange={next => set('pois', next)}
+              addLabel={onAddPoi ? 'Add Person of Interest' : undefined}
+              onRequestAdd={onAddPoi}
             />
             <MultiDropdownField
               label="Equipment"
@@ -524,7 +576,9 @@ const MaintenanceForm: React.FC<Props> = ({
       />
     </ScreenBackground>
   );
-};
+});
+
+MaintenanceForm.displayName = 'MaintenanceForm';
 
 const styles = StyleSheet.create({
   // RN doesn't collapse margins: DropdownField carries its own bottom margin

@@ -34,14 +34,11 @@ export const BUSINESS_NAMES = [
   'BlockByBlock',
   'LoDo District',
 ];
-export const POIS = ['R. Blake', 'M. Ortiz', 'D. Cole', 'T. Wells', 'G. Fisher'];
-export const EQUIPMENT = [
-  'Hammer',
-  'Tool Box',
-  'Pressure Washer',
-  'Ladder',
-  'Paint Kit',
-];
+// Persons of interest and equipment are not listed here. Both option lists are
+// served live from their own modules' stores (`poiOptions` / `equipmentOptions`
+// in resolvers.ts), so a record created from Connected Elements — which opens
+// those modules' real create forms — appears without a second source to keep in
+// sync.
 
 const DETAIL_DEFAULTS = {
   programName: 'Louisville KY Training',

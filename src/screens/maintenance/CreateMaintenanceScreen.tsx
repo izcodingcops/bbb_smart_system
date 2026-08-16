@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useRef} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {
   useCreateMaintenanceRequestMutation,
@@ -6,10 +6,13 @@ import {
 } from '../../graphql/features/maintenance/hooks';
 import {MaintenanceFormValues} from '../../types/maintenance';
 import {GetUserRole} from '../../redux/auth/selectors';
-import MaintenanceForm, {buildInitialValues} from './components/MaintenanceForm';
-import AddEquipmentSheet from './components/AddEquipmentSheet';
-import AddFixtureSheet from './components/AddFixtureSheet';
-import AddIncidentSheet from './components/AddIncidentSheet';
+import MaintenanceForm, {
+  buildInitialValues,
+  MaintenanceFormHandle,
+} from './components/MaintenanceForm';
+import ConnectedElementCreateOverlay, {
+  useConnectedElementCreate,
+} from './components/ConnectedElementCreateOverlay';
 import {EmptyState, FormScreenSkeleton} from '../../components/ui';
 import {ToolsIcon} from '../../components/icons';
 import {theme} from '../../theme';
@@ -24,15 +27,18 @@ const CreateMaintenanceScreen: React.FC<Props> = ({onClose, onCreated}) => {
   const {data: options, isLoading, isError, refetch} = useMaintenanceFormOptionsQuery();
   const {mutate: create, isLoading: isSubmitting} =
     useCreateMaintenanceRequestMutation();
-  const [addFixtureOpen, setAddFixtureOpen] = useState(false);
-  const [addEquipmentOpen, setAddEquipmentOpen] = useState(false);
-  // Holds the form's current address while the sheet is up — null when closed.
-  const [incidentAddress, setIncidentAddress] = useState<string | null>(null);
+  // Lets each create form select what it just made, without remounting the
+  // maintenance form and discarding everything else the user has typed.
+  const formRef = useRef<MaintenanceFormHandle>(null);
+  const connectedCreate = useConnectedElementCreate(formRef, refetch);
   // Decides which assignee options the fresh form starts on — a supervisor's
   // list has no 'Supervisor' entry, so the default has to differ by role.
   const role = GetUserRole() ?? 'ambassador';
 
-  if (isError || (!isLoading && !options)) {
+  // Only a load that left us with nothing is fatal. Once the options are in
+  // hand the form is mounted and holding the user's input, so a later refetch
+  // that fails must not replace it with a full-screen error.
+  if (!options && (isError || !isLoading)) {
     return (
       <View style={styles.loading}>
         <EmptyState
@@ -49,7 +55,12 @@ const CreateMaintenanceScreen: React.FC<Props> = ({onClose, onCreated}) => {
     );
   }
 
-  if (isLoading || !options) {
+  // Gated on the data alone, never on `isLoading`. Apollo reports loading again
+  // for a refetch, and every quick-create sheet refetches these options — so
+  // keying off the flag would swap the mounted form for this skeleton, unmount
+  // it, and throw away both the item just selected and everything typed so far.
+  // `refetch` keeps the previous data, so `options` stays populated throughout.
+  if (!options) {
     // Matches MaintenanceForm's own section layout: Basic (4 rows), Other (2),
     // Location (4), Connected Elements (4).
     return (
@@ -69,9 +80,7 @@ const CreateMaintenanceScreen: React.FC<Props> = ({onClose, onCreated}) => {
   return (
     <View style={styles.root}>
       <MaintenanceForm
-        // Remounts when the fixture list changes so a quick-created fixture
-        // shows up in the dropdown's options.
-        key={options.fixtures.length}
+        ref={formRef}
         mode="create"
         reference={options.nextReference}
         options={options}
@@ -80,30 +89,10 @@ const CreateMaintenanceScreen: React.FC<Props> = ({onClose, onCreated}) => {
         isSubmitting={isSubmitting}
         onSubmit={submit}
         onClose={onClose}
-        onAddFixture={() => setAddFixtureOpen(true)}
-        onAddIncident={address => setIncidentAddress(address)}
-        onAddEquipment={() => setAddEquipmentOpen(true)}
+        {...connectedCreate.formProps}
       />
 
-      <AddFixtureSheet
-        visible={addFixtureOpen}
-        options={options}
-        onCreated={() => refetch()}
-        onClose={() => setAddFixtureOpen(false)}
-      />
-
-      <AddIncidentSheet
-        visible={incidentAddress !== null}
-        defaultAddress={incidentAddress ?? ''}
-        onCreated={() => refetch()}
-        onClose={() => setIncidentAddress(null)}
-      />
-
-      <AddEquipmentSheet
-        visible={addEquipmentOpen}
-        onCreated={() => refetch()}
-        onClose={() => setAddEquipmentOpen(false)}
-      />
+      <ConnectedElementCreateOverlay {...connectedCreate.overlayProps} />
     </View>
   );
 };
