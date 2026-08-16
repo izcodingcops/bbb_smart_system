@@ -186,6 +186,10 @@ export function useCreateFixtureMutation() {
       return {
         id,
         reference: result.data?.createFixture.reference ?? '',
+        // The title as submitted. Maintenance's Connected Elements lists
+        // fixtures by title, so a caller that opened this form to fill that
+        // field can select the result without re-reading the store.
+        title: values.title,
         // offlineQueueLink stamps queued ids with this prefix (link.ts) —
         // same convention useCreateWorkLogEntryMutation already uses.
         queued: id.startsWith('outbox_'),

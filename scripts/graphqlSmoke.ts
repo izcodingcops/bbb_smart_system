@@ -748,7 +748,7 @@ const checks: Check[] = [
 
   ['maintenance form options serve every dropdown', async () => {
     const r: any = await run(
-      'query O($p: ID!) { maintenanceFormOptions(programId: $p) { nextReference types zones departments businessNames fixtures incidents pois equipment fixtureTypes } }',
+      'query O($p: ID!) { maintenanceFormOptions(programId: $p) { nextReference types zones departments businessNames fixtures incidents pois equipment } }',
       {p: 'p1'},
     );
     assert.equal(r.errors, undefined);
@@ -758,7 +758,13 @@ const checks: Check[] = [
     assert.equal(o.zones.length, 6);
     // fixtures is served from fixtureStore titles alone — one source of truth.
     assert.ok(o.fixtures.includes('16th St Floor Fixture'));
-    assert.equal(o.fixtureTypes.length, 10);
+    // equipment likewise comes from the Equipment module's records, not the
+    // placeholder list this module used to keep ('Hammer', 'Tool Box', …).
+    assert.ok(o.equipment.includes('Car 1700cc'));
+    assert.ok(!o.equipment.includes('Hammer'));
+    // Both option lists are deduped by name.
+    assert.equal(new Set(o.equipment).size, o.equipment.length);
+    assert.equal(new Set(o.pois).size, o.pois.length);
   }],
 
   ['maintenance comments add, edit and delete', async () => {
@@ -873,16 +879,28 @@ const checks: Check[] = [
     assert.equal(o.zones.length, 6);
   }],
 
-  ['fixture quick-create injects a new dropdown option', async () => {
+  // Connected Elements opens the Fixture module's own create form rather than a
+  // maintenance-local quick-create, so the real mutation is what has to feed
+  // the dropdown. (createMaintenanceFixture, which this test used to exercise,
+  // no longer exists.)
+  ['a fixture created through the real mutation appears in maintenance options', async () => {
     const r: any = await run(
-      'mutation F($n: String!, $t: String!) { createMaintenanceFixture(name: $n, fixtureType: $t) }',
-      {n: 'Bench #B-311', t: 'Bench'},
+      'mutation C($p: ID!, $i: FixtureInput!) { createFixture(programId: $p, input: $i) { reference } }',
+      {
+        p: 'p1',
+        i: {
+          title: 'Bench #B-311', serviceDateTime: '2026-08-16T09:00:00',
+          fixtureType: 'Bench', status: 'ACTIVE', address: '16th St Mall',
+          zone: 'Zone 2', describeLocation: null, description: null, documents: [],
+        },
+      },
     );
     assert.equal(r.errors, undefined);
-    assert.equal(r.data.createMaintenanceFixture, 'Bench #B-311');
     const opts: any = await run(
       'query O($p: ID!) { maintenanceFormOptions(programId: $p) { fixtures } }', {p: 'p1'},
     );
+    // unshifted onto the store, so the newest fixture leads the option list —
+    // this is the title the maintenance form selects on the way back.
     assert.equal(opts.data.maintenanceFormOptions.fixtures[0], 'Bench #B-311');
   }],
 
@@ -1679,6 +1697,44 @@ const checks: Check[] = [
     const u = r.data.poiUpdateFormOptions;
     assert.ok(u.nextReference.startsWith('#UPD-'));
     assert.equal(u.zones.length, 6);
+  }],
+
+  // Runs after every POI test that asserts a record count — it leaves the
+  // person it creates in the store, the way the fixture quick-create does.
+  ['person quick-create injects a new maintenance dropdown option', async () => {
+    const before: any = await run(
+      'query O($p: ID!) { maintenanceFormOptions(programId: $p) { pois } }',
+      {p: 'p1'},
+    );
+    assert.equal(before.errors, undefined);
+    // Served from the POI store, not a static list of its own: a seeded person
+    // is offered, and the old hardcoded names are gone.
+    assert.ok(before.data.maintenanceFormOptions.pois.includes('James Rivera'));
+    assert.ok(!before.data.maintenanceFormOptions.pois.includes('R. Blake'));
+
+    const created: any = await run(
+      'mutation C($p: ID!, $i: PoiInput!) { createPoi(programId: $p, input: $i) { reference } }',
+      {
+        p: 'p1',
+        i: {
+          name: 'Quick Created Person', personType: 'Regular Visitor',
+          disposition: 'ACTIVE', occurredAt: '2026-08-16T09:00:00.000Z',
+          contact: '(303) 555-0199', top1020: false, alias: null, gender: null,
+          age: null, race: null, weight: null, height: null,
+          physicalDescription: null, situation: null, contacts: [],
+          connectedIncidents: [], connectedMaintenance: [], connectedEquipment: [],
+        },
+      },
+    );
+    assert.equal(created.errors, undefined);
+
+    const after: any = await run(
+      'query O($p: ID!) { maintenanceFormOptions(programId: $p) { pois } }',
+      {p: 'p1'},
+    );
+    // unshifted onto the store, so the newest person leads the option list —
+    // this is the value AddPoiSheet hands back for the form to select.
+    assert.equal(after.data.maintenanceFormOptions.pois[0], 'Quick Created Person');
   }],
 
   // ---- Notifications ----

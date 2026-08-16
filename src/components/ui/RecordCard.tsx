@@ -14,7 +14,10 @@ export interface RecordCardField {
 interface Props {
   onPress?: () => void;
   idLabel: string;
-  /** Omitted by Equipment, whose card header is the serial alone. */
+  /**
+   * Omitted by Equipment, whose card header is the serial alone, and by
+   * Maintenance, which shows its type as a field row instead.
+   */
   typeLabel?: string;
   /** Caller renders its own <StatusPill>, so it owns the color/transition policy. */
   statusPill: React.ReactNode;

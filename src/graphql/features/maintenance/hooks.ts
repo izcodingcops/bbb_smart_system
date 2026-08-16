@@ -15,8 +15,6 @@ import {
 import {
   ADD_MAINTENANCE_COMMENT,
   ASSIGN_MAINTENANCE_REQUEST,
-  CREATE_MAINTENANCE_EQUIPMENT,
-  CREATE_MAINTENANCE_FIXTURE,
   CREATE_MAINTENANCE_REQUEST,
   DELETE_MAINTENANCE_COMMENT,
   DELETE_MAINTENANCE_REQUEST,
@@ -377,30 +375,3 @@ export function useDeleteMaintenanceCommentMutation() {
   };
 }
 
-export function useCreateMaintenanceEquipmentMutation() {
-  const [run, {loading}] = useMutation<{createMaintenanceEquipment: string}>(
-    CREATE_MAINTENANCE_EQUIPMENT,
-    MAINTENANCE_CONTEXT,
-  );
-  return {
-    mutate: async (name: string) => {
-      const result = await run({variables: {name}});
-      return result.data?.createMaintenanceEquipment ?? name;
-    },
-    isLoading: loading,
-  };
-}
-
-export function useCreateMaintenanceFixtureMutation() {
-  const [run, {loading}] = useMutation<{createMaintenanceFixture: string}>(
-    CREATE_MAINTENANCE_FIXTURE,
-    MAINTENANCE_CONTEXT,
-  );
-  return {
-    mutate: async (name: string, fixtureType: string) => {
-      const result = await run({variables: {name, fixtureType}});
-      return result.data?.createMaintenanceFixture ?? name;
-    },
-    isLoading: loading,
-  };
-}

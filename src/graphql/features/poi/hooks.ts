@@ -306,13 +306,24 @@ export interface PoiCreateResult {
   queued: boolean;
 }
 
+/**
+ * The person create reports its name on top of that. Other modules list people
+ * by name, so a caller that opened this form to fill such a field can select
+ * the result without re-reading the store. Interactions and updates have no
+ * equivalent, which is why this is a separate type rather than an optional
+ * field on the shared one.
+ */
+export interface PersonCreateResult extends PoiCreateResult {
+  name: string;
+}
+
 export function useCreatePoiMutation() {
   const programId = GetActiveProgramId();
   const [run, {loading}] = useMutation<{
     createPoi: {id: string; reference: string};
   }>(CREATE_POI, CREATE_CONTEXT);
   return {
-    mutate: async (values: PoiFormValues): Promise<PoiCreateResult> => {
+    mutate: async (values: PoiFormValues): Promise<PersonCreateResult> => {
       const result = await run({
         variables: {programId: programId ?? '', input: toWireInput(values)},
       });
@@ -320,6 +331,7 @@ export function useCreatePoiMutation() {
       return {
         id,
         reference: result.data?.createPoi.reference ?? '',
+        name: values.name,
         // offlineQueueLink stamps queued ids with this prefix (link.ts) —
         // the same convention useCreateFixtureMutation already uses.
         queued: id.startsWith('outbox_'),

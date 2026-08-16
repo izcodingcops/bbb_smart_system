@@ -9,13 +9,33 @@ import {theme} from '../../theme';
 
 interface Props {
   onClose: () => void;
-  /** Fires with the new incident's id, reference and queued state once created. */
-  onCreated: (created: {id: string; reference: string; queued: boolean}) => void;
+  /**
+   * Fires with the new incident's id, reference, queued state and the type and
+   * time it was filed under. Maintenance builds its Connected Elements option
+   * label from the latter two when it opens this form to fill that field.
+   */
+  onCreated: (created: {
+    id: string;
+    reference: string;
+    incidentType: string;
+    occurredAt: string;
+    queued: boolean;
+  }) => void;
   /** Set only when opened from within a Dispatch call's Add Incident flow. */
   dispatchReference?: string;
+  /**
+   * Seeds the Address field. Maintenance passes the address already on its own
+   * form, since an incident raised against a request happened where it did.
+   */
+  defaultAddress?: string;
 }
 
-const CreateIncidentScreen: React.FC<Props> = ({onClose, onCreated, dispatchReference}) => {
+const CreateIncidentScreen: React.FC<Props> = ({
+  onClose,
+  onCreated,
+  dispatchReference,
+  defaultAddress,
+}) => {
   const {data: options, isLoading, isError, refetch} = useIncidentFormOptionsQuery();
   const {mutate: create, isLoading: isSubmitting} = useCreateIncidentMutation();
 
@@ -60,7 +80,11 @@ const CreateIncidentScreen: React.FC<Props> = ({onClose, onCreated, dispatchRefe
         mode="create"
         reference={options.nextReference}
         options={options}
-        initialValues={buildInitialValues(options)}
+        initialValues={
+          defaultAddress
+            ? {...buildInitialValues(options), address: defaultAddress}
+            : buildInitialValues(options)
+        }
         submitLabel="Submit"
         isSubmitting={isSubmitting}
         onSubmit={submit}

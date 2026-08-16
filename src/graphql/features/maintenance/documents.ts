@@ -82,7 +82,6 @@ export const GET_MAINTENANCE_FORM_OPTIONS = gql`
       incidents
       pois
       equipment
-      fixtureTypes
     }
   }
 `;
@@ -192,14 +191,3 @@ export const DELETE_MAINTENANCE_COMMENT = gql`
   }
 `;
 
-export const CREATE_MAINTENANCE_FIXTURE = gql`
-  mutation CreateMaintenanceFixture($name: String!, $fixtureType: String!) {
-    createMaintenanceFixture(name: $name, fixtureType: $fixtureType)
-  }
-`;
-
-export const CREATE_MAINTENANCE_EQUIPMENT = gql`
-  mutation CreateMaintenanceEquipment($name: String!) {
-    createMaintenanceEquipment(name: $name)
-  }
-`;
