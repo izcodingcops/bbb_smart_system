@@ -73,7 +73,8 @@ const RecordCard: React.FC<Props> = ({
       style={[styles.card, compact && styles.cardCompact]}
       compact={compact}>
       <View style={styles.headerRow}>
-        <View style={styles.headerLeft}>
+        <View
+          style={[styles.headerLeft, subtitle !== undefined && styles.headerLeftStacked]}>
           {leading}
           {subtitle === undefined ? (
             <>
@@ -165,9 +166,12 @@ const styles = StyleSheet.create({
     gap: 6,
     flexShrink: 1,
   },
+  // The design's `.c2-idwrap` sits its avatar 12px from the text block, where
+  // the inline id + type variant above uses 6.
+  headerLeftStacked: {gap: 12},
   // Takes the row's spare width so a long name truncates rather than pushing
-  // the status pill off the card.
-  headerStack: {flex: 1, minWidth: 0, gap: 2},
+  // the status pill off the card. 3px is `.c2-nm`'s own gap.
+  headerStack: {flex: 1, minWidth: 0, gap: 3},
   id: {fontFamily: theme.fonts.black, fontSize: 16.5, color: '#181B1F'},
   subtitle: {
     fontFamily: theme.fonts.bold,

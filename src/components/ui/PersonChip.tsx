@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import {StyleProp, StyleSheet, Text, View, ViewStyle} from 'react-native';
 import {theme} from '../../theme';
 
 /**
@@ -19,12 +19,33 @@ export function initials(name: string): string {
     .toUpperCase();
 }
 
+/** The in-field chip, which is every caller's default. */
+const DEFAULT_SIZE = 20;
+
+/**
+ * Initials scale with the tile, but the smallest one is pinned: the design sets
+ * 9px on its 20px chip, which no proportional rule reaches without making the
+ * larger tiles too small.
+ */
+function fontSizeFor(size: number): number {
+  return size <= 22 ? 9 : Math.round(size * 0.35);
+}
+
 interface Props {
   name: string;
-  /** 'sm' is the 20px in-field chip; 'lg' the 34px card header / detail hero avatar. */
-  size?: 'sm' | 'lg';
+  /** Avatar diameter in px. Defaults to the 20px in-field chip. */
+  size?: number;
+  /**
+   * 'rounded' is the design's squircle, used for the card and hero avatars
+   * (`.c2-av` and `.rvh-av`); everything else is a circle. The radius is
+   * derived at ~0.3 of the size, which lands within a pixel of the design's
+   * own 14-at-46 and 16-at-56.
+   */
+  shape?: 'circle' | 'rounded';
   /** Avatar without the name beside it — a card's leading slot. */
   avatarOnly?: boolean;
+  /** Applied to the avatar itself, for a caller that needs to nudge spacing. */
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -33,17 +54,27 @@ interface Props {
  * The designs use stock photography that this app doesn't ship, so every
  * person reads as initials on a tinted disc. Lifted out of Observation
  * Reports, where it existed twice, because `initials`/`initialsOf` is already
- * copy-pasted across nine files here and RVP Site Visit needed a tenth.
- * Migrating the remaining copies (POI, Work, Equipment, Maintenance, Incident)
- * is deliberately left as its own change.
+ * copy-pasted across nine files here.
  */
-const PersonChip: React.FC<Props> = ({name, size = 'sm', avatarOnly = false}) => {
-  const large = size === 'lg';
+const PersonChip: React.FC<Props> = ({
+  name,
+  size = DEFAULT_SIZE,
+  shape = 'circle',
+  avatarOnly = false,
+  style,
+}) => {
+  // Held in a variable rather than written inline, so the style prop stays an
+  // identifier and doesn't trip react-native/no-inline-styles.
+  const avatarSize = {
+    width: size,
+    height: size,
+    borderRadius: shape === 'circle' ? size / 2 : Math.round(size * 0.3),
+  };
+  const textSize = {fontSize: fontSizeFor(size)};
+
   const avatar = (
-    <View style={[styles.avatar, large && styles.avatarLg]}>
-      <Text style={[styles.avatarText, large && styles.avatarTextLg]}>
-        {initials(name)}
-      </Text>
+    <View style={[styles.avatar, avatarSize, style]}>
+      <Text style={[styles.avatarText, textSize]}>{initials(name)}</Text>
     </View>
   );
 
@@ -64,25 +95,14 @@ const PersonChip: React.FC<Props> = ({name, size = 'sm', avatarOnly = false}) =>
 const styles = StyleSheet.create({
   row: {flexDirection: 'row', alignItems: 'center', gap: 6},
   avatar: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
     backgroundColor: theme.colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarLg: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    marginRight: 2,
-  },
   avatarText: {
     fontFamily: theme.fonts.black,
-    fontSize: 9,
     color: theme.colors.primary,
   },
-  avatarTextLg: {fontSize: 12},
   name: {
     fontFamily: theme.fonts.black,
     fontSize: 13,

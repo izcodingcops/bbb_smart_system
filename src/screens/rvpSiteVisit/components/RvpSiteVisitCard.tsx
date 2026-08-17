@@ -58,7 +58,14 @@ const RvpSiteVisitCard: React.FC<Props> = ({visit, onPress}) => {
   return (
     <RecordCard
       onPress={() => onPress(visit)}
-      leading={<PersonChip name={visit.operationManager} size="lg" avatarOnly />}
+      leading={
+        <PersonChip
+          name={visit.operationManager}
+          size={46}
+          shape="rounded"
+          avatarOnly
+        />
+      }
       idLabel={visit.operationManager}
       subtitle={visit.program}
       statusPill={

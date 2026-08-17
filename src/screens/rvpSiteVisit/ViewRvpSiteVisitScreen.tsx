@@ -145,7 +145,12 @@ const ViewRvpSiteVisitScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
       />
 
       <View style={styles.hero}>
-        <PersonChip name={visit.operationManager} size="lg" avatarOnly />
+        <PersonChip
+          name={visit.operationManager}
+          size={56}
+          shape="rounded"
+          avatarOnly
+        />
         <View style={styles.heroText}>
           <Text style={styles.heroName} numberOfLines={1}>
             {visit.operationManager}
