@@ -51,6 +51,7 @@ const RVP_DETAIL = `
   query D($id: ID!) {
     rvpSiteVisit(id: $id) {
       id reference visitType reasonForVisit images
+      reviewedBy updatedBy leaderPosition
       score scoreMax avgScore isComplete
       sections {
         key title subtitle score scoreMax
@@ -63,6 +64,67 @@ const RVP_DETAIL = `
     }
   }
 `;
+
+const RVP_FORM_OPTIONS = `
+  query O($p: ID!) {
+    rvpSiteVisitFormOptions(programId: $p) {
+      nextReference programs visitTypes operationManagers
+      sections {
+        key title subtitle textPrompts
+        groups { key title requiresTime requiresHow notesLabel questions { key prompt } }
+      }
+    }
+  }
+`;
+
+const RVP_CREATE = `
+  mutation C($p: ID!, $input: RvpSiteVisitInput!) {
+    createRvpSiteVisit(programId: $p, input: $input) {
+      id reference score scoreMax avgScore isComplete
+      visitType reasonForVisit leaderPosition reviewedBy updatedBy
+      sections { key score scoreMax groups { title notes howObserved answers { question answer note } } }
+    }
+  }
+`;
+
+const RVP_UPDATE = `
+  mutation U($id: ID!, $input: RvpSiteVisitInput!) {
+    updateRvpSiteVisit(id: $id, input: $input) {
+      id reference score scoreMax avgScore isComplete reviewedBy updatedBy updatedAt
+    }
+  }
+`;
+
+/** Answers the first `yes` questions YES and the next `no` questions NO. */
+function rvpAnswers(yes: number, no: number) {
+  const flat = RVP_SECTIONS.flatMap(s =>
+    s.groups.flatMap(g => g.questions.map(q => ({sectionKey: s.key, groupKey: g.key, key: q.key}))),
+  );
+  const picked = flat.slice(0, yes + no).map((q, i) => ({...q, answer: i < yes ? 'YES' : 'NO'}));
+  return RVP_SECTIONS.map(section => ({
+    key: section.key,
+    texts: section.textPrompts.map(() => ''),
+    groups: section.groups.map(group => ({
+      key: group.key,
+      observedFrom: group.requiresTime ? '2026-08-17T08:15:00' : '',
+      observedTo: group.requiresTime ? '2026-08-17T11:40:00' : '',
+      howObserved: group.requiresHow ? 'Walked the district.' : '',
+      notes: group.notesLabel ? 'Group note.' : '',
+      answers: picked
+        .filter(q => q.groupKey === group.key)
+        .map(q => ({key: q.key, answer: q.answer, note: 'note text', images: []})),
+    })),
+  }));
+}
+
+const RVP_INPUT_BASE = {
+  program: 'Louisville KY Training BID 1000',
+  visitType: 'FULL_SITE_VISIT',
+  operationManager: 'Michael Chou',
+  startDate: '2026-08-17T00:00:00',
+  endDate: '2026-08-17T00:00:00',
+  images: [],
+};
 
 const EQUIPMENT_INPUT = {
   serial: 'SN-SMOKE-01',
@@ -1980,6 +2042,138 @@ const checks: Check[] = [
     const r: any = await run(RVP_DETAIL, {id: 'nope'});
     assert.equal(r.errors, undefined);
     assert.equal(r.data.rvpSiteVisit, null);
+  }],
+
+  ['rvpSiteVisitFormOptions serves the reserved reference and the whole question tree', async () => {
+    const r: any = await run(RVP_FORM_OPTIONS, {p: 'p1'});
+    assert.equal(r.errors, undefined);
+    const o = r.data.rvpSiteVisitFormOptions;
+    assert.equal(o.nextReference, '#RVP-1189');
+    assert.equal(o.programs.length, 16);
+    assert.deepEqual(o.visitTypes, ['FULL_SITE_VISIT', 'DROP_IN_VISIT', 'SPECIAL_PURPOSE']);
+    assert.equal(o.operationManagers.length, 10);
+    assert.equal(o.sections.length, 10);
+    const served = o.sections.reduce(
+      (n: number, s: any) => n + s.groups.reduce((m: number, g: any) => m + g.questions.length, 0),
+      0,
+    );
+    assert.equal(served, RVP_TOTAL_QUESTIONS);
+    // Only the two Field Operations visibility groups ask for a window.
+    const timed = o.sections.flatMap((s: any) => s.groups).filter((g: any) => g.requiresTime);
+    assert.equal(timed.length, 2);
+  }],
+
+  ['createRvpSiteVisit scores from the answers, not from anything the client claims', async () => {
+    const created: any = await run(
+      RVP_CREATE,
+      {p: 'p1', input: {...RVP_INPUT_BASE, sections: rvpAnswers(40, 10)}},
+      null,
+    );
+    assert.equal(created.errors, undefined);
+    const d = created.data.createRvpSiteVisit;
+    assert.equal(d.reference, '#RVP-1189');
+    assert.equal(d.score, 40);
+    assert.equal(d.scoreMax, RVP_TOTAL_QUESTIONS);
+    assert.equal(d.avgScore, Math.round((40 / RVP_TOTAL_QUESTIONS) * 5 * 10) / 10);
+    // 50 of 74 answered, so it is not complete.
+    assert.equal(d.isComplete, false);
+    // The position comes from the roster, never from the input.
+    assert.equal(d.leaderPosition, 'Divisional Vice President');
+    assert.equal(d.reviewedBy, 'You');
+
+    // Section scores still sum to the whole, and the tail section is untouched.
+    assert.equal(d.sections.reduce((n: number, s: any) => n + s.score, 0), 40);
+    assert.equal(d.sections.reduce((n: number, s: any) => n + s.scoreMax, 0), RVP_TOTAL_QUESTIONS);
+    assert.equal(d.sections[d.sections.length - 1].groups[0].answers.length, 0);
+
+    await run('mutation D($id: ID!) { deleteRvpSiteVisit(id: $id) }', {id: d.id});
+  }],
+
+  ['createRvpSiteVisit drops a note on a Yes, a reason on a full visit, and an unknown key', async () => {
+    const sections = rvpAnswers(2, 1);
+    // A key the server's tree does not contain must not become a stored answer.
+    sections[0].groups[0].answers.push({key: 'field.g0.qNOPE', answer: 'YES', note: 'x', images: []});
+
+    const created: any = await run(RVP_CREATE, {
+      p: 'p1',
+      input: {...RVP_INPUT_BASE, reasonForVisit: 'should be dropped', sections},
+    });
+    assert.equal(created.errors, undefined);
+    const d = created.data.createRvpSiteVisit;
+
+    // FULL_SITE_VISIT carries no reason, whatever was sent.
+    assert.equal(d.reasonForVisit, '');
+    // Three real answers, the phantom key dropped.
+    const answers = d.sections.flatMap((s: any) => s.groups.flatMap((g: any) => g.answers));
+    assert.equal(answers.length, 3);
+    assert.equal(d.score, 2);
+    // Every answer carried 'note text'; only the No may keep it.
+    assert.ok(answers.every((a: any) => (a.answer === 'YES' ? a.note === '' : a.note === 'note text')));
+
+    // A group the tree says asks for nothing stores nothing, even though the
+    // input offered both.
+    const bare = d.sections.find((s: any) => s.key === 'hr').groups[0];
+    assert.equal(bare.howObserved, '');
+    assert.equal(bare.notes, '');
+
+    await run('mutation D($id: ID!) { deleteRvpSiteVisit(id: $id) }', {id: d.id});
+  }],
+
+  ['updateRvpSiteVisit re-scores and moves updatedBy, but never reviewedBy', async () => {
+    // Updates a record this check creates rather than a seeded one: the slice-1
+    // assertions pin rvp_1188's score and the list's length, and a check that
+    // quietly rewrites shared fixtures breaks whichever check runs after it.
+    const created: any = await run(RVP_CREATE, {
+      p: 'p1',
+      input: {...RVP_INPUT_BASE, sections: rvpAnswers(20, 5)},
+    });
+    const id = created.data.createRvpSiteVisit.id;
+    const reviewer = created.data.createRvpSiteVisit.reviewedBy;
+    assert.equal(created.data.createRvpSiteVisit.score, 20);
+
+    const updated: any = await run(RVP_UPDATE, {
+      id,
+      input: {...RVP_INPUT_BASE, sections: rvpAnswers(12, 3)},
+    });
+    assert.equal(updated.errors, undefined);
+    const u = updated.data.updateRvpSiteVisit;
+    assert.equal(u.id, id);
+    assert.equal(u.score, 12);
+    assert.equal(u.isComplete, false);
+    assert.equal(u.updatedBy, 'You');
+    // Who filed it, not who last touched it.
+    assert.equal(u.reviewedBy, reviewer);
+
+    await run('mutation D($id: ID!) { deleteRvpSiteVisit(id: $id) }', {id});
+
+    const missing: any = await run(RVP_UPDATE, {
+      id: 'nope',
+      input: {...RVP_INPUT_BASE, sections: rvpAnswers(1, 0)},
+    });
+    assert.ok(missing.errors, 'updating an unknown id should throw');
+  }],
+
+  ['deleteRvpSiteVisit removes the record and an unknown id throws', async () => {
+    const created: any = await run(RVP_CREATE, {
+      p: 'p1',
+      input: {...RVP_INPUT_BASE, visitType: 'DROP_IN_VISIT', reasonForVisit: 'Kept', sections: rvpAnswers(3, 0)},
+    });
+    const d = created.data.createRvpSiteVisit;
+    // A non-full visit does keep its reason.
+    assert.equal(d.reasonForVisit, 'Kept');
+
+    const before: any = await run(RVP_LIST, {p: 'p1'});
+    const gone: any = await run('mutation D($id: ID!) { deleteRvpSiteVisit(id: $id) }', {id: d.id});
+    assert.equal(gone.errors, undefined);
+    assert.equal(gone.data.deleteRvpSiteVisit, d.id);
+
+    const after: any = await run(RVP_LIST, {p: 'p1'});
+    assert.equal(after.data.rvpSiteVisits.length, before.data.rvpSiteVisits.length - 1);
+    const lookup: any = await run(RVP_DETAIL, {id: d.id});
+    assert.equal(lookup.data.rvpSiteVisit, null);
+
+    const missing: any = await run('mutation D($id: ID!) { deleteRvpSiteVisit(id: $id) }', {id: 'nope'});
+    assert.ok(missing.errors, 'deleting an unknown id should throw');
   }],
 
 ];

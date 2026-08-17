@@ -50,6 +50,7 @@ export const mockSchema = makeExecutableSchema({
       ...poiResolvers.Mutation,
       ...workLogResolvers.Mutation,
       ...notificationResolvers.Mutation,
+      ...rvpSiteVisitResolvers.Mutation,
     },
   },
 });

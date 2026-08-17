@@ -102,12 +102,95 @@ export const rvpSiteVisitTypeDefs = /* GraphQL */ `
     sections: [RvpAnsweredSection!]!
   }
 
-  # Read-only in this slice — the form options query and the create/update/
-  # delete mutations land with the form. (A comment rather than a description:
-  # type extensions don't accept one.)
+  type RvpQuestion {
+    "Stable key the form's answer maps use, e.g. 'field.g0.q2'."
+    key: String!
+    prompt: String!
+  }
+
+  type RvpQuestionGroup {
+    key: String!
+    title: String!
+    "Group asks for an observation window."
+    requiresTime: Boolean!
+    "Group asks the required 'How observed' note."
+    requiresHow: Boolean!
+    "Label of the group's free-text box. Empty when it has none."
+    notesLabel: String!
+    questions: [RvpQuestion!]!
+  }
+
+  type RvpSection {
+    key: String!
+    title: String!
+    subtitle: String!
+    groups: [RvpQuestionGroup!]!
+    textPrompts: [String!]!
+  }
+
+  type RvpSiteVisitFormOptions {
+    "Reserved when the form opens, e.g. '#RVP-1189'."
+    nextReference: String!
+    programs: [String!]!
+    visitTypes: [RvpVisitType!]!
+    operationManagers: [String!]!
+    sections: [RvpSection!]!
+  }
+
+  input RvpAnswerInput {
+    "Question key. An unrecognised key is dropped, not stored."
+    key: String!
+    answer: RvpAnswerValue!
+    "Ignored when the answer is YES."
+    note: String
+    images: [String!]
+  }
+
+  input RvpGroupInput {
+    key: String!
+    observedFrom: String
+    observedTo: String
+    howObserved: String
+    notes: String
+    answers: [RvpAnswerInput!]!
+  }
+
+  input RvpSectionInput {
+    key: String!
+    groups: [RvpGroupInput!]!
+    "By index, matching the section's own textPrompts."
+    texts: [String!]!
+  }
+
+  input RvpSiteVisitInput {
+    program: String!
+    visitType: RvpVisitType!
+    "Ignored when visitType is FULL_SITE_VISIT."
+    reasonForVisit: String
+    "The leader position is resolved from this server-side, never sent."
+    operationManager: String!
+    startDate: String!
+    endDate: String!
+    images: [String!]
+    sections: [RvpSectionInput!]!
+  }
+
   extend type Query {
     rvpSiteVisits(programId: ID!): [RvpSiteVisit!]!
     "Null for an unknown id, which the detail screen's error branch handles."
     rvpSiteVisit(id: ID!): RvpSiteVisitDetail
+    rvpSiteVisitFormOptions(programId: ID!): RvpSiteVisitFormOptions!
+  }
+
+  # Scores are never taken from the client: create and update recompute them
+  # from the submitted answers against the server's own question tree. (A
+  # comment rather than a description: type extensions don't accept one.)
+  extend type Mutation {
+    createRvpSiteVisit(
+      programId: ID!
+      input: RvpSiteVisitInput!
+    ): RvpSiteVisitDetail!
+    updateRvpSiteVisit(id: ID!, input: RvpSiteVisitInput!): RvpSiteVisitDetail!
+    deleteRvpSiteVisit(id: ID!): ID!
   }
 `;

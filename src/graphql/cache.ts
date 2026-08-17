@@ -66,5 +66,11 @@ export const cache = new InMemoryCache({
     RvpAnsweredGroup: {keyFields: false},
     RvpAnswer: {keyFields: false},
     RvpSectionText: {keyFields: false},
+    // The served question tree and the options object that wraps it — all
+    // id-less, all belonging to the query that asked for them.
+    RvpSiteVisitFormOptions: {keyFields: false},
+    RvpSection: {keyFields: false},
+    RvpQuestionGroup: {keyFields: false},
+    RvpQuestion: {keyFields: false},
   },
 });
