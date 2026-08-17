@@ -66,6 +66,14 @@ export const MOCK_MENU_ITEMS = [
     menu_group: 'modules',
   },
   {
+    id: 'off_hours',
+    menu_name: 'Off Hours Visit',
+    screen_name: 'OffHoursVisit',
+    menu_icon: 'off_hours',
+    position: 'more',
+    menu_group: 'modules',
+  },
+  {
     id: 'reference_documents',
     menu_name: 'Reference Documents',
     screen_name: 'ReferenceDocuments',

@@ -11,6 +11,7 @@ import {HomeStackParamList} from '../screens/home/routes';
 import {ObservationReportsStackParamList} from '../screens/observationReports/routes';
 import {ReferenceDocumentsStackParamList} from '../screens/referenceDocuments/routes';
 import {EquipmentStackParamList} from '../screens/equipment/routes';
+import {OffHoursVisitStackParamList} from '../screens/offHoursVisit/routes';
 
 /** Screen names as the menu reports them — the keys MainTabNavigator maps. */
 export const SCREEN = {
@@ -25,6 +26,7 @@ export const SCREEN = {
   poi: 'Poi',
   reports: 'Reports',
   referenceDocuments: 'ReferenceDocuments',
+  offHoursVisit: 'OffHoursVisit',
 } as const;
 
 /**
@@ -57,6 +59,9 @@ export type MainTabParamList = {
   [SCREEN.referenceDocuments]:
     | NavigatorScreenParams<ReferenceDocumentsStackParamList>
     | undefined;
+  [SCREEN.offHoursVisit]:
+    | NavigatorScreenParams<OffHoursVisitStackParamList>
+    | undefined;
 };
 
 export type TabNavigation = BottomTabNavigationProp<MainTabParamList>;
@@ -81,6 +86,7 @@ export const TAB_ROOT_ROUTE: Record<string, string> = {
   [SCREEN.poi]: 'PoiList',
   [SCREEN.reports]: 'ObservationReportsList',
   [SCREEN.referenceDocuments]: 'ReferenceDocumentsList',
+  [SCREEN.offHoursVisit]: 'OffHoursVisitList',
 };
 
 /**
@@ -113,6 +119,11 @@ export const CREATE_TARGET_BY_TILE: Record<string, ModuleTarget> = {
   // shared Add Requests sheet rather than a module-local create action, so
   // without this entry the screen is unreachable from anywhere.
   equipment: {tab: SCREEN.equipment, screen: 'EquipmentCreate'},
+  // Off Hours Visit is submit-only — its tab root is an empty state, so the
+  // sheet tile is the main way anyone reaches the form. The other two "Add New
+  // Reports" tiles stay unrouted: Observation Reports is deliberately
+  // read-only, and RVP Site Visit isn't ported yet.
+  off_hours: {tab: SCREEN.offHoursVisit, screen: 'OffHoursVisitCreate'},
 };
 
 export const createTargetForTile = (tileId: string): ModuleTarget | null =>
