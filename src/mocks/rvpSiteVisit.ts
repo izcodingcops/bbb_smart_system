@@ -637,6 +637,13 @@ interface RecordSeed {
  * The offsets are chosen so every Date Range bucket has a record in it (today,
  * yesterday, within 7 days, within 30 days) and every Score bucket has one too
  * (<2, 2-3, 3-5). Both are asserted in scripts/graphqlSmoke.ts.
+ *
+ * One inconsistency in the source is not reproduced: it orders its list by a
+ * separate `ts` field that disagrees with the clock times printed on those same
+ * rows — `#RVP-1188` leads at 10:11 AM while `#RVP-1187` sits below it at
+ * 11:52 AM. The design's card shows a date without a time, so the contradiction
+ * is invisible there. `updatedAt` is the only timestamp a record here carries,
+ * so it drives the sort, which puts those two the other way round.
  */
 const EXPLICIT_SEEDS: RecordSeed[] = [
   {reference: '#RVP-1188', operationManager: 'Waqas Ahmed', leaderPosition: 'Regional Vice President', program: 'Louisville KY Training BID 1000', reviewedBy: 'Ahsann Rizvi', updatedBy: 'Ahsann Rizvi', updatedDaysAgo: 0, updatedMinutes: 10 * 60 + 11, startDaysAgo: 0, endDaysAgo: 0, yesCount: 65},

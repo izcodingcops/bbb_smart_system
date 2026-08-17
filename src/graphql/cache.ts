@@ -59,5 +59,12 @@ export const cache = new InMemoryCache({
     ObservationReviewer: {keyFields: false},
     ObservationChecklistItem: {keyFields: false},
     ReferenceDocument: {keyFields: ['id']},
+    RvpSiteVisit: {keyFields: ['id']},
+    RvpSiteVisitDetail: {keyFields: ['id']},
+    // No id of their own; keep them embedded in the report they belong to.
+    RvpAnsweredSection: {keyFields: false},
+    RvpAnsweredGroup: {keyFields: false},
+    RvpAnswer: {keyFields: false},
+    RvpSectionText: {keyFields: false},
   },
 });
