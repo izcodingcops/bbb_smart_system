@@ -91,12 +91,31 @@ const AddRequestsSheet: React.FC<Props> = ({
   onClose,
   onClosed,
 }) => {
+  /**
+   * Picking a tile closes the sheet here rather than leaving that to the
+   * caller.
+   *
+   * Closing is not cosmetic: `useAddRequestTiles` only *queues* the tile in
+   * `onSelect` and acts on it from `onClosed`, once the modal is really gone —
+   * iOS drops an alert or a navigation presented while another modal is still
+   * up. So a caller that forgets to close leaves the tile queued and the tap
+   * looks like it did nothing at all, which is a silent failure rather than a
+   * visible one.
+   *
+   * Every caller currently sets the same state in its own `onSelect`, so this
+   * is a no-op for them — it just means the next one can't get it wrong.
+   */
+  const handlePress = (tileId: string) => {
+    onSelect(tileId);
+    onClose();
+  };
+
   const renderTile = (tile: AddRequestTile) => (
     <TouchableOpacity
       key={tile.id}
       style={styles.tile}
       activeOpacity={0.85}
-      onPress={() => onSelect(tile.id)}>
+      onPress={() => handlePress(tile.id)}>
       <View style={styles.tileIcon}>
         <tile.Icon size={22} color={TILE_ICON} />
       </View>
