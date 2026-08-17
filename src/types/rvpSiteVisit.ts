@@ -138,3 +138,54 @@ export interface RvpSiteVisitDetail extends RvpSiteVisit {
   images: string[];
   sections: RvpAnsweredSection[];
 }
+
+/* ------------------------------------------------------------------ *
+ * The form
+ * ------------------------------------------------------------------ */
+
+/** One section's working state. Keyed throughout, never positional. */
+export interface RvpSectionValues {
+  /** Question key → Yes/No. A key with no entry is unanswered. */
+  answers: Record<string, RvpAnswerValue>;
+  /**
+   * Question key → note text. Kept when the answer flips to Yes so that
+   * No → Yes → No shows it again; the wire mapper is what drops it.
+   */
+  notes: Record<string, string>;
+  /** Question key → local image URIs. */
+  images: Record<string, string[]>;
+  /** Group key → observation window, ISO-8601. */
+  observed: Record<string, {from: string; to: string}>;
+  /** Group key → 'How observed'. */
+  howObserved: Record<string, string>;
+  /** Group key → the group's own notes box. */
+  groupNotes: Record<string, string>;
+  /** Section text-prompt index → value. */
+  texts: Record<number, string>;
+  /** The user pressed Save Section at least once. */
+  saved: boolean;
+}
+
+export interface RvpSiteVisitFormValues {
+  program: string;
+  /** '' until picked — the form won't submit without one. */
+  visitType: RvpVisitType | '';
+  /** ISO-8601. */
+  startDate: string;
+  endDate: string;
+  operationManager: string;
+  /** Required for Drop In / Special Purpose; dropped at the wire otherwise. */
+  reasonForVisit: string;
+  images: string[];
+  /** Section key → that section's working state. */
+  sections: Record<string, RvpSectionValues>;
+}
+
+export interface RvpSiteVisitFormOptions {
+  /** Reserved when the form opens, e.g. '#RVP-1189'. */
+  nextReference: string;
+  programs: string[];
+  visitTypes: RvpVisitType[];
+  operationManagers: string[];
+  sections: RvpSection[];
+}

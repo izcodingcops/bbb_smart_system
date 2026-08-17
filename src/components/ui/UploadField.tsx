@@ -13,12 +13,19 @@ import {UploadIcon, XIcon} from '../icons';
 import {theme} from '../../theme';
 
 interface Props {
-  label: string;
+  /** Omitted in `compact` mode, which has no label row of its own. */
+  label?: string;
   /** Local file URIs. */
   uris: string[];
   onChange: (uris: string[]) => void;
   title?: string;
   subtitle?: string;
+  /**
+   * The design's `.uplmini`: a single 44px dashed button instead of the stacked
+   * dropzone, with no label and no subtitle. It sits directly under a question
+   * prompt, where a second label row would just repeat the question.
+   */
+  compact?: boolean;
 }
 
 /**
@@ -31,6 +38,7 @@ const UploadField: React.FC<Props> = ({
   onChange,
   title = 'Upload document',
   subtitle = 'PNG or JPG · up to 10 MB',
+  compact = false,
 }) => {
   const pick = async () => {
     const result = await launchImageLibrary({
@@ -54,18 +62,29 @@ const UploadField: React.FC<Props> = ({
   };
 
   return (
-    <View style={styles.field}>
-      <FieldLabel label={label} />
-      <TouchableOpacity
-        style={styles.dropzone}
-        activeOpacity={0.85}
-        onPress={pick}>
-        <View style={styles.dropIcon}>
-          <UploadIcon size={20} color={theme.colors.primary} />
-        </View>
-        <Text style={styles.dropTitle}>{title}</Text>
-        <Text style={styles.dropSubtitle}>{subtitle}</Text>
-      </TouchableOpacity>
+    <View style={compact ? styles.fieldCompact : styles.field}>
+      {label && !compact ? <FieldLabel label={label} /> : null}
+
+      {compact ? (
+        <TouchableOpacity
+          style={styles.dropzoneCompact}
+          activeOpacity={0.85}
+          onPress={pick}>
+          <UploadIcon size={17} color={theme.colors.primary} />
+          <Text style={styles.dropTitle}>{title}</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          style={styles.dropzone}
+          activeOpacity={0.85}
+          onPress={pick}>
+          <View style={styles.dropIcon}>
+            <UploadIcon size={20} color={theme.colors.primary} />
+          </View>
+          <Text style={styles.dropTitle}>{title}</Text>
+          <Text style={styles.dropSubtitle}>{subtitle}</Text>
+        </TouchableOpacity>
+      )}
 
       {uris.length > 0 ? (
         <View style={styles.thumbs}>
@@ -89,6 +108,20 @@ const UploadField: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
   field: {marginBottom: theme.spacing.lg},
+  fieldCompact: {marginTop: 11},
+  dropzoneCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    height: 44,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#99D3FF',
+    backgroundColor: theme.colors.primaryLight,
+  },
   dropzone: {
     alignItems: 'center',
     gap: theme.spacing.sm,

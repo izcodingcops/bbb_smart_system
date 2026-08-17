@@ -125,19 +125,34 @@ export const RVP_LEADER_POSITIONS = [
   'System Administration',
 ];
 
-/** The create form's Operation Manager list — the records draw their OMs from it. */
+/**
+ * The create form's Operation Manager roster, paired with the leader position
+ * the handoff's own report rows give each of them.
+ *
+ * The pairing exists because the create form asks for a manager but never for a
+ * position, while the list filters on one — so the position is looked up
+ * server-side rather than collected from, or trusted from, the client.
+ */
 export const RVP_OPERATION_MANAGERS = [
-  'Waqas Ahmed',
-  'Michael Chou',
-  'Teeya Barnes',
-  'Anthony Boone Jr.',
-  'Bridget Brownlee',
-  'Will Campbell',
-  'Tahira Cox',
-  'Kendrick Dale',
-  'Stan Der-by',
-  'Tina Durbin',
+  {name: 'Waqas Ahmed', leaderPosition: 'Regional Vice President'},
+  {name: 'Michael Chou', leaderPosition: 'Divisional Vice President'},
+  {name: 'Teeya Barnes', leaderPosition: 'Regional Vice President'},
+  {name: 'Anthony Boone Jr.', leaderPosition: 'Management'},
+  {name: 'Bridget Brownlee', leaderPosition: 'Divisional Vice President'},
+  {name: 'Will Campbell', leaderPosition: 'System Administration'},
+  {name: 'Tahira Cox', leaderPosition: 'Regional Vice President'},
+  {name: 'Kendrick Dale', leaderPosition: 'Management'},
+  {name: 'Stan Der-by', leaderPosition: 'Divisional Vice President'},
+  {name: 'Tina Durbin', leaderPosition: 'Regional Vice President'},
 ];
+
+/** Falls back rather than throwing — a manager can leave the roster. */
+export function rvpLeaderPositionFor(name: string): string {
+  return (
+    RVP_OPERATION_MANAGERS.find(m => m.name === name)?.leaderPosition ??
+    'Regional Vice President'
+  );
+}
 
 /* ------------------------------------------------------------------ *
  * The question tree — 74 questions across 10 sections
