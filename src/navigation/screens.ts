@@ -119,6 +119,9 @@ export const CREATE_TARGET_BY_TILE: Record<string, ModuleTarget> = {
   // shared Add Requests sheet rather than a module-local create action, so
   // without this entry the screen is unreachable from anywhere.
   equipment: {tab: SCREEN.equipment, screen: 'EquipmentCreate'},
+  // The other two "Add New Reports" tiles stay unrouted: Observation Reports is
+  // deliberately read-only, and Off Hours Visit lives on its own branch.
+  rvp_site_visit: {tab: SCREEN.rvpSiteVisit, screen: 'RvpSiteVisitCreate'},
 };
 
 export const createTargetForTile = (tileId: string): ModuleTarget | null =>

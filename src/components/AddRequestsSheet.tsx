@@ -4,9 +4,12 @@ import BottomSheet from './ui/BottomSheet';
 import {
   AlertTriangleIcon,
   BoxIcon,
+  ClockIcon,
   CubeIcon,
   LogInIcon,
   LogOutIcon,
+  MapPinIcon,
+  SearchIcon,
   SprayCanIcon,
   ToolsIcon,
   UserPlusIcon,
@@ -49,6 +52,24 @@ const SECTIONS: {key: string; title: string; tiles: AddRequestTile[]}[] = [
     tiles: [
       {id: 'check_in', label: 'Check In', Icon: LogInIcon},
       {id: 'check_out', label: 'Check Out', Icon: LogOutIcon},
+    ],
+  },
+  {
+    key: 'reports',
+    title: 'Add New Reports',
+    // Only RVP Site Visit routes anywhere. Observation Reports is a
+    // deliberately read-only archive, and Off Hours Visit is not on this
+    // branch — both fall through to useAddRequestTiles' "Coming soon" alert,
+    // the same way check_in / check_out already do. They ship because the
+    // section reads as incomplete with one tile in it, and because the source
+    // mockup draws all three.
+    //
+    // The off-hours branch adds a byte-similar section of its own; when the two
+    // meet, the resolution is to keep one copy and both routing entries.
+    tiles: [
+      {id: 'observation', label: 'Observation', Icon: SearchIcon},
+      {id: 'off_hours', label: 'Off Hours Visit', Icon: ClockIcon},
+      {id: 'rvp_site_visit', label: 'RVP Site Visit', Icon: MapPinIcon},
     ],
   },
 ];
