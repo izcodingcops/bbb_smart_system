@@ -203,7 +203,13 @@ const RvpSiteVisitScreen: React.FC = () => {
       <AddRequestsSheet
         visible={addOpen}
         shiftName={shiftName}
-        onSelect={queueTile}
+        // Closing here is what eventually runs the tile: queueTile only holds
+        // it, and flushTile fires from onClosed once the modal is really gone.
+        // Without this the sheet stays up and the tile never acts.
+        onSelect={tileId => {
+          setAddOpen(false);
+          queueTile(tileId);
+        }}
         onClose={() => setAddOpen(false)}
         onClosed={flushTile}
       />
