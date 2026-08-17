@@ -59,5 +59,11 @@ export const cache = new InMemoryCache({
     ObservationReviewer: {keyFields: false},
     ObservationChecklistItem: {keyFields: false},
     ReferenceDocument: {keyFields: ['id']},
+    OffHoursVisit: {keyFields: ['id']},
+    // No id of their own — the question set belongs to the query that asked
+    // for it, and an option belongs to its question.
+    OffHoursVisitFormOptions: {keyFields: false},
+    OffHoursQuestion: {keyFields: false},
+    OffHoursQuestionOption: {keyFields: false},
   },
 });

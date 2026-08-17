@@ -1841,6 +1841,117 @@ const checks: Check[] = [
     const bad: any = await run('mutation M($id: ID!) { markNotificationRead(id: $id) { id } }', {id: 'ntf_nope'});
     assert.ok(bad.errors);
   }],
+
+  // ---- Off Hours Visit ----
+  // Submit-only: there is no list or detail query to exercise, so these cover
+  // the form options payload and the scoring the create mutation applies.
+  ['off hours form options carry the zones, locked type and next reference', async () => {
+    const r: any = await run(
+      'query O($p: ID!) { offHoursVisitFormOptions(programId: $p) { nextReference type zones questions { key } } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.offHoursVisitFormOptions;
+    assert.equal(o.zones.length, 8);
+    assert.equal(o.zones[0], 'Downtown Louisville');
+    assert.equal(o.type, 'Off Hour Visit');
+    assert.equal(o.questions.length, 5);
+    // Seeds top out at 1186, so the first form opens on the design's own id.
+    assert.equal(o.nextReference, '#OHV-1187');
+  }],
+
+  ['off hours reveal rule survives the nested enum translation', async () => {
+    const r: any = await run(
+      'query O($p: ID!) { offHoursVisitFormOptions(programId: $p) { questions { key reveal numeric options { label points } } } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const qs = r.data.offHoursVisitFormOptions.questions;
+    const byKey = Object.fromEntries(qs.map((q: any) => [q.key, q]));
+    // 'yesNo'.toUpperCase() would be 'YESNO' and fail schema validation.
+    assert.equal(byKey.q2.reveal, 'YES_NO');
+    assert.equal(byKey.q1.reveal, 'ANY');
+    assert.equal(byKey.q4.numeric, true);
+    assert.equal(byKey.q1.numeric, false);
+    // Q5 is scored in reverse — more violations is a worse score.
+    assert.deepEqual(
+      byKey.q5.options.map((o: any) => o.points),
+      [4, 3, 2, 1, 0],
+    );
+  }],
+
+  ['createOffHoursVisit scores from the server option table, not the labels', async () => {
+    const m: any = await run(
+      'mutation C($p: ID!, $i: OffHoursVisitInput!) { createOffHoursVisit(programId: $p, input: $i) { reference rating ratingMax checklist { question answer points note images } } }',
+      {
+        p: 'p1',
+        i: {
+          capturedAt: '2026-08-17T19:25:00',
+          zone: 'RiverFront',
+          auditNotes: 'Quiet walk.',
+          answers: [
+            {key: 'q1', answer: '25% - 80%', note: 'Six of nine on point.', images: ['file:///a.jpg']},
+            {key: 'q2', answer: 'Yes', note: '', images: []},
+            {key: 'q3', answer: 'No', note: 'Blower off route.', images: []},
+            {key: 'q4', answer: '4', note: '', images: []},
+            {key: 'q5', answer: '1', note: 'Gloves missing.', images: []},
+          ],
+        },
+      },
+    );
+    assert.equal(m.errors, undefined);
+    const v = m.data.createOffHoursVisit;
+    assert.equal(v.reference, '#OHV-1187');
+    assert.equal(v.checklist.length, 5);
+    // 2 + 4 + 1 + 4 + 3 — note q5's '1' scores 3, so a build that read the
+    // label as the score would land on 12 here rather than 14.
+    assert.equal(v.rating, 14);
+    assert.equal(v.ratingMax, 20);
+    assert.equal(v.checklist[4].points, 3);
+    assert.equal(v.checklist[0].images.length, 1);
+    // Denormalized: the prompt is stored, not an index into the question list.
+    assert.ok(v.checklist[0].question.startsWith('What percentage of staff'));
+  }],
+
+  ['the off hours reference sequence advances after a create', async () => {
+    const r: any = await run(
+      'query O($p: ID!) { offHoursVisitFormOptions(programId: $p) { nextReference } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.data.offHoursVisitFormOptions.nextReference, '#OHV-1188');
+  }],
+
+  ['createOffHoursVisit drops unresolvable answers and coalesces nulls', async () => {
+    const m: any = await run(
+      'mutation C($p: ID!, $i: OffHoursVisitInput!) { createOffHoursVisit(programId: $p, input: $i) { reference rating ratingMax auditNotes checklist { answer note images } } }',
+      {
+        p: 'p1',
+        i: {
+          capturedAt: '2026-08-17T20:00:00',
+          zone: 'Beachmont',
+          answers: [
+            {key: 'q1', answer: 'More than 80%'},
+            // Neither of these resolves — an unknown question, and a label
+            // that isn't one of q2's options.
+            {key: 'q99', answer: 'Yes'},
+            {key: 'q2', answer: 'Maybe'},
+          ],
+        },
+      },
+    );
+    assert.equal(m.errors, undefined);
+    const v = m.data.createOffHoursVisit;
+    assert.equal(v.reference, '#OHV-1188');
+    assert.equal(v.checklist.length, 1);
+    assert.equal(v.checklist[0].answer, 'More than 80%');
+    // Nullable on the input, non-null on the record.
+    assert.equal(v.checklist[0].note, '');
+    assert.deepEqual(v.checklist[0].images, []);
+    assert.equal(v.auditNotes, '');
+    // ratingMax is the whole question set's ceiling, not the answered subset's.
+    assert.equal(v.rating, 4);
+    assert.equal(v.ratingMax, 20);
+  }],
 ];
 
 async function main() {

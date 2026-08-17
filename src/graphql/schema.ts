@@ -5,6 +5,7 @@ import {fixtureTypeDefs} from './features/fixture/schema';
 import {incidentTypeDefs} from './features/incident/schema';
 import {maintenanceTypeDefs} from './features/maintenance/schema';
 import {navigationTypeDefs} from './features/navigation/schema';
+import {offHoursVisitTypeDefs} from './features/offHoursVisit/schema';
 import {notificationTypeDefs} from './features/notification/schema';
 import {observationReportTypeDefs} from './features/observationReport/schema';
 import {poiTypeDefs} from './features/poi/schema';
@@ -41,4 +42,5 @@ export const typeDefs = [
   notificationTypeDefs,
   observationReportTypeDefs,
   referenceDocumentTypeDefs,
+  offHoursVisitTypeDefs,
 ].join('\n');

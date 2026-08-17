@@ -18,7 +18,8 @@ export type Feature =
   | 'workLog'
   | 'notification'
   | 'observationReport'
-  | 'referenceDocument';
+  | 'referenceDocument'
+  | 'offHoursVisit';
 
 export const API_TRANSPORT: Record<Feature, Transport> = {
   auth: 'mock',
@@ -34,6 +35,7 @@ export const API_TRANSPORT: Record<Feature, Transport> = {
   notification: 'mock',
   observationReport: 'mock',
   referenceDocument: 'mock',
+  offHoursVisit: 'mock',
 };
 
 export const GRAPHQL_ENDPOINT = 'https://REPLACE_ME/graphql';
