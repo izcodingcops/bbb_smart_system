@@ -23,9 +23,16 @@ interface Props {
   statusPill: React.ReactNode;
   /** Caller renders its own <KebabMenu>, or omits it entirely. */
   kebab?: React.ReactNode;
+  /**
+   * Second line *inside* the header, stacked under `idLabel` and indented past
+   * `leading` — the design's name-over-program block. Mutually exclusive with
+   * `typeLabel`, which sits beside the id on the same line instead.
+   */
+  subtitle?: string;
   /** Plain text renders with the shell's own dateLine style; pass a node
-   *  (e.g. an avatar + name row) for anything richer. */
-  dateLine: React.ReactNode;
+   *  (e.g. an avatar + name row) for anything richer. Omitted by cards whose
+   *  second line is a header `subtitle`. */
+  dateLine?: React.ReactNode;
   /** A fully-formed node, e.g. Maintenance's 'Queued · offline' row. */
   badge?: React.ReactNode;
   fields: RecordCardField[];
@@ -49,6 +56,7 @@ const RecordCard: React.FC<Props> = ({
   typeLabel,
   statusPill,
   kebab,
+  subtitle,
   dateLine,
   badge,
   fields,
@@ -67,12 +75,25 @@ const RecordCard: React.FC<Props> = ({
       <View style={styles.headerRow}>
         <View style={styles.headerLeft}>
           {leading}
-          <Text style={styles.id}>{idLabel}</Text>
-          {typeLabel ? (
-            <Text style={styles.type} numberOfLines={1}>
-              {typeLabel}
-            </Text>
-          ) : null}
+          {subtitle === undefined ? (
+            <>
+              <Text style={styles.id}>{idLabel}</Text>
+              {typeLabel ? (
+                <Text style={styles.type} numberOfLines={1}>
+                  {typeLabel}
+                </Text>
+              ) : null}
+            </>
+          ) : (
+            <View style={styles.headerStack}>
+              <Text style={styles.id} numberOfLines={1}>
+                {idLabel}
+              </Text>
+              <Text style={styles.subtitle} numberOfLines={1}>
+                {subtitle}
+              </Text>
+            </View>
+          )}
         </View>
         <View style={styles.headerRight}>
           {statusPill}
@@ -83,7 +104,7 @@ const RecordCard: React.FC<Props> = ({
       {typeof dateLine === 'string' ? (
         <Text style={styles.dateLine}>{dateLine}</Text>
       ) : (
-        dateLine
+        dateLine ?? null
       )}
 
       {badge}
@@ -144,7 +165,15 @@ const styles = StyleSheet.create({
     gap: 6,
     flexShrink: 1,
   },
+  // Takes the row's spare width so a long name truncates rather than pushing
+  // the status pill off the card.
+  headerStack: {flex: 1, minWidth: 0, gap: 2},
   id: {fontFamily: theme.fonts.black, fontSize: 16.5, color: '#181B1F'},
+  subtitle: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 12.5,
+    color: theme.colors.textOnGlassMuted,
+  },
   type: {
     flexShrink: 1,
     fontFamily: theme.fonts.bold,

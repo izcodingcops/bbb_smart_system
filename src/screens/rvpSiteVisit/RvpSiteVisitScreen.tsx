@@ -112,7 +112,14 @@ const RvpSiteVisitScreen: React.FC = () => {
   return (
     <ScreenBackground style={styles.root}>
       <SafeAreaView edges={['top']}>
-        <Text style={styles.title}>RVP Site Visits</Text>
+        <Text style={styles.title}>
+          RVP Site Visits
+          {/* The design pairs the title with a total. Its own is a hardcoded
+              148 against twelve rows; this counts what is actually loaded. */}
+          {isLoading ? null : (
+            <Text style={styles.titleCount}> ({visits.length})</Text>
+          )}
+        </Text>
 
         <ListSearchRow
           value={search}
@@ -276,6 +283,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.sm,
     paddingBottom: theme.spacing.md,
+  },
+  titleCount: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 19,
+    letterSpacing: 0,
+    color: theme.colors.textSecondary,
   },
   listContent: {
     paddingHorizontal: theme.spacing.lg,
