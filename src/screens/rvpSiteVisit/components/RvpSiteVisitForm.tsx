@@ -182,14 +182,31 @@ const RvpSiteVisitForm: React.FC<Props> = ({
   };
 
   const handleSectionChange = useCallback(
-    (key: string, next: RvpSectionValues) => {
+    (key: string, update: (current: RvpSectionValues) => RvpSectionValues) => {
       setTouched(true);
       setValues(current => ({
         ...current,
-        sections: {...current.sections, [key]: next},
+        sections: {
+          ...current.sections,
+          [key]: update(current.sections[key] ?? emptySection()),
+        },
       }));
     },
     [setTouched],
+  );
+
+  /**
+   * Bound to whichever section is open, and stable while it stays open — the
+   * editor's own per-question handlers depend on this identity, and through
+   * them so does QuestionBlock's memo.
+   */
+  const handleOpenSectionChange = useCallback(
+    (update: (current: RvpSectionValues) => RvpSectionValues) => {
+      if (openSection) {
+        handleSectionChange(openSection, update);
+      }
+    },
+    [openSection, handleSectionChange],
   );
 
   const handleOpenSection = useCallback((key: string) => {
@@ -269,12 +286,12 @@ const RvpSiteVisitForm: React.FC<Props> = ({
       <SectionEditor
         section={editing}
         values={values.sections[editing.key] ?? emptySection()}
-        onChange={next => handleSectionChange(editing.key, next)}
+        onChange={handleOpenSectionChange}
         onSave={() => {
-          handleSectionChange(editing.key, {
-            ...(values.sections[editing.key] ?? emptySection()),
+          handleSectionChange(editing.key, current => ({
+            ...current,
             saved: true,
-          });
+          }));
           setOpenSection(null);
         }}
         onClose={() => setOpenSection(null)}

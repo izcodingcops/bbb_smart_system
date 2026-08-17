@@ -21,7 +21,13 @@ import {theme} from '../../../theme';
 interface Props {
   section: RvpSection;
   values: RvpSectionValues;
-  onChange: (next: RvpSectionValues) => void;
+  /**
+   * Takes an updater rather than the next value. That is what lets the
+   * per-question handlers below stay `useCallback`-stable — closing over
+   * `values` would give all three a new identity on every keystroke and make
+   * QuestionBlock's memo inert across eighteen blocks.
+   */
+  onChange: (update: (current: RvpSectionValues) => RvpSectionValues) => void;
   onSave: () => void;
   onClose: () => void;
 }
@@ -60,37 +66,49 @@ const SectionEditor: React.FC<Props> = ({
   );
 
   /*
-   * One handler per map rather than a closure per question — QuestionBlock is
-   * memoized, and a fresh callback identity per render would make that memo
-   * inert across eighteen blocks.
+   * One handler per map rather than a closure per question, and each depends on
+   * `onChange` alone — never on `values`. That is what keeps their identity
+   * stable across keystrokes, which is what makes QuestionBlock's memo do
+   * anything at all when a section holds eighteen of them.
    */
   const handleAnswer = useCallback(
     (key: string, answer: RvpAnswerValue) => {
-      onChange({...values, answers: {...values.answers, [key]: answer}});
+      onChange(current => ({
+        ...current,
+        answers: {...current.answers, [key]: answer},
+      }));
     },
-    [onChange, values],
+    [onChange],
   );
 
   const handleNote = useCallback(
     (key: string, note: string) => {
-      onChange({...values, notes: {...values.notes, [key]: note}});
+      onChange(current => ({...current, notes: {...current.notes, [key]: note}}));
     },
-    [onChange, values],
+    [onChange],
   );
 
   const handleImages = useCallback(
     (key: string, images: string[]) => {
-      onChange({...values, images: {...values.images, [key]: images}});
+      onChange(current => ({
+        ...current,
+        images: {...current.images, [key]: images},
+      }));
     },
-    [onChange, values],
+    [onChange],
   );
 
   const handleObserved = (groupKey: string, half: 'from' | 'to', iso: string) => {
-    const current = values.observed[groupKey] ?? {from: '', to: ''};
-    onChange({
-      ...values,
-      observed: {...values.observed, [groupKey]: {...current, [half]: iso}},
-    });
+    onChange(current => ({
+      ...current,
+      observed: {
+        ...current.observed,
+        [groupKey]: {
+          ...(current.observed[groupKey] ?? {from: '', to: ''}),
+          [half]: iso,
+        },
+      },
+    }));
   };
 
   const tabs = useMemo(
@@ -191,10 +209,10 @@ const SectionEditor: React.FC<Props> = ({
                   placeholder="Add notes"
                   value={values.howObserved[group.key] ?? ''}
                   onChangeText={next =>
-                    onChange({
-                      ...values,
-                      howObserved: {...values.howObserved, [group.key]: next},
-                    })
+                    onChange(current => ({
+                      ...current,
+                      howObserved: {...current.howObserved, [group.key]: next},
+                    }))
                   }
                   multiline
                   numberOfLines={3}
@@ -227,10 +245,10 @@ const SectionEditor: React.FC<Props> = ({
                   placeholder="Add notes"
                   value={values.groupNotes[group.key] ?? ''}
                   onChangeText={next =>
-                    onChange({
-                      ...values,
-                      groupNotes: {...values.groupNotes, [group.key]: next},
-                    })
+                    onChange(current => ({
+                      ...current,
+                      groupNotes: {...current.groupNotes, [group.key]: next},
+                    }))
                   }
                   multiline
                   numberOfLines={4}
@@ -249,7 +267,10 @@ const SectionEditor: React.FC<Props> = ({
                 placeholder="Add notes"
                 value={values.texts[index] ?? ''}
                 onChangeText={next =>
-                  onChange({...values, texts: {...values.texts, [index]: next}})
+                  onChange(current => ({
+                    ...current,
+                    texts: {...current.texts, [index]: next},
+                  }))
                 }
                 multiline
                 numberOfLines={4}
