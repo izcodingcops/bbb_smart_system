@@ -2,16 +2,24 @@ import React, {useCallback, useMemo, useRef, useState} from 'react';
 import {View, Text, ScrollView, StyleSheet} from 'react-native';
 import ScreenBackground from '../../components/ScreenBackground';
 import {
+  ConfirmDialog,
   DetailScreenSkeleton,
   DetailTopBar,
   EmptyState,
   PersonChip,
   ScrollableTabs,
   StatusPill,
+  Toast,
 } from '../../components/ui';
 import {MapPinIcon, StarIcon} from '../../components/icons';
-import {useGetRvpSiteVisitQuery} from '../../graphql/features/rvpSiteVisit/hooks';
+import {
+  useDeleteRvpSiteVisitMutation,
+  useGetRvpSiteVisitQuery,
+  useRvpSiteVisitFormOptionsQuery,
+  useUpdateRvpSiteVisitMutation,
+} from '../../graphql/features/rvpSiteVisit/hooks';
 import BasicDetailsTab from './components/BasicDetailsTab';
+import RvpSiteVisitForm, {buildEditValues} from './components/RvpSiteVisitForm';
 import SectionTab from './components/SectionTab';
 import {theme} from '../../theme';
 
@@ -26,14 +34,26 @@ function truncLabel(label: string): string {
 interface Props {
   id: string;
   onClose: () => void;
+  /** Fires after the record is gone, so the list can pop back and toast. */
+  onDeleted: (reference: string) => void;
 }
 
-const ViewRvpSiteVisitScreen: React.FC<Props> = ({id, onClose}) => {
-  // Every hook runs before the early returns below — the loading, error and
-  // loaded branches must not change hook order between renders.
+const ViewRvpSiteVisitScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
+  // Every hook runs before the early returns below — the loading, error,
+  // editing and loaded branches must not change hook order between renders.
   const {data: visit, isLoading, isError, refetch} = useGetRvpSiteVisitQuery(id);
   const [activeTab, setActiveTab] = useState(BASIC_TAB);
+  const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [toast, setToast] = useState<{
+    title: string;
+    message: string;
+    variant?: 'success' | 'danger';
+  } | null>(null);
   const bodyRef = useRef<ScrollView>(null);
+  const {data: options} = useRvpSiteVisitFormOptionsQuery();
+  const {mutate: update, isLoading: isUpdating} = useUpdateRvpSiteVisitMutation();
+  const {mutate: remove} = useDeleteRvpSiteVisitMutation();
 
   const tabs = useMemo(
     () => [
@@ -86,6 +106,30 @@ const ViewRvpSiteVisitScreen: React.FC<Props> = ({id, onClose}) => {
     );
   }
 
+  // Edit replaces the detail in place, matching the design's slide-over.
+  if (editing && options) {
+    return (
+      <View style={styles.root}>
+        <RvpSiteVisitForm
+          mode="edit"
+          reference={visit.reference}
+          options={options}
+          initialValues={buildEditValues(options, visit)}
+          isSubmitting={isUpdating}
+          onSubmit={async values => {
+            await update(visit.id, values, options.sections);
+            setEditing(false);
+            setToast({
+              title: 'Report updated',
+              message: `${visit.reference} was saved successfully.`,
+            });
+          }}
+          onClose={() => setEditing(false)}
+        />
+      </View>
+    );
+  }
+
   const section = visit.sections.find(s => s.key === activeTab);
 
   return (
@@ -94,6 +138,10 @@ const ViewRvpSiteVisitScreen: React.FC<Props> = ({id, onClose}) => {
         title="RVP Site Visit"
         reference={visit.reference}
         onBack={onClose}
+        // Held back until the form options land, or Edit would open onto
+        // nothing — the same guard the editing branch above applies.
+        onEdit={options ? () => setEditing(true) : undefined}
+        onDelete={() => setConfirmDelete(true)}
       />
 
       <View style={styles.hero}>
@@ -134,6 +182,46 @@ const ViewRvpSiteVisitScreen: React.FC<Props> = ({id, onClose}) => {
           <SectionTab section={section} />
         )}
       </ScrollView>
+
+      <ConfirmDialog
+        visible={confirmDelete}
+        title="Delete this report?"
+        message={
+          <Text>
+            This can't be undone.{' '}
+            <Text style={styles.bold}>{visit.operationManager}</Text>{' '}
+            (Operations Manager) will be notified that report{' '}
+            <Text style={styles.bold}>{visit.reference}</Text> was deleted.
+          </Text>
+        }
+        confirmLabel="Delete report"
+        icon="warning"
+        iconTone="danger"
+        confirmTone="danger"
+        onConfirm={async () => {
+          try {
+            await remove(visit.id);
+            setConfirmDelete(false);
+            onDeleted(visit.reference);
+          } catch {
+            setConfirmDelete(false);
+            setToast({
+              title: "Couldn't delete",
+              message: `${visit.reference} is still there. Check your connection and try again.`,
+              variant: 'danger',
+            });
+          }
+        }}
+        onCancel={() => setConfirmDelete(false)}
+      />
+
+      <Toast
+        visible={toast !== null}
+        title={toast?.title ?? ''}
+        message={toast?.message ?? ''}
+        variant={toast?.variant}
+        onDismiss={() => setToast(null)}
+      />
     </ScreenBackground>
   );
 };
@@ -183,6 +271,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#EEF0F2',
   },
   body: {paddingBottom: 40},
+  bold: {fontFamily: theme.fonts.black},
 });
 
 export default ViewRvpSiteVisitScreen;

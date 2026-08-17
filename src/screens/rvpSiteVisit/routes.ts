@@ -7,10 +7,7 @@
 /**
  * Toast handed back to the list when an update or delete finishes.
  *
- * Declared now because the list route's params reference it. Nothing produces
- * one until the create/edit/delete flows land — but the param has to exist and
- * be consumed from the start, or the guard that clears it gets added later as
- * an afterthought.
+ * Create hands one back on submit, and View on delete.
  */
 export interface RvpSiteVisitToast {
   title: string;
@@ -23,4 +20,9 @@ export interface RvpSiteVisitToast {
 export type RvpSiteVisitStackParamList = {
   RvpSiteVisitList: {toast?: RvpSiteVisitToast} | undefined;
   RvpSiteVisitView: {id: string};
+  /**
+   * `origin` is the tab the create was asked for from, so closing it unsaved
+   * can go back there — the trip into this module never really happened.
+   */
+  RvpSiteVisitCreate: {origin?: string} | undefined;
 };
