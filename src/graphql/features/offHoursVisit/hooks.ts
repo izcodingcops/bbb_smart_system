@@ -76,10 +76,29 @@ export function useOffHoursVisitFormOptionsQuery() {
 }
 
 /**
- * Maps the form's per-question maps into the wire's answer list, dropping a
- * description the current answer hides — the same rule the form applies when
- * deciding whether to render the box. Questions the user hasn't answered are
- * left out entirely; the form won't submit until all of them are.
+ * Whether a question's description box is showing, given the current answer:
+ * `any` reveals it on any option, `yesNo` only on a No.
+ *
+ * Exported because two places have to agree on it — the form decides whether
+ * to render the box, and the mapper below decides whether to send what's in
+ * it. Hiding the box deliberately leaves the typed text in form state, so
+ * flipping No → Yes → No shows it again rather than blanking it; dropping it
+ * here is what stops a hidden note reaching the store.
+ */
+export function isNoteVisible(
+  question: OffHoursQuestion,
+  answer: string,
+): boolean {
+  if (!answer) {
+    return false;
+  }
+  return question.reveal === 'any' || answer === 'No';
+}
+
+/**
+ * Maps the form's per-question maps into the wire's answer list. Questions the
+ * user hasn't answered are left out entirely; the form won't submit until all
+ * of them are.
  */
 function toWireAnswers(
   values: OffHoursVisitFormValues,
@@ -90,12 +109,13 @@ function toWireAnswers(
     if (!answer) {
       return [];
     }
-    const noteVisible = question.reveal === 'any' || answer === 'No';
     return [
       {
         key: question.key,
         answer,
-        note: noteVisible ? values.notes[question.key] ?? '' : '',
+        note: isNoteVisible(question, answer)
+          ? values.notes[question.key] ?? ''
+          : '',
         images: values.images[question.key] ?? [],
       },
     ];
