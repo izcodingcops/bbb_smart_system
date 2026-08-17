@@ -12,6 +12,7 @@ import {ObservationReportsStackParamList} from '../screens/observationReports/ro
 import {ReferenceDocumentsStackParamList} from '../screens/referenceDocuments/routes';
 import {EquipmentStackParamList} from '../screens/equipment/routes';
 import {OffHoursVisitStackParamList} from '../screens/offHoursVisit/routes';
+import {ShiftNotesStackParamList} from '../screens/shiftNotes/routes';
 
 /** Screen names as the menu reports them — the keys MainTabNavigator maps. */
 export const SCREEN = {
@@ -27,6 +28,7 @@ export const SCREEN = {
   reports: 'Reports',
   referenceDocuments: 'ReferenceDocuments',
   offHoursVisit: 'OffHoursVisit',
+  shiftNotes: 'ShiftNotes',
 } as const;
 
 /**
@@ -62,6 +64,7 @@ export type MainTabParamList = {
   [SCREEN.offHoursVisit]:
     | NavigatorScreenParams<OffHoursVisitStackParamList>
     | undefined;
+  [SCREEN.shiftNotes]: NavigatorScreenParams<ShiftNotesStackParamList> | undefined;
 };
 
 export type TabNavigation = BottomTabNavigationProp<MainTabParamList>;
@@ -87,6 +90,7 @@ export const TAB_ROOT_ROUTE: Record<string, string> = {
   [SCREEN.reports]: 'ObservationReportsList',
   [SCREEN.referenceDocuments]: 'ReferenceDocumentsList',
   [SCREEN.offHoursVisit]: 'OffHoursVisitList',
+  [SCREEN.shiftNotes]: 'ShiftNotesList',
 };
 
 /**
@@ -124,6 +128,9 @@ export const CREATE_TARGET_BY_TILE: Record<string, ModuleTarget> = {
   // Reports" tiles stay unrouted: Observation Reports is deliberately
   // read-only, and RVP Site Visit isn't ported yet.
   off_hours: {tab: SCREEN.offHoursVisit, screen: 'OffHoursVisitCreate'},
+  // Same shape as off_hours: submit-only, so its tab root is an empty state and
+  // the sheet tile is the main way anyone reaches the form.
+  shift_notes: {tab: SCREEN.shiftNotes, screen: 'ShiftNotesCreate'},
 };
 
 export const createTargetForTile = (tileId: string): ModuleTarget | null =>
