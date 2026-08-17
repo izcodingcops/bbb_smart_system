@@ -206,6 +206,7 @@ const DropdownField: React.FC<Props> = ({
 
 interface MultiProps {
   label: string;
+  required?: boolean;
   placeholder: string;
   options: string[];
   values: string[];
@@ -214,6 +215,18 @@ interface MultiProps {
   /** Label for the panel's create button, e.g. 'Add Incident'. */
   addLabel?: string;
   onRequestAdd?: () => void;
+  /**
+   * Replaces the placeholder in the control once something is picked, e.g.
+   * '3 selected'. Omit to keep showing the placeholder however many are
+   * selected — what every caller before Shift Notes expects, since the chips
+   * underneath already say what was picked.
+   */
+  summarize?: (values: string[], options: string[]) => string;
+  /**
+   * Adds a divided all-or-nothing row above the options, e.g. 'Select all'.
+   * Omit for no such row.
+   */
+  selectAllLabel?: string;
 }
 
 /**
@@ -223,6 +236,7 @@ interface MultiProps {
  */
 export const MultiDropdownField: React.FC<MultiProps> = ({
   label,
+  required = false,
   placeholder,
   options,
   values,
@@ -230,11 +244,14 @@ export const MultiDropdownField: React.FC<MultiProps> = ({
   searchable,
   addLabel,
   onRequestAdd,
+  summarize,
+  selectAllLabel,
 }) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const canSearch = searchable ?? options.length > SEARCH_THRESHOLD;
   const shown = filterOptions(options, query);
+  const allSelected = options.length > 0 && values.length === options.length;
 
   const close = () => {
     setOpen(false);
@@ -249,15 +266,24 @@ export const MultiDropdownField: React.FC<MultiProps> = ({
     );
   };
 
+  // Against `options`, never the filtered `shown` — otherwise a search term
+  // silently redefines what "all" means, and clearing it leaves the row
+  // claiming everything is selected when only the matches were.
+  const toggleAll = () => onChange(allSelected ? [] : [...options]);
+
+  const summary = summarize && values.length ? summarize(values, options) : '';
+
   return (
     <View style={styles.field}>
-      <FieldLabel label={label} />
+      <FieldLabel label={label} required={required} />
       <TouchableOpacity
         style={[styles.control, open && styles.controlOpen]}
         activeOpacity={0.85}
         onPress={() => (open ? close() : setOpen(true))}>
-        <Text style={[styles.value, styles.placeholder]} numberOfLines={1}>
-          {placeholder}
+        <Text
+          style={[styles.value, !summary && styles.placeholder]}
+          numberOfLines={1}>
+          {summary || placeholder}
         </Text>
         <View style={open ? styles.chevOpen : undefined}>
           <ChevronDownIcon size={19} />
@@ -311,6 +337,20 @@ export const MultiDropdownField: React.FC<MultiProps> = ({
                 autoCorrect={false}
               />
             </View>
+          ) : null}
+
+          {selectAllLabel ? (
+            <TouchableOpacity
+              style={[styles.opt, styles.optAll]}
+              activeOpacity={0.7}
+              onPress={toggleAll}>
+              <Text style={[styles.optLabel, styles.optAllLabel]}>
+                {selectAllLabel}
+              </Text>
+              <View style={[styles.box, allSelected && styles.boxChecked]}>
+                {allSelected ? <CheckIcon size={13} /> : null}
+              </View>
+            </TouchableOpacity>
           ) : null}
 
           {shown.length === 0 ? (
@@ -498,6 +538,16 @@ const styles = StyleSheet.create({
     fontSize: 14.5,
     color: theme.colors.text,
   },
+  // Sits outside the options' own scroll, divided from them — it acts on the
+  // whole list, so it must not scroll away with the part of it in view.
+  optAll: {
+    marginHorizontal: 6,
+    marginTop: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF0F2',
+    borderRadius: 0,
+  },
+  optAllLabel: {fontFamily: theme.fonts.black},
   radio: {
     width: 20,
     height: 20,
