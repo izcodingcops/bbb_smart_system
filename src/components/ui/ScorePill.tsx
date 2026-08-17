@@ -1,8 +1,13 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
-import StarIcon from '../../../components/icons/StarIcon';
-import {theme} from '../../../theme';
+import StarIcon from '../icons/StarIcon';
+import {theme} from '../../theme';
 
+/**
+ * Score tiers. The same thresholds appear in two independent handoffs — the
+ * Observation Reports mockup and RVP Site Visit's `p2-schi` / `p2-scmid` /
+ * `p2-sclo` — so they are the design language, not one screen's choice.
+ */
 const TIER = [
   {min: 3, bg: '#F6FFED', fg: '#389E0D'},
   {min: 2, bg: '#FFFBE6', fg: '#AD8B00'},
