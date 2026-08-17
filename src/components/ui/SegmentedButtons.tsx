@@ -70,8 +70,13 @@ const styles = StyleSheet.create({
   },
   // Grow to fill the line, but never shrink a label below its own width —
   // that is what lets a long option push the next one onto a new row.
+  //
+  // `flex: 0` resets the base rule's `flex: 1` to grow 0 / shrink 0 / basis
+  // auto, and flexGrow puts the growth back. Setting `flex: undefined` would
+  // leave it to how the style array flattens an undefined key, which is not
+  // worth relying on.
   buttonWrap: {
-    flex: undefined,
+    flex: 0,
     flexGrow: 1,
     flexBasis: 'auto',
     paddingHorizontal: 13,
