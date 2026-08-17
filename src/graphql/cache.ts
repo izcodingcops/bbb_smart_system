@@ -65,5 +65,8 @@ export const cache = new InMemoryCache({
     OffHoursVisitFormOptions: {keyFields: false},
     OffHoursQuestion: {keyFields: false},
     OffHoursQuestionOption: {keyFields: false},
+    ShiftNote: {keyFields: ['id']},
+    // No id of its own — the options belong to the query that asked for them.
+    ShiftNoteFormOptions: {keyFields: false},
   },
 });
