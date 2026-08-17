@@ -7,17 +7,11 @@ import {
 /** Locked Type — this form only ever records off-hours visits. */
 export const OFF_HOURS_TYPE = 'Off Hour Visit';
 
-/** The design's zone list, verbatim and in its own order. */
-export const OFF_HOURS_ZONES = [
-  'Downtown Louisville',
-  'RiverFront',
-  'Waterfront Park',
-  'Southern Indiana',
-  'South IN 2',
-  'Beachmont',
-  'testzone2222',
-  'map box',
-];
+/*
+ * The zone list this module used to own now lives in
+ * `graphql/features/shared/options.ts` as `PROGRAM_ZONES` — Shift Notes serves
+ * the same eight zones, and one list with two consumers beats two that drift.
+ */
 
 /**
  * The checklist, ported verbatim from the design's own `QS` — prompts,
