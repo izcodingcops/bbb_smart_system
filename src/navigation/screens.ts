@@ -11,6 +11,7 @@ import {HomeStackParamList} from '../screens/home/routes';
 import {ObservationReportsStackParamList} from '../screens/observationReports/routes';
 import {ReferenceDocumentsStackParamList} from '../screens/referenceDocuments/routes';
 import {EquipmentStackParamList} from '../screens/equipment/routes';
+import {RvpSiteVisitStackParamList} from '../screens/rvpSiteVisit/routes';
 
 /** Screen names as the menu reports them — the keys MainTabNavigator maps. */
 export const SCREEN = {
@@ -25,6 +26,7 @@ export const SCREEN = {
   poi: 'Poi',
   reports: 'Reports',
   referenceDocuments: 'ReferenceDocuments',
+  rvpSiteVisit: 'RvpSiteVisit',
 } as const;
 
 /**
@@ -57,6 +59,9 @@ export type MainTabParamList = {
   [SCREEN.referenceDocuments]:
     | NavigatorScreenParams<ReferenceDocumentsStackParamList>
     | undefined;
+  [SCREEN.rvpSiteVisit]:
+    | NavigatorScreenParams<RvpSiteVisitStackParamList>
+    | undefined;
 };
 
 export type TabNavigation = BottomTabNavigationProp<MainTabParamList>;
@@ -81,6 +86,7 @@ export const TAB_ROOT_ROUTE: Record<string, string> = {
   [SCREEN.poi]: 'PoiList',
   [SCREEN.reports]: 'ObservationReportsList',
   [SCREEN.referenceDocuments]: 'ReferenceDocumentsList',
+  [SCREEN.rvpSiteVisit]: 'RvpSiteVisitList',
 };
 
 /**
