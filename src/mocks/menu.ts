@@ -98,6 +98,14 @@ export const MOCK_MENU_ITEMS = [
     menu_group: 'modules',
   },
   {
+    id: 'ambassadors',
+    menu_name: 'Ambassadors',
+    screen_name: 'Ambassadors',
+    menu_icon: 'ambassadors',
+    position: 'more',
+    menu_group: 'modules',
+  },
+  {
     id: 'change_program',
     menu_name: 'Change Program',
     screen_name: 'ChangeProgram',
