@@ -16,7 +16,8 @@ import ScreenBackground from '../components/ScreenBackground';
 import ErrorBoundary from '../components/ErrorBoundary';
 import {useGetMenuItemsQuery} from '../graphql/features/navigation/hooks';
 import {useAppDispatch} from '../redux/store';
-import {SetupIntent, setSetupIntent} from '../redux/ui/slice';
+import {SetupIntent, setSetupIntent, clearGlobalToast} from '../redux/ui/slice';
+import {GetGlobalToast} from '../redux/ui/selectors';
 import {SCREEN, TAB_ROOT_ROUTE} from './screens';
 import {endShift} from '../redux/shift/slice';
 import {GetActiveProgram} from '../redux/auth/selectors';
@@ -25,7 +26,7 @@ import {MenuItem} from '../types/navigation';
 import {theme} from '../theme';
 import HomeNavigator from '../screens/home/HomeNavigator';
 import MoreSheet from '../components/MoreSheet';
-import {ConfirmDialog} from '../components/ui';
+import {ConfirmDialog, Toast} from '../components/ui';
 import {
   AlertTriangleIcon,
   GridIcon,
@@ -377,6 +378,8 @@ const AppTabBar: React.FC<TabBarProps> = ({state, navigation, menuItems}) => {
 
 const MainTabNavigator: React.FC = () => {
   const {data: menuItems = [], isLoading} = useGetMenuItemsQuery();
+  const dispatch = useAppDispatch();
+  const globalToast = GetGlobalToast();
 
   // Briefly on show while the menu loads after a shift starts, so it uses the
   // app's background and type rather than bare text on white.
@@ -420,6 +423,20 @@ const MainTabNavigator: React.FC = () => {
           />
         ))}
       </Tab.Navigator>
+
+      {/*
+       * Mounted here rather than in a module's own screen so it survives a
+       * cross-tab handoff — e.g. Off Hours Visit / Shift Notes returning to
+       * `origin` after a successful submit. A toast tied to one screen's
+       * route params would unmount with it the instant the tab switches.
+       */}
+      <Toast
+        visible={globalToast !== null}
+        title={globalToast?.title ?? ''}
+        message={globalToast?.message ?? ''}
+        variant={globalToast?.variant}
+        onDismiss={() => dispatch(clearGlobalToast())}
+      />
     </SafeAreaView>
   );
 };

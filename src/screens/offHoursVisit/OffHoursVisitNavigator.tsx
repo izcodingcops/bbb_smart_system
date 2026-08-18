@@ -6,6 +6,8 @@ import {
 import {OffHoursVisitStackParamList} from './routes';
 import OffHoursVisitScreen from './OffHoursVisitScreen';
 import OffHoursVisitCreateScreen from './OffHoursVisitCreateScreen';
+import {useAppDispatch} from '../../redux/store';
+import {showGlobalToast} from '../../redux/ui/slice';
 import {theme} from '../../theme';
 
 const Stack = createNativeStackNavigator<OffHoursVisitStackParamList>();
@@ -22,6 +24,7 @@ type CreateProps = NativeStackScreenProps<
  */
 const CreateRoute: React.FC<CreateProps> = ({navigation, route}) => {
   const origin = route.params?.origin;
+  const dispatch = useAppDispatch();
   return (
     <OffHoursVisitCreateScreen
       onClose={() => {
@@ -34,12 +37,27 @@ const CreateRoute: React.FC<CreateProps> = ({navigation, route}) => {
         }
       }}
       onCreated={() => {
-        navigation.popTo('OffHoursVisitList', {
-          toast: {
-            title: 'Off Hours Visit report saved successfully',
-            message: 'You can view it on your portal.',
-          },
-        });
+        if (origin) {
+          // Leaving the tab entirely, so the List screen's own toast (tied to
+          // its route params) would never be seen — show it globally instead
+          // and return to wherever the create was actually opened from,
+          // rather than stranding the user on this tab's empty state.
+          dispatch(
+            showGlobalToast({
+              title: 'Off Hours Visit report saved successfully',
+              message: 'You can view it on your portal.',
+            }),
+          );
+          navigation.popTo('OffHoursVisitList');
+          navigation.getParent()?.navigate(origin as never);
+        } else {
+          navigation.popTo('OffHoursVisitList', {
+            toast: {
+              title: 'Off Hours Visit report saved successfully',
+              message: 'You can view it on your portal.',
+            },
+          });
+        }
       }}
     />
   );
