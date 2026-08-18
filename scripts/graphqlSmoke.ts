@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {graphql} from 'graphql';
 import {mockSchema} from '../src/graphql/mockSchema';
 import {DATE_RANGE_OPTIONS, matchesDateRange} from '../src/utils/dateRange';
+import {RVP_SECTIONS, RVP_TOTAL_QUESTIONS} from '../src/mocks/rvpSiteVisit';
 
 type Check = [name: string, run: () => Promise<void> | void];
 
@@ -35,6 +36,95 @@ const EQUIPMENT_DETAIL_SHAPE = `
   fuel images incidents personsOfInterest maintenance
   upkeeps { id }
 `;
+
+const RVP_LIST = `
+  query R($p: ID!) {
+    rvpSiteVisits(programId: $p) {
+      id reference program operationManager leaderPosition
+      startDate endDate reviewedBy updatedBy updatedAt
+      score scoreMax avgScore isComplete
+    }
+  }
+`;
+
+const RVP_DETAIL = `
+  query D($id: ID!) {
+    rvpSiteVisit(id: $id) {
+      id reference visitType reasonForVisit images
+      reviewedBy updatedBy leaderPosition
+      score scoreMax avgScore isComplete
+      sections {
+        key title subtitle score scoreMax
+        texts { label value }
+        groups {
+          title observedFrom observedTo howObserved notesLabel notes
+          answers { question answer note images }
+        }
+      }
+    }
+  }
+`;
+
+const RVP_FORM_OPTIONS = `
+  query O($p: ID!) {
+    rvpSiteVisitFormOptions(programId: $p) {
+      nextReference programs visitTypes operationManagers
+      sections {
+        key title subtitle textPrompts
+        groups { key title requiresTime requiresHow notesLabel questions { key prompt } }
+      }
+    }
+  }
+`;
+
+const RVP_CREATE = `
+  mutation C($p: ID!, $input: RvpSiteVisitInput!) {
+    createRvpSiteVisit(programId: $p, input: $input) {
+      id reference score scoreMax avgScore isComplete
+      visitType reasonForVisit leaderPosition reviewedBy updatedBy
+      sections { key score scoreMax groups { title notes howObserved answers { question answer note } } }
+    }
+  }
+`;
+
+const RVP_UPDATE = `
+  mutation U($id: ID!, $input: RvpSiteVisitInput!) {
+    updateRvpSiteVisit(id: $id, input: $input) {
+      id reference score scoreMax avgScore isComplete reviewedBy updatedBy updatedAt
+    }
+  }
+`;
+
+/** Answers the first `yes` questions YES and the next `no` questions NO. */
+function rvpAnswers(yes: number, no: number) {
+  const flat = RVP_SECTIONS.flatMap(s =>
+    s.groups.flatMap(g => g.questions.map(q => ({sectionKey: s.key, groupKey: g.key, key: q.key}))),
+  );
+  const picked = flat.slice(0, yes + no).map((q, i) => ({...q, answer: i < yes ? 'YES' : 'NO'}));
+  return RVP_SECTIONS.map(section => ({
+    key: section.key,
+    texts: section.textPrompts.map(() => ''),
+    groups: section.groups.map(group => ({
+      key: group.key,
+      observedFrom: group.requiresTime ? '2026-08-17T08:15:00' : '',
+      observedTo: group.requiresTime ? '2026-08-17T11:40:00' : '',
+      howObserved: group.requiresHow ? 'Walked the district.' : '',
+      notes: group.notesLabel ? 'Group note.' : '',
+      answers: picked
+        .filter(q => q.groupKey === group.key)
+        .map(q => ({key: q.key, answer: q.answer, note: 'note text', images: []})),
+    })),
+  }));
+}
+
+const RVP_INPUT_BASE = {
+  program: 'Louisville KY Training BID 1000',
+  visitType: 'FULL_SITE_VISIT',
+  operationManager: 'Michael Chou',
+  startDate: '2026-08-17T00:00:00',
+  endDate: '2026-08-17T00:00:00',
+  images: [],
+};
 
 const EQUIPMENT_INPUT = {
   serial: 'SN-SMOKE-01',
@@ -1841,6 +1931,251 @@ const checks: Check[] = [
     const bad: any = await run('mutation M($id: ID!) { markNotificationRead(id: $id) { id } }', {id: 'ntf_nope'});
     assert.ok(bad.errors);
   }],
+  ['rvpSiteVisits returns every seeded report, newest first', async () => {
+    const r: any = await run(RVP_LIST, {p: 'p1'});
+    assert.equal(r.errors, undefined);
+    const rows = r.data.rvpSiteVisits;
+    assert.equal(rows.length, 15);
+    const updated = rows.map((v: any) => Date.parse(v.updatedAt));
+    assert.deepEqual(updated, [...updated].sort((a: number, b: number) => b - a));
+    // The three same-day reports lead the list. Which of them is first follows
+    // updatedAt, the only timestamp a record carries — the handoff's own list
+    // order comes from a separate `ts` field that disagrees with the clock
+    // times printed on those same rows, so it is not reproducible here.
+    assert.deepEqual(
+      rows.slice(0, 3).map((v: any) => v.reference).sort(),
+      ['#RVP-1186', '#RVP-1187', '#RVP-1188'],
+    );
+    // id and reference are distinct values, and neither is the other.
+    const first = rows.find((v: any) => v.reference === '#RVP-1188');
+    assert.equal(first.id, 'rvp_1188');
+  }],
+
+  ['every rvpSiteVisit avgScore is derived from score/scoreMax, not stored', async () => {
+    const r: any = await run(RVP_LIST, {p: 'p1'});
+    for (const v of r.data.rvpSiteVisits) {
+      const expected = Math.round((v.score / v.scoreMax) * 5 * 10) / 10;
+      assert.equal(v.avgScore, expected, `${v.reference} avgScore ${v.avgScore} != ${expected}`);
+    }
+    // The design's own stated averages, reproduced by the seeded Yes-counts.
+    const byRef = new Map(r.data.rvpSiteVisits.map((v: any) => [v.reference, v.avgScore]));
+    assert.equal(byRef.get('#RVP-1188'), 4.4);
+    assert.equal(byRef.get('#RVP-1163'), 4.7);
+    assert.equal(byRef.get('#RVP-1136'), 1.8);
+  }],
+
+  ['rvpSiteVisit scoreMax equals the served question tree, so they cannot drift', async () => {
+    const fromTree = RVP_SECTIONS.reduce(
+      (total, section) => total + section.groups.reduce((n, g) => n + g.questions.length, 0),
+      0,
+    );
+    assert.equal(fromTree, 74);
+    assert.equal(RVP_TOTAL_QUESTIONS, fromTree);
+    const r: any = await run(RVP_LIST, {p: 'p1'});
+    for (const v of r.data.rvpSiteVisits) {
+      assert.equal(v.scoreMax, fromTree, `${v.reference} scoreMax ${v.scoreMax} != ${fromTree}`);
+    }
+  }],
+
+  ['the seeded reports fill every score bucket, every date bucket, and both completion states', async () => {
+    const r: any = await run(RVP_LIST, {p: 'p1'});
+    const rows = r.data.rvpSiteVisits;
+
+    // The overlapping-boundary buckets the list's Score filter uses.
+    assert.ok(rows.some((v: any) => v.avgScore < 2), '0-2 Score is empty');
+    assert.ok(rows.some((v: any) => v.avgScore >= 2 && v.avgScore < 3), '2-3 Score is empty');
+    assert.ok(rows.some((v: any) => v.avgScore >= 3 && v.avgScore <= 5), '3-5 Score is empty');
+
+    assert.ok(rows.some((v: any) => v.isComplete === false), 'no incomplete report');
+    assert.ok(rows.some((v: any) => v.isComplete === true), 'no complete report');
+
+    // Same shape as the notification recency check above: a day index rather
+    // than matchesDateRange, because DATE_RANGE_OPTIONS includes a custom range
+    // that cannot match without an encoded value.
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const dayIndex = (iso: string) => {
+      const d = new Date(iso);
+      d.setHours(0, 0, 0, 0);
+      return Math.round((startOfToday.getTime() - d.getTime()) / 86400000);
+    };
+    const days = rows.map((v: any) => dayIndex(v.updatedAt));
+    assert.ok(days.some((d: number) => d === 0), 'Today is empty');
+    assert.ok(days.some((d: number) => d === 1), 'Yesterday is empty');
+    assert.ok(days.some((d: number) => d > 1 && d <= 7), 'Last 7 days is empty');
+    assert.ok(days.some((d: number) => d > 7 && d <= 30), 'Last 30 days is empty');
+    // Nothing updated in the future, whatever time of day this runs.
+    assert.ok(days.every((d: number) => d >= 0));
+  }],
+
+  ['rvpSiteVisit detail sums to the record score and maps the nested answer enum', async () => {
+    const r: any = await run(RVP_DETAIL, {id: 'rvp_1188'});
+    assert.equal(r.errors, undefined);
+    const d = r.data.rvpSiteVisit;
+    assert.equal(d.reference, '#RVP-1188');
+    assert.equal(d.visitType, 'FULL_SITE_VISIT');
+    assert.equal(d.sections.length, 10);
+
+    assert.equal(d.sections.reduce((n: number, s: any) => n + s.score, 0), d.score);
+    assert.equal(d.sections.reduce((n: number, s: any) => n + s.scoreMax, 0), d.scoreMax);
+
+    // The enum sits three levels down. A toWire that only mapped the top level
+    // would serve 'Yes' here and graphql would reject it — this is the check
+    // that catches a mapper which forgot to recurse.
+    const answers = d.sections.flatMap((s: any) => s.groups.flatMap((g: any) => g.answers));
+    assert.equal(answers.length, 74);
+    assert.ok(answers.every((a: any) => a.answer === 'YES' || a.answer === 'NO'));
+    assert.equal(answers.filter((a: any) => a.answer === 'YES').length, d.score);
+    // A note only ever accompanies a No.
+    assert.ok(answers.every((a: any) => a.answer === 'NO' || a.note === ''));
+
+    // The incomplete rows are short of the tree, which is what isComplete reads.
+    const partial: any = await run(RVP_DETAIL, {id: 'rvp_1147'});
+    const p = partial.data.rvpSiteVisit;
+    assert.equal(p.isComplete, false);
+    const partialAnswers = p.sections.flatMap((s: any) => s.groups.flatMap((g: any) => g.answers));
+    assert.equal(partialAnswers.length, 63);
+    assert.equal(p.scoreMax, 74);
+  }],
+
+  ['an unknown rvpSiteVisit id resolves null rather than throwing', async () => {
+    const r: any = await run(RVP_DETAIL, {id: 'nope'});
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.rvpSiteVisit, null);
+  }],
+
+  ['rvpSiteVisitFormOptions serves the reserved reference and the whole question tree', async () => {
+    const r: any = await run(RVP_FORM_OPTIONS, {p: 'p1'});
+    assert.equal(r.errors, undefined);
+    const o = r.data.rvpSiteVisitFormOptions;
+    assert.equal(o.nextReference, '#RVP-1189');
+    assert.equal(o.programs.length, 16);
+    assert.deepEqual(o.visitTypes, ['FULL_SITE_VISIT', 'DROP_IN_VISIT', 'SPECIAL_PURPOSE']);
+    assert.equal(o.operationManagers.length, 10);
+    assert.equal(o.sections.length, 10);
+    const served = o.sections.reduce(
+      (n: number, s: any) => n + s.groups.reduce((m: number, g: any) => m + g.questions.length, 0),
+      0,
+    );
+    assert.equal(served, RVP_TOTAL_QUESTIONS);
+    // Only the two Field Operations visibility groups ask for a window.
+    const timed = o.sections.flatMap((s: any) => s.groups).filter((g: any) => g.requiresTime);
+    assert.equal(timed.length, 2);
+  }],
+
+  ['createRvpSiteVisit scores from the answers, not from anything the client claims', async () => {
+    const created: any = await run(
+      RVP_CREATE,
+      {p: 'p1', input: {...RVP_INPUT_BASE, sections: rvpAnswers(40, 10)}},
+      null,
+    );
+    assert.equal(created.errors, undefined);
+    const d = created.data.createRvpSiteVisit;
+    assert.equal(d.reference, '#RVP-1189');
+    assert.equal(d.score, 40);
+    assert.equal(d.scoreMax, RVP_TOTAL_QUESTIONS);
+    assert.equal(d.avgScore, Math.round((40 / RVP_TOTAL_QUESTIONS) * 5 * 10) / 10);
+    // 50 of 74 answered, so it is not complete.
+    assert.equal(d.isComplete, false);
+    // The position comes from the roster, never from the input.
+    assert.equal(d.leaderPosition, 'Divisional Vice President');
+    assert.equal(d.reviewedBy, 'You');
+
+    // Section scores still sum to the whole, and the tail section is untouched.
+    assert.equal(d.sections.reduce((n: number, s: any) => n + s.score, 0), 40);
+    assert.equal(d.sections.reduce((n: number, s: any) => n + s.scoreMax, 0), RVP_TOTAL_QUESTIONS);
+    assert.equal(d.sections[d.sections.length - 1].groups[0].answers.length, 0);
+
+    await run('mutation D($id: ID!) { deleteRvpSiteVisit(id: $id) }', {id: d.id});
+  }],
+
+  ['createRvpSiteVisit drops a note on a Yes, a reason on a full visit, and an unknown key', async () => {
+    const sections = rvpAnswers(2, 1);
+    // A key the server's tree does not contain must not become a stored answer.
+    sections[0].groups[0].answers.push({key: 'field.g0.qNOPE', answer: 'YES', note: 'x', images: []});
+
+    const created: any = await run(RVP_CREATE, {
+      p: 'p1',
+      input: {...RVP_INPUT_BASE, reasonForVisit: 'should be dropped', sections},
+    });
+    assert.equal(created.errors, undefined);
+    const d = created.data.createRvpSiteVisit;
+
+    // FULL_SITE_VISIT carries no reason, whatever was sent.
+    assert.equal(d.reasonForVisit, '');
+    // Three real answers, the phantom key dropped.
+    const answers = d.sections.flatMap((s: any) => s.groups.flatMap((g: any) => g.answers));
+    assert.equal(answers.length, 3);
+    assert.equal(d.score, 2);
+    // Every answer carried 'note text'; only the No may keep it.
+    assert.ok(answers.every((a: any) => (a.answer === 'YES' ? a.note === '' : a.note === 'note text')));
+
+    // A group the tree says asks for nothing stores nothing, even though the
+    // input offered both.
+    const bare = d.sections.find((s: any) => s.key === 'hr').groups[0];
+    assert.equal(bare.howObserved, '');
+    assert.equal(bare.notes, '');
+
+    await run('mutation D($id: ID!) { deleteRvpSiteVisit(id: $id) }', {id: d.id});
+  }],
+
+  ['updateRvpSiteVisit re-scores and moves updatedBy, but never reviewedBy', async () => {
+    // Updates a record this check creates rather than a seeded one: the slice-1
+    // assertions pin rvp_1188's score and the list's length, and a check that
+    // quietly rewrites shared fixtures breaks whichever check runs after it.
+    const created: any = await run(RVP_CREATE, {
+      p: 'p1',
+      input: {...RVP_INPUT_BASE, sections: rvpAnswers(20, 5)},
+    });
+    const id = created.data.createRvpSiteVisit.id;
+    const reviewer = created.data.createRvpSiteVisit.reviewedBy;
+    assert.equal(created.data.createRvpSiteVisit.score, 20);
+
+    const updated: any = await run(RVP_UPDATE, {
+      id,
+      input: {...RVP_INPUT_BASE, sections: rvpAnswers(12, 3)},
+    });
+    assert.equal(updated.errors, undefined);
+    const u = updated.data.updateRvpSiteVisit;
+    assert.equal(u.id, id);
+    assert.equal(u.score, 12);
+    assert.equal(u.isComplete, false);
+    assert.equal(u.updatedBy, 'You');
+    // Who filed it, not who last touched it.
+    assert.equal(u.reviewedBy, reviewer);
+
+    await run('mutation D($id: ID!) { deleteRvpSiteVisit(id: $id) }', {id});
+
+    const missing: any = await run(RVP_UPDATE, {
+      id: 'nope',
+      input: {...RVP_INPUT_BASE, sections: rvpAnswers(1, 0)},
+    });
+    assert.ok(missing.errors, 'updating an unknown id should throw');
+  }],
+
+  ['deleteRvpSiteVisit removes the record and an unknown id throws', async () => {
+    const created: any = await run(RVP_CREATE, {
+      p: 'p1',
+      input: {...RVP_INPUT_BASE, visitType: 'DROP_IN_VISIT', reasonForVisit: 'Kept', sections: rvpAnswers(3, 0)},
+    });
+    const d = created.data.createRvpSiteVisit;
+    // A non-full visit does keep its reason.
+    assert.equal(d.reasonForVisit, 'Kept');
+
+    const before: any = await run(RVP_LIST, {p: 'p1'});
+    const gone: any = await run('mutation D($id: ID!) { deleteRvpSiteVisit(id: $id) }', {id: d.id});
+    assert.equal(gone.errors, undefined);
+    assert.equal(gone.data.deleteRvpSiteVisit, d.id);
+
+    const after: any = await run(RVP_LIST, {p: 'p1'});
+    assert.equal(after.data.rvpSiteVisits.length, before.data.rvpSiteVisits.length - 1);
+    const lookup: any = await run(RVP_DETAIL, {id: d.id});
+    assert.equal(lookup.data.rvpSiteVisit, null);
+
+    const missing: any = await run('mutation D($id: ID!) { deleteRvpSiteVisit(id: $id) }', {id: 'nope'});
+    assert.ok(missing.errors, 'deleting an unknown id should throw');
+  }],
+
 ];
 
 async function main() {

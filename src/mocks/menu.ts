@@ -74,6 +74,14 @@ export const MOCK_MENU_ITEMS = [
     menu_group: 'modules',
   },
   {
+    id: 'rvp_site_visit',
+    menu_name: 'RVP Site Visit',
+    screen_name: 'RvpSiteVisit',
+    menu_icon: 'rvp_site_visit',
+    position: 'more',
+    menu_group: 'modules',
+  },
+  {
     id: 'change_program',
     menu_name: 'Change Program',
     screen_name: 'ChangeProgram',

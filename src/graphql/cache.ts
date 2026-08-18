@@ -59,5 +59,18 @@ export const cache = new InMemoryCache({
     ObservationReviewer: {keyFields: false},
     ObservationChecklistItem: {keyFields: false},
     ReferenceDocument: {keyFields: ['id']},
+    RvpSiteVisit: {keyFields: ['id']},
+    RvpSiteVisitDetail: {keyFields: ['id']},
+    // No id of their own; keep them embedded in the report they belong to.
+    RvpAnsweredSection: {keyFields: false},
+    RvpAnsweredGroup: {keyFields: false},
+    RvpAnswer: {keyFields: false},
+    RvpSectionText: {keyFields: false},
+    // The served question tree and the options object that wraps it — all
+    // id-less, all belonging to the query that asked for them.
+    RvpSiteVisitFormOptions: {keyFields: false},
+    RvpSection: {keyFields: false},
+    RvpQuestionGroup: {keyFields: false},
+    RvpQuestion: {keyFields: false},
   },
 });
