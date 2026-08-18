@@ -1,3 +1,4 @@
+import {ambassadorTypeDefs} from './features/ambassador/schema';
 import {authTypeDefs} from './features/auth/schema';
 import {dispatchTypeDefs} from './features/dispatch/schema';
 import {equipmentTypeDefs} from './features/equipment/schema';
@@ -47,4 +48,5 @@ export const typeDefs = [
   rvpSiteVisitTypeDefs,
   offHoursVisitTypeDefs,
   shiftNoteTypeDefs,
+  ambassadorTypeDefs,
 ].join('\n');

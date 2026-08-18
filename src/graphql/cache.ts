@@ -84,5 +84,7 @@ export const cache = new InMemoryCache({
     ShiftNote: {keyFields: ['id']},
     // No id of its own — the options belong to the query that asked for them.
     ShiftNoteFormOptions: {keyFields: false},
+    Ambassador: {keyFields: ['id']},
+    AmbassadorWork: {keyFields: ['id']},
   },
 });

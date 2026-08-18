@@ -1,4 +1,5 @@
 import {makeExecutableSchema} from '@graphql-tools/schema';
+import {ambassadorResolvers} from './features/ambassador/resolvers';
 import {authResolvers} from './features/auth/resolvers';
 import {dispatchResolvers} from './features/dispatch/resolvers';
 import {equipmentResolvers} from './features/equipment/resolvers';
@@ -43,6 +44,7 @@ export const mockSchema = makeExecutableSchema({
       ...rvpSiteVisitResolvers.Query,
       ...offHoursVisitResolvers.Query,
       ...shiftNoteResolvers.Query,
+      ...ambassadorResolvers.Query,
     },
     Mutation: {
       ...authResolvers.Mutation,
