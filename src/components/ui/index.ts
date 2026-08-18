@@ -49,7 +49,7 @@ export {default as SectionTabs} from './SectionTabs';
 export type {SectionTabItem} from './SectionTabs';
 export {default as SectionTitle} from './SectionTitle';
 export {default as SegmentedButtons} from './SegmentedButtons';
-export type {SegmentOption} from './SegmentedButtons';
+export type {SegmentOption, SegmentTone} from './SegmentedButtons';
 export {default as SegmentedTabs} from './SegmentedTabs';
 export type {SegmentedTabItem} from './SegmentedTabs';
 export {default as SingleSelectSheet} from './SingleSelectSheet';

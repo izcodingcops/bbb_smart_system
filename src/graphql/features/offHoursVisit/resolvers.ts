@@ -4,11 +4,8 @@ import {
   OffHoursRevealRule,
   OffHoursVisit,
 } from '../../../types/offHoursVisit';
-import {
-  OFF_HOURS_QUESTIONS,
-  OFF_HOURS_TYPE,
-  OFF_HOURS_ZONES,
-} from '../../../mocks/offHoursVisit';
+import {OFF_HOURS_QUESTIONS, OFF_HOURS_TYPE} from '../../../mocks/offHoursVisit';
+import {PROGRAM_ZONES} from '../shared/options';
 import {sleep} from '../../mockSession';
 import {nextReference, offHoursVisitStore} from './store';
 
@@ -102,7 +99,7 @@ export const offHoursVisitResolvers = {
       return {
         nextReference: nextReference(),
         type: OFF_HOURS_TYPE,
-        zones: OFF_HOURS_ZONES,
+        zones: PROGRAM_ZONES,
         questions: OFF_HOURS_QUESTIONS.map(toWireQuestion),
       };
     },

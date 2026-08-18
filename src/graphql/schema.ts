@@ -11,6 +11,7 @@ import {observationReportTypeDefs} from './features/observationReport/schema';
 import {poiTypeDefs} from './features/poi/schema';
 import {referenceDocumentTypeDefs} from './features/referenceDocument/schema';
 import {rvpSiteVisitTypeDefs} from './features/rvpSiteVisit/schema';
+import {shiftNoteTypeDefs} from './features/shiftNote/schema';
 import {workTypeDefs} from './features/work/schema';
 import {workLogTypeDefs} from './features/workLog/schema';
 
@@ -45,4 +46,5 @@ export const typeDefs = [
   referenceDocumentTypeDefs,
   rvpSiteVisitTypeDefs,
   offHoursVisitTypeDefs,
+  shiftNoteTypeDefs,
 ].join('\n');

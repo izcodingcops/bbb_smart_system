@@ -6,6 +6,7 @@ import {
   BoxIcon,
   ClockIcon,
   CubeIcon,
+  FileTextIcon,
   LogInIcon,
   LogOutIcon,
   MapPinIcon,
@@ -39,6 +40,7 @@ const SECTIONS: {key: string; title: string; tiles: AddRequestTile[]}[] = [
       {id: 'fixture', label: 'Fixture', Icon: BoxIcon},
       {id: 'incident', label: 'Incident', Icon: AlertTriangleIcon},
       {id: 'poi', label: 'POI', Icon: UserPlusIcon},
+      {id: 'shift_notes', label: 'Shift Notes', Icon: FileTextIcon},
       // CubeIcon rather than BoxIcon: the sheet already spends BoxIcon on
       // Fixture, and two identical glyphs in one grid read as a mistake. The
       // source mockup pairs them the other way round (i-cube Fixture, i-box

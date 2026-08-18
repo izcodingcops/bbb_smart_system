@@ -2287,6 +2287,92 @@ const checks: Check[] = [
     assert.equal(v.rating, 4);
     assert.equal(v.ratingMax, 20);
   }],
+
+  ['shiftNoteFormOptions serves the padded reference and the shared rosters', async () => {
+    const r: any = await run(
+      'query S($p: ID!) { shiftNoteFormOptions(programId: $p) { nextReference shiftTypes zones ambassadors } }',
+      {p: 'p1'},
+    );
+    const o = r.data.shiftNoteFormOptions;
+    // Four digits, not '#SHN-442' — the design's own padding.
+    assert.equal(o.nextReference, '#SHN-0442');
+    // The program's shift-type roster, not a list this module owns.
+    assert.deepEqual(o.shiftTypes, [
+      'Cleaning',
+      'General',
+      'Hospitality',
+      'Management',
+      'Outreach',
+      'Safety',
+    ]);
+    assert.equal(o.zones.length, 8);
+    assert.equal(o.zones[0], 'Downtown Louisville');
+    assert.equal(o.ambassadors.length, 8);
+    assert.equal(o.ambassadors[2], 'Cam Hurd');
+  }],
+
+  ['createShiftNote clears the ambassador when the brief goes to the whole zone', async () => {
+    const m: any = await run(
+      'mutation C($p: ID!, $i: ShiftNoteInput!) { createShiftNote(programId: $p, input: $i) { reference sendToAll ambassador priority createdBy } }',
+      {
+        p: 'p1',
+        i: {
+          shiftTypes: ['Cleaning'],
+          sentAt: '2026-08-17T06:05:00',
+          zone: 'RiverFront',
+          sendToAll: true,
+          // The client sent one anyway; the server must not store it.
+          ambassador: 'Cam Hurd',
+          priority: 'LOW',
+          title: 'Rain gear on the north loop',
+          description: 'Storms through the morning — pull the north loop crew under the pavilion between rounds.',
+        },
+      },
+    );
+    assert.equal(m.errors, undefined);
+    const n = m.data.createShiftNote;
+    assert.equal(n.reference, '#SHN-0442');
+    assert.equal(n.sendToAll, true);
+    assert.equal(n.ambassador, null);
+    assert.equal(n.priority, 'LOW');
+    assert.equal(n.createdBy, 'You');
+  }],
+
+  ['createShiftNote keeps a named ambassador and round-trips the priority enum', async () => {
+    const m: any = await run(
+      'mutation C($p: ID!, $i: ShiftNoteInput!) { createShiftNote(programId: $p, input: $i) { reference sendToAll ambassador priority shiftTypes } }',
+      {
+        p: 'p1',
+        i: {
+          shiftTypes: ['Safety', 'Outreach'],
+          sentAt: '2026-08-17T06:20:00',
+          zone: 'Beachmont',
+          sendToAll: false,
+          ambassador: 'Barnes, Teeya',
+          priority: 'HIGH',
+          title: 'Radio check before the walk',
+          description: 'Two handsets came back dead yesterday — check yours at the van before heading out.',
+        },
+      },
+    );
+    assert.equal(m.errors, undefined);
+    const n = m.data.createShiftNote;
+    // The sequence advanced past the note the previous check created.
+    assert.equal(n.reference, '#SHN-0443');
+    assert.equal(n.sendToAll, false);
+    assert.equal(n.ambassador, 'Barnes, Teeya');
+    // 'High' -> HIGH survives the map in both directions.
+    assert.equal(n.priority, 'HIGH');
+    assert.deepEqual(n.shiftTypes, ['Safety', 'Outreach']);
+  }],
+
+  ['the shift note reference sequence advances after the creates', async () => {
+    const r: any = await run(
+      'query S($p: ID!) { shiftNoteFormOptions(programId: $p) { nextReference } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.data.shiftNoteFormOptions.nextReference, '#SHN-0444');
+  }],
 ];
 
 async function main() {

@@ -12,6 +12,7 @@ import {observationReportResolvers} from './features/observationReport/resolvers
 import {poiResolvers} from './features/poi/resolvers';
 import {referenceDocumentResolvers} from './features/referenceDocument/resolvers';
 import {rvpSiteVisitResolvers} from './features/rvpSiteVisit/resolvers';
+import {shiftNoteResolvers} from './features/shiftNote/resolvers';
 import {workResolvers} from './features/work/resolvers';
 import {workLogResolvers} from './features/workLog/resolvers';
 import {typeDefs} from './schema';
@@ -41,6 +42,7 @@ export const mockSchema = makeExecutableSchema({
       ...referenceDocumentResolvers.Query,
       ...rvpSiteVisitResolvers.Query,
       ...offHoursVisitResolvers.Query,
+      ...shiftNoteResolvers.Query,
     },
     Mutation: {
       ...authResolvers.Mutation,
@@ -54,6 +56,7 @@ export const mockSchema = makeExecutableSchema({
       ...notificationResolvers.Mutation,
       ...rvpSiteVisitResolvers.Mutation,
       ...offHoursVisitResolvers.Mutation,
+      ...shiftNoteResolvers.Mutation,
     },
   },
 });

@@ -74,6 +74,14 @@ export const MOCK_MENU_ITEMS = [
     menu_group: 'modules',
   },
   {
+    id: 'shift_notes',
+    menu_name: 'Shift Notes',
+    screen_name: 'ShiftNotes',
+    menu_icon: 'shift_notes',
+    position: 'more',
+    menu_group: 'modules',
+  },
+  {
     id: 'reference_documents',
     menu_name: 'Reference Documents',
     screen_name: 'ReferenceDocuments',
