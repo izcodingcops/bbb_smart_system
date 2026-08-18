@@ -24,6 +24,7 @@ const ReportCard: React.FC<Props> = ({report, onPress}) => (
     statusPill={<ScorePill score={report.score} />}
     dateLine={formatCardDate(report.dateTime)}
     fields={[
+      {label: 'Report No', value: report.reference},
       {label: 'Zone', value: report.zone},
       {label: 'Reviewed By', node: <PersonChip name={report.reviewedBy.name} />},
     ]}
