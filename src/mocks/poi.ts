@@ -87,26 +87,6 @@ export const BUSINESS_LOCATIONS = [
   'Denver Rescue Mission',
 ];
 
-export const INCIDENT_OPTIONS = [
-  'Incident #IN-42984',
-  'Incident #IN-42960',
-  'Incident #IN-42931',
-  'Incident #IN-42905',
-];
-
-export const MAINTENANCE_OPTIONS = [
-  'Maintenance #96211407',
-  'Maintenance #96211',
-  'Maintenance #42984',
-];
-
-export const EQUIPMENT_OPTIONS = [
-  'Equipment #96211407',
-  'Equipment #96211',
-  'Body Camera',
-  'Radio',
-];
-
 /* ---------------------------------------------------------------------------
  * Dates
  *

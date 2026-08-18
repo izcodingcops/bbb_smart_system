@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {View, Text, TouchableOpacity, ScrollView, StyleSheet} from 'react-native';
 import ScreenBackground from '../../components/ScreenBackground';
 import {
@@ -27,7 +27,10 @@ import {
   useUpdateIncidentMutation,
 } from '../../graphql/features/incident/hooks';
 import {IncidentComment, IncidentPriority, IncidentResponderInfo, IncidentStatus} from '../../types/incident';
-import IncidentForm, {buildInitialValues} from './components/IncidentForm';
+import IncidentForm, {buildInitialValues, IncidentFormHandle} from './components/IncidentForm';
+import ConnectedElementCreateOverlay, {
+  useConnectedElementCreate,
+} from './components/ConnectedElementCreateOverlay';
 import {theme} from '../../theme';
 
 const STATUS_STYLE: Record<IncidentStatus, {bg: string; fg: string}> = {
@@ -92,12 +95,16 @@ const ViewIncidentScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [toast, setToast] = useState<{title: string; message: string; variant?: 'success' | 'danger'} | null>(null);
+  // Lets each create form select what it just made, without remounting the
+  // form and discarding the user's unsaved edits.
+  const formRef = useRef<IncidentFormHandle>(null);
   const {mutate: addComment} = useAddIncidentCommentMutation();
   const {mutate: updateComment} = useUpdateIncidentCommentMutation();
   const {mutate: deleteComment} = useDeleteIncidentCommentMutation();
-  const {data: options} = useIncidentFormOptionsQuery();
+  const {data: options, refetch: refetchOptions} = useIncidentFormOptionsQuery();
   const {mutate: update, isLoading: isUpdating} = useUpdateIncidentMutation();
   const {mutate: remove} = useDeleteIncidentMutation();
+  const connectedCreate = useConnectedElementCreate(formRef, refetchOptions);
 
   if (isLoading) {
     return (
@@ -145,6 +152,7 @@ const ViewIncidentScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
     return (
       <View style={styles.root}>
         <IncidentForm
+          ref={formRef}
           mode="edit"
           reference={detail.reference}
           options={options}
@@ -157,7 +165,10 @@ const ViewIncidentScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
             setToast({title: 'Incident updated', message: `${detail.reference} was saved successfully.`});
           }}
           onClose={() => setEditing(false)}
+          {...connectedCreate.formProps}
         />
+
+        <ConnectedElementCreateOverlay {...connectedCreate.overlayProps} />
       </View>
     );
   }

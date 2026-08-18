@@ -6,15 +6,11 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import {BottomSheet} from '../../../components/ui';
-import {
-  ChevronRightIcon,
-  MapPinIcon,
-  TargetIcon,
-} from '../../../components/icons';
-import {GetDownloadedMaps} from '../../../redux/maps/selectors';
-import {getCurrentPosition, reverseGeocode} from '../../../services/maps';
-import {theme} from '../../../theme';
+import {BottomSheet} from './ui';
+import {ChevronRightIcon, MapPinIcon, TargetIcon} from './icons';
+import {GetDownloadedMaps} from '../redux/maps/selectors';
+import {getCurrentPosition, reverseGeocode} from '../services/maps';
+import {theme} from '../theme';
 
 interface Props {
   visible: boolean;

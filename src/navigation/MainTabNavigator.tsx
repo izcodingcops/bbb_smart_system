@@ -85,6 +85,16 @@ const INTENT_COPY: Record<SetupIntent, string> = {
   shift_type: 'Changing shift type',
 };
 
+/**
+ * Off Hours Visit and Shift Notes are submit-only — their tab root is an
+ * empty state whose only action re-opens the same Add Requests sheet, so a
+ * More row for either is a redundant path to the same form. Their menu items
+ * stay in the query result (still `position: 'more'`) so MainTabNavigator
+ * still registers the tab those sheet tiles navigate into; only the row in
+ * the sheet itself is suppressed here.
+ */
+const HIDDEN_FROM_MORE = new Set(['off_hours', 'shift_notes']);
+
 type IconComponent = React.FC<{size?: number; color?: string}>;
 
 /** Exact paths pulled from the Ambassador mockups' inline SVG symbols. */
@@ -216,7 +226,9 @@ const AppTabBar: React.FC<TabBarProps> = ({state, navigation, menuItems}) => {
   };
 
   const bottomItems = menuItems.filter(item => item.position === 'bottom');
-  const moreItems = menuItems.filter(item => item.position === 'more');
+  const moreItems = menuItems.filter(
+    item => item.position === 'more' && !HIDDEN_FROM_MORE.has(item.id),
+  );
   const isMoreActive =
     moreOpen || moreItems.some(item => item.screen_name === activeScreen);
 

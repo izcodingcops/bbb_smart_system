@@ -1,11 +1,14 @@
-import React from 'react';
+import React, {useRef} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {
   useCreateEquipmentMutation,
   useEquipmentFormOptionsQuery,
 } from '../../graphql/features/equipment/hooks';
 import {EquipmentFormValues} from '../../types/equipment';
-import EquipmentForm, {buildInitialValues} from './components/EquipmentForm';
+import EquipmentForm, {buildInitialValues, EquipmentFormHandle} from './components/EquipmentForm';
+import ConnectedElementCreateOverlay, {
+  useConnectedElementCreate,
+} from './components/ConnectedElementCreateOverlay';
 import {EmptyState, FormScreenSkeleton} from '../../components/ui';
 import {BoxIcon} from '../../components/icons';
 import {theme} from '../../theme';
@@ -23,9 +26,20 @@ interface Props {
     name: string;
     queued: boolean;
   }) => void;
+  /**
+   * False when this screen is itself opened as a Connected Elements
+   * quick-create from another module (Incident's, POI's or Maintenance's own
+   * Connected Elements). Its own Connected Elements then offers no further
+   * Add buttons, so quick-create never nests more than one level deep.
+   */
+  allowConnectedCreate?: boolean;
 }
 
-const CreateEquipmentScreen: React.FC<Props> = ({onClose, onCreated}) => {
+const CreateEquipmentScreen: React.FC<Props> = ({
+  onClose,
+  onCreated,
+  allowConnectedCreate = true,
+}) => {
   const {
     data: options,
     isLoading,
@@ -33,12 +47,20 @@ const CreateEquipmentScreen: React.FC<Props> = ({onClose, onCreated}) => {
     refetch,
   } = useEquipmentFormOptionsQuery();
   const {mutate: create, isLoading: isSubmitting} = useCreateEquipmentMutation();
+  // Lets each create form select what it just made, without remounting the
+  // equipment form and discarding everything else the user has typed.
+  const formRef = useRef<EquipmentFormHandle>(null);
+  const connectedCreate = useConnectedElementCreate(formRef, refetch);
 
   // The "Go back" link is part of this branch on purpose — this route hides the
   // tab bar, so a failed load with no way out would trap the user, and there is
   // no BackHandler anywhere in this app. EquipmentFormError isn't reused here:
   // its copy is about loading an existing record, which this screen has none of.
-  if (isError || (!isLoading && !options)) {
+  //
+  // Only a load that left us with nothing is fatal. Once the options are in
+  // hand the form is mounted and holding the user's input, so a later refetch
+  // that fails must not replace it with a full-screen error.
+  if (!options && (isError || !isLoading)) {
     return (
       <View style={styles.loading}>
         <EmptyState
@@ -55,7 +77,10 @@ const CreateEquipmentScreen: React.FC<Props> = ({onClose, onCreated}) => {
     );
   }
 
-  if (isLoading || !options) {
+  // Gated on the data alone, never on `isLoading` — see CreateIncidentScreen's
+  // identical comment. `refetch` keeps the previous data, so `options` stays
+  // populated throughout Connected Elements' quick-create refetches.
+  if (!options) {
     // Matches EquipmentForm's own section layout: Basic (9 rows), Other (6),
     // Connected (3).
     return (
@@ -75,6 +100,7 @@ const CreateEquipmentScreen: React.FC<Props> = ({onClose, onCreated}) => {
   return (
     <View style={styles.root}>
       <EquipmentForm
+        ref={formRef}
         mode="create"
         reference={options.nextReference}
         options={options}
@@ -83,7 +109,12 @@ const CreateEquipmentScreen: React.FC<Props> = ({onClose, onCreated}) => {
         isSubmitting={isSubmitting}
         onSubmit={submit}
         onClose={onClose}
+        {...(allowConnectedCreate ? connectedCreate.formProps : null)}
       />
+
+      {allowConnectedCreate ? (
+        <ConnectedElementCreateOverlay {...connectedCreate.overlayProps} />
+      ) : null}
     </View>
   );
 };

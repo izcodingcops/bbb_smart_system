@@ -5,7 +5,7 @@ import {equipmentStore} from '../equipment/store';
 import {incidentStore} from '../incident/store';
 import {poiStore} from '../poi/store';
 import {ZONES} from '../shared/options';
-import {incidentConnectedLabel} from './connectedLabels';
+import {incidentConnectedLabel} from '../shared/connectedLabels';
 import {
   BUSINESS_NAMES,
   DEPARTMENTS,

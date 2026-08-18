@@ -47,7 +47,7 @@ import {
   MaintenancePriority,
 } from '../../../types/maintenance';
 import AssigneeToggle, {AssigneeOption} from './AssigneeToggle';
-import ChangeLocationSheet from './ChangeLocationSheet';
+import ChangeLocationSheet from '../../../components/ChangeLocationSheet';
 import {theme} from '../../../theme';
 
 /** Fallback address when a record has none — matches the design's auto-fill. */

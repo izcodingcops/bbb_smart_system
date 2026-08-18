@@ -1,4 +1,4 @@
-import React, {useMemo, useRef, useState} from 'react';
+import React, {forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState} from 'react';
 import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import ScreenBackground from '../../../components/ScreenBackground';
@@ -100,6 +100,15 @@ export function buildInitialValues(
   };
 }
 
+/** Imperative handle so Connected Elements' quick-create overlay can select
+ *  a freshly-made record on this form without remounting it. */
+export interface EquipmentFormHandle {
+  /** Appends to the multi-selects, ignoring a value that's already chosen. */
+  addIncident: (label: string) => void;
+  addPoi: (name: string) => void;
+  addMaintenance: (label: string) => void;
+}
+
 interface Props {
   mode: 'create' | 'edit';
   /** Display reference shown under the title, e.g. '#4366'. */
@@ -110,9 +119,12 @@ interface Props {
   isSubmitting: boolean;
   onSubmit: (values: EquipmentFormValues) => Promise<void>;
   onClose: () => void;
+  onAddIncident?: () => void;
+  onAddPoi?: () => void;
+  onAddMaintenance?: () => void;
 }
 
-const EquipmentForm: React.FC<Props> = ({
+const EquipmentForm = forwardRef<EquipmentFormHandle, Props>(({
   mode,
   reference,
   options,
@@ -121,7 +133,10 @@ const EquipmentForm: React.FC<Props> = ({
   isSubmitting,
   onSubmit,
   onClose,
-}) => {
+  onAddIncident,
+  onAddPoi,
+  onAddMaintenance,
+}, ref) => {
   const [values, setValues] = useState<EquipmentFormValues>(initialValues);
   const {
     setTouched,
@@ -185,6 +200,30 @@ const EquipmentForm: React.FC<Props> = ({
     setValues(current => ({...current, [key]: value}));
     setTouched(true);
   };
+
+  type MultiSelectKey = 'incidents' | 'personsOfInterest' | 'maintenance';
+
+  // Guarded against duplicates: the option lists are plain strings, so adding
+  // the same name twice would render two identical chips the user can't tell
+  // apart, and submit it twice.
+  const appendTo = useCallback((key: MultiSelectKey, value: string) => {
+    setValues(current =>
+      current[key].includes(value)
+        ? current
+        : {...current, [key]: [...current[key], value]},
+    );
+    setTouched(true);
+  }, [setTouched]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      addIncident: (label: string) => appendTo('incidents', label),
+      addPoi: (name: string) => appendTo('personsOfInterest', name),
+      addMaintenance: (label: string) => appendTo('maintenance', label),
+    }),
+    [appendTo],
+  );
 
   /*
    * Each of the three handlers below clears *every* descendant, not just its
@@ -454,10 +493,6 @@ const EquipmentForm: React.FC<Props> = ({
             title="Connected Elements"
             initiallyOpen
             onLayout={recordSectionY('connected')}>
-            {/*
-              No '+ Add Incident / POI / Maintenance' affordances: the design's
-              are no-ops, and there is no cross-module create to route to.
-            */}
             <MultiDropdownField
               label="Incident"
               placeholder="Select incident"
@@ -465,6 +500,8 @@ const EquipmentForm: React.FC<Props> = ({
               values={values.incidents}
               onChange={next => set('incidents', next)}
               searchable
+              addLabel={onAddIncident ? 'Add Incident' : undefined}
+              onRequestAdd={onAddIncident}
             />
             <MultiDropdownField
               label="Person of Interest"
@@ -473,6 +510,8 @@ const EquipmentForm: React.FC<Props> = ({
               values={values.personsOfInterest}
               onChange={next => set('personsOfInterest', next)}
               searchable
+              addLabel={onAddPoi ? 'Add Person of Interest' : undefined}
+              onRequestAdd={onAddPoi}
             />
             <MultiDropdownField
               label="Maintenance"
@@ -481,6 +520,8 @@ const EquipmentForm: React.FC<Props> = ({
               values={values.maintenance}
               onChange={next => set('maintenance', next)}
               searchable
+              addLabel={onAddMaintenance ? 'Add Maintenance' : undefined}
+              onRequestAdd={onAddMaintenance}
             />
           </AccordionSection>
         </ScrollView>
@@ -546,7 +587,9 @@ const EquipmentForm: React.FC<Props> = ({
       />
     </ScreenBackground>
   );
-};
+});
+
+EquipmentForm.displayName = 'EquipmentForm';
 
 const styles = StyleSheet.create({
   // Matches DropdownField's own helper line, so the two read as one treatment.

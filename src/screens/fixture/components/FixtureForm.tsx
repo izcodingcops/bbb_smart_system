@@ -1,12 +1,7 @@
 import React, {useRef, useState} from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-} from 'react-native';
+import {View, Text, TouchableOpacity, ScrollView} from 'react-native';
 import ScreenBackground from '../../../components/ScreenBackground';
+import ChangeLocationSheet from '../../../components/ChangeLocationSheet';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {
   AccordionSection,
@@ -104,6 +99,7 @@ const FixtureForm: React.FC<Props> = ({
   const [values, setValues] = useState<FixtureFormValues>(initialValues);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [changeLocationOpen, setChangeLocationOpen] = useState(false);
   /** Set when onSubmit rejects, so the form can report it without navigating away. */
   const [submitFailed, setSubmitFailed] = useState(false);
 
@@ -235,12 +231,7 @@ const FixtureForm: React.FC<Props> = ({
                   <TouchableOpacity
                     style={formChrome.changeLocation}
                     activeOpacity={0.7}
-                    onPress={() =>
-                      Alert.alert(
-                        'Coming soon',
-                        'Picking a location on the map is not wired up yet.',
-                      )
-                    }>
+                    onPress={() => setChangeLocationOpen(true)}>
                     <RefreshIcon size={14} color={theme.colors.primary} />
                     <Text style={formChrome.changeLocationText}>Change Location</Text>
                   </TouchableOpacity>
@@ -356,6 +347,12 @@ const FixtureForm: React.FC<Props> = ({
         message="Something went wrong saving this fixture. Check your connection and try again."
         variant="danger"
         onDismiss={() => setSubmitFailed(false)}
+      />
+
+      <ChangeLocationSheet
+        visible={changeLocationOpen}
+        onSelect={next => set('address', next)}
+        onClose={() => setChangeLocationOpen(false)}
       />
     </ScreenBackground>
   );

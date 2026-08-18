@@ -7,11 +7,8 @@ import {
 import {
   BUSINESS_LOCATIONS,
   DISPOSITIONS,
-  EQUIPMENT_OPTIONS,
   GENDERS,
-  INCIDENT_OPTIONS,
   INTERACTION_TYPES,
-  MAINTENANCE_OPTIONS,
   PERSON_TYPES,
   POI_FIXTURES,
   RACES,
@@ -20,12 +17,41 @@ import {
 import {sleep} from '../../mockSession';
 import {ZONES} from '../shared/options';
 import {
+  incidentConnectedLabel,
+  maintenanceConnectedLabel,
+} from '../shared/connectedLabels';
+import {incidentStore} from '../incident/store';
+import {maintenanceStore} from '../maintenance/store';
+import {equipmentStore} from '../equipment/store';
+import {
   findRecord,
   nextInteractionReference,
   nextPersonReference,
   nextUpdateReference,
   poiStore,
 } from './store';
+
+/**
+ * Connected Elements offers incidents as labels, not ids — read live off the
+ * incident store, the same way Maintenance's own form reads them, so one
+ * quick-created from this form shows up here.
+ */
+const incidentOptions = (): string[] =>
+  Array.from(
+    new Set(
+      incidentStore.records.map(record =>
+        incidentConnectedLabel(record.type, record.occurredAt),
+      ),
+    ),
+  );
+
+/** Maintenance requests, read live off the Maintenance store — see `incidentOptions` above. */
+const maintenanceOptions = (): string[] =>
+  maintenanceStore.records.map(record => maintenanceConnectedLabel(record.reference));
+
+/** Equipment, read live off the Equipment store — see `incidentOptions` above. */
+const equipmentOptions = (): string[] =>
+  Array.from(new Set(equipmentStore.records.map(record => record.name)));
 
 /** Same static demo location Fixture stamps on every record it creates. */
 const DEFAULT_ADDRESS = 'Rue Des Hauteurs, Val-David, Quebec J0T 2N0, Canada';
@@ -180,9 +206,9 @@ export const poiResolvers = {
         dispositions: DISPOSITIONS,
         genders: GENDERS,
         races: RACES,
-        incidentOptions: INCIDENT_OPTIONS,
-        maintenanceOptions: MAINTENANCE_OPTIONS,
-        equipmentOptions: EQUIPMENT_OPTIONS,
+        incidentOptions: incidentOptions(),
+        maintenanceOptions: maintenanceOptions(),
+        equipmentOptions: equipmentOptions(),
       };
     },
 

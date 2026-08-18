@@ -113,12 +113,4 @@ export const MOCK_MENU_ITEMS = [
     position: 'more',
     menu_group: 'employee_shift',
   },
-  {
-    id: 'shift_details',
-    menu_name: 'Shift Details',
-    screen_name: 'ShiftDetails',
-    menu_icon: 'shift_details',
-    position: 'more',
-    menu_group: 'employee_shift',
-  },
 ] satisfies MenuItem[];

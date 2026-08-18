@@ -100,37 +100,5 @@ export const TAXONOMY_MODELS: Record<string, string[]> = {
   Snyder: ['65 Gal Leg Tank'],
 };
 
-/**
- * Connected Elements option lists. Free text in this app — these modules'
- * own records are not joined to equipment, matching the mockup.
- *
- * The dates baked into the incident and maintenance labels are part of the
- * option string itself, not a record date: nothing parses them, they are
- * never compared against the clock, and no Date Range filter reads them. They
- * are left literal on purpose, so the project's relative-dates rule for mocks
- * does not apply here.
- */
-export const CONNECTED_INCIDENTS: string[] = [
-  'Graffiti — 07/04/2026',
-  'Vandalism — 07/03/2026',
-  'Broken Glass — 06/28/2026',
-  'Illegal Dumping — 06/21/2026',
-];
-
-export const CONNECTED_POIS: string[] = [
-  'R. Blake',
-  'M. Ortiz',
-  'D. Whitfield',
-  'T. Nguyen',
-  'S. Alvarez',
-];
-
-export const CONNECTED_MAINTENANCE: string[] = [
-  '#MT-4471 — Alley Cleaning',
-  '#MT-4460 — Light Out',
-  '#MT-4432 — Bench Repair',
-  '#MT-4419 — Signage Damage',
-];
-
 /** 'Vehicle is on'. */
 export const FUEL_OPTIONS: string[] = ['Gas', 'Electricity'];

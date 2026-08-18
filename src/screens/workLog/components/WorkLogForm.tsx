@@ -4,10 +4,10 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Alert,
   StyleSheet,
 } from 'react-native';
 import ScreenBackground from '../../../components/ScreenBackground';
+import ChangeLocationSheet from '../../../components/ChangeLocationSheet';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {
   ConfirmDialog,
@@ -100,6 +100,7 @@ const WorkLogForm: React.FC<Props> = ({
 }) => {
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [changeLocationOpen, setChangeLocationOpen] = useState(false);
   /** Set when onSubmit rejects, so the form can report it without navigating away. */
   const [submitFailed, setSubmitFailed] = useState(false);
 
@@ -274,12 +275,7 @@ const WorkLogForm: React.FC<Props> = ({
                   <TouchableOpacity
                     style={styles.changeLocation}
                     activeOpacity={0.7}
-                    onPress={() =>
-                      Alert.alert(
-                        'Coming soon',
-                        'Picking a location on the map is not wired up yet.',
-                      )
-                    }>
+                    onPress={() => setChangeLocationOpen(true)}>
                     <RefreshIcon size={14} color={theme.colors.primary} />
                     <Text style={styles.changeLocationText}>Change Location</Text>
                   </TouchableOpacity>
@@ -400,6 +396,12 @@ const WorkLogForm: React.FC<Props> = ({
         message="Something went wrong saving this record. Check your connection and try again."
         variant="danger"
         onDismiss={() => setSubmitFailed(false)}
+      />
+
+      <ChangeLocationSheet
+        visible={changeLocationOpen}
+        onSelect={next => set('address', next)}
+        onClose={() => setChangeLocationOpen(false)}
       />
     </ScreenBackground>
   );

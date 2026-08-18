@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {forwardRef, useCallback, useImperativeHandle, useRef, useState} from 'react';
 import {View, Text, TouchableOpacity, ScrollView, StyleSheet} from 'react-native';
 import ScreenBackground from '../../../components/ScreenBackground';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -90,6 +90,15 @@ export function buildInitialValues(
   };
 }
 
+/** Imperative handle so Connected Elements' quick-create overlay can select
+ *  a freshly-made record on this form without remounting it. */
+export interface PoiFormHandle {
+  /** Appends to the multi-selects, ignoring a value that's already chosen. */
+  addIncident: (label: string) => void;
+  addMaintenance: (label: string) => void;
+  addEquipment: (name: string) => void;
+}
+
 interface Props {
   mode: 'create' | 'edit';
   /** Display reference shown under the title, e.g. '#POI-4022'. */
@@ -100,9 +109,12 @@ interface Props {
   isSubmitting: boolean;
   onSubmit: (values: PoiFormValues) => Promise<void>;
   onClose: () => void;
+  onAddIncident?: () => void;
+  onAddMaintenance?: () => void;
+  onAddEquipment?: () => void;
 }
 
-const PoiForm: React.FC<Props> = ({
+const PoiForm = forwardRef<PoiFormHandle, Props>(({
   mode,
   reference,
   options,
@@ -111,7 +123,10 @@ const PoiForm: React.FC<Props> = ({
   isSubmitting,
   onSubmit,
   onClose,
-}) => {
+  onAddIncident,
+  onAddMaintenance,
+  onAddEquipment,
+}, ref) => {
   const [values, setValues] = useState<PoiFormValues>(initialValues);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -143,6 +158,29 @@ const PoiForm: React.FC<Props> = ({
     key: K,
     value: PoiFormValues[K],
   ) => setValues(current => ({...current, [key]: value}));
+
+  type MultiSelectKey = 'connectedIncidents' | 'connectedMaintenance' | 'connectedEquipment';
+
+  // Guarded against duplicates: the option lists are plain strings, so adding
+  // the same name twice would render two identical chips the user can't tell
+  // apart, and submit it twice.
+  const appendTo = useCallback((key: MultiSelectKey, value: string) => {
+    setValues(current =>
+      current[key].includes(value)
+        ? current
+        : {...current, [key]: [...current[key], value]},
+    );
+  }, []);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      addIncident: (label: string) => appendTo('connectedIncidents', label),
+      addMaintenance: (label: string) => appendTo('connectedMaintenance', label),
+      addEquipment: (name: string) => appendTo('connectedEquipment', name),
+    }),
+    [appendTo],
+  );
 
   const setContact = (index: number, next: PoiFormValues['contacts'][0]) =>
     setValues(current => ({
@@ -425,6 +463,8 @@ const PoiForm: React.FC<Props> = ({
               values={values.connectedIncidents}
               onChange={next => set('connectedIncidents', next)}
               searchable
+              addLabel={onAddIncident ? 'Add Incident' : undefined}
+              onRequestAdd={onAddIncident}
             />
             <MultiDropdownField
               label="Maintenance"
@@ -433,6 +473,8 @@ const PoiForm: React.FC<Props> = ({
               values={values.connectedMaintenance}
               onChange={next => set('connectedMaintenance', next)}
               searchable
+              addLabel={onAddMaintenance ? 'Add Maintenance' : undefined}
+              onRequestAdd={onAddMaintenance}
             />
             <MultiDropdownField
               label="Equipment"
@@ -441,6 +483,8 @@ const PoiForm: React.FC<Props> = ({
               values={values.connectedEquipment}
               onChange={next => set('connectedEquipment', next)}
               searchable
+              addLabel={onAddEquipment ? 'Add Equipment' : undefined}
+              onRequestAdd={onAddEquipment}
             />
           </AccordionSection>
         </ScrollView>
@@ -505,7 +549,9 @@ const PoiForm: React.FC<Props> = ({
       />
     </ScreenBackground>
   );
-};
+});
+
+PoiForm.displayName = 'PoiForm';
 
 const styles = StyleSheet.create({
   checkRow: {

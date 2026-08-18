@@ -25,7 +25,10 @@ import {
   useUpdatePoiMutation,
 } from '../../graphql/features/poi/hooks';
 import {PoiDetail} from '../../types/poi';
-import PoiForm, {buildInitialValues} from './components/PoiForm';
+import PoiForm, {buildInitialValues, PoiFormHandle} from './components/PoiForm';
+import ConnectedElementCreateOverlay, {
+  useConnectedElementCreate,
+} from './components/ConnectedElementCreateOverlay';
 import PoiDetailTabs, {PoiDetailTab} from './components/PoiDetailTabs';
 import {
   PoiInteractionTimeline,
@@ -109,9 +112,13 @@ const ViewPoiScreen: React.FC<Props> = ({
     variant?: 'success' | 'danger';
   } | null>(null);
   const scrollRef = useRef<ScrollView>(null);
-  const {data: options} = usePoiFormOptionsQuery();
+  // Lets each create form select what it just made, without remounting the
+  // form and discarding the user's unsaved edits.
+  const formRef = useRef<PoiFormHandle>(null);
+  const {data: options, refetch: refetchOptions} = usePoiFormOptionsQuery();
   const {mutate: update, isLoading: isUpdating} = useUpdatePoiMutation();
   const {mutate: remove} = useDeletePoiMutation();
+  const connectedCreate = useConnectedElementCreate(formRef, refetchOptions);
 
   if (isLoading) {
     // Matches the POI Details tab's own sections: Basic (6 half + 1 full),
@@ -156,6 +163,7 @@ const ViewPoiScreen: React.FC<Props> = ({
     return (
       <View style={styles.root}>
         <PoiForm
+          ref={formRef}
           mode="edit"
           reference={detail.reference}
           options={options}
@@ -171,7 +179,10 @@ const ViewPoiScreen: React.FC<Props> = ({
             });
           }}
           onClose={() => setEditing(false)}
+          {...connectedCreate.formProps}
         />
+
+        <ConnectedElementCreateOverlay {...connectedCreate.overlayProps} />
       </View>
     );
   }

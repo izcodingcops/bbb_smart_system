@@ -21,9 +21,20 @@ interface Props {
   onClose: () => void;
   /** Fires with the new record's id, reference and queued state once created. */
   onCreated: (created: {id: string; reference: string; queued: boolean}) => void;
+  /**
+   * False when this screen is itself opened as a Connected Elements
+   * quick-create from another module (Incident's or POI's own Connected
+   * Elements). Its own Connected Elements then offers no further Add
+   * buttons, so quick-create never nests more than one level deep.
+   */
+  allowConnectedCreate?: boolean;
 }
 
-const CreateMaintenanceScreen: React.FC<Props> = ({onClose, onCreated}) => {
+const CreateMaintenanceScreen: React.FC<Props> = ({
+  onClose,
+  onCreated,
+  allowConnectedCreate = true,
+}) => {
   const {data: options, isLoading, isError, refetch} = useMaintenanceFormOptionsQuery();
   const {mutate: create, isLoading: isSubmitting} =
     useCreateMaintenanceRequestMutation();
@@ -89,10 +100,12 @@ const CreateMaintenanceScreen: React.FC<Props> = ({onClose, onCreated}) => {
         isSubmitting={isSubmitting}
         onSubmit={submit}
         onClose={onClose}
-        {...connectedCreate.formProps}
+        {...(allowConnectedCreate ? connectedCreate.formProps : null)}
       />
 
-      <ConnectedElementCreateOverlay {...connectedCreate.overlayProps} />
+      {allowConnectedCreate ? (
+        <ConnectedElementCreateOverlay {...connectedCreate.overlayProps} />
+      ) : null}
     </View>
   );
 };

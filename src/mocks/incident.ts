@@ -237,8 +237,17 @@ export const MOCK_INCIDENTS: IncidentDetail[] = [
   },
 ];
 
-/** Every list the Create/Edit form offers, verbatim from the design's IncForm. */
-export const MOCK_INCIDENT_FORM_OPTIONS: Omit<IncidentFormOptions, 'nextReference'> = {
+/**
+ * Every list the Create/Edit form offers, verbatim from the design's IncForm —
+ * except `fixtures`/`maintenanceOptions`/`poiOptions`/`equipmentOptions`,
+ * which the resolver now reads live off the respective stores (Connected
+ * Elements' quick-create needs a freshly-made record to actually show up in
+ * its own dropdown), the same way `maintenanceFormOptions` already does.
+ */
+export const MOCK_INCIDENT_FORM_OPTIONS: Omit<
+  IncidentFormOptions,
+  'nextReference' | 'fixtures' | 'maintenanceOptions' | 'poiOptions' | 'equipmentOptions'
+> = {
   incidentTypes: [
     'Vandalism', 'Medical Emergency', 'Theft', 'Suspicious Activity', 'Trespassing',
     'Property Damage', 'Drug Activity', 'Disturbance', 'Graffiti', 'Assault',
@@ -251,9 +260,5 @@ export const MOCK_INCIDENT_FORM_OPTIONS: Omit<IncidentFormOptions, 'nextReferenc
   ],
   zones: ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'Zone 5', 'Zone 6'],
   businessNames: ['16th St Mall', 'Union Station', 'Larimer Square', 'Civic Center', 'LoDo District', 'BlockByBlock'],
-  fixtures: ['Bench #B-204', 'Trash Bin #T-88', 'Planter #P-12', 'Bike Rack #BR-5', 'Light Pole #LP-19'],
   partyTypes: ['Witness', 'Victim', 'Suspect', 'Bystander', 'Reporting Party', 'Other'],
-  maintenanceOptions: ['Maintenance #96211407', 'Maintenance #96211', 'Maintenance #42984', 'Maintenance #42931'],
-  poiOptions: ['POI #96211407', 'POI #96211', 'R. Blake', 'M. Ortiz', 'D. Cole'],
-  equipmentOptions: ['Equipment #96211407', 'Equipment #96211', 'Tool Box', 'Pressure Washer'],
 };

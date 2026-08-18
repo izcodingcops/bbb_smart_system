@@ -1,7 +1,29 @@
 import {IncidentDetail, IncidentParty, IncidentPriority, IncidentStatus, IncidentVehicle} from '../../../types/incident';
 import {sleep} from '../../mockSession';
 import {MOCK_INCIDENT_FORM_OPTIONS} from '../../../mocks/incident';
+import {maintenanceConnectedLabel} from '../shared/connectedLabels';
+import {fixtureStore} from '../fixture/store';
+import {equipmentStore} from '../equipment/store';
+import {poiStore} from '../poi/store';
+import {maintenanceStore} from '../maintenance/store';
 import {allocateReference, findRecord, incidentStore, nextReference} from './store';
+
+/**
+ * Connected Elements offers maintenance requests as labels, not ids — read
+ * live off the maintenance store (like Maintenance's own form reads
+ * `incidents`/`pois`/`equipment` live) so one quick-created from this form
+ * shows up here. References are already unique, so no dedup is needed.
+ */
+const maintenanceOptions = (): string[] =>
+  maintenanceStore.records.map(record => maintenanceConnectedLabel(record.reference));
+
+/** Persons of interest, read live off the POI store — see `maintenanceOptions` above. */
+const poiOptions = (): string[] =>
+  Array.from(new Set(poiStore.records.map(record => record.name)));
+
+/** Equipment, read live off the Equipment store — see `maintenanceOptions` above. */
+const equipmentOptions = (): string[] =>
+  Array.from(new Set(equipmentStore.records.map(record => record.name)));
 
 const STATUS: Record<IncidentDetail['status'], string> = {
   Open: 'OPEN',
@@ -123,6 +145,10 @@ export const incidentResolvers = {
       await sleep();
       return {
         ...MOCK_INCIDENT_FORM_OPTIONS,
+        fixtures: fixtureStore.records.map(record => record.title),
+        maintenanceOptions: maintenanceOptions(),
+        poiOptions: poiOptions(),
+        equipmentOptions: equipmentOptions(),
         nextReference: nextReference(),
       };
     },

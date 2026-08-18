@@ -1,13 +1,13 @@
-import React, {useRef, useState} from 'react';
+import React, {forwardRef, useCallback, useImperativeHandle, useRef, useState} from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
-  Alert,
   StyleSheet,
 } from 'react-native';
 import ScreenBackground from '../../../components/ScreenBackground';
+import ChangeLocationSheet from '../../../components/ChangeLocationSheet';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {
   AccordionSection,
@@ -286,6 +286,17 @@ const AddRowButton: React.FC<{label: string; onPress: () => void}> = ({label, on
   </TouchableOpacity>
 );
 
+/** Imperative handle so Connected Elements' quick-create overlay can select
+ *  a freshly-made record on this form without remounting it. */
+export interface IncidentFormHandle {
+  /** Replaces the chosen fixture — the field holds one at a time. */
+  selectFixture: (name: string) => void;
+  /** Appends to the multi-selects, ignoring a value that's already chosen. */
+  addMaintenance: (label: string) => void;
+  addPoi: (name: string) => void;
+  addEquipment: (name: string) => void;
+}
+
 interface Props {
   mode: 'create' | 'edit';
   /** Display reference shown under the title, e.g. '#IN-42985'. */
@@ -296,9 +307,14 @@ interface Props {
   isSubmitting: boolean;
   onSubmit: (values: IncidentFormValues) => Promise<void>;
   onClose: () => void;
+  /** Fires once the Fixture overlay has closed, so a quick-create can open. */
+  onAddFixture?: () => void;
+  onAddMaintenance?: () => void;
+  onAddPoi?: () => void;
+  onAddEquipment?: () => void;
 }
 
-const IncidentForm: React.FC<Props> = ({
+const IncidentForm = forwardRef<IncidentFormHandle, Props>(({
   mode,
   reference,
   options,
@@ -307,10 +323,15 @@ const IncidentForm: React.FC<Props> = ({
   isSubmitting,
   onSubmit,
   onClose,
-}) => {
+  onAddFixture,
+  onAddMaintenance,
+  onAddPoi,
+  onAddEquipment,
+}, ref) => {
   const [values, setValues] = useState<IncidentFormValues>(initialValues);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [changeLocationOpen, setChangeLocationOpen] = useState(false);
   /** Set when onSubmit rejects, so the form reports it without navigating away. */
   const [submitFailed, setSubmitFailed] = useState(false);
 
@@ -369,6 +390,31 @@ const IncidentForm: React.FC<Props> = ({
 
   const set = <K extends keyof IncidentFormValues>(key: K, value: IncidentFormValues[K]) =>
     setValues(current => ({...current, [key]: value}));
+
+  type MultiSelectKey = 'connectedMaintenance' | 'connectedPois' | 'connectedEquipment';
+
+  // Guarded against duplicates: the option lists are plain strings, so adding
+  // the same name twice would render two identical chips the user can't tell
+  // apart, and submit it twice.
+  const appendTo = useCallback((key: MultiSelectKey, value: string) => {
+    setValues(current =>
+      current[key].includes(value)
+        ? current
+        : {...current, [key]: [...current[key], value]},
+    );
+  }, []);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      selectFixture: (name: string) =>
+        setValues(current => ({...current, fixture: name})),
+      addMaintenance: (label: string) => appendTo('connectedMaintenance', label),
+      addPoi: (name: string) => appendTo('connectedPois', name),
+      addEquipment: (name: string) => appendTo('connectedEquipment', name),
+    }),
+    [appendTo],
+  );
 
   const setParty = <K extends keyof IncidentPartyValues>(
     index: number,
@@ -525,9 +571,7 @@ const IncidentForm: React.FC<Props> = ({
                   <TouchableOpacity
                     style={formChrome.changeLocation}
                     activeOpacity={0.7}
-                    onPress={() =>
-                      Alert.alert('Coming soon', 'Picking a location on the map is not wired up yet.')
-                    }>
+                    onPress={() => setChangeLocationOpen(true)}>
                     <RefreshIcon size={14} color={theme.colors.primary} />
                     <Text style={formChrome.changeLocationText}>Change Location</Text>
                   </TouchableOpacity>
@@ -848,6 +892,8 @@ const IncidentForm: React.FC<Props> = ({
               value={values.fixture}
               onChange={next => set('fixture', next)}
               searchable
+              addLabel={onAddFixture ? 'Add Fixture' : undefined}
+              onRequestAdd={onAddFixture}
             />
             <MultiDropdownField
               label="Maintenance"
@@ -856,6 +902,8 @@ const IncidentForm: React.FC<Props> = ({
               values={values.connectedMaintenance}
               onChange={next => set('connectedMaintenance', next)}
               searchable
+              addLabel={onAddMaintenance ? 'Add Maintenance' : undefined}
+              onRequestAdd={onAddMaintenance}
             />
             <MultiDropdownField
               label="Person of Interest"
@@ -864,6 +912,8 @@ const IncidentForm: React.FC<Props> = ({
               values={values.connectedPois}
               onChange={next => set('connectedPois', next)}
               searchable
+              addLabel={onAddPoi ? 'Add Person of Interest' : undefined}
+              onRequestAdd={onAddPoi}
             />
             <MultiDropdownField
               label="Equipment"
@@ -872,6 +922,8 @@ const IncidentForm: React.FC<Props> = ({
               values={values.connectedEquipment}
               onChange={next => set('connectedEquipment', next)}
               searchable
+              addLabel={onAddEquipment ? 'Add Equipment' : undefined}
+              onRequestAdd={onAddEquipment}
             />
           </AccordionSection>
         </ScrollView>
@@ -927,9 +979,17 @@ const IncidentForm: React.FC<Props> = ({
         variant="danger"
         onDismiss={() => setSubmitFailed(false)}
       />
+
+      <ChangeLocationSheet
+        visible={changeLocationOpen}
+        onSelect={next => set('address', next)}
+        onClose={() => setChangeLocationOpen(false)}
+      />
     </ScreenBackground>
   );
-};
+});
+
+IncidentForm.displayName = 'IncidentForm';
 
 const styles = StyleSheet.create({
   repeatCard: {

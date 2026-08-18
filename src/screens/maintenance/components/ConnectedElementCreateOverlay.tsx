@@ -4,7 +4,7 @@ import CreateEquipmentScreen from '../../equipment/CreateEquipmentScreen';
 import CreateFixtureScreen from '../../fixture/CreateFixtureScreen';
 import CreateIncidentScreen from '../../incident/CreateIncidentScreen';
 import CreatePoiScreen from '../../poi/CreatePoiScreen';
-import {incidentConnectedLabel} from '../../../graphql/features/maintenance/connectedLabels';
+import {incidentConnectedLabel} from '../../../graphql/features/shared/connectedLabels';
 import {MaintenanceFormHandle} from './MaintenanceForm';
 import {theme} from '../../../theme';
 
@@ -150,6 +150,9 @@ const ConnectedElementCreateOverlay: React.FC<Props> = ({
               incidentConnectedLabel(created.incidentType, created.occurredAt),
             )
           }
+          // Quick-create never nests more than one level deep — this
+          // instance's own Connected Elements offers no further Add buttons.
+          allowConnectedCreate={false}
         />
       ) : null}
 
@@ -157,6 +160,7 @@ const ConnectedElementCreateOverlay: React.FC<Props> = ({
         <CreatePoiScreen
           onClose={onClose}
           onCreated={created => onCreated('poi', created.name)}
+          allowConnectedCreate={false}
         />
       ) : null}
 
@@ -164,6 +168,7 @@ const ConnectedElementCreateOverlay: React.FC<Props> = ({
         <CreateEquipmentScreen
           onClose={onClose}
           onCreated={created => onCreated('equipment', created.name)}
+          allowConnectedCreate={false}
         />
       ) : null}
     </View>

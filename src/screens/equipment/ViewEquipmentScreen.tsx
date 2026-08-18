@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {ScrollView, Text, TouchableOpacity, View, StyleSheet} from 'react-native';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -24,7 +24,10 @@ import {
 } from '../../graphql/features/equipment/hooks';
 import {EquipmentStatus} from '../../types/equipment';
 import EquipmentDetailTabs from './components/EquipmentDetailTabs';
-import EquipmentForm, {buildInitialValues} from './components/EquipmentForm';
+import EquipmentForm, {buildInitialValues, EquipmentFormHandle} from './components/EquipmentForm';
+import ConnectedElementCreateOverlay, {
+  useConnectedElementCreate,
+} from './components/ConnectedElementCreateOverlay';
 import EquipmentFormError from './components/EquipmentFormError';
 import UpkeepList from './components/UpkeepList';
 import {useQueuedEquipmentIds} from './pendingEquipmentItems';
@@ -78,6 +81,10 @@ const ViewEquipmentScreen: React.FC<Props> = ({
   } = useEquipmentFormOptionsQuery();
   const {mutate: update, isLoading: isUpdating} = useUpdateEquipmentMutation();
   const {mutate: remove} = useDeleteEquipmentMutation();
+  // Lets each create form select what it just made, without remounting the
+  // form and discarding the user's unsaved edits.
+  const formRef = useRef<EquipmentFormHandle>(null);
+  const connectedCreate = useConnectedElementCreate(formRef, refetchOptions);
   const route = useRoute<RouteProp<EquipmentStackParamList, 'EquipmentView'>>();
   const navigation =
     useNavigation<NativeStackNavigationProp<EquipmentStackParamList, 'EquipmentView'>>();
@@ -144,6 +151,7 @@ const ViewEquipmentScreen: React.FC<Props> = ({
     return (
       <View style={styles.root}>
         <EquipmentForm
+          ref={formRef}
           mode="edit"
           reference={detail.reference}
           options={options}
@@ -159,7 +167,10 @@ const ViewEquipmentScreen: React.FC<Props> = ({
             });
           }}
           onClose={() => setEditing(false)}
+          {...connectedCreate.formProps}
         />
+
+        <ConnectedElementCreateOverlay {...connectedCreate.overlayProps} />
       </View>
     );
   }

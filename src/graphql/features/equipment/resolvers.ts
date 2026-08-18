@@ -5,9 +5,6 @@ import {
   EquipmentUnit,
 } from '../../../types/equipment';
 import {
-  CONNECTED_INCIDENTS,
-  CONNECTED_MAINTENANCE,
-  CONNECTED_POIS,
   FUEL_OPTIONS,
   TAXONOMY_CATEGORIES,
   TAXONOMY_MAKES,
@@ -15,6 +12,13 @@ import {
   TAXONOMY_TYPES,
 } from '../../../mocks/equipmentTaxonomy';
 import {sleep} from '../../mockSession';
+import {
+  incidentConnectedLabel,
+  maintenanceConnectedLabel,
+} from '../shared/connectedLabels';
+import {incidentStore} from '../incident/store';
+import {poiStore} from '../poi/store';
+import {maintenanceStore} from '../maintenance/store';
 import {
   equipmentStore,
   findByCode,
@@ -24,6 +28,28 @@ import {
   nextReference,
   removeRecord,
 } from './store';
+
+/**
+ * Connected Elements offers incidents as labels, not ids — read live off the
+ * incident store, the same way Maintenance's own form reads them, so one
+ * quick-created from this form shows up here.
+ */
+const incidentOptions = (): string[] =>
+  Array.from(
+    new Set(
+      incidentStore.records.map(record =>
+        incidentConnectedLabel(record.type, record.occurredAt),
+      ),
+    ),
+  );
+
+/** Persons of interest, read live off the POI store — see `incidentOptions` above. */
+const poiOptions = (): string[] =>
+  Array.from(new Set(poiStore.records.map(record => record.name)));
+
+/** Maintenance requests, read live off the Maintenance store — see `incidentOptions` above. */
+const maintenanceOptions = (): string[] =>
+  maintenanceStore.records.map(record => maintenanceConnectedLabel(record.reference));
 
 /**
  * The create flow's list, not the hub mockup's — the hub ships real-world test
@@ -321,9 +347,9 @@ export const equipmentResolvers = {
         ownerships: ['OWNED', 'LEASED', 'RENTED', 'LOANED'],
         units: ['MILES', 'HOURS', 'KILOMETERS', 'NONE'],
         fuels: FUEL_OPTIONS,
-        incidents: CONNECTED_INCIDENTS,
-        personsOfInterest: CONNECTED_POIS,
-        maintenance: CONNECTED_MAINTENANCE,
+        incidents: incidentOptions(),
+        personsOfInterest: poiOptions(),
+        maintenance: maintenanceOptions(),
       };
     },
   },
