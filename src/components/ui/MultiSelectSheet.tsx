@@ -78,7 +78,27 @@ const MultiSelectSheet: React.FC<Props> = ({
       onClose={() => {
         setQuery('');
         onClose();
-      }}>
+      }}
+      footer={
+        <>
+          <TouchableOpacity
+            style={[styles.button, styles.reset]}
+            activeOpacity={0.85}
+            onPress={() => setDraft([])}>
+            <Text style={styles.resetText}>Reset</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, styles.apply]}
+            activeOpacity={0.85}
+            onPress={() => {
+              onApply(draft);
+              setQuery('');
+              onClose();
+            }}>
+            <Text style={styles.applyText}>Apply</Text>
+          </TouchableOpacity>
+        </>
+      }>
       {headerAction ? (
         <View style={styles.headerRow}>{headerAction}</View>
       ) : null}
@@ -115,25 +135,6 @@ const MultiSelectSheet: React.FC<Props> = ({
           </TouchableOpacity>
         );
       })}
-
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.button, styles.reset]}
-          activeOpacity={0.85}
-          onPress={() => setDraft([])}>
-          <Text style={styles.resetText}>Reset</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.button, styles.apply]}
-          activeOpacity={0.85}
-          onPress={() => {
-            onApply(draft);
-            setQuery('');
-            onClose();
-          }}>
-          <Text style={styles.applyText}>Apply</Text>
-        </TouchableOpacity>
-      </View>
     </BottomSheet>
   );
 };
@@ -189,11 +190,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
   label: {fontFamily: theme.fonts.bold, fontSize: 15, color: '#181B1F'},
-  footer: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginTop: theme.spacing.xl,
-  },
   button: {
     flex: 1,
     height: 48,

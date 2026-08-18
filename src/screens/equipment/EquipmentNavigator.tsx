@@ -34,9 +34,24 @@ type AddUpkeepProps = NativeStackScreenProps<
 >;
 type ScanProps = NativeStackScreenProps<EquipmentStackParamList, 'EquipmentScan'>;
 
-const CreateRoute: React.FC<CreateProps> = ({navigation}) => (
+const CreateRoute: React.FC<CreateProps> = ({navigation, route}) => (
   <CreateEquipmentScreen
-    onClose={() => navigation.popTo('EquipmentList')}
+    onClose={() => {
+      // Reset first, regardless of origin — the Equipment tab's own stack
+      // stays mounted while another tab is active, so leaving it on
+      // EquipmentCreate here would resurface Add Equipment the next time
+      // anyone navigates to this tab by name (bottom tab, More menu, or the
+      // FAB again), even from a plain tab switch that never touches this
+      // screen.
+      navigation.popTo('EquipmentList');
+      const returnTab = route.params?.returnTab;
+      if (returnTab) {
+        // Opened via the shared FAB from another tab — switch back there
+        // instead of leaving the Equipment hub on screen, which the user
+        // never asked to see.
+        navigation.getParent()?.navigate(returnTab as never);
+      }
+    }}
     onCreated={created =>
       navigation.popTo('EquipmentList', {
         toast: created.queued

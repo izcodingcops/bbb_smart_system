@@ -271,13 +271,15 @@ const ViewEquipmentScreen: React.FC<Props> = ({
         contentContainerStyle={styles.body}
         showsVerticalScrollIndicator={false}>
         <View style={styles.idRow}>
-          <Text style={styles.idBig}>{detail.reference}</Text>
-          {queued ? (
-            <View style={styles.queuedRow}>
-              <CloudOffIcon size={13} color="#C26401" />
-              <Text style={styles.queuedText}>Queued · offline</Text>
-            </View>
-          ) : null}
+          <View style={styles.idText}>
+            <Text style={styles.idBig}>{detail.reference}</Text>
+            {queued ? (
+              <View style={styles.queuedRow}>
+                <CloudOffIcon size={13} color="#C26401" />
+                <Text style={styles.queuedText}>Queued · offline</Text>
+              </View>
+            ) : null}
+          </View>
           <View style={styles.idActions}>
             {detail.mine ? (
               <>
@@ -392,11 +394,18 @@ const styles = StyleSheet.create({
   root: {flex: 1},
   body: {paddingBottom: theme.spacing.xxl},
   idRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.sm,
-    gap: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF0F2',
   },
+  idText: {flexShrink: 1, gap: 5},
   idBig: {
     fontFamily: theme.fonts.black,
     fontSize: 24,
@@ -407,8 +416,8 @@ const styles = StyleSheet.create({
   queuedRow: {flexDirection: 'row', alignItems: 'center', gap: 5},
   queuedText: {fontFamily: theme.fonts.black, fontSize: 12, color: '#C26401'},
   idAction: {
-    flex: 1,
     height: 42,
+    paddingHorizontal: 14,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: theme.radius.md,

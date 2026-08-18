@@ -75,7 +75,29 @@ const DateRangeSheet: React.FC<Props> = ({visible, value, onApply, onClose}) => 
   };
 
   return (
-    <BottomSheet visible={visible} title="Filter by Date Range" onClose={onClose}>
+    <BottomSheet
+      visible={visible}
+      title="Filter by Date Range"
+      onClose={onClose}
+      footer={
+        <>
+          <TouchableOpacity
+            style={[styles.button, styles.reset]}
+            activeOpacity={0.85}
+            onPress={() => {
+              onApply(null);
+              onClose();
+            }}>
+            <Text style={styles.resetText}>Reset</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, styles.apply]}
+            activeOpacity={0.85}
+            onPress={commit}>
+            <Text style={styles.applyText}>Apply</Text>
+          </TouchableOpacity>
+        </>
+      }>
       {DATE_RANGE_OPTIONS.map(option => {
         const selected = choice === option.value;
         return (
@@ -113,24 +135,6 @@ const DateRangeSheet: React.FC<Props> = ({visible, value, onApply, onClose}) => 
           ))}
         </View>
       ) : null}
-
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.button, styles.reset]}
-          activeOpacity={0.85}
-          onPress={() => {
-            onApply(null);
-            onClose();
-          }}>
-          <Text style={styles.resetText}>Reset</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.button, styles.apply]}
-          activeOpacity={0.85}
-          onPress={commit}>
-          <Text style={styles.applyText}>Apply</Text>
-        </TouchableOpacity>
-      </View>
 
       <TimePickerSheet
         visible={picking !== null}
@@ -207,11 +211,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.black,
     fontSize: 13.5,
     color: '#181B1F',
-  },
-  footer: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginTop: theme.spacing.xl,
   },
   button: {
     flex: 1,

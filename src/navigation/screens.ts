@@ -152,8 +152,16 @@ export function navigateToTarget(
   target: ModuleTarget,
   params?: Record<string, unknown>,
 ): void {
+  // Whichever tab was active before this jump — so a screen that cares (by
+  // reading `route.params.returnTab`) can switch back there on close instead
+  // of landing on its own module's list. Omitted when the FAB tile opens a
+  // screen in the tab the user was already on, since that tab's own list is
+  // the right place to land anyway.
+  const state = navigation?.getState();
+  const activeTab = state?.routes[state.index]?.name;
+  const returnTab = activeTab && activeTab !== target.tab ? activeTab : undefined;
   navigation?.navigate(target.tab, {
     screen: target.screen,
-    params: {...target.params, ...params},
+    params: {...target.params, ...params, returnTab},
   } as never);
 }

@@ -8,7 +8,13 @@ export interface EquipmentToast {
 
 export type EquipmentStackParamList = {
   EquipmentList: {toast?: EquipmentToast; initialTab?: 'all' | 'mine'} | undefined;
-  EquipmentCreate: undefined;
+  /**
+   * `returnTab` is set by the shared Add Requests FAB (`navigateToTarget` in
+   * navigation/screens.ts) when this screen was reached by switching tabs —
+   * closing without creating anything should switch back there instead of
+   * surfacing this module's own list, which the user never asked to see.
+   */
+  EquipmentCreate: {returnTab?: string} | undefined;
   EquipmentView: {id: string; initialTab?: 'equipment' | 'upkeep'};
   EquipmentCheckOut: {id: string};
   EquipmentCheckIn: {id: string};

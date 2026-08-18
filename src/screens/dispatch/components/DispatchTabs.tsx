@@ -41,9 +41,6 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
     paddingHorizontal: theme.spacing.xl,
     paddingVertical: 14,
-    backgroundColor: theme.colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEF0F2',
   },
   tab: {
     paddingHorizontal: 16,

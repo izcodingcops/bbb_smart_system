@@ -478,7 +478,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
     paddingTop: 18,
     paddingBottom: theme.spacing.lg,
-    backgroundColor: theme.colors.white,
   },
   idText: {flex: 1, minWidth: 0},
   idBig: {

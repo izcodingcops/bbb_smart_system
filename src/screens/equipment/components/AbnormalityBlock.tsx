@@ -34,7 +34,10 @@ const AbnormalityBlock: React.FC<Props> = ({
   const segmentValue = value === null ? '' : value ? 'yes' : 'no';
 
   return (
-    <View style={styles.field}>
+    // DropdownField already carries its own marginBottom — this wrapper only
+    // adds one when the dropdown isn't rendered, so the gap before the next
+    // field doesn't double up when "Yes" reveals it.
+    <View style={[styles.field, value !== true && styles.fieldSpacing]}>
       <FieldLabel
         label="Are there any abnormalities with the equipment?"
         required
@@ -62,7 +65,8 @@ const AbnormalityBlock: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
-  field: {marginBottom: theme.spacing.lg},
+  field: {},
+  fieldSpacing: {marginBottom: theme.spacing.lg},
   dropdown: {marginTop: theme.spacing.lg},
 });
 
