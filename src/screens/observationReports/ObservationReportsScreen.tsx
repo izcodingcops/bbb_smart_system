@@ -1,24 +1,32 @@
-import React, {useCallback, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {View, Text, FlatList, ScrollView, StyleSheet} from 'react-native';
 import ScreenBackground from '../../components/ScreenBackground';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {ObservationReportsStackParamList} from './routes';
+import AddRequestsSheet from '../../components/AddRequestsSheet';
+import {ObservationReportsStackParamList, ObservationReportsToast} from './routes';
 import {
   BackToTopPill,
   DateRangeSheet,
   EmptyState,
   FilterChips,
+  GradientFab,
   ListSearchRow,
   ListSummary,
   MultiSelectSheet,
   RecordCardSkeleton,
+  SegmentedTabs,
   SingleSelectSheet,
+  Toast,
 } from '../../components/ui';
 import {ClipboardCheckIcon} from '../../components/icons';
 import {useGetObservationReportsQuery} from '../../graphql/features/observationReport/hooks';
 import {ObservationReport, ObservationReportType} from '../../types/observationReport';
+import {GetShiftTypes} from '../../redux/auth/selectors';
+import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
+import {SCREEN} from '../../navigation/screens';
+import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {
   EMPTY_FILTERS,
   FIELD_LABEL,
@@ -39,7 +47,6 @@ import {
   optionsForField,
 } from './filtering';
 import ReportCard from './components/ReportCard';
-import ReportTabSwitcher from './components/ReportTabSwitcher';
 import {theme} from '../../theme';
 
 type ListNavigation = NativeStackNavigationProp<
@@ -57,8 +64,27 @@ const ObservationReportsScreen: React.FC = () => {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [openFilter, setOpenFilter] = useState<FilterField | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [toast, setToast] = useState<ObservationReportsToast | null>(null);
   const navigation = useNavigation<ListNavigation>();
+  const route = useRoute<RouteProp<ObservationReportsStackParamList, 'ObservationReportsList'>>();
   const listRef = useRef<FlatList<ObservationReport>>(null);
+  const {queueTile, flushTile} = useAddRequestTiles(SCREEN.reports);
+
+  // A toast handed back on the way out shows once, then the param is cleared so
+  // returning here later doesn't replay it.
+  const incomingToast = route.params?.toast;
+  useEffect(() => {
+    if (!incomingToast) {
+      return;
+    }
+    setToast(incomingToast);
+    navigation.setParams({toast: undefined});
+  }, [incomingToast, navigation]);
+
+  const shiftTypes = GetShiftTypes();
+  const shiftTypeId = GetActiveShiftTypeId();
+  const shiftName = shiftTypes.find(t => t.id === shiftTypeId)?.name ?? 'Shift';
 
   const handleOpenReport = useCallback(
     (report: ObservationReport) => {
@@ -103,12 +129,14 @@ const ObservationReportsScreen: React.FC = () => {
         <Text style={styles.title}>Observation Reports</Text>
 
         <View style={styles.tabsRow}>
-          <ReportTabSwitcher
-            tab={tab}
-            ambassadorCount={ambassadorCount}
-            supervisorCount={supervisorCount}
-            onChange={next => {
-              setTab(next);
+          <SegmentedTabs
+            tabs={[
+              {key: 'Ambassador', label: 'Ambassador', count: ambassadorCount},
+              {key: 'Supervisor', label: 'Supervisor', count: supervisorCount},
+            ]}
+            activeKey={tab}
+            onSelect={key => {
+              setTab(key as ObservationReportType);
               setSearch('');
               setFilters(EMPTY_FILTERS);
             }}
@@ -204,6 +232,22 @@ const ObservationReportsScreen: React.FC = () => {
         onPress={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}
       />
 
+      <GradientFab onPress={() => setAddOpen(true)} />
+
+      <AddRequestsSheet
+        visible={addOpen}
+        shiftName={shiftName}
+        // Closing here is what eventually runs the tile: queueTile only holds
+        // it, and flushTile fires from onClosed once the modal is really gone.
+        // Without this the sheet stays up and the tile never acts.
+        onSelect={tileId => {
+          setAddOpen(false);
+          queueTile(tileId);
+        }}
+        onClose={() => setAddOpen(false)}
+        onClosed={flushTile}
+      />
+
       <SingleSelectSheet
         visible={sortOpen}
         title="Sort by"
@@ -245,6 +289,24 @@ const ObservationReportsScreen: React.FC = () => {
           setFilters(current => ({...current, dateRange: next ? [next] : []}))
         }
         onClose={() => setOpenFilter(null)}
+      />
+
+      <Toast
+        visible={toast !== null}
+        title={toast?.title ?? ''}
+        message={toast?.message ?? ''}
+        variant={toast?.variant}
+        actionLabel={toast?.routeId ? 'View' : undefined}
+        onAction={
+          toast?.routeId
+            ? () => {
+                const id = toast.routeId;
+                setToast(null);
+                navigation.navigate('ObservationReportsView', {id});
+              }
+            : undefined
+        }
+        onDismiss={() => setToast(null)}
       />
     </ScreenBackground>
   );

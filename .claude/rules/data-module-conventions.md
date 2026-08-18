@@ -31,8 +31,11 @@ Check these before "fixing" something that looks like an inconsistency.
   unfiltered chip is a bug.
 
 - **A module with no create screen in its mockup export gets no create
-  screen here.** Several modules (Observation Reports, Reference Documents,
-  Notifications, Maps) are intentionally read-only archives because their
-  standalone-export mockup only built a list + detail view, even when the
-  old app (`bbb_mobile_application`) has a fuller create flow. Don't port the
-  old app's create flow without a design/spec decision to do so.
+  screen here.** Several modules (Reference Documents, Notifications, Maps)
+  are intentionally read-only archives because their standalone-export
+  mockup only built a list + detail view, even when the old app
+  (`bbb_mobile_application`) has a fuller create flow. Don't port the old
+  app's create flow without a design/spec decision to do so. (Observation
+  Reports used to be on this list — a later Supervisor design handoff added
+  a real create/edit form, so it isn't anymore; see
+  `.claude/rules/modules/observation-reports.md`.)

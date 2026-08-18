@@ -1,33 +1,52 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
-import {StatusPill} from '../../../components/ui';
 import {ObservationChecklistItem} from '../../../types/observationReport';
 import {theme} from '../../../theme';
 
-const ANSWER_STYLE: Record<ObservationChecklistItem['answer'], {bg: string; fg: string}> = {
-  Yes: {bg: '#F6FFED', fg: '#389E0D'},
-  No: {bg: '#FFF2F0', fg: '#CF1322'},
-  'N/A': {bg: '#F1F3F5', fg: '#475467'},
-};
-
-const ChecklistItem: React.FC<{item: ObservationChecklistItem}> = ({item}) => {
-  const style = ANSWER_STYLE[item.answer];
-  return (
-    <View style={styles.row}>
-      <View style={styles.head}>
-        <Text style={styles.question}>{item.question}</Text>
-        <StatusPill label={item.answer} bg={style.bg} fg={style.fg} />
+const ChecklistItem: React.FC<{item: ObservationChecklistItem}> = ({item}) => (
+  <View style={styles.row}>
+    <Text style={styles.question}>{item.question}</Text>
+    <Text style={styles.answer}>{item.answer}</Text>
+    {item.note ? (
+      <View style={styles.note}>
+        <Text style={styles.noteText}>
+          <Text style={styles.noteLabel}>Note: </Text>
+          {item.note}
+        </Text>
       </View>
-      {item.note ? <Text style={styles.note}>{item.note}</Text> : null}
-    </View>
-  );
-};
+    ) : null}
+  </View>
+);
 
 const styles = StyleSheet.create({
-  row: {gap: 8, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#EEF0F2'},
-  head: {flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: theme.spacing.md},
-  question: {flex: 1, fontFamily: theme.fonts.bold, fontSize: 14, color: '#181B1F'},
-  note: {fontFamily: theme.fonts.bold, fontSize: 12.5, color: theme.colors.textSecondary},
+  row: {paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#EEF0F2'},
+  question: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 12.5,
+    color: '#5B7290',
+    lineHeight: 17,
+    marginBottom: 6,
+  },
+  answer: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 14,
+    color: '#252728',
+    marginBottom: 10,
+  },
+  note: {
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.white,
+    padding: theme.spacing.md,
+  },
+  noteText: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 13.5,
+    lineHeight: 19,
+    color: theme.colors.textSecondary,
+  },
+  noteLabel: {fontFamily: theme.fonts.black, color: theme.colors.text},
 });
 
 export default React.memo(ChecklistItem);

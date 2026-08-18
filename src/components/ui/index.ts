@@ -29,6 +29,8 @@ export {default as FilterChips} from './FilterChips';
 export {formChrome} from './formChrome';
 export {default as FormScreenSkeleton} from './FormScreenSkeleton';
 export {default as GradientFab} from './GradientFab';
+export {default as IconToggleCards} from './IconToggleCards';
+export type {IconToggleOption} from './IconToggleCards';
 export {default as KebabMenu} from './KebabMenu';
 export type {KebabMenuOption} from './KebabMenu';
 export {default as ListSearchRow} from './ListSearchRow';

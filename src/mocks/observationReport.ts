@@ -1,4 +1,8 @@
-import {ObservationChecklistItem, ObservationReport} from '../types/observationReport';
+import {
+  ObservationChecklistItem,
+  ObservationQuestion,
+  ObservationReport,
+} from '../types/observationReport';
 
 const QUESTIONS = [
   'Was the Ambassador on task during Observation?',
@@ -7,6 +11,15 @@ const QUESTIONS = [
   'Was the Ambassador adhering to safety standards? (PPE utilized, Observing BBB Rules)?',
   'Was a training topic/scenario covered?',
 ];
+
+/**
+ * The server's own question tree for the create/edit form — stable keys the
+ * form's answer map uses, walked positionally against the same fixed
+ * `QUESTIONS` list every record's checklist already denormalizes from.
+ */
+export const OBSERVATION_QUESTIONS: ObservationQuestion[] = QUESTIONS.map(
+  (prompt, i) => ({key: `q${i + 1}`, prompt}),
+);
 
 function checklist(
   answers: ObservationChecklistItem['answer'][],
@@ -19,7 +32,12 @@ function checklist(
   }));
 }
 
-const EXPLICIT: ObservationReport[] = [
+/**
+ * `images` is added by `MOCK_OBSERVATION_REPORTS` below rather than on every
+ * literal here — it's a real field on the type (the create form persists
+ * locally-picked photo URIs, same as RVP), but no seed record has one.
+ */
+const EXPLICIT: Omit<ObservationReport, 'images'>[] = [
   {
     id: 'obr_2043', reference: '#OBR-2043', type: 'Ambassador',
     name: 'ambassador, test', date: '2026-07-17', dateTime: '2026-07-17T09:51:00',
@@ -134,12 +152,14 @@ const EXPLICIT: ObservationReport[] = [
   },
 ];
 
-const AMB_NAMES = [
+/** Also the create form's Ambassador picklist. */
+export const AMB_NAMES = [
   'Jordan Blake', 'Priya Anand', 'Marcus Webb', 'Devon Reyes', 'Sasha Kim',
   'Elliot Cho', 'Nadia Brooks', 'Trevor Lang', 'Maya Solis', 'Ibrahim Noor',
   'Casey Flynn', 'Renee Ortiz',
 ];
-const SUP_NAMES = [
+/** Also the create form's Supervisor picklist. */
+export const SUP_NAMES = [
   'Harold Byrne', 'Simone Iqbal', 'Dana Whitfield', 'Marcus Petrov',
   'Alicia Byun', 'Tomas Reyes', 'Nia Okonkwo', 'Felix Dumont',
   'Rosa Delgado', 'Ken Arata', 'Vivian Cross', 'Aiden Wolfe',
@@ -150,7 +170,8 @@ const REVIEWERS = [
   'Dev 2, Tester', 'Bridget Brownlee', 'Chris Coulter', 'Will Campbell',
   'Tina Durbin', 'Michael Chou', 'Stan Der-by', 'Kendrick Dale',
 ];
-const ZONES = [
+/** Also the create form's Zone picklist. */
+export const ZONES = [
   'Beachmont', 'Downtown Louisville', 'LOOPER - update222', 'map box',
   'New July Zone 1', 'RiverFront', 'South IN 2', 'Southern Indiana',
   'Tes June Zone', 'test', 'test July 7', 'Test June 25', 'TEST ZONE',
@@ -191,11 +212,12 @@ function generate(
   type: 'Ambassador' | 'Supervisor',
   names: string[],
   idFloor: number,
-): ObservationReport[] {
+): Omit<ObservationReport, 'images'>[] {
   return names.map((name, i) => {
     const {date, dateTime} = isoAt(DAYS_AGO[i], 8 + (i % 6), (i * 11) % 60);
     const num = idFloor - i * 3;
     const prefix = type === 'Ambassador' ? 'AMB' : 'SUP';
+    const answers = GEN_ANSWER_SETS[i % GEN_ANSWER_SETS.length];
     return {
       id: `obr_gen_${prefix.toLowerCase()}_${num}`,
       reference: `#OBR-${num}`,
@@ -205,18 +227,23 @@ function generate(
       dateTime,
       reviewedBy: {name: REVIEWERS[i % REVIEWERS.length]},
       zone: ZONES[i % ZONES.length],
-      score: [1, 2, 3, 5][i % 4],
+      // Yes-count, so the score always agrees with the checklist it's paired
+      // with — an unrelated cyclical array here once showed Jordan Blake at
+      // 1/5 despite an all-Yes checklist (real bug, fixed 2026-08-18).
+      score: answers.filter(a => a === 'Yes').length,
       summary: GEN_SUMMARIES[i % GEN_SUMMARIES.length],
-      checklist: checklist(GEN_ANSWER_SETS[i % GEN_ANSWER_SETS.length], ['', '', '', '', '']),
+      checklist: checklist(answers, ['', '', '', '', '']),
     };
   });
 }
 
 // Lowest explicit AMB id is 1994, lowest SUP id is 3053 — floors sit well
 // below both so generated ids never collide with the explicit set.
-const GENERATED: ObservationReport[] = [
+const GENERATED: Omit<ObservationReport, 'images'>[] = [
   ...generate('Ambassador', AMB_NAMES, 1900),
   ...generate('Supervisor', SUP_NAMES, 2900),
 ];
 
-export const MOCK_OBSERVATION_REPORTS: ObservationReport[] = [...EXPLICIT, ...GENERATED];
+export const MOCK_OBSERVATION_REPORTS: ObservationReport[] = [...EXPLICIT, ...GENERATED].map(
+  record => ({...record, images: []}),
+);

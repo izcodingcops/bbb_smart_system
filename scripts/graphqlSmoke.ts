@@ -1565,6 +1565,192 @@ const checks: Check[] = [
     assert.equal(missing.data.observationReport, null);
   }],
 
+  ['observationReportFormOptions serves the reserved reference and the fixed question tree', async () => {
+    const r: any = await run(
+      'query O($p: ID!) { observationReportFormOptions(programId: $p) { nextReference zones ambassadors supervisors questions { key prompt } } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.observationReportFormOptions;
+    // The seed's highest reference is #OBR-3097.
+    assert.equal(o.nextReference, '#OBR-3098');
+    assert.equal(o.zones.length, 14);
+    assert.equal(o.ambassadors.length, 12);
+    assert.equal(o.supervisors.length, 12);
+    assert.equal(o.questions.length, 5);
+    assert.deepEqual(o.questions.map((q: any) => q.key), ['q1', 'q2', 'q3', 'q4', 'q5']);
+  }],
+
+  ['createObservationReport scores from the answers, not from anything the client claims', async () => {
+    const created: any = await run(
+      `mutation C($p: ID!, $input: ObservationReportInput!) {
+        createObservationReport(programId: $p, input: $input) {
+          id reference score checklist { question answer note } images
+        }
+      }`,
+      {
+        p: 'p1',
+        input: {
+          type: 'AMBASSADOR',
+          name: 'Smoke Test Ambassador',
+          zone: 'RiverFront',
+          dateTime: '2026-08-18T09:00:00.000Z',
+          answers: [
+            {key: 'q1', answer: 'Yes'},
+            {key: 'q2', answer: 'Yes'},
+            {key: 'q3', answer: 'No', note: 'Left post briefly.'},
+            {key: 'q4', answer: 'Yes'},
+            {key: 'q5', answer: 'Yes', note: 'Reviewed radio protocol.'},
+          ],
+        },
+      },
+    );
+    assert.equal(created.errors, undefined);
+    const d = created.data.createObservationReport;
+    assert.equal(d.reference, '#OBR-3098');
+    assert.equal(d.score, 4);
+    assert.equal(d.checklist.length, 5);
+    assert.equal(d.checklist[2].answer, 'No');
+    assert.equal(d.checklist[2].note, 'Left post briefly.');
+    assert.equal(d.checklist[4].note, 'Reviewed radio protocol.');
+    assert.deepEqual(d.images, []);
+
+    await run('mutation D($id: ID!) { deleteObservationReport(id: $id) }', {id: d.id});
+  }],
+
+  ['createObservationReport drops an unknown key and a missing answer stores as No', async () => {
+    const created: any = await run(
+      `mutation C($p: ID!, $input: ObservationReportInput!) {
+        createObservationReport(programId: $p, input: $input) {
+          id score checklist { question answer }
+        }
+      }`,
+      {
+        p: 'p1',
+        input: {
+          type: 'SUPERVISOR',
+          name: 'Smoke Test Supervisor',
+          zone: 'Beachmont',
+          dateTime: '2026-08-18T09:00:00.000Z',
+          // q4 and q5 are simply absent; qNOPE is not a real question key.
+          answers: [
+            {key: 'q1', answer: 'Yes'},
+            {key: 'q2', answer: 'Yes'},
+            {key: 'q3', answer: 'Yes'},
+            {key: 'qNOPE', answer: 'Yes'},
+          ],
+        },
+      },
+    );
+    assert.equal(created.errors, undefined);
+    const d = created.data.createObservationReport;
+    // Still exactly 5 checklist rows — the phantom key never became one.
+    assert.equal(d.checklist.length, 5);
+    assert.equal(d.score, 3);
+    assert.equal(d.checklist[3].answer, 'No');
+    assert.equal(d.checklist[4].answer, 'No');
+
+    await run('mutation D($id: ID!) { deleteObservationReport(id: $id) }', {id: d.id});
+  }],
+
+  ['updateObservationReport re-scores and keeps the reference, but the person is not swapped', async () => {
+    const created: any = await run(
+      `mutation C($p: ID!, $input: ObservationReportInput!) {
+        createObservationReport(programId: $p, input: $input) { id reference name }
+      }`,
+      {
+        p: 'p1',
+        input: {
+          type: 'AMBASSADOR',
+          name: 'Original Ambassador',
+          zone: 'test',
+          dateTime: '2026-08-18T09:00:00.000Z',
+          answers: [
+            {key: 'q1', answer: 'Yes'}, {key: 'q2', answer: 'Yes'},
+            {key: 'q3', answer: 'Yes'}, {key: 'q4', answer: 'Yes'}, {key: 'q5', answer: 'Yes'},
+          ],
+        },
+      },
+    );
+    const id = created.data.createObservationReport.id;
+    const reference = created.data.createObservationReport.reference;
+
+    const updated: any = await run(
+      `mutation U($id: ID!, $input: ObservationReportInput!) {
+        updateObservationReport(id: $id, input: $input) { id reference score }
+      }`,
+      {
+        id,
+        input: {
+          type: 'AMBASSADOR',
+          // The client can't move who a report is about — the detail form
+          // locks this field — but the resolver itself just re-stores
+          // whatever it's sent, same as every other write here.
+          name: 'Original Ambassador',
+          zone: 'test',
+          dateTime: '2026-08-18T09:00:00.000Z',
+          answers: [
+            {key: 'q1', answer: 'Yes'}, {key: 'q2', answer: 'No'},
+            {key: 'q3', answer: 'No'}, {key: 'q4', answer: 'Yes'}, {key: 'q5', answer: 'No'},
+          ],
+        },
+      },
+    );
+    assert.equal(updated.errors, undefined);
+    const u = updated.data.updateObservationReport;
+    assert.equal(u.id, id);
+    assert.equal(u.reference, reference);
+    assert.equal(u.score, 2);
+
+    await run('mutation D($id: ID!) { deleteObservationReport(id: $id) }', {id});
+
+    const missing: any = await run(
+      `mutation U($id: ID!, $input: ObservationReportInput!) {
+        updateObservationReport(id: $id, input: $input) { id }
+      }`,
+      {
+        id: 'nope',
+        input: {
+          type: 'AMBASSADOR', name: 'x', zone: 'x', dateTime: '2026-08-18T09:00:00.000Z',
+          answers: [],
+        },
+      },
+    );
+    assert.ok(missing.errors, 'updating an unknown id should throw');
+  }],
+
+  ['deleteObservationReport removes the record and an unknown id throws', async () => {
+    const created: any = await run(
+      `mutation C($p: ID!, $input: ObservationReportInput!) {
+        createObservationReport(programId: $p, input: $input) { id }
+      }`,
+      {
+        p: 'p1',
+        input: {
+          type: 'SUPERVISOR', name: 'To Be Deleted', zone: 'test', dateTime: '2026-08-18T09:00:00.000Z',
+          answers: [
+            {key: 'q1', answer: 'Yes'}, {key: 'q2', answer: 'Yes'},
+            {key: 'q3', answer: 'Yes'}, {key: 'q4', answer: 'Yes'}, {key: 'q5', answer: 'Yes'},
+          ],
+        },
+      },
+    );
+    const id = created.data.createObservationReport.id;
+
+    const before: any = await run('query L($p: ID!) { observationReports(programId: $p) { id } }', {p: 'p1'});
+    const gone: any = await run('mutation D($id: ID!) { deleteObservationReport(id: $id) }', {id});
+    assert.equal(gone.errors, undefined);
+    assert.equal(gone.data.deleteObservationReport, id);
+
+    const after: any = await run('query L($p: ID!) { observationReports(programId: $p) { id } }', {p: 'p1'});
+    assert.equal(after.data.observationReports.length, before.data.observationReports.length - 1);
+    const lookup: any = await run('query D($id: ID!) { observationReport(id: $id) { id } }', {id});
+    assert.equal(lookup.data.observationReport, null);
+
+    const missing: any = await run('mutation D($id: ID!) { deleteObservationReport(id: $id) }', {id: 'nope'});
+    assert.ok(missing.errors, 'deleting an unknown id should throw');
+  }],
+
   ['reference documents resolve with 30 records', async () => {
     const r: any = await run(
       'query R($p: ID!) { referenceDocuments(programId: $p) { id reference entryType fixtureType fixture } }',

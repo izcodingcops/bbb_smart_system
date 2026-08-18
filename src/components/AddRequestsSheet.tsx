@@ -49,11 +49,6 @@ const SECTIONS: {key: string; title: string; tiles: AddRequestTile[]}[] = [
   {
     key: 'reports',
     title: 'Add New Reports',
-    // Off Hours Visit and RVP Site Visit both route; Observation Reports does
-    // not — it is a deliberately read-only archive with no create flow, so its
-    // tile falls through to useAddRequestTiles' "Coming soon" alert. It ships
-    // anyway because the source mockup draws all three and the section reads
-    // as incomplete without it.
     tiles: [
       {id: 'observation', label: 'Observation', Icon: SearchIcon},
       {id: 'off_hours', label: 'Off Hours Visit', Icon: ClockIcon},

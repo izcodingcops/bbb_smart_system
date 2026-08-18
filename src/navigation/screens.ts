@@ -128,15 +128,15 @@ export const CREATE_TARGET_BY_TILE: Record<string, ModuleTarget> = {
   // shared Add Requests sheet rather than a module-local create action, so
   // without this entry the screen is unreachable from anywhere.
   equipment: {tab: SCREEN.equipment, screen: 'EquipmentCreate'},
-  // Both report modules are submit-only and their tab roots are empty states,
-  // so the sheet tile is the main way anyone reaches either form. The third
-  // "Add New Reports" tile stays unrouted: Observation Reports is a
-  // deliberately read-only archive with no create flow to route to.
+  // Off Hours Visit and Shift Notes are submit-only and their tab roots are
+  // empty states, so the sheet tile is the main way anyone reaches either
+  // form.
   rvp_site_visit: {tab: SCREEN.rvpSiteVisit, screen: 'RvpSiteVisitCreate'},
   off_hours: {tab: SCREEN.offHoursVisit, screen: 'OffHoursVisitCreate'},
   // Same shape as off_hours: submit-only, so its tab root is an empty state and
   // the sheet tile is the main way anyone reaches the form.
   shift_notes: {tab: SCREEN.shiftNotes, screen: 'ShiftNotesCreate'},
+  observation: {tab: SCREEN.reports, screen: 'ObservationReportsCreate'},
 };
 
 export const createTargetForTile = (tileId: string): ModuleTarget | null =>

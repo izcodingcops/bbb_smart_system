@@ -1,7 +1,8 @@
-import React from 'react';
-import {View, Text, ScrollView, StyleSheet} from 'react-native';
+import React, {useState} from 'react';
+import {View, Text, Image, ScrollView, StyleSheet} from 'react-native';
 import ScreenBackground from '../../components/ScreenBackground';
 import {
+  ConfirmDialog,
   DetailField,
   DetailScreenSkeleton,
   DetailSection,
@@ -9,32 +10,52 @@ import {
   EmptyState,
   PersonChip,
   ScorePill,
+  Toast,
   formatDateTime,
 } from '../../components/ui';
 import {ClipboardCheckIcon} from '../../components/icons';
-import {useGetObservationReportQuery} from '../../graphql/features/observationReport/hooks';
+import {
+  useDeleteObservationReportMutation,
+  useGetObservationReportQuery,
+  useObservationReportFormOptionsQuery,
+  useUpdateObservationReportMutation,
+} from '../../graphql/features/observationReport/hooks';
 import ChecklistItem from './components/ChecklistItem';
+import ObservationReportForm, {buildEditValues} from './components/ObservationReportForm';
 import {theme} from '../../theme';
 
 interface Props {
   id: string;
   onClose: () => void;
+  /** Fires after the record is gone, so the list can pop back and toast. */
+  onDeleted: (reference: string) => void;
 }
 
-const ViewObservationReportScreen: React.FC<Props> = ({id, onClose}) => {
-  // Only hook in this component — runs before every early return below.
+const ViewObservationReportScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
+  // Every hook runs before the early returns below — the loading, error,
+  // editing and loaded branches must not change hook order between renders.
   const {data: detail, isLoading, isError, refetch} = useGetObservationReportQuery(id);
+  const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [toast, setToast] = useState<{
+    title: string;
+    message: string;
+    variant?: 'success' | 'danger';
+  } | null>(null);
+  const {data: options} = useObservationReportFormOptionsQuery();
+  const {mutate: update, isLoading: isUpdating} = useUpdateObservationReportMutation();
+  const {mutate: remove} = useDeleteObservationReportMutation();
 
   if (isLoading) {
-    // Report Details (4 fields), the 5-row Checklist, and the single-block
-    // Summary — the latter two aren't grids, so they're approximated as
-    // stacks of full-width bones rather than left empty.
+    // Report Details (4 fields, all half-width), the 5-row Checklist, and the
+    // single-block Summary — the latter two aren't grids, so they're
+    // approximated as stacks of full-width bones rather than left empty.
     return (
       <DetailScreenSkeleton
         title="Observation Report"
         onBack={onClose}
         sections={[
-          ['half', 'half', 'full', 'half'],
+          ['half', 'half', 'half', 'half'],
           ['full', 'full', 'full', 'full', 'full'],
           ['full'],
         ]}
@@ -61,23 +82,70 @@ const ViewObservationReportScreen: React.FC<Props> = ({id, onClose}) => {
     );
   }
 
+  // Edit replaces the detail in place, matching RVP's own slide-over.
+  if (editing && options) {
+    return (
+      <View style={styles.root}>
+        <ObservationReportForm
+          mode="edit"
+          reference={detail.reference}
+          options={options}
+          initialValues={buildEditValues(options, detail)}
+          isSubmitting={isUpdating}
+          onSubmit={async values => {
+            await update(detail.id, values);
+            setEditing(false);
+            setToast({
+              title: 'Observation updated',
+              message: `${detail.reference} was updated.`,
+            });
+          }}
+          onClose={() => setEditing(false)}
+        />
+      </View>
+    );
+  }
+
   return (
     <ScreenBackground style={styles.root}>
-      <DetailTopBar title="Observation Report" reference={detail.reference} onBack={onClose} />
+      <DetailTopBar
+        title="Observation Report"
+        reference={detail.reference}
+        onBack={onClose}
+        // Held back until the form options land, or Edit would open onto
+        // nothing — the same guard RVP's own detail screen applies.
+        onEdit={options ? () => setEditing(true) : undefined}
+        onDelete={() => setConfirmDelete(true)}
+      />
 
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.idRow}>
-          <Text style={styles.idBig}>{detail.name}</Text>
+          <PersonChip name={detail.name} size={56} shape="rounded" avatarOnly />
+          <View style={styles.idText}>
+            <Text style={styles.idBig} numberOfLines={1}>
+              {detail.name}
+            </Text>
+            <Text style={styles.idRef}>ID {detail.reference}</Text>
+          </View>
           <ScorePill score={detail.score} size="md" />
         </View>
 
         <DetailSection title="Report Details">
-          <DetailField label="Zone" value={detail.zone} />
           <DetailField label="Reviewed by">
             <PersonChip name={detail.reviewedBy.name} />
           </DetailField>
-          <DetailField label="Date/Time Captured" value={formatDateTime(detail.dateTime)} full />
+          <DetailField label="Zone" value={detail.zone} />
+          <DetailField label="Date/Time Captured" value={formatDateTime(detail.dateTime)} />
           <DetailField label="Type" value={detail.type} />
+          {detail.images.length > 0 ? (
+            <DetailField label="Images" full>
+              <View style={styles.thumbs}>
+                {detail.images.map(uri => (
+                  <Image key={uri} source={{uri}} style={styles.thumb} />
+                ))}
+              </View>
+            </DetailField>
+          ) : null}
         </DetailSection>
 
         <DetailSection title="Observation Checklist" grid={false}>
@@ -87,9 +155,50 @@ const ViewObservationReportScreen: React.FC<Props> = ({id, onClose}) => {
         </DetailSection>
 
         <DetailSection title="Observation Summary" grid={false}>
-          <Text style={styles.summary}>{detail.summary || 'No summary added'}</Text>
+          <View style={styles.summaryBox}>
+            <Text style={styles.summary}>{detail.summary || 'No summary added'}</Text>
+          </View>
         </DetailSection>
       </ScrollView>
+
+      <ConfirmDialog
+        visible={confirmDelete}
+        title="Delete this observation report?"
+        message={
+          <Text>
+            Report <Text style={styles.bold}>{detail.reference}</Text> for{' '}
+            <Text style={styles.bold}>{detail.name}</Text> will be permanently deleted and{' '}
+            {detail.name} will be notified. This action cannot be undone.
+          </Text>
+        }
+        confirmLabel="Delete"
+        icon="warning"
+        iconTone="danger"
+        confirmTone="danger"
+        onConfirm={async () => {
+          try {
+            await remove(detail.id);
+            setConfirmDelete(false);
+            onDeleted(detail.reference);
+          } catch {
+            setConfirmDelete(false);
+            setToast({
+              title: "Couldn't delete",
+              message: `${detail.reference} is still there. Check your connection and try again.`,
+              variant: 'danger',
+            });
+          }
+        }}
+        onCancel={() => setConfirmDelete(false)}
+      />
+
+      <Toast
+        visible={toast !== null}
+        title={toast?.title ?? ''}
+        message={toast?.message ?? ''}
+        variant={toast?.variant}
+        onDismiss={() => setToast(null)}
+      />
     </ScreenBackground>
   );
 };
@@ -113,12 +222,24 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EEF0F2',
   },
+  idText: {flex: 1, minWidth: 0, gap: 4},
   idBig: {
-    flex: 1,
     fontFamily: theme.fonts.black,
-    fontSize: 25,
+    fontSize: 21,
     letterSpacing: -0.5,
     color: theme.colors.text,
+  },
+  idRef: {
+    fontFamily: theme.fonts.bold,
+    fontSize: 13,
+    color: theme.colors.textMuted,
+  },
+  summaryBox: {
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.white,
+    padding: theme.spacing.md,
   },
   summary: {
     fontFamily: theme.fonts.bold,
@@ -126,6 +247,9 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: theme.colors.text,
   },
+  thumbs: {flexDirection: 'row', flexWrap: 'wrap', gap: 8},
+  thumb: {width: 64, height: 64, borderRadius: theme.radius.md},
+  bold: {fontFamily: theme.fonts.black},
 });
 
 export default ViewObservationReportScreen;

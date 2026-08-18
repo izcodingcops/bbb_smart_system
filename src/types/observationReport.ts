@@ -24,8 +24,44 @@ export interface ObservationReport {
   dateTime: string;
   reviewedBy: ObservationReviewer;
   zone: string;
-  /** 0–5, one decimal place. */
+  /** Yes-count out of the fixed 5-question checklist. */
   score: number;
   summary: string;
   checklist: ObservationChecklistItem[];
+  images: string[];
+}
+
+/* ------------------------------------------------------------------ *
+ * The form
+ * ------------------------------------------------------------------ */
+
+/** One fixed checklist question, as the server's own question tree serves it. */
+export interface ObservationQuestion {
+  /** Stable key the form's answer map uses, e.g. 'q1'. */
+  key: string;
+  prompt: string;
+}
+
+export interface ObservationReportFormValues {
+  type: ObservationReportType;
+  /** The Ambassador or Supervisor being observed — '' until picked. */
+  person: string;
+  zone: string;
+  /** ISO-8601. */
+  dateTime: string;
+  /** Question key → Yes/No. A key with no entry is unanswered. */
+  answers: Record<string, 'Yes' | 'No'>;
+  /** Question key → note text (a "why not" on No, the training topic on Q5's Yes). */
+  notes: Record<string, string>;
+  summary: string;
+  images: string[];
+}
+
+export interface ObservationReportFormOptions {
+  /** Reserved when the form opens, e.g. '#OBR-3054'. */
+  nextReference: string;
+  zones: string[];
+  ambassadors: string[];
+  supervisors: string[];
+  questions: ObservationQuestion[];
 }

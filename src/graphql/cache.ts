@@ -58,6 +58,9 @@ export const cache = new InMemoryCache({
     ObservationReport: {keyFields: ['id']},
     ObservationReviewer: {keyFields: false},
     ObservationChecklistItem: {keyFields: false},
+    ObservationQuestion: {keyFields: false},
+    // No id of its own — options belong to the query that asked for them.
+    ObservationReportFormOptions: {keyFields: false},
     ReferenceDocument: {keyFields: ['id']},
     RvpSiteVisit: {keyFields: ['id']},
     RvpSiteVisitDetail: {keyFields: ['id']},
