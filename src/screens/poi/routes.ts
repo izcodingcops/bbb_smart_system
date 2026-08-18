@@ -17,9 +17,9 @@ export interface PoiToast {
  * `personId`/`personName` are set when the sub-record was started from a
  * specific person, which locks the form's person field.
  *
- * There is no `origin` here, unlike the other modules' create routes: every
- * way into POI's creates goes through the chooser on the POI list, so the user
- * is already visibly on this tab and closing unsaved returns them to it.
+ * There is no `origin` here, unlike `PoiCreatePerson`: Interaction and Update
+ * are only reachable from a card or the person detail screen, both already on
+ * this tab, so closing unsaved has nowhere else to bounce back to.
  */
 export interface PoiSubRecordParams {
   personId?: string;
@@ -27,18 +27,13 @@ export interface PoiSubRecordParams {
 }
 
 export type PoiStackParamList = {
+  PoiList: {toast?: PoiToast} | undefined;
   /**
-   * `openChooser` is how the Add Requests POI tile arrives: POI has three
-   * record types, so the tile lands here and the three-way chooser opens over
-   * the list rather than guessing a create screen.
-   *
-   * There is no `origin` counterpart. Unlike the other modules' tiles, this one
-   * puts the user visibly on the POI tab rather than covering the switch with a
-   * form — so dismissing the chooser, or closing a create it led to, leaves
-   * them here rather than bouncing back to a tab they can see they left.
+   * `origin` is the tab the create was asked for from, so closing it unsaved
+   * can return there — same convention as Fixture/Maintenance/Incident. Set
+   * when the Add Requests POI tile is tapped from a different tab.
    */
-  PoiList: {toast?: PoiToast; openChooser?: boolean} | undefined;
-  PoiCreatePerson: undefined;
+  PoiCreatePerson: {origin?: string} | undefined;
   PoiCreateInteraction: PoiSubRecordParams | undefined;
   PoiCreateUpdate: PoiSubRecordParams | undefined;
   PoiView: {id: string};

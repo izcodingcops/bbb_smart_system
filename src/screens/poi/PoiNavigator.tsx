@@ -48,10 +48,22 @@ function createdToast(
     : {title, message, routeId: created.id};
 }
 
-const CreatePersonRoute: React.FC<CreatePersonProps> = ({navigation}) => {
+const CreatePersonRoute: React.FC<CreatePersonProps> = ({
+  navigation,
+  route,
+}) => {
+  const origin = route.params?.origin;
   return (
     <CreatePoiScreen
-      onClose={() => navigation.popTo('PoiList')}
+      onClose={() => {
+        navigation.popTo('PoiList');
+        // Closed unsaved and the create was asked for from another tab, so the
+        // trip into this module never really happened — go back where it
+        // started from.
+        if (origin) {
+          navigation.getParent()?.navigate(origin as never);
+        }
+      }}
       onCreated={created =>
         navigation.popTo('PoiList', {
           toast: createdToast(

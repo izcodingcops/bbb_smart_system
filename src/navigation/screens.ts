@@ -119,10 +119,7 @@ export const CREATE_TARGET_BY_TILE: Record<string, ModuleTarget> = {
   maintenance: {tab: SCREEN.maintenance, screen: 'MaintenanceCreate'},
   fixture: {tab: SCREEN.fixture, screen: 'FixtureCreate'},
   incident: {tab: SCREEN.incident, screen: 'IncidentCreate'},
-  // The one tile that doesn't open a create screen. POI has three record types
-  // and the user picks which — so this lands on the POI list and asks the
-  // chooser to open over it, wherever the tile was tapped from.
-  poi: {tab: SCREEN.poi, screen: 'PoiList', params: {openChooser: true}},
+  poi: {tab: SCREEN.poi, screen: 'PoiCreatePerson'},
   work_log: {tab: SCREEN.work, screen: 'WorkLogCreate'},
   // The only route to Add Equipment: the Equipment hub's own FAB opens the
   // shared Add Requests sheet rather than a module-local create action, so

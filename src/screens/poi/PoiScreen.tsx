@@ -43,7 +43,6 @@ import {
   optionsForField,
 } from './filtering';
 import PoiCard from './components/PoiCard';
-import PoiChoiceSheet, {PoiCreateKind} from './components/PoiChoiceSheet';
 import {usePendingPoiItems} from './pendingPoiItems';
 import {PoiStackParamList, PoiToast} from './routes';
 import {theme} from '../../theme';
@@ -73,13 +72,6 @@ const PoiScreen: React.FC = () => {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [openFilter, setOpenFilter] = useState<FilterField | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  const [chooserOpen, setChooserOpen] = useState(false);
-  /**
-   * The chooser's pick, held until its modal is really gone — swapping the
-   * screen out from under a live modal strands it on iOS. Same reason
-   * useAddRequestTiles defers a tile.
-   */
-  const [chosenKind, setChosenKind] = useState<PoiCreateKind | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [toast, setToast] = useState<PoiToast | null>(null);
@@ -96,15 +88,6 @@ const PoiScreen: React.FC = () => {
     setToast(incomingToast);
     navigation.setParams({toast: undefined});
   }, [incomingToast, navigation]);
-
-  // The Add Requests POI tile, from this tab or any other. Spent on arrival so
-  // coming back here later doesn't reopen the chooser.
-  const openChooser = route.params?.openChooser;
-  useEffect(() => {
-    if (!openChooser) return;
-    setChooserOpen(true);
-    navigation.setParams({openChooser: undefined});
-  }, [openChooser, navigation]);
 
   const handleOpenPoi = useCallback(
     (record: Poi) => {
@@ -245,12 +228,6 @@ const PoiScreen: React.FC = () => {
         onPress={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}
       />
 
-      {/*
-        The FAB opens Add Requests, as it does on every other list screen — the
-        chooser is what the sheet's own POI tile leads to, wherever it was
-        tapped. Opening the chooser straight from the FAB would skip the sheet
-        and make this one tab behave unlike the rest.
-      */}
       <GradientFab onPress={() => setAddOpen(true)} />
 
       <SingleSelectSheet
@@ -283,27 +260,6 @@ const PoiScreen: React.FC = () => {
           setFilters(current => ({...current, dateRange: next ? [next] : []}))
         }
         onClose={() => setOpenFilter(null)}
-      />
-
-      <PoiChoiceSheet
-        visible={chooserOpen}
-        onSelect={kind => {
-          setChooserOpen(false);
-          setChosenKind(kind);
-        }}
-        // Dismissing leaves the user on the POI list — whichever tab the tile
-        // was tapped on, they can see they are here now, so there is nowhere
-        // to send them back to.
-        onClose={() => setChooserOpen(false)}
-        onClosed={() => {
-          if (!chosenKind) return;
-          if (chosenKind === 'person') {
-            navigation.navigate('PoiCreatePerson');
-          } else {
-            navigation.navigate(SUB_RECORD_ROUTE[chosenKind]);
-          }
-          setChosenKind(null);
-        }}
       />
 
       <AddRequestsSheet

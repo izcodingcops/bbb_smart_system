@@ -17,10 +17,13 @@ paths: src/screens/poi/**, src/graphql/features/poi/**, src/mocks/poi.ts, src/ty
 - **Interactions and Updates are append-only.** No edit/delete mutations
   exist for either, matching the old app, which has no such endpoints.
 
-- **The `poi` Add Requests tile is the only tile whose target is a chooser,
-  not a single create screen.** `PoiScreen` reads the `pendingCreate` handoff
-  into a bottom sheet (Person / Interaction / Update), rather than routing
-  straight to a form.
+- **The `poi` Add Requests tile routes straight to Create Person**, same as
+  every other module's tile — no chooser. Person is the only record type
+  reachable from that sheet; Interaction and Update stay reachable only from
+  a person's card (`Add Interaction`/`Add Update`) or their detail screen.
+  (An earlier build had a three-way "What do you want to create?" chooser
+  sheet here — `PoiChoiceSheet` — since removed; don't reintroduce it without
+  a design ask, since it wasn't in the source mockup to begin with.)
 
 - **Height/weight/age are free text here but dropdowns in the old app**
   (`person/heightDropdown` etc.). Flag this as a validation risk if/when this
