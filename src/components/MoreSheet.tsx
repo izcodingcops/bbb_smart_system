@@ -34,6 +34,7 @@ const ICON_MAP: Record<string, IconComponent> = {
   equipment: BoxIcon,
   maps: MapIcon,
   reports: SearchIcon,
+  off_hours: ClockIcon,
   documents: FileTextIcon,
   rvp_site_visit: MapPinIcon,
   program: BriefcaseIcon,

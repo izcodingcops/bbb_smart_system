@@ -12,6 +12,7 @@ import {ObservationReportsStackParamList} from '../screens/observationReports/ro
 import {ReferenceDocumentsStackParamList} from '../screens/referenceDocuments/routes';
 import {EquipmentStackParamList} from '../screens/equipment/routes';
 import {RvpSiteVisitStackParamList} from '../screens/rvpSiteVisit/routes';
+import {OffHoursVisitStackParamList} from '../screens/offHoursVisit/routes';
 
 /** Screen names as the menu reports them — the keys MainTabNavigator maps. */
 export const SCREEN = {
@@ -27,6 +28,7 @@ export const SCREEN = {
   reports: 'Reports',
   referenceDocuments: 'ReferenceDocuments',
   rvpSiteVisit: 'RvpSiteVisit',
+  offHoursVisit: 'OffHoursVisit',
 } as const;
 
 /**
@@ -61,6 +63,8 @@ export type MainTabParamList = {
     | undefined;
   [SCREEN.rvpSiteVisit]:
     | NavigatorScreenParams<RvpSiteVisitStackParamList>
+  [SCREEN.offHoursVisit]:
+    | NavigatorScreenParams<OffHoursVisitStackParamList>
     | undefined;
 };
 
@@ -87,6 +91,7 @@ export const TAB_ROOT_ROUTE: Record<string, string> = {
   [SCREEN.reports]: 'ObservationReportsList',
   [SCREEN.referenceDocuments]: 'ReferenceDocumentsList',
   [SCREEN.rvpSiteVisit]: 'RvpSiteVisitList',
+  [SCREEN.offHoursVisit]: 'OffHoursVisitList',
 };
 
 /**
@@ -119,9 +124,12 @@ export const CREATE_TARGET_BY_TILE: Record<string, ModuleTarget> = {
   // shared Add Requests sheet rather than a module-local create action, so
   // without this entry the screen is unreachable from anywhere.
   equipment: {tab: SCREEN.equipment, screen: 'EquipmentCreate'},
-  // The other two "Add New Reports" tiles stay unrouted: Observation Reports is
-  // deliberately read-only, and Off Hours Visit lives on its own branch.
+  // Both report modules are submit-only and their tab roots are empty states,
+  // so the sheet tile is the main way anyone reaches either form. The third
+  // "Add New Reports" tile stays unrouted: Observation Reports is a
+  // deliberately read-only archive with no create flow to route to.
   rvp_site_visit: {tab: SCREEN.rvpSiteVisit, screen: 'RvpSiteVisitCreate'},
+  off_hours: {tab: SCREEN.offHoursVisit, screen: 'OffHoursVisitCreate'},
 };
 
 export const createTargetForTile = (tileId: string): ModuleTarget | null =>

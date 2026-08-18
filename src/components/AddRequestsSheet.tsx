@@ -57,15 +57,11 @@ const SECTIONS: {key: string; title: string; tiles: AddRequestTile[]}[] = [
   {
     key: 'reports',
     title: 'Add New Reports',
-    // Only RVP Site Visit routes anywhere. Observation Reports is a
-    // deliberately read-only archive, and Off Hours Visit is not on this
-    // branch — both fall through to useAddRequestTiles' "Coming soon" alert,
-    // the same way check_in / check_out already do. They ship because the
-    // section reads as incomplete with one tile in it, and because the source
-    // mockup draws all three.
-    //
-    // The off-hours branch adds a byte-similar section of its own; when the two
-    // meet, the resolution is to keep one copy and both routing entries.
+    // Off Hours Visit and RVP Site Visit both route; Observation Reports does
+    // not — it is a deliberately read-only archive with no create flow, so its
+    // tile falls through to useAddRequestTiles' "Coming soon" alert the same
+    // way check_in / check_out already do. It ships anyway because the source
+    // mockup draws all three and the section reads as incomplete without it.
     tiles: [
       {id: 'observation', label: 'Observation', Icon: SearchIcon},
       {id: 'off_hours', label: 'Off Hours Visit', Icon: ClockIcon},
