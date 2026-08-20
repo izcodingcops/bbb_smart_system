@@ -86,10 +86,11 @@ const PRIORITY_OPTIONS = [
 ];
 
 /**
- * Type, Business Name, Completed By and Assigned To come from the loaded
- * records so they stay correct as data changes; Status, Priority and Date Range
- * use fixed lists so an option never disappears just because nothing currently
- * has that value.
+ * Type, Business Name and Assigned To use formOptions (same source as the
+ * create form) so both agree and stay correct. Completed By derives from
+ * loaded requests — no backend lookup for completed-by exists. Status,
+ * Priority and Date Range use fixed lists so options never disappear just
+ * because nothing has that value.
  */
 export function optionsForField(
   requests: MaintenanceRequest[],
