@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {optionsForField as maintenanceOptionsForField} from '../src/screens/maintenance/filtering';
+import {optionsForField as incidentOptionsForField} from '../src/screens/incident/filtering';
 
 type Check = [name: string, run: () => void];
 
@@ -46,6 +47,39 @@ const checks: Check[] = [
   ['Maintenance: status stays hardcoded regardless of formOptions', () => {
     const result = maintenanceOptionsForField([], 'status', null);
     assert.equal(result.some(o => o.value === 'Open'), true);
+  }],
+
+  // Incident
+  ['Incident: type reads from formOptions.incidentTypes', () => {
+    const result = incidentOptionsForField([], 'type', {incidentTypes: ['Theft']} as any);
+    assert.deepEqual(result, [{value: 'Theft', label: 'Theft'}]);
+  }],
+
+  ['Incident: outcome reads from formOptions.outcomes', () => {
+    const result = incidentOptionsForField([], 'outcome', {outcomes: ['Resolved']} as any);
+    assert.deepEqual(result, [{value: 'Resolved', label: 'Resolved'}]);
+  }],
+
+  ['Incident: businessName reads from formOptions.businessNames', () => {
+    const result = incidentOptionsForField([], 'businessName', {
+      businessNames: ['Acme Co'],
+    } as any);
+    assert.deepEqual(result, [{value: 'Acme Co', label: 'Acme Co'}]);
+  }],
+
+  ['Incident: person still derives from loaded incidents, ignoring formOptions', () => {
+    const incidents = [{person: 'John Smith'}] as any;
+    const result = incidentOptionsForField(incidents, 'person', null);
+    assert.deepEqual(result, [{value: 'John Smith', label: 'John Smith'}]);
+  }],
+
+  ['Incident: assignee still derives, plus Unassigned sentinel', () => {
+    const incidents = [{assignee: {name: 'Ada'}}, {assignee: null}] as any;
+    const result = incidentOptionsForField(incidents, 'assignee', null);
+    assert.deepEqual(result, [
+      {value: 'Ada', label: 'Ada'},
+      {value: '__unassigned__', label: 'Unassigned'},
+    ]);
   }],
 ];
 

@@ -1,4 +1,4 @@
-import {Incident} from '../../types/incident';
+import {Incident, IncidentFormOptions} from '../../types/incident';
 import {DATE_RANGE_OPTIONS, formatDateRangeValue, matchesDateRange} from '../../utils/dateRange';
 
 export type SortKey = 'latest' | 'oldest' | 'az' | 'za';
@@ -80,14 +80,16 @@ const PRIORITY_OPTIONS = [
 ];
 
 /**
- * Type, Outcome, Business Name, Person and Ambassador come from the loaded
- * records so they stay correct as data changes; Status, Priority and Date
- * Range use fixed lists so an option never disappears just because nothing
- * currently has that value.
+ * Type, Outcome, Business Name come from formOptions (the same
+ * incidentFormOptions the create form uses); Person and Ambassador (assignee)
+ * still derive from loaded records; Status, Priority and Date Range use fixed
+ * lists so an option never disappears just because nothing currently has that
+ * value.
  */
 export function optionsForField(
   incidents: Incident[],
   field: FilterField,
+  formOptions: IncidentFormOptions | null,
 ): {value: string; label: string}[] {
   if (field === 'status') {
     return STATUS_OPTIONS;
@@ -98,12 +100,23 @@ export function optionsForField(
   if (field === 'dateRange') {
     return DATE_RANGE_OPTIONS;
   }
+  if (field === 'type') {
+    return (formOptions?.incidentTypes ?? []).map(value => ({value, label: value}));
+  }
+  if (field === 'outcome') {
+    return (formOptions?.outcomes ?? []).map(value => ({value, label: value}));
+  }
+  if (field === 'businessName') {
+    return (formOptions?.businessNames ?? []).map(value => ({value, label: value}));
+  }
   if (field === 'assignee') {
     const names = Array.from(
       new Set(incidents.map(i => i.assignee?.name).filter((n): n is string => !!n)),
     ).sort();
     return [...names.map(name => ({value: name, label: name})), {value: UNASSIGNED_VALUE, label: 'Unassigned'}];
   }
+  // 'person' stays derived from loaded records: it's free text typed on the
+  // Parties section, not a real lookup — see the sourcing-audit doc.
   const values = Array.from(new Set(incidents.map(i => i[field]))).sort();
   return values.map(value => ({value, label: value}));
 }
