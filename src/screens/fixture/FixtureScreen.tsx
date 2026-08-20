@@ -7,7 +7,11 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import AddRequestsSheet from '../../components/AddRequestsSheet';
 import {BackToTopPill, DateRangeSheet, EmptyState, FilterChips, GradientFab, ListSearchRow, ListSummary, MultiSelectSheet, RecordCardSkeleton, SingleSelectSheet, Toast} from '../../components/ui';
 import {BoxIcon} from '../../components/icons';
-import {useGetFixturesQuery, useSetFixtureStatusMutation} from '../../graphql/features/fixture/hooks';
+import {
+  useFixtureFormOptionsQuery,
+  useGetFixturesQuery,
+  useSetFixtureStatusMutation,
+} from '../../graphql/features/fixture/hooks';
 import {Fixture, FixtureStatus} from '../../types/fixture';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
@@ -41,6 +45,7 @@ type ListNavigation = NativeStackNavigationProp<
 
 const FixtureScreen: React.FC = () => {
   const {data: queryFixtures = [], isLoading, isError, refetch} = useGetFixturesQuery();
+  const {data: formOptions} = useFixtureFormOptionsQuery('cache-first');
   const pendingFixtures = usePendingFixtureItems();
   const fixtures = useMemo(
     () => [...pendingFixtures, ...queryFixtures],
@@ -245,7 +250,7 @@ const FixtureScreen: React.FC = () => {
       <MultiSelectSheet
         visible={openFilter !== null && openFilter !== 'dateRange'}
         title={openFilter ? `Filter by ${FIELD_LABEL[openFilter]}` : ''}
-        options={openFilter ? optionsForField(fixtures, openFilter) : []}
+        options={openFilter ? optionsForField(fixtures, openFilter, formOptions) : []}
         value={openFilter ? filters[openFilter] : []}
         searchable={openFilter === 'fixtureType'}
         onApply={next => {

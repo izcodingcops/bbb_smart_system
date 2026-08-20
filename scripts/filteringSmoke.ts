@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {optionsForField as maintenanceOptionsForField} from '../src/screens/maintenance/filtering';
 import {optionsForField as incidentOptionsForField} from '../src/screens/incident/filtering';
+import {optionsForField as fixtureOptionsForField} from '../src/screens/fixture/filtering';
 
 type Check = [name: string, run: () => void];
 
@@ -80,6 +81,22 @@ const checks: Check[] = [
       {value: 'Ada', label: 'Ada'},
       {value: '__unassigned__', label: 'Unassigned'},
     ]);
+  }],
+
+  // Fixture
+  ['Fixture: fixtureType reads from formOptions.fixtureTypes', () => {
+    const result = fixtureOptionsForField([], 'fixtureType', {fixtureTypes: ['Bench']} as any);
+    assert.deepEqual(result, [{value: 'Bench', label: 'Bench'}]);
+  }],
+
+  ['Fixture: zone reads from formOptions.zones', () => {
+    const result = fixtureOptionsForField([], 'zone', {zones: ['Downtown']} as any);
+    assert.deepEqual(result, [{value: 'Downtown', label: 'Downtown'}]);
+  }],
+
+  ['Fixture: status stays hardcoded regardless of formOptions', () => {
+    const result = fixtureOptionsForField([], 'status', null);
+    assert.equal(result.some(o => o.value === 'Active'), true);
   }],
 ];
 
