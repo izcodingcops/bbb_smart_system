@@ -1,4 +1,4 @@
-import {MaintenanceRequest} from '../../types/maintenance';
+import {MaintenanceFormOptions, MaintenanceRequest} from '../../types/maintenance';
 import {
   DATE_RANGE_OPTIONS,
   formatDateRangeValue,
@@ -94,6 +94,7 @@ const PRIORITY_OPTIONS = [
 export function optionsForField(
   requests: MaintenanceRequest[],
   field: FilterField,
+  formOptions: MaintenanceFormOptions | null,
 ): {value: string; label: string}[] {
   if (field === 'status') {
     return STATUS_OPTIONS;
@@ -104,6 +105,12 @@ export function optionsForField(
   if (field === 'dateRange') {
     return DATE_RANGE_OPTIONS;
   }
+  if (field === 'type') {
+    return (formOptions?.types ?? []).map(value => ({value, label: value}));
+  }
+  if (field === 'businessName') {
+    return (formOptions?.businessNames ?? []).map(value => ({value, label: value}));
+  }
   if (field === 'completedBy') {
     const names = Array.from(
       new Set(requests.map(r => r.completedBy).filter((n): n is string => !!n)),
@@ -111,18 +118,12 @@ export function optionsForField(
     return names.map(value => ({value, label: value}));
   }
   if (field === 'assignedTo') {
-    const names = Array.from(
-      new Set(
-        requests.map(r => r.assignee?.name).filter((n): n is string => !!n),
-      ),
-    ).sort();
     return [
-      ...names.map(value => ({value, label: value})),
+      ...(formOptions?.ambassadors ?? []).map(value => ({value, label: value})),
       {value: UNASSIGNED_VALUE, label: 'Unassigned'},
     ];
   }
-  const values = Array.from(new Set(requests.map(r => r[field]))).sort();
-  return values.map(value => ({value, label: value}));
+  return [];
 }
 
 function matchesField(
