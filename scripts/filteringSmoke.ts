@@ -3,6 +3,10 @@ import {optionsForField as maintenanceOptionsForField} from '../src/screens/main
 import {optionsForField as incidentOptionsForField} from '../src/screens/incident/filtering';
 import {optionsForField as fixtureOptionsForField} from '../src/screens/fixture/filtering';
 import {optionsForField as poiOptionsForField} from '../src/screens/poi/filtering';
+import {
+  isSearchable as rvpIsSearchable,
+  optionsForField as rvpOptionsForField,
+} from '../src/screens/rvpSiteVisit/filtering';
 
 type Check = [name: string, run: () => void];
 
@@ -131,6 +135,23 @@ const checks: Check[] = [
   ['POI: disposition stays hardcoded regardless of formOptions', () => {
     const result = poiOptionsForField([], 'disposition', null, null);
     assert.equal(result.some(o => o.value === 'Active'), true);
+  }],
+
+  // RVP Site Visit
+  ['RVP: program reads from the passed programs list, not the RVP_PROGRAMS constant', () => {
+    const result = rvpOptionsForField('program', ['Custom Program']);
+    assert.deepEqual(result, [{value: 'Custom Program', label: 'Custom Program'}]);
+  }],
+
+  ['RVP: reviewer still reads the hardcoded RVP_REVIEWERS constant', () => {
+    const result = rvpOptionsForField('reviewer', []);
+    assert.equal(result.length > 0, true);
+  }],
+
+  ['RVP: isSearchable takes the programs list into account', () => {
+    const many = Array.from({length: 9}, (_, i) => `Program ${i}`);
+    assert.equal(rvpIsSearchable('program', many), true);
+    assert.equal(rvpIsSearchable('program', ['Only one']), false);
   }],
 ];
 
