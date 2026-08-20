@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {optionsForField as maintenanceOptionsForField} from '../src/screens/maintenance/filtering';
 import {optionsForField as incidentOptionsForField} from '../src/screens/incident/filtering';
 import {optionsForField as fixtureOptionsForField} from '../src/screens/fixture/filtering';
+import {optionsForField as poiOptionsForField} from '../src/screens/poi/filtering';
 
 type Check = [name: string, run: () => void];
 
@@ -96,6 +97,39 @@ const checks: Check[] = [
 
   ['Fixture: status stays hardcoded regardless of formOptions', () => {
     const result = fixtureOptionsForField([], 'status', null);
+    assert.equal(result.some(o => o.value === 'Active'), true);
+  }],
+
+  // POI
+  ['POI: personType reads from formOptions.personTypes', () => {
+    const result = poiOptionsForField([], 'personType', {personTypes: ['Resident']} as any, null);
+    assert.deepEqual(result, [{value: 'Resident', label: 'Resident'}]);
+  }],
+
+  ['POI: zone reads from interactionFormOptions.zones', () => {
+    const result = poiOptionsForField([], 'zone', null, {zones: ['Downtown']} as any);
+    assert.deepEqual(result, [{value: 'Downtown', label: 'Downtown'}]);
+  }],
+
+  ['POI: person reads names from interactionFormOptions.people, deduped', () => {
+    const opts = {
+      people: [
+        {id: 'p1', name: 'Ada'},
+        {id: 'p2', name: 'Ada'},
+      ],
+    } as any;
+    const result = poiOptionsForField([], 'person', null, opts);
+    assert.deepEqual(result, [{value: 'Ada', label: 'Ada'}]);
+  }],
+
+  ['POI: createdBy still derives from loaded pois, ignoring both formOptions', () => {
+    const pois = [{createdBy: {name: 'Sam'}}] as any;
+    const result = poiOptionsForField(pois, 'createdBy', null, null);
+    assert.deepEqual(result, [{value: 'Sam', label: 'Sam'}]);
+  }],
+
+  ['POI: disposition stays hardcoded regardless of formOptions', () => {
+    const result = poiOptionsForField([], 'disposition', null, null);
     assert.equal(result.some(o => o.value === 'Active'), true);
   }],
 ];

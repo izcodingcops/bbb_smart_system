@@ -1,4 +1,9 @@
-import {Poi, PoiDisposition} from '../../types/poi';
+import {
+  Poi,
+  PoiDisposition,
+  PoiFormOptions,
+  PoiInteractionFormOptions,
+} from '../../types/poi';
 import {
   DATE_RANGE_OPTIONS,
   formatDateRangeValue,
@@ -105,14 +110,18 @@ const DISPOSITION_OPTIONS = (
   .map(value => ({value, label: value}));
 
 /**
- * Person, Type, Zone and Created/Modified come from the loaded records so they
- * stay correct as data changes; Disposition, Interaction Count and Date Range
- * use fixed lists so an option never disappears just because nothing currently
- * has that value.
+ * Person and Zone come from poiInteractionFormOptions (the Create Person form
+ * never asks for either, so poiFormOptions carries neither); Type/personType
+ * comes from poiFormOptions. Disposition, Interaction Count and Date Range use
+ * fixed lists so an option never disappears just because nothing currently
+ * has that value. Created/Modified still derives from loaded pois — no
+ * per-record distinction between created-by and last-modified-by exists yet.
  */
 export function optionsForField(
   pois: Poi[],
   field: FilterField,
+  formOptions: PoiFormOptions | null,
+  interactionFormOptions: PoiInteractionFormOptions | null,
 ): {value: string; label: string}[] {
   if (field === 'disposition') {
     return DISPOSITION_OPTIONS;
@@ -123,23 +132,20 @@ export function optionsForField(
   if (field === 'dateRange') {
     return DATE_RANGE_OPTIONS;
   }
-  const values = Array.from(
-    new Set(
-      pois.map(poi => {
-        if (field === 'person') {
-          return poi.name;
-        }
-        if (field === 'personType') {
-          return poi.personType;
-        }
-        if (field === 'createdBy') {
-          return poi.createdBy.name;
-        }
-        return poi.zone;
-      }),
-    ),
-  ).sort();
-  return values.map(value => ({value, label: value}));
+  if (field === 'person') {
+    const names = Array.from(
+      new Set((interactionFormOptions?.people ?? []).map(p => p.name)),
+    );
+    return names.map(value => ({value, label: value}));
+  }
+  if (field === 'personType') {
+    return (formOptions?.personTypes ?? []).map(value => ({value, label: value}));
+  }
+  if (field === 'zone') {
+    return (interactionFormOptions?.zones ?? []).map(value => ({value, label: value}));
+  }
+  const names = Array.from(new Set(pois.map(poi => poi.createdBy.name))).sort();
+  return names.map(value => ({value, label: value}));
 }
 
 function matchesField(
