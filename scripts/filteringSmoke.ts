@@ -7,6 +7,10 @@ import {
   isSearchable as rvpIsSearchable,
   optionsForField as rvpOptionsForField,
 } from '../src/screens/rvpSiteVisit/filtering';
+import {
+  isSearchable as obsIsSearchable,
+  optionsForField as obsOptionsForField,
+} from '../src/screens/observationReports/filtering';
 
 type Check = [name: string, run: () => void];
 
@@ -152,6 +156,23 @@ const checks: Check[] = [
     const many = Array.from({length: 9}, (_, i) => `Program ${i}`);
     assert.equal(rvpIsSearchable('program', many), true);
     assert.equal(rvpIsSearchable('program', ['Only one']), false);
+  }],
+
+  // Observation Reports
+  ['Observation Reports: zone reads from the passed zones list, not a hardcoded constant', () => {
+    const result = obsOptionsForField('zone', ['Only Zone']);
+    assert.deepEqual(result, [{value: 'Only Zone', label: 'Only Zone'}]);
+  }],
+
+  ['Observation Reports: reviewedBy still reads the hardcoded REVIEWED_BY_OPTIONS constant', () => {
+    const result = obsOptionsForField('reviewedBy', []);
+    assert.equal(result.length > 0, true);
+  }],
+
+  ['Observation Reports: isSearchable takes the zones list into account', () => {
+    const many = Array.from({length: 9}, (_, i) => `Zone ${i}`);
+    assert.equal(obsIsSearchable('zone', many), true);
+    assert.equal(obsIsSearchable('zone', ['Only one']), false);
   }],
 ];
 
