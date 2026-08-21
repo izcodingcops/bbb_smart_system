@@ -327,6 +327,10 @@ const checks: Check[] = [
     ]);
   }],
 
+  ['Equipment: region is empty when formOptions is null', () => {
+    assert.deepEqual(equipmentOptionsForField([], 'region', null), []);
+  }],
+
   // Reference Documents
   ['Reference Documents: entryType reads from options.entryTypes, not a hardcoded constant', () => {
     const result = referenceDocumentOptionsForField('entryType', {
