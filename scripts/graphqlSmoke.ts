@@ -330,6 +330,19 @@ const checks: Check[] = [
     assert.ok(o.zones.length > 0);
   }],
 
+  ['equipment form options serve regions and divisions derived from the store', async () => {
+    const r: any = await run(
+      'query O { equipmentFormOptions { regions divisions } }',
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.equipmentFormOptions;
+    // The mock seeds exactly two program/region/division triples (TRAINING and
+    // BLOCK_CITY in src/mocks/equipment.ts) — every record uses one or the
+    // other, so these are the only two values that can appear.
+    assert.deepEqual([...o.regions].sort(), ['914', 'North']);
+    assert.deepEqual([...o.divisions].sort(), ['Central', 'Punjab']);
+  }],
+
   ['checkOutEquipment takes custody and checkInEquipment releases it', async () => {
     const q = 'query D($id: ID!) { equipmentDetail(id: $id) { id status mine checkedOutBy checkedOutAt } }';
     const before: any = await run(q, {id: 'eq_4341'});
@@ -1785,6 +1798,23 @@ const checks: Check[] = [
       {id: 'refdoc_does_not_exist'},
     );
     assert.equal(missing.data.referenceDocument, null);
+  }],
+
+  ['referenceDocumentFilterOptions derives entryTypes/businesses/zones from the store, not a hardcoded list', async () => {
+    const r: any = await run(
+      'query O($p: ID!) { referenceDocumentFilterOptions(programId: $p) { entryTypes businesses zones } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.referenceDocumentFilterOptions;
+    // 12 entry types, 8 businesses, 6 zones — the exact sets the mock's own
+    // ENTRY_TYPES/BUSINESSES generators cycle through (src/mocks/referenceDocument.ts).
+    assert.equal(o.entryTypes.length, 12);
+    assert.ok(o.entryTypes.includes('Elevator Check'));
+    assert.equal(o.businesses.length, 8);
+    assert.ok(o.businesses.includes('Union Station'));
+    assert.equal(o.zones.length, 6);
+    assert.ok(o.zones.includes('Transit Hub'));
   }],
 
   // ---- POI ----

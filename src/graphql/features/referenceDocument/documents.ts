@@ -41,3 +41,13 @@ export const GET_REFERENCE_DOCUMENT = gql`
     }
   }
 `;
+
+export const GET_REFERENCE_DOCUMENT_FILTER_OPTIONS = gql`
+  query GetReferenceDocumentFilterOptions($programId: ID!) {
+    referenceDocumentFilterOptions(programId: $programId) {
+      entryTypes
+      businesses
+      zones
+    }
+  }
+`;

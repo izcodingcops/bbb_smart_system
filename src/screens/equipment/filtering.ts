@@ -1,4 +1,4 @@
-import {Equipment} from '../../types/equipment';
+import {Equipment, EquipmentFormOptions} from '../../types/equipment';
 import {
   DATE_RANGE_OPTIONS,
   formatDateRangeValue,
@@ -136,18 +136,27 @@ const VALUE_OF: Record<
 
 /**
  * Status and Date Range use fixed lists so an option never disappears just
- * because nothing currently has that value; everything else is derived from
- * the loaded records so it stays correct as the pool changes.
+ * because nothing currently has that value; Region and Division read from
+ * formOptions (derived from the store, same as the create form's own
+ * picklists); everything else is derived from the loaded records so it stays
+ * correct as the pool changes.
  */
 export function optionsForField(
   items: Equipment[],
   field: AllFilterField,
+  formOptions: EquipmentFormOptions | null,
 ): {value: string; label: string}[] {
   if (field === 'status') {
     return STATUS_OPTIONS;
   }
   if (field === 'dateRange') {
     return DATE_RANGE_OPTIONS;
+  }
+  if (field === 'region') {
+    return (formOptions?.regions ?? []).map(value => ({value, label: value}));
+  }
+  if (field === 'division') {
+    return (formOptions?.divisions ?? []).map(value => ({value, label: value}));
   }
   const read = VALUE_OF[field];
   // Blanks are dropped rather than offered as an unlabelled row. Zone is

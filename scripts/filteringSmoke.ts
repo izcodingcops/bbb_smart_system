@@ -3,6 +3,7 @@ import {optionsForField as maintenanceOptionsForField} from '../src/screens/main
 import {optionsForField as incidentOptionsForField} from '../src/screens/incident/filtering';
 import {optionsForField as fixtureOptionsForField} from '../src/screens/fixture/filtering';
 import {optionsForField as poiOptionsForField} from '../src/screens/poi/filtering';
+import {optionsForField as equipmentOptionsForField} from '../src/screens/equipment/filtering';
 import {
   isSearchable as rvpIsSearchable,
   optionsForField as rvpOptionsForField,
@@ -11,6 +12,10 @@ import {
   isSearchable as obsIsSearchable,
   optionsForField as obsOptionsForField,
 } from '../src/screens/observationReports/filtering';
+import {
+  isSearchable as referenceDocumentIsSearchable,
+  optionsForField as referenceDocumentOptionsForField,
+} from '../src/screens/referenceDocuments/filtering';
 
 // Real mock data + the real resolver-backing constants, for the
 // formOptions-coverage checks below — deliberately not the hand-built `as
@@ -287,6 +292,87 @@ const checks: Check[] = [
 
   ['Observation Reports: every record.zone is covered by the real formOptions.zones', () => {
     assertValuesCovered(MOCK_OBSERVATION_REPORTS.map(r => r.zone), OBSERVATION_ZONES, 'Observation Reports zone');
+  }],
+
+  // Equipment
+  ['Equipment: region reads from formOptions.regions, not loaded records', () => {
+    const result = equipmentOptionsForField(
+      [{region: 'Ignored'} as any],
+      'region',
+      {regions: ['914', 'North']} as any,
+    );
+    assert.deepEqual(result, [
+      {value: '914', label: '914'},
+      {value: 'North', label: 'North'},
+    ]);
+  }],
+
+  ['Equipment: division reads from formOptions.divisions', () => {
+    const result = equipmentOptionsForField([], 'division', {
+      divisions: ['Central'],
+    } as any);
+    assert.deepEqual(result, [{value: 'Central', label: 'Central'}]);
+  }],
+
+  ['Equipment: status stays hardcoded regardless of formOptions', () => {
+    const result = equipmentOptionsForField([], 'status', null);
+    assert.equal(result.some(o => o.value === 'Active'), true);
+  }],
+
+  ['Equipment: program still derives from loaded records, ignoring formOptions', () => {
+    const items = [{program: 'Louisville KY Training BBB 0000'}] as any;
+    const result = equipmentOptionsForField(items, 'program', null);
+    assert.deepEqual(result, [
+      {value: 'Louisville KY Training BBB 0000', label: 'Louisville KY Training BBB 0000'},
+    ]);
+  }],
+
+  ['Equipment: region is empty when formOptions is null', () => {
+    assert.deepEqual(equipmentOptionsForField([], 'region', null), []);
+  }],
+
+  // Reference Documents
+  ['Reference Documents: entryType reads from options.entryTypes, not a hardcoded constant', () => {
+    const result = referenceDocumentOptionsForField('entryType', {
+      entryTypes: ['Only Type'],
+      businesses: [],
+      zones: [],
+    });
+    assert.deepEqual(result, [{value: 'Only Type', label: 'Only Type'}]);
+  }],
+
+  ['Reference Documents: business reads from options.businesses', () => {
+    const result = referenceDocumentOptionsForField('business', {
+      entryTypes: [],
+      businesses: ['Only Business'],
+      zones: [],
+    });
+    assert.deepEqual(result, [{value: 'Only Business', label: 'Only Business'}]);
+  }],
+
+  ['Reference Documents: zone reads from options.zones', () => {
+    const result = referenceDocumentOptionsForField('zone', {
+      entryTypes: [],
+      businesses: [],
+      zones: ['Only Zone'],
+    });
+    assert.deepEqual(result, [{value: 'Only Zone', label: 'Only Zone'}]);
+  }],
+
+  ['Reference Documents: entryType is empty when options is null', () => {
+    const result = referenceDocumentOptionsForField('entryType', null);
+    assert.deepEqual(result, []);
+  }],
+
+  ['Reference Documents: isSearchable takes options into account', () => {
+    const many = {
+      entryTypes: Array.from({length: 9}, (_, i) => `Type ${i}`),
+      businesses: [],
+      zones: [],
+    };
+    const few = {entryTypes: ['Only one'], businesses: [], zones: []};
+    assert.equal(referenceDocumentIsSearchable('entryType', many), true);
+    assert.equal(referenceDocumentIsSearchable('entryType', few), false);
   }],
 ];
 

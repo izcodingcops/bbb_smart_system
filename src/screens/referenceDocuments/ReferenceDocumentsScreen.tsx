@@ -17,7 +17,10 @@ import {
   SingleSelectSheet,
 } from '../../components/ui';
 import {FileTextIcon} from '../../components/icons';
-import {useGetReferenceDocumentsQuery} from '../../graphql/features/referenceDocument/hooks';
+import {
+  useGetReferenceDocumentsQuery,
+  useReferenceDocumentFilterOptionsQuery,
+} from '../../graphql/features/referenceDocument/hooks';
 import {ReferenceDocument} from '../../types/referenceDocument';
 import {
   EMPTY_FILTERS,
@@ -46,6 +49,7 @@ type ListNavigation = NativeStackNavigationProp<
 
 const ReferenceDocumentsScreen: React.FC = () => {
   const {data: items = [], isLoading, isError, refetch} = useGetReferenceDocumentsQuery();
+  const {data: filterOptions} = useReferenceDocumentFilterOptionsQuery();
 
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('latest');
@@ -183,9 +187,9 @@ const ReferenceDocumentsScreen: React.FC = () => {
       <MultiSelectSheet
         visible={openFilter !== null && openFilter !== 'dateRange'}
         title={openFilter ? `Filter by ${FIELD_LABEL[openFilter]}` : ''}
-        options={openFilter ? optionsForField(openFilter) : []}
+        options={openFilter ? optionsForField(openFilter, filterOptions) : []}
         value={openFilter ? filters[openFilter] : []}
-        searchable={openFilter ? isSearchable(openFilter) : false}
+        searchable={openFilter ? isSearchable(openFilter, filterOptions) : false}
         onApply={next => {
           if (openFilter) {
             setFilters(current => ({...current, [openFilter]: next}));
