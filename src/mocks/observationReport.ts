@@ -66,6 +66,33 @@ const EXPLICIT: Omit<ObservationReport, 'images'>[] = [
     summary: 'Excellent engagement, clean uniform, followed all BBB rules.',
     checklist: checklist(['Yes', 'Yes', 'Yes', 'Yes', 'Yes'], ['', '', '', '', '']),
   },
+  // The three below are the Ambassador module handoff's own history for its
+  // walkthrough ambassador (Arslan Saeed) — `obr_2024` above already covered
+  // its newest one under a lowercase-surname scrape, which is why the
+  // Ambassador module matches this store's `name` case-insensitively rather
+  // than "fixing" that record. Ids sit below the generated AMB floor (1867)
+  // so they never collide with it.
+  {
+    id: 'obr_1840', reference: '#OBR-1840', type: 'Ambassador',
+    name: 'Arslan Saeed', date: '2026-04-28', dateTime: '2026-04-28T09:22:00',
+    reviewedBy: {name: 'Bridget Brownlee'}, zone: 'Zone 1 - Blue', score: 5,
+    summary: 'Excellent engagement, sharp uniform, followed every BBB rule during the sweep.',
+    checklist: checklist(['Yes', 'Yes', 'Yes', 'Yes', 'Yes'], ['', '', 'Assisted three visitors with directions.', '', '']),
+  },
+  {
+    id: 'obr_1810', reference: '#OBR-1810', type: 'Ambassador',
+    name: 'Arslan Saeed', date: '2026-03-31', dateTime: '2026-03-31T13:48:00',
+    reviewedBy: {name: 'Chris Coulter'}, zone: 'Zone 2 - Orange', score: 3,
+    summary: 'Missing hi-vis vest at the start of shift; corrected within ten minutes.',
+    checklist: checklist(['Yes', 'No', 'Yes', 'Yes', 'N/A'], ['', 'Vest retrieved from locker.', '', '', 'No training scheduled today.']),
+  },
+  {
+    id: 'obr_1780', reference: '#OBR-1780', type: 'Ambassador',
+    name: 'Arslan Saeed', date: '2026-02-17', dateTime: '2026-02-17T08:05:00',
+    reviewedBy: {name: 'Teeya Barnes'}, zone: 'Zone 4 - Green', score: 2,
+    summary: 'Observed off task twice; coaching provided on staying within the assigned zone.',
+    checklist: checklist(['No', 'Yes', 'No', 'Yes', 'Yes'], ['On phone away from post twice.', '', 'Minimal interaction with public.', '', 'Covered de-escalation basics.']),
+  },
   {
     id: 'obr_2016', reference: '#OBR-2016', type: 'Ambassador',
     name: 'Chad Williamson', date: '2026-07-07', dateTime: '2026-07-07T07:48:00',

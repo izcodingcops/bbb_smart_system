@@ -17,6 +17,7 @@ import {
   UploadIcon,
   UserIcon,
   UserPlusIcon,
+  UsersIcon,
 } from './icons';
 import {MenuGroup, MenuItem} from '../types/navigation';
 import {locationTracker} from '../utils/locationTracker';
@@ -38,6 +39,7 @@ const ICON_MAP: Record<string, IconComponent> = {
   shift_notes: FileTextIcon,
   documents: FileTextIcon,
   rvp_site_visit: MapPinIcon,
+  ambassadors: UsersIcon,
   program: BriefcaseIcon,
   shift_type: RefreshIcon,
   shift_details: ClockIcon,

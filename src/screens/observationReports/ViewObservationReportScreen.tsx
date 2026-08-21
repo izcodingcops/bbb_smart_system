@@ -29,9 +29,20 @@ interface Props {
   onClose: () => void;
   /** Fires after the record is gone, so the list can pop back and toast. */
   onDeleted: (reference: string) => void;
+  /**
+   * Suppresses Edit/Delete. The Ambassador module drills into a report as a
+   * read-only record — the same report is still fully editable from its own
+   * Observation Reports tab, this just doesn't expose that here.
+   */
+  readOnly?: boolean;
 }
 
-const ViewObservationReportScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
+const ViewObservationReportScreen: React.FC<Props> = ({
+  id,
+  onClose,
+  onDeleted,
+  readOnly = false,
+}) => {
   // Every hook runs before the early returns below — the loading, error,
   // editing and loaded branches must not change hook order between renders.
   const {data: detail, isLoading, isError, refetch} = useGetObservationReportQuery(id);
@@ -114,8 +125,8 @@ const ViewObservationReportScreen: React.FC<Props> = ({id, onClose, onDeleted}) 
         onBack={onClose}
         // Held back until the form options land, or Edit would open onto
         // nothing — the same guard RVP's own detail screen applies.
-        onEdit={options ? () => setEditing(true) : undefined}
-        onDelete={() => setConfirmDelete(true)}
+        onEdit={!readOnly && options ? () => setEditing(true) : undefined}
+        onDelete={readOnly ? undefined : () => setConfirmDelete(true)}
       />
 
       <ScrollView contentContainerStyle={styles.body}>

@@ -1535,15 +1535,17 @@ const checks: Check[] = [
     assert.ok(afterDelete.data.dispatch.incidents.every((i: any) => i.reference !== '#IN-42986'));
   }],
 
-  ['observation reports resolve with 40 records split evenly by type', async () => {
+  ['observation reports resolve with 43 records, 23 Ambassador and 20 Supervisor', async () => {
     const r: any = await run(
       'query R($p: ID!) { observationReports(programId: $p) { id reference type score checklist { question answer } } }',
       {p: 'p1'},
     );
     assert.equal(r.errors, undefined);
     const reports = r.data.observationReports;
-    assert.equal(reports.length, 40);
-    assert.equal(reports.filter((x: any) => x.type === 'AMBASSADOR').length, 20);
+    // 20/20 plus the 3 EXPLICIT records the Ambassador module added for its
+    // own walkthrough ambassador (Arslan Saeed) — see mocks/observationReport.ts.
+    assert.equal(reports.length, 43);
+    assert.equal(reports.filter((x: any) => x.type === 'AMBASSADOR').length, 23);
     assert.equal(reports.filter((x: any) => x.type === 'SUPERVISOR').length, 20);
     assert.ok(reports.every((x: any) => x.checklist.length === 5));
   }],
@@ -2558,6 +2560,74 @@ const checks: Check[] = [
       {p: 'p1'},
     );
     assert.equal(r.data.shiftNoteFormOptions.nextReference, '#SHN-0444');
+  }],
+
+  ['ambassadors resolve with totalWork/totalReports computed, not stored', async () => {
+    const r: any = await run(
+      'query A { ambassadors { id reference name totalWork totalReports } }',
+    );
+    assert.equal(r.errors, undefined);
+    assert.ok(r.data.ambassadors.length > 10);
+    const arslan = r.data.ambassadors.find((a: any) => a.reference === '#27617');
+    assert.ok(arslan);
+    // 8 EXPLICIT + 1 GENERATED work record (index 0 lands back on amb_27617),
+    // plus 4 EXPLICIT reports (1 scraped lowercase, 3 added) for Arslan Saeed.
+    assert.equal(arslan.totalWork, 9);
+    assert.equal(arslan.totalReports, 4);
+  }],
+
+  ['ambassador(id) resolves detail, unknown id resolves null', async () => {
+    const r: any = await run(
+      'query A($id: ID!) { ambassador(id: $id) { name status points } }',
+      {id: 'amb_27617'},
+    );
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.ambassador.name, 'Arslan Saeed');
+    assert.equal(r.data.ambassador.status, 'ACTIVE');
+    const miss: any = await run(
+      'query A($id: ID!) { ambassador(id: $id) { name } }',
+      {id: 'amb_nope'},
+    );
+    assert.equal(miss.data.ambassador, null);
+  }],
+
+  ['ambassadorWork returns only that ambassador\'s records, with wire enums', async () => {
+    const r: any = await run(
+      'query W($aid: ID!) { ambassadorWork(ambassadorId: $aid) { id ambassadorId type status } }',
+      {aid: 'amb_27617'},
+    );
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.ambassadorWork.length, 9);
+    assert.ok(r.data.ambassadorWork.every((w: any) => w.ambassadorId === 'amb_27617'));
+    assert.ok(r.data.ambassadorWork.some((w: any) => w.type === 'CLEANING'));
+    assert.ok(r.data.ambassadorWork.some((w: any) => w.type === 'MAINTENANCE'));
+  }],
+
+  ['ambassadorReports matches the real observationReport store by name, case-insensitively', async () => {
+    const r: any = await run(
+      'query R($aid: ID!) { ambassadorReports(ambassadorId: $aid) { id reference name } }',
+      {aid: 'amb_27617'},
+    );
+    assert.equal(r.errors, undefined);
+    // obr_2024's own name is scraped as 'Arslan saeed' (lowercase surname) —
+    // this only matches the 'Arslan Saeed' roster record because the resolver
+    // compares case-insensitively.
+    assert.ok(r.data.ambassadorReports.some((rep: any) => rep.reference === '#OBR-2024'));
+    assert.equal(r.data.ambassadorReports.length, 4);
+  }],
+
+  ['the Ambassadors menu row is supervisor-only', async () => {
+    const amb: any = await run(LOGIN, {input: {username: 'batman', password: 'Temp@123', loginType: 1}});
+    const ambMenu: any = await run('query M { menuItems { id } }', undefined, amb.data.login.token);
+    assert.ok(!ambMenu.data.menuItems.some((i: any) => i.id === 'ambassadors'));
+
+    const sup: any = await run(LOGIN, {input: {username: 'taz', password: 'Temp@123', loginType: 1}});
+    const supMenu: any = await run('query M { menuItems { id } }', undefined, sup.data.login.token);
+    assert.ok(supMenu.data.menuItems.some((i: any) => i.id === 'ambassadors'));
+
+    // No token at all (never logged in) stays on the safe/filtered side too.
+    const anonMenu: any = await run('query M { menuItems { id } }');
+    assert.ok(!anonMenu.data.menuItems.some((i: any) => i.id === 'ambassadors'));
   }],
 ];
 
