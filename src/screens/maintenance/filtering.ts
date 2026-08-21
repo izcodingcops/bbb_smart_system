@@ -1,4 +1,4 @@
-import {MaintenanceRequest} from '../../types/maintenance';
+import {MaintenanceFormOptions, MaintenanceRequest} from '../../types/maintenance';
 import {
   DATE_RANGE_OPTIONS,
   formatDateRangeValue,
@@ -15,6 +15,11 @@ export type FilterField =
   | 'completedBy'
   | 'assignedTo';
 export type Filters = Record<FilterField, string[]>;
+
+/** Forces a compile error if `FilterField` ever grows a member `optionsForField` doesn't handle. */
+function assertNever(value: never): never {
+  throw new Error(`Unhandled field: ${value}`);
+}
 
 export const EMPTY_FILTERS: Filters = {
   type: [],
@@ -86,14 +91,16 @@ const PRIORITY_OPTIONS = [
 ];
 
 /**
- * Type, Business Name, Completed By and Assigned To come from the loaded
- * records so they stay correct as data changes; Status, Priority and Date Range
- * use fixed lists so an option never disappears just because nothing currently
- * has that value.
+ * Type, Business Name and Assigned To use formOptions (same source as the
+ * create form) so both agree and stay correct. Completed By derives from
+ * loaded requests — no backend lookup for completed-by exists. Status,
+ * Priority and Date Range use fixed lists so options never disappear just
+ * because nothing has that value.
  */
 export function optionsForField(
   requests: MaintenanceRequest[],
   field: FilterField,
+  formOptions: MaintenanceFormOptions | null,
 ): {value: string; label: string}[] {
   if (field === 'status') {
     return STATUS_OPTIONS;
@@ -104,6 +111,12 @@ export function optionsForField(
   if (field === 'dateRange') {
     return DATE_RANGE_OPTIONS;
   }
+  if (field === 'type') {
+    return (formOptions?.types ?? []).map(value => ({value, label: value}));
+  }
+  if (field === 'businessName') {
+    return (formOptions?.businessNames ?? []).map(value => ({value, label: value}));
+  }
   if (field === 'completedBy') {
     const names = Array.from(
       new Set(requests.map(r => r.completedBy).filter((n): n is string => !!n)),
@@ -111,18 +124,12 @@ export function optionsForField(
     return names.map(value => ({value, label: value}));
   }
   if (field === 'assignedTo') {
-    const names = Array.from(
-      new Set(
-        requests.map(r => r.assignee?.name).filter((n): n is string => !!n),
-      ),
-    ).sort();
     return [
-      ...names.map(value => ({value, label: value})),
+      ...(formOptions?.ambassadors ?? []).map(value => ({value, label: value})),
       {value: UNASSIGNED_VALUE, label: 'Unassigned'},
     ];
   }
-  const values = Array.from(new Set(requests.map(r => r[field]))).sort();
-  return values.map(value => ({value, label: value}));
+  return assertNever(field);
 }
 
 function matchesField(

@@ -227,7 +227,9 @@ export function useGetMaintenanceRequestQuery(id: string) {
   return {data: detail, isLoading: loading, isError: !!error, refetch};
 }
 
-export function useMaintenanceFormOptionsQuery() {
+export function useMaintenanceFormOptionsQuery(
+  fetchPolicy: 'network-only' | 'cache-first' = 'network-only',
+) {
   const programId = GetActiveProgramId();
   const {data, loading, error, refetch} = useQuery<{
     maintenanceFormOptions: MaintenanceFormOptions;
@@ -235,8 +237,11 @@ export function useMaintenanceFormOptionsQuery() {
     ...MAINTENANCE_CONTEXT,
     variables: {programId: programId ?? ''},
     skip: !programId,
-    // nextReference and quick-created fixtures have to be fresh on every open.
-    fetchPolicy: 'network-only',
+    // nextReference and quick-created fixtures have to be fresh on every open
+    // — the default. The list filter sheet passes 'cache-first': it only
+    // reads Type/Business Name/Assigned To, which don't need per-open
+    // freshness, so it skips a network round trip every time the sheet opens.
+    fetchPolicy,
   });
 
   return {

@@ -1283,8 +1283,11 @@ const checks: Check[] = [
     assert.equal(r.errors, undefined);
     const o = r.data.incidentFormOptions;
     assert.equal(o.nextReference, '#IN-42988');
-    assert.equal(o.incidentTypes.length, 13);
-    assert.equal(o.outcomes.length, 13);
+    // 13 + Narcan/Welfare Check (dropdown-sourcing Fix 1: the two ex-dispatch
+    // records inc_42986/inc_42987 use types the picklist was missing).
+    assert.equal(o.incidentTypes.length, 15);
+    // 13 + 911 CALLED (same fix — inc_42986's outcome).
+    assert.equal(o.outcomes.length, 14);
     assert.equal(o.zones.length, 6);
     assert.equal(o.partyTypes.length, 6);
     for (const list of [o.businessNames, o.fixtures, o.maintenanceOptions, o.poiOptions, o.equipmentOptions]) {
@@ -1576,7 +1579,9 @@ const checks: Check[] = [
     const o = r.data.observationReportFormOptions;
     // The seed's highest reference is #OBR-3097.
     assert.equal(o.nextReference, '#OBR-3098');
-    assert.equal(o.zones.length, 14);
+    // 14 + Zone 1 - Blue/Zone 2 - Orange/Zone 4 - Green (dropdown-sourcing
+    // Fix 2: obr_1840/obr_1810/obr_1780's zones were missing from the picklist).
+    assert.equal(o.zones.length, 17);
     assert.equal(o.ambassadors.length, 12);
     assert.equal(o.supervisors.length, 12);
     assert.equal(o.questions.length, 5);

@@ -156,10 +156,16 @@ export function useGetIncidentQuery(id: string) {
 
 /**
  * `skip` is for callers mounted long before they're used — Maintenance's
- * inline Add Incident sheet sits in the form's tree the whole time, and this
- * is a network-only query, so it would otherwise refetch on every form open.
+ * inline Add Incident sheet sits in the form's tree the whole time, and
+ * would otherwise refetch on every form open if it stayed network-only.
+ * `fetchPolicy` defaults to 'network-only': nextReference and the
+ * Connected Elements options (fixtures/maintenance/POI/equipment) have to be
+ * fresh on every open. The list filter sheet passes 'cache-first' since it
+ * only reads Type/Outcome/Business Name, which don't need per-open freshness.
  */
-export function useIncidentFormOptionsQuery() {
+export function useIncidentFormOptionsQuery(
+  fetchPolicy: 'network-only' | 'cache-first' = 'network-only',
+) {
   const programId = GetActiveProgramId();
   const {data, loading, error, refetch} = useQuery<{incidentFormOptions: IncidentFormOptions}>(
     GET_INCIDENT_FORM_OPTIONS,
@@ -167,8 +173,10 @@ export function useIncidentFormOptionsQuery() {
       ...INCIDENT_CONTEXT,
       variables: {programId: programId ?? ''},
       skip: !programId,
-      // nextReference has to be fresh on every open.
-      fetchPolicy: 'network-only',
+      // nextReference has to be fresh on every open — the default. The list
+      // filter sheet passes 'cache-first' since Type/Outcome/Business Name
+      // don't need per-open freshness.
+      fetchPolicy,
     },
   );
 

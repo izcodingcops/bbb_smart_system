@@ -1,4 +1,4 @@
-import {Fixture} from '../../types/fixture';
+import {Fixture, FixtureFormOptions} from '../../types/fixture';
 import {
   DATE_RANGE_OPTIONS,
   formatDateRangeValue,
@@ -8,6 +8,11 @@ import {
 export type SortKey = 'latest' | 'oldest' | 'az' | 'za';
 export type FilterField = 'fixtureType' | 'zone' | 'status' | 'dateRange';
 export type Filters = Record<FilterField, string[]>;
+
+/** Forces a compile error if `FilterField` ever grows a member `optionsForField` doesn't handle. */
+function assertNever(value: never): never {
+  throw new Error(`Unhandled field: ${value}`);
+}
 
 export const EMPTY_FILTERS: Filters = {
   fixtureType: [],
@@ -55,13 +60,14 @@ const STATUS_OPTIONS = [
 ];
 
 /**
- * Type and Zone come from the loaded records so they stay correct as data
- * changes; Status and Date Range use fixed lists so an option never
- * disappears just because nothing currently has that value.
+ * Type and Zone read from formOptions (the same source as the Create form);
+ * Status and Date Range use fixed lists so an option never disappears just
+ * because nothing currently has that value.
  */
 export function optionsForField(
-  fixtures: Fixture[],
+  _fixtures: Fixture[],
   field: FilterField,
+  formOptions: FixtureFormOptions | null,
 ): {value: string; label: string}[] {
   if (field === 'status') {
     return STATUS_OPTIONS;
@@ -69,9 +75,13 @@ export function optionsForField(
   if (field === 'dateRange') {
     return DATE_RANGE_OPTIONS;
   }
-  const key = field === 'fixtureType' ? 'fixtureType' : 'zone';
-  const values = Array.from(new Set(fixtures.map(f => f[key]))).sort();
-  return values.map(value => ({value, label: value}));
+  if (field === 'fixtureType') {
+    return (formOptions?.fixtureTypes ?? []).map(value => ({value, label: value}));
+  }
+  if (field === 'zone') {
+    return (formOptions?.zones ?? []).map(value => ({value, label: value}));
+  }
+  return assertNever(field);
 }
 
 function matchesField(fixture: Fixture, field: FilterField, selected: string[]): boolean {

@@ -20,7 +20,11 @@ import {
   Toast,
 } from '../../components/ui';
 import {UserPlusIcon} from '../../components/icons';
-import {useGetPoisQuery} from '../../graphql/features/poi/hooks';
+import {
+  useGetPoisQuery,
+  usePoiFormOptionsQuery,
+  usePoiInteractionFormOptionsQuery,
+} from '../../graphql/features/poi/hooks';
 import {Poi} from '../../types/poi';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
@@ -60,6 +64,8 @@ const SUB_RECORD_ROUTE = {
 
 const PoiScreen: React.FC = () => {
   const {data: queryPois = [], isLoading, isError, refetch} = useGetPoisQuery();
+  const {data: formOptions} = usePoiFormOptionsQuery('cache-first');
+  const {data: interactionFormOptions} = usePoiInteractionFormOptionsQuery('cache-first');
   const pendingPois = usePendingPoiItems();
   const pois = useMemo(
     () => [...pendingPois, ...queryPois],
@@ -242,7 +248,11 @@ const PoiScreen: React.FC = () => {
       <MultiSelectSheet
         visible={openFilter !== null && openFilter !== 'dateRange'}
         title={openFilter ? `Filter by ${FIELD_LABEL[openFilter]}` : ''}
-        options={openFilter ? optionsForField(pois, openFilter) : []}
+        options={
+          openFilter
+            ? optionsForField(pois, openFilter, formOptions, interactionFormOptions)
+            : []
+        }
         value={openFilter ? filters[openFilter] : []}
         searchable={openFilter === 'person' || openFilter === 'personType'}
         onApply={next => {

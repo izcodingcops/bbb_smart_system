@@ -22,6 +22,7 @@ import {
 import {ToolsIcon} from '../../components/icons';
 import {
   useGetMaintenanceRequestsQuery,
+  useMaintenanceFormOptionsQuery,
   useSetMaintenanceStatusMutation,
 } from '../../graphql/features/maintenance/hooks';
 import {
@@ -66,6 +67,7 @@ const MaintenanceScreen: React.FC = () => {
     isError,
     refetch,
   } = useGetMaintenanceRequestsQuery();
+  const {data: formOptions} = useMaintenanceFormOptionsQuery('cache-first');
   const pendingRequests = usePendingMaintenanceItems();
   const requests = useMemo(
     () => [...pendingRequests, ...queryRequests],
@@ -338,7 +340,7 @@ const MaintenanceScreen: React.FC = () => {
       <MultiSelectSheet
         visible={openFilter !== null && openFilter !== 'dateRange'}
         title={openFilter ? `Filter by ${FIELD_LABEL[openFilter]}` : ''}
-        options={openFilter ? optionsForField(requests, openFilter) : []}
+        options={openFilter ? optionsForField(requests, openFilter, formOptions) : []}
         value={openFilter ? filters[openFilter] : []}
         searchable={openFilter === 'type' || openFilter === 'businessName'}
         onApply={next => {

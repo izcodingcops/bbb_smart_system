@@ -73,13 +73,6 @@ export const SORT_LABEL: Record<SortKey, string> = {
   nameDesc: 'Z → A',
 };
 
-const ZONE_OPTIONS = [
-  'Beachmont', 'Downtown Louisville', 'LOOPER - update222', 'map box',
-  'New July Zone 1', 'RiverFront', 'South IN 2', 'Southern Indiana',
-  'Tes June Zone', 'test', 'test July 7', 'Test June 25', 'TEST ZONE',
-  'testzone2222',
-];
-
 const SCORE_OPTIONS = ['0-2 Score', '2-3 Score', '3-5 Score'];
 
 const REVIEWED_BY_OPTIONS = [
@@ -110,15 +103,13 @@ const DELETED_USER_OPTIONS = [
   'Asim Tester (Deleted) 05/04/2026', 'BBB Tester (Deleted) 01/07/2025',
 ];
 
-/** Static per-field lists, same convention as Fixture's FIXTURE_TYPES/ZONES —
- * none of these are derived from loaded records in the mockup either. */
-export function optionsForField(field: FilterField): {value: string; label: string}[] {
+export function optionsForField(field: FilterField, zones: string[]): {value: string; label: string}[] {
   if (field === 'dateRange') {
     return DATE_RANGE_OPTIONS;
   }
   const values: string[] = (() => {
     switch (field) {
-      case 'zone': return ZONE_OPTIONS;
+      case 'zone': return zones;
       case 'score': return SCORE_OPTIONS;
       case 'reviewedBy': return REVIEWED_BY_OPTIONS;
       case 'createdUser': return CREATED_USER_OPTIONS;
@@ -130,8 +121,8 @@ export function optionsForField(field: FilterField): {value: string; label: stri
 }
 
 /** > 8 options and not a single-select sheet — same rule as the mockup. */
-export function isSearchable(field: FilterField): boolean {
-  return optionsForField(field).length > 8 && !SINGLE_FIELDS.includes(field);
+export function isSearchable(field: FilterField, zones: string[]): boolean {
+  return optionsForField(field, zones).length > 8 && !SINGLE_FIELDS.includes(field);
 }
 
 function matchesScoreBucket(score: number, bucket: string): boolean {

@@ -33,6 +33,7 @@ export const BUSINESS_NAMES = [
   'Civic Center',
   'BlockByBlock',
   'LoDo District',
+  'Denver Pavilions',
 ];
 // Persons of interest and equipment are not listed here. Both option lists are
 // served live from their own modules' stores (`poiOptions` / `equipmentOptions`

@@ -137,7 +137,9 @@ export function useGetFixtureQuery(id: string) {
   return {data: detail, isLoading: loading, isError: !!error, refetch};
 }
 
-export function useFixtureFormOptionsQuery() {
+export function useFixtureFormOptionsQuery(
+  fetchPolicy: 'network-only' | 'cache-first' = 'network-only',
+) {
   const programId = GetActiveProgramId();
   const {data, loading, error, refetch} = useQuery<{
     fixtureFormOptions: FixtureFormOptions;
@@ -145,8 +147,10 @@ export function useFixtureFormOptionsQuery() {
     ...FIXTURE_CONTEXT,
     variables: {programId: programId ?? ''},
     skip: !programId,
-    // nextReference has to be fresh on every open.
-    fetchPolicy: 'network-only',
+    // nextReference has to be fresh on every open — the default. The list
+    // filter sheet passes 'cache-first' since Type/Zone don't need per-open
+    // freshness.
+    fetchPolicy,
   });
 
   return {

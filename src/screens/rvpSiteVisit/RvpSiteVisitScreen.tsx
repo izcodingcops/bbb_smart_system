@@ -19,7 +19,10 @@ import {
   Toast,
 } from '../../components/ui';
 import {MapPinIcon} from '../../components/icons';
-import {useGetRvpSiteVisitsQuery} from '../../graphql/features/rvpSiteVisit/hooks';
+import {
+  useGetRvpSiteVisitsQuery,
+  useRvpSiteVisitFormOptionsQuery,
+} from '../../graphql/features/rvpSiteVisit/hooks';
 import {RvpSiteVisit} from '../../types/rvpSiteVisit';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
@@ -54,6 +57,8 @@ type ListNavigation = NativeStackNavigationProp<
 
 const RvpSiteVisitScreen: React.FC = () => {
   const {data: visits = [], isLoading, isError, refetch} = useGetRvpSiteVisitsQuery();
+  const {data: formOptions} = useRvpSiteVisitFormOptionsQuery('cache-first');
+  const programs = formOptions?.programs ?? [];
 
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('latest');
@@ -233,7 +238,7 @@ const RvpSiteVisitScreen: React.FC = () => {
       <SingleSelectSheet
         visible={openFilter === 'score'}
         title="Filter by Score"
-        options={optionsForField('score')}
+        options={optionsForField('score', programs)}
         value={filters.score[0] ?? ''}
         onChange={next => setFilters(current => ({...current, score: [next]}))}
         onClose={() => setOpenFilter(null)}
@@ -242,9 +247,9 @@ const RvpSiteVisitScreen: React.FC = () => {
       <MultiSelectSheet
         visible={openFilter !== null && !SINGLE_FIELDS.includes(openFilter)}
         title={openFilter ? `Filter by ${FIELD_LABEL[openFilter]}` : ''}
-        options={openFilter ? optionsForField(openFilter) : []}
+        options={openFilter ? optionsForField(openFilter, programs) : []}
         value={openFilter ? filters[openFilter] : []}
-        searchable={openFilter ? isSearchable(openFilter) : false}
+        searchable={openFilter ? isSearchable(openFilter, programs) : false}
         onApply={next => {
           if (openFilter) {
             setFilters(current => ({...current, [openFilter]: next}));
