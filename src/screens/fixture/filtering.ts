@@ -9,6 +9,11 @@ export type SortKey = 'latest' | 'oldest' | 'az' | 'za';
 export type FilterField = 'fixtureType' | 'zone' | 'status' | 'dateRange';
 export type Filters = Record<FilterField, string[]>;
 
+/** Forces a compile error if `FilterField` ever grows a member `optionsForField` doesn't handle. */
+function assertNever(value: never): never {
+  throw new Error(`Unhandled field: ${value}`);
+}
+
 export const EMPTY_FILTERS: Filters = {
   fixtureType: [],
   zone: [],
@@ -73,7 +78,10 @@ export function optionsForField(
   if (field === 'fixtureType') {
     return (formOptions?.fixtureTypes ?? []).map(value => ({value, label: value}));
   }
-  return (formOptions?.zones ?? []).map(value => ({value, label: value}));
+  if (field === 'zone') {
+    return (formOptions?.zones ?? []).map(value => ({value, label: value}));
+  }
+  return assertNever(field);
 }
 
 function matchesField(fixture: Fixture, field: FilterField, selected: string[]): boolean {

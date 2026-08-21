@@ -16,6 +16,11 @@ export type FilterField =
   | 'assignedTo';
 export type Filters = Record<FilterField, string[]>;
 
+/** Forces a compile error if `FilterField` ever grows a member `optionsForField` doesn't handle. */
+function assertNever(value: never): never {
+  throw new Error(`Unhandled field: ${value}`);
+}
+
 export const EMPTY_FILTERS: Filters = {
   type: [],
   businessName: [],
@@ -124,7 +129,7 @@ export function optionsForField(
       {value: UNASSIGNED_VALUE, label: 'Unassigned'},
     ];
   }
-  return [];
+  return assertNever(field);
 }
 
 function matchesField(

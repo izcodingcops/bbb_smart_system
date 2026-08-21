@@ -135,7 +135,7 @@ export function optionsForField(
   if (field === 'person') {
     const names = Array.from(
       new Set((interactionFormOptions?.people ?? []).map(p => p.name)),
-    );
+    ).sort();
     return names.map(value => ({value, label: value}));
   }
   if (field === 'personType') {

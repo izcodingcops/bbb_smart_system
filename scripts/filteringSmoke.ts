@@ -178,8 +178,10 @@ const checks: Check[] = [
   }],
 
   ['RVP: reviewer still reads the hardcoded RVP_REVIEWERS constant', () => {
+    // A specific known member, not just length > 0 — length alone would also
+    // pass if this accidentally returned the `programs` argument instead.
     const result = rvpOptionsForField('reviewer', []);
-    assert.equal(result.length > 0, true);
+    assert.equal(result.some(o => o.value === 'Barnes , Teeya'), true);
   }],
 
   ['RVP: isSearchable takes the programs list into account', () => {
@@ -195,8 +197,10 @@ const checks: Check[] = [
   }],
 
   ['Observation Reports: reviewedBy still reads the hardcoded REVIEWED_BY_OPTIONS constant', () => {
+    // A specific known member, not just length > 0 — length alone would also
+    // pass if this accidentally returned the `zones` argument instead.
     const result = obsOptionsForField('reviewedBy', []);
-    assert.equal(result.length > 0, true);
+    assert.equal(result.some(o => o.value === 'Barnes, Teeya'), true);
   }],
 
   ['Observation Reports: isSearchable takes the zones list into account', () => {

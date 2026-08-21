@@ -116,7 +116,7 @@ export function optionsForField(
     return [...names.map(name => ({value: name, label: name})), {value: UNASSIGNED_VALUE, label: 'Unassigned'}];
   }
   // 'person' stays derived from loaded records: it's free text typed on the
-  // Parties section, not a real lookup — see the sourcing-audit doc.
+  // Parties section, not a real lookup.
   const values = Array.from(new Set(incidents.map(i => i[field]))).sort();
   return values.map(value => ({value, label: value}));
 }
