@@ -330,6 +330,19 @@ const checks: Check[] = [
     assert.ok(o.zones.length > 0);
   }],
 
+  ['equipment form options serve regions and divisions derived from the store', async () => {
+    const r: any = await run(
+      'query O { equipmentFormOptions { regions divisions } }',
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.equipmentFormOptions;
+    // The mock seeds exactly two program/region/division triples (TRAINING and
+    // BLOCK_CITY in src/mocks/equipment.ts) — every record uses one or the
+    // other, so these are the only two values that can appear.
+    assert.deepEqual([...o.regions].sort(), ['914', 'North']);
+    assert.deepEqual([...o.divisions].sort(), ['Central', 'Punjab']);
+  }],
+
   ['checkOutEquipment takes custody and checkInEquipment releases it', async () => {
     const q = 'query D($id: ID!) { equipmentDetail(id: $id) { id status mine checkedOutBy checkedOutAt } }';
     const before: any = await run(q, {id: 'eq_4341'});

@@ -28,7 +28,10 @@ import {
   Toast,
 } from '../../components/ui';
 import {BoxIcon, ScanIcon} from '../../components/icons';
-import {useGetEquipmentQuery} from '../../graphql/features/equipment/hooks';
+import {
+  useEquipmentFormOptionsQuery,
+  useGetEquipmentQuery,
+} from '../../graphql/features/equipment/hooks';
 import {Equipment} from '../../types/equipment';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
@@ -78,6 +81,7 @@ const TABS = [
 
 const EquipmentScreen: React.FC = () => {
   const {data: queryEquipment = [], isLoading, isError, refetch} = useGetEquipmentQuery();
+  const {data: formOptions} = useEquipmentFormOptionsQuery('cache-first');
   const queuedEquipmentIds = useQueuedEquipmentIds();
   const pendingEquipment = usePendingEquipmentItems();
 
@@ -419,7 +423,7 @@ const EquipmentScreen: React.FC = () => {
       <MultiSelectSheet
         visible={openFilter !== null && openFilter !== 'dateRange'}
         title={openFilter ? `Filter by ${FIELD_LABEL[openFilter]}` : ''}
-        options={openFilter ? optionsForField(pool, openFilter) : []}
+        options={openFilter ? optionsForField(pool, openFilter, formOptions) : []}
         value={currentFilterValues}
         searchable={
           openFilter === 'equipmentType' ||

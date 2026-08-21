@@ -3,6 +3,7 @@ import {optionsForField as maintenanceOptionsForField} from '../src/screens/main
 import {optionsForField as incidentOptionsForField} from '../src/screens/incident/filtering';
 import {optionsForField as fixtureOptionsForField} from '../src/screens/fixture/filtering';
 import {optionsForField as poiOptionsForField} from '../src/screens/poi/filtering';
+import {optionsForField as equipmentOptionsForField} from '../src/screens/equipment/filtering';
 import {
   isSearchable as rvpIsSearchable,
   optionsForField as rvpOptionsForField,
@@ -287,6 +288,39 @@ const checks: Check[] = [
 
   ['Observation Reports: every record.zone is covered by the real formOptions.zones', () => {
     assertValuesCovered(MOCK_OBSERVATION_REPORTS.map(r => r.zone), OBSERVATION_ZONES, 'Observation Reports zone');
+  }],
+
+  // Equipment
+  ['Equipment: region reads from formOptions.regions, not loaded records', () => {
+    const result = equipmentOptionsForField(
+      [{region: 'Ignored'} as any],
+      'region',
+      {regions: ['914', 'North']} as any,
+    );
+    assert.deepEqual(result, [
+      {value: '914', label: '914'},
+      {value: 'North', label: 'North'},
+    ]);
+  }],
+
+  ['Equipment: division reads from formOptions.divisions', () => {
+    const result = equipmentOptionsForField([], 'division', {
+      divisions: ['Central'],
+    } as any);
+    assert.deepEqual(result, [{value: 'Central', label: 'Central'}]);
+  }],
+
+  ['Equipment: status stays hardcoded regardless of formOptions', () => {
+    const result = equipmentOptionsForField([], 'status', null);
+    assert.equal(result.some(o => o.value === 'Active'), true);
+  }],
+
+  ['Equipment: program still derives from loaded records, ignoring formOptions', () => {
+    const items = [{program: 'Louisville KY Training BBB 0000'}] as any;
+    const result = equipmentOptionsForField(items, 'program', null);
+    assert.deepEqual(result, [
+      {value: 'Louisville KY Training BBB 0000', label: 'Louisville KY Training BBB 0000'},
+    ]);
   }],
 ];
 
