@@ -1800,6 +1800,23 @@ const checks: Check[] = [
     assert.equal(missing.data.referenceDocument, null);
   }],
 
+  ['referenceDocumentFilterOptions derives entryTypes/businesses/zones from the store, not a hardcoded list', async () => {
+    const r: any = await run(
+      'query O($p: ID!) { referenceDocumentFilterOptions(programId: $p) { entryTypes businesses zones } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.referenceDocumentFilterOptions;
+    // 12 entry types, 8 businesses, 6 zones — the exact sets the mock's own
+    // ENTRY_TYPES/BUSINESSES generators cycle through (src/mocks/referenceDocument.ts).
+    assert.equal(o.entryTypes.length, 12);
+    assert.ok(o.entryTypes.includes('Elevator Check'));
+    assert.equal(o.businesses.length, 8);
+    assert.ok(o.businesses.includes('Union Station'));
+    assert.equal(o.zones.length, 6);
+    assert.ok(o.zones.includes('Transit Hub'));
+  }],
+
   // ---- POI ----
 
   ['poi list resolves with uppercase disposition enums', async () => {

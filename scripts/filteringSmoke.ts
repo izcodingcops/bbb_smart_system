@@ -12,6 +12,10 @@ import {
   isSearchable as obsIsSearchable,
   optionsForField as obsOptionsForField,
 } from '../src/screens/observationReports/filtering';
+import {
+  isSearchable as referenceDocumentIsSearchable,
+  optionsForField as referenceDocumentOptionsForField,
+} from '../src/screens/referenceDocuments/filtering';
 
 // Real mock data + the real resolver-backing constants, for the
 // formOptions-coverage checks below — deliberately not the hand-built `as
@@ -321,6 +325,50 @@ const checks: Check[] = [
     assert.deepEqual(result, [
       {value: 'Louisville KY Training BBB 0000', label: 'Louisville KY Training BBB 0000'},
     ]);
+  }],
+
+  // Reference Documents
+  ['Reference Documents: entryType reads from options.entryTypes, not a hardcoded constant', () => {
+    const result = referenceDocumentOptionsForField('entryType', {
+      entryTypes: ['Only Type'],
+      businesses: [],
+      zones: [],
+    });
+    assert.deepEqual(result, [{value: 'Only Type', label: 'Only Type'}]);
+  }],
+
+  ['Reference Documents: business reads from options.businesses', () => {
+    const result = referenceDocumentOptionsForField('business', {
+      entryTypes: [],
+      businesses: ['Only Business'],
+      zones: [],
+    });
+    assert.deepEqual(result, [{value: 'Only Business', label: 'Only Business'}]);
+  }],
+
+  ['Reference Documents: zone reads from options.zones', () => {
+    const result = referenceDocumentOptionsForField('zone', {
+      entryTypes: [],
+      businesses: [],
+      zones: ['Only Zone'],
+    });
+    assert.deepEqual(result, [{value: 'Only Zone', label: 'Only Zone'}]);
+  }],
+
+  ['Reference Documents: entryType is empty when options is null', () => {
+    const result = referenceDocumentOptionsForField('entryType', null);
+    assert.deepEqual(result, []);
+  }],
+
+  ['Reference Documents: isSearchable takes options into account', () => {
+    const many = {
+      entryTypes: Array.from({length: 9}, (_, i) => `Type ${i}`),
+      businesses: [],
+      zones: [],
+    };
+    const few = {entryTypes: ['Only one'], businesses: [], zones: []};
+    assert.equal(referenceDocumentIsSearchable('entryType', many), true);
+    assert.equal(referenceDocumentIsSearchable('entryType', few), false);
   }],
 ];
 
