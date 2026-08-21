@@ -12,7 +12,37 @@ import {
   optionsForField as obsOptionsForField,
 } from '../src/screens/observationReports/filtering';
 
+// Real mock data + the real resolver-backing constants, for the
+// formOptions-coverage checks below — deliberately not the hand-built `as
+// any` fixtures the rest of this file uses, since only the real data can
+// catch a real mock record carrying a value its own picklist doesn't offer.
+import {MOCK_MAINTENANCE_REQUESTS} from '../src/mocks/maintenance';
+import {AMBASSADORS as MAINT_AMBASSADORS, BUSINESS_NAMES as MAINT_BUSINESS_NAMES, MAINT_TYPES} from '../src/graphql/features/maintenance/store';
+import {MOCK_INCIDENTS, MOCK_INCIDENT_FORM_OPTIONS} from '../src/mocks/incident';
+import {MOCK_FIXTURES} from '../src/mocks/fixture';
+import {FIXTURE_TYPES, ZONES as SHARED_ZONES} from '../src/graphql/features/shared/options';
+import {MOCK_POIS, PERSON_TYPES} from '../src/mocks/poi';
+import {MOCK_RVP_SITE_VISITS, RVP_PROGRAMS} from '../src/mocks/rvpSiteVisit';
+import {MOCK_OBSERVATION_REPORTS, ZONES as OBSERVATION_ZONES} from '../src/mocks/observationReport';
+
 type Check = [name: string, run: () => void];
+
+/**
+ * Asserts every distinct, non-empty value in `actual` appears in `allowed` —
+ * the invariant that broke once already: a mock record carrying a value its
+ * own formOptions picklist doesn't offer is unreachable via its own filter
+ * chip, a real regression versus deriving options from loaded records.
+ */
+function assertValuesCovered(
+  actual: (string | null | undefined)[],
+  allowed: string[],
+  label: string,
+) {
+  const allowedSet = new Set(allowed);
+  const distinct = Array.from(new Set(actual.filter((v): v is string => !!v)));
+  const missing = distinct.filter(v => !allowedSet.has(v));
+  assert.deepEqual(missing, [], `${label}: missing from options — ${missing.join(', ')}`);
+}
 
 const checks: Check[] = [
   // Maintenance
@@ -173,6 +203,86 @@ const checks: Check[] = [
     const many = Array.from({length: 9}, (_, i) => `Zone ${i}`);
     assert.equal(obsIsSearchable('zone', many), true);
     assert.equal(obsIsSearchable('zone', ['Only one']), false);
+  }],
+
+  // ---------------------------------------------------------------------
+  // Real-data coverage: every distinct value a real mock record carries must
+  // be reachable through its own field's real formOptions. Exercises the
+  // actual mocks and the actual resolver-backing constants, not fixtures.
+  // ---------------------------------------------------------------------
+
+  ['Maintenance: every record.type is covered by the real formOptions.types', () => {
+    assertValuesCovered(MOCK_MAINTENANCE_REQUESTS.map(r => r.type), MAINT_TYPES, 'Maintenance type');
+  }],
+
+  ['Maintenance: every record.businessName is covered by the real formOptions.businessNames', () => {
+    assertValuesCovered(
+      MOCK_MAINTENANCE_REQUESTS.map(r => r.businessName),
+      MAINT_BUSINESS_NAMES,
+      'Maintenance businessName',
+    );
+  }],
+
+  ['Maintenance: every record.assignee.name is covered by the real formOptions.ambassadors', () => {
+    assertValuesCovered(
+      MOCK_MAINTENANCE_REQUESTS.map(r => r.assignee?.name ?? null),
+      MAINT_AMBASSADORS,
+      'Maintenance assignedTo',
+    );
+  }],
+
+  ['Incident: every record.type is covered by the real formOptions.incidentTypes', () => {
+    assertValuesCovered(
+      MOCK_INCIDENTS.map(i => i.type),
+      MOCK_INCIDENT_FORM_OPTIONS.incidentTypes,
+      'Incident type',
+    );
+  }],
+
+  ['Incident: every record.outcome is covered by the real formOptions.outcomes', () => {
+    assertValuesCovered(
+      MOCK_INCIDENTS.map(i => i.outcome),
+      MOCK_INCIDENT_FORM_OPTIONS.outcomes,
+      'Incident outcome',
+    );
+  }],
+
+  ['Incident: every record.businessName is covered by the real formOptions.businessNames', () => {
+    assertValuesCovered(
+      MOCK_INCIDENTS.map(i => i.businessName),
+      MOCK_INCIDENT_FORM_OPTIONS.businessNames,
+      'Incident businessName',
+    );
+  }],
+
+  ['Fixture: every record.fixtureType is covered by the real formOptions.fixtureTypes', () => {
+    assertValuesCovered(MOCK_FIXTURES.map(f => f.fixtureType), FIXTURE_TYPES, 'Fixture fixtureType');
+  }],
+
+  ['Fixture: every record.zone is covered by the real formOptions.zones', () => {
+    assertValuesCovered(MOCK_FIXTURES.map(f => f.zone), SHARED_ZONES, 'Fixture zone');
+  }],
+
+  ['POI: every record.personType is covered by the real formOptions.personTypes', () => {
+    assertValuesCovered(MOCK_POIS.map(p => p.personType), PERSON_TYPES, 'POI personType');
+  }],
+
+  ['POI: every record.zone is covered by the real interactionFormOptions.zones', () => {
+    assertValuesCovered(MOCK_POIS.map(p => p.zone), SHARED_ZONES, 'POI zone');
+  }],
+
+  // POI: `person` is skipped here on purpose — poiInteractionFormOptions.people
+  // (see graphql/features/poi/resolvers.ts's `people()`) is
+  // `poiStore.records.map(r => ({id: r.id, name: r.name}))`, i.e. read live
+  // off the same store MOCK_POIS seeds. Every POI's name is trivially its own
+  // option by construction; a coverage check here would just restate that.
+
+  ['RVP Site Visit: every record.program is covered by the real formOptions.programs', () => {
+    assertValuesCovered(MOCK_RVP_SITE_VISITS.map(v => v.program), RVP_PROGRAMS, 'RVP program');
+  }],
+
+  ['Observation Reports: every record.zone is covered by the real formOptions.zones', () => {
+    assertValuesCovered(MOCK_OBSERVATION_REPORTS.map(r => r.zone), OBSERVATION_ZONES, 'Observation Reports zone');
   }],
 ];
 
