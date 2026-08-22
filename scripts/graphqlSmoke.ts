@@ -1156,7 +1156,8 @@ const checks: Check[] = [
     const o = r.data.workLogFormOptions;
     assert.equal(o.entryTypes.length, 16);
     assert.equal(o.zones.length, 6);
-    assert.equal(o.businessNames.length, 4);
+    // Now the shared 7-value list — see src/graphql/features/shared/options.ts.
+    assert.equal(o.businessNames.length, 7);
   }],
 
   ['work log create freezes the shift, then round-trips through update and delete', async () => {
