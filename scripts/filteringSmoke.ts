@@ -16,6 +16,7 @@ import {
   isSearchable as referenceDocumentIsSearchable,
   optionsForField as referenceDocumentOptionsForField,
 } from '../src/screens/referenceDocuments/filtering';
+import {optionsForField as dispatchOptionsForField} from '../src/screens/dispatch/filtering';
 
 // Real mock data + the real resolver-backing constants, for the
 // formOptions-coverage checks below — deliberately not the hand-built `as
@@ -373,6 +374,25 @@ const checks: Check[] = [
     const few = {entryTypes: ['Only one'], businesses: [], zones: []};
     assert.equal(referenceDocumentIsSearchable('entryType', many), true);
     assert.equal(referenceDocumentIsSearchable('entryType', few), false);
+  }],
+
+  // Dispatch
+  ['Dispatch: howReferred reads from options.referralSources, not loaded records', () => {
+    const result = dispatchOptionsForField(
+      [{howReferred: 'Ignored'} as any],
+      'howReferred',
+      {referralSources: ['Only Source']},
+    );
+    assert.deepEqual(result, [{value: 'Only Source', label: 'Only Source'}]);
+  }],
+
+  ['Dispatch: howReferred is empty when options is null', () => {
+    assert.deepEqual(dispatchOptionsForField([], 'howReferred', null), []);
+  }],
+
+  ['Dispatch: status stays hardcoded regardless of options', () => {
+    const result = dispatchOptionsForField([], 'status', null);
+    assert.equal(result.some(o => o.value === 'Open'), true);
   }],
 ];
 

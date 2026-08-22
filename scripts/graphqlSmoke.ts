@@ -1112,6 +1112,20 @@ const checks: Check[] = [
     assert.ok(dates.every(d => Date.parse(d) <= now));
   }],
 
+  ['dispatchFilterOptions derives referralSources from the store, not a hardcoded list', async () => {
+    const r: any = await run(
+      'query O($p: ID!) { dispatchFilterOptions(programId: $p) { referralSources } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.dispatchFilterOptions;
+    // The mock's explicit + generated records cycle through exactly these 7
+    // referral sources (src/mocks/dispatch.ts) — no more, no fewer.
+    assert.equal(o.referralSources.length, 7);
+    assert.ok(o.referralSources.includes('Citizen App'));
+    assert.ok(o.referralSources.includes('Webform'));
+  }],
+
   ['work log entries resolve with uppercase YesNo enums', async () => {
     const r: any = await run(
       'query W($p: ID!) { workLogEntries(programId: $p) { id reference shiftTypeName fvmAccessibilityChecked } }',

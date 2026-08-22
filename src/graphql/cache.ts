@@ -40,6 +40,7 @@ export const cache = new InMemoryCache({
     IncidentFormOptions: {keyFields: false},
     Dispatch: {keyFields: ['id']},
     DispatchEscalation: {keyFields: ['id']},
+    DispatchFilterOptions: {keyFields: false},
     Poi: {keyFields: ['id']},
     PoiInteraction: {keyFields: ['id']},
     PoiUpdate: {keyFields: ['id']},

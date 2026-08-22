@@ -1,4 +1,4 @@
-import {Dispatch} from '../../types/dispatch';
+import {Dispatch, DispatchFilterOptions} from '../../types/dispatch';
 import {
   DATE_RANGE_OPTIONS,
   formatDateRangeValue,
@@ -58,14 +58,10 @@ const PRIORITY_OPTIONS = [
   {value: 'High', label: 'High'},
 ];
 
-/**
- * Referral Source comes from the loaded records so it stays correct as data
- * changes; Status, Priority and Date Range use fixed lists so an option never
- * disappears just because nothing currently has that value.
- */
 export function optionsForField(
-  dispatches: Dispatch[],
+  _dispatches: Dispatch[],
   field: FilterField,
+  options: DispatchFilterOptions | null,
 ): {value: string; label: string}[] {
   if (field === 'status') {
     return STATUS_OPTIONS;
@@ -76,8 +72,7 @@ export function optionsForField(
   if (field === 'dateRange') {
     return DATE_RANGE_OPTIONS;
   }
-  const values = Array.from(new Set(dispatches.map(d => d.howReferred))).sort();
-  return values.map(value => ({value, label: value}));
+  return (options?.referralSources ?? []).map(value => ({value, label: value}));
 }
 
 function matchesField(
