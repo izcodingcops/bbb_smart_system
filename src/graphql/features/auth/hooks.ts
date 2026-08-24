@@ -1,5 +1,6 @@
 import {apolloClient} from '../../client';
 import {
+  ChangePasswordResult,
   LoginCredentials,
   LoginResult,
   RequestPasswordResetResult,
@@ -7,6 +8,7 @@ import {
   VerifyResetCodeResult,
 } from '../../../types/auth';
 import {
+  CHANGE_PASSWORD,
   LOGIN,
   REQUEST_PASSWORD_RESET,
   RESET_PASSWORD,
@@ -62,5 +64,18 @@ export const authApi = {
       variables: {input: {email, code, newPassword}},
     });
     return data!.resetPassword;
+  },
+
+  changePassword: async (
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<ChangePasswordResult> => {
+    const {data} = await apolloClient.mutate<{changePassword: ChangePasswordResult}>({
+      mutation: CHANGE_PASSWORD,
+      context,
+      fetchPolicy: 'no-cache',
+      variables: {input: {currentPassword, newPassword}},
+    });
+    return data!.changePassword;
   },
 };

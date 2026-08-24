@@ -53,6 +53,12 @@ export const authTypeDefs = /* GraphQL */ `
     email: String!
   }
 
+  type InvalidCurrentPassword {
+    message: String!
+  }
+
+  union ChangePasswordResult = PasswordChanged | InvalidCurrentPassword
+
   union LoginResult = AuthSession | InvalidCredentials
   union RequestPasswordResetResult = PasswordResetRequested | AccountNotFound
   union VerifyResetCodeResult = ResetCodeVerified | InvalidResetCode
@@ -70,6 +76,11 @@ export const authTypeDefs = /* GraphQL */ `
     newPassword: String!
   }
 
+  input ChangePasswordInput {
+    currentPassword: String!
+    newPassword: String!
+  }
+
   extend type Query {
     "Resolved from the bearer token; null when unauthenticated."
     me: User
@@ -80,5 +91,6 @@ export const authTypeDefs = /* GraphQL */ `
     requestPasswordReset(email: String!): RequestPasswordResetResult!
     verifyResetCode(email: String!, code: String!): VerifyResetCodeResult!
     resetPassword(input: ResetPasswordInput!): ResetPasswordResult!
+    changePassword(input: ChangePasswordInput!): ChangePasswordResult!
   }
 `;

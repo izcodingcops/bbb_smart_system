@@ -81,6 +81,13 @@ export interface PasswordChanged {
   email: string;
 }
 
+export interface InvalidCurrentPassword {
+  __typename: 'InvalidCurrentPassword';
+  message: string;
+}
+
+export type ChangePasswordResult = PasswordChanged | InvalidCurrentPassword;
+
 export type LoginResult = AuthSession | InvalidCredentials;
 export type RequestPasswordResetResult = PasswordResetRequested | AccountNotFound;
 export type VerifyResetCodeResult = ResetCodeVerified | InvalidResetCode;
