@@ -4,6 +4,7 @@ import shiftReducer from './shift/slice';
 import uiReducer from './ui/slice';
 import outboxReducer from './outbox/slice';
 import mapsReducer from './maps/slice';
+import settingsReducer from './settings/slice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -11,6 +12,7 @@ const rootReducer = combineReducers({
   ui: uiReducer,
   outbox: outboxReducer,
   maps: mapsReducer,
+  settings: settingsReducer,
 });
 
 export default rootReducer;
