@@ -3,13 +3,14 @@ import {initialAuthState} from './auth/initialState';
 import {initialShiftState} from './shift/initialState';
 import {initialMapsState} from './maps/initialState';
 import {initialOutboxState} from './outbox/initialState';
+import {initialSettingsState} from './settings/initialState';
 
 /**
  * Bump PERSIST_VERSION and add a migration whenever a persisted slice gains or
  * changes a field. Without this, state saved by an older build rehydrates
  * missing the new keys and selectors read `undefined`.
  */
-export const PERSIST_VERSION = 5;
+export const PERSIST_VERSION = 6;
 
 export const migrations: MigrationManifest = {
   // v1: auth gained programs/activeProgramId/shiftTypes; the shift slice was
@@ -103,6 +104,21 @@ export const migrations: MigrationManifest = {
     return {
       ...previous,
       auth: {...previous.auth, user: {role: 'ambassador', ...user}},
+    } as unknown as PersistedState;
+  },
+
+  // v6: the Profile module added a persisted `settings` slice (language +
+  // notification prefs). State saved by an older build has no such key, and
+  // GetLanguage()/GetNotificationSettings() would read `undefined` after
+  // upgrade.
+  6: (state): PersistedState => {
+    const previous = state as Record<string, any> | undefined;
+    if (!previous) {
+      return state;
+    }
+    return {
+      ...previous,
+      settings: {...initialSettingsState, ...(previous.settings ?? {})},
     } as unknown as PersistedState;
   },
 };

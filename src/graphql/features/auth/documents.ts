@@ -84,3 +84,17 @@ export const RESET_PASSWORD = gql`
     }
   }
 `;
+
+export const CHANGE_PASSWORD = gql`
+  mutation ChangePassword($input: ChangePasswordInput!) {
+    changePassword(input: $input) {
+      __typename
+      ... on PasswordChanged {
+        email
+      }
+      ... on InvalidCurrentPassword {
+        message
+      }
+    }
+  }
+`;

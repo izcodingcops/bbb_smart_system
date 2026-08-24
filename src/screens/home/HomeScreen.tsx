@@ -54,7 +54,7 @@ const RECORD_KIND: Partial<Record<WorkItem['category'], 'Maintenance' | 'Fixture
 };
 
 const HomeScreen: React.FC = () => {
-  const {user, logout} = useAuth();
+  const {user} = useAuth();
   const dispatch = useAppDispatch();
   const program = GetActiveProgram();
   const shiftTypes = GetShiftTypes();
@@ -137,11 +137,8 @@ const HomeScreen: React.FC = () => {
   }, [navigation]);
 
   const handleAvatar = useCallback(() => {
-    Alert.alert('Log out', 'Are you sure you want to log out?', [
-      {text: 'Cancel', style: 'cancel'},
-      {text: 'Log out', style: 'destructive', onPress: () => logout()},
-    ]);
-  }, [logout]);
+    tabNavigation?.navigate(SCREEN.profile);
+  }, [tabNavigation]);
 
   const handleAddRequest = useCallback(
     (tileId: string) => {

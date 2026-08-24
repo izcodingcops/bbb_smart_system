@@ -4,8 +4,8 @@ import {migrations, PERSIST_VERSION} from '../src/redux/migrations';
 type Check = [name: string, run: () => void];
 
 const checks: Check[] = [
-  ['PERSIST_VERSION is 5', () => {
-    assert.equal(PERSIST_VERSION, 5);
+  ['PERSIST_VERSION is 6', () => {
+    assert.equal(PERSIST_VERSION, 6);
   }],
 
   ['migration 2 drops the api key entirely', () => {
@@ -141,6 +141,27 @@ const checks: Check[] = [
     const result: any = migrations[5]!(input as any);
     assert.deepEqual(result.auth.session, {token: 'abc123'});
     assert.equal(result.auth.user, undefined);
+  }],
+
+  ['migration 6 backfills settings for state saved before the slice existed', () => {
+    const input = {auth: {}, shift: {}};
+    const result: any = migrations[6]!(input as any);
+    assert.equal(result.settings.language, 'English');
+    assert.equal(result.settings.notifications.master, true);
+  }],
+
+  ['migration 6 preserves existing settings rather than reseeding', () => {
+    const input = {auth: {}, settings: {language: 'Spanish', notifications: {master: false}}};
+    const result: any = migrations[6]!(input as any);
+    assert.equal(result.settings.language, 'Spanish');
+    // Backfilled field the saved partial didn't have.
+    assert.equal(result.settings.notifications.sound, undefined);
+    assert.equal(result.settings.notifications.master, false);
+  }],
+
+  ['migration 6 handles undefined state without throwing', () => {
+    const result = migrations[6]!(undefined as any);
+    assert.equal(result, undefined);
   }],
 ];
 

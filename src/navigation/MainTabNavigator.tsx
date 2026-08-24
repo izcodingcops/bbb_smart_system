@@ -50,6 +50,7 @@ import RvpSiteVisitNavigator from '../screens/rvpSiteVisit/RvpSiteVisitNavigator
 import OffHoursVisitNavigator from '../screens/offHoursVisit/OffHoursVisitNavigator';
 import ShiftNotesNavigator from '../screens/shiftNotes/ShiftNotesNavigator';
 import AmbassadorsNavigator from '../screens/ambassadors/AmbassadorsNavigator';
+import ProfileNavigator from '../screens/profile/ProfileNavigator';
 
 const {LATO} = fontFamilies;
 
@@ -71,6 +72,7 @@ const SCREEN_MAP: Record<string, React.ComponentType<any>> = {
   [SCREEN.offHoursVisit]: OffHoursVisitNavigator,
   [SCREEN.shiftNotes]: ShiftNotesNavigator,
   [SCREEN.ambassadors]: AmbassadorsNavigator,
+  [SCREEN.profile]: ProfileNavigator,
 };
 
 /**

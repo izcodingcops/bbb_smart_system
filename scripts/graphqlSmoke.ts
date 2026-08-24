@@ -19,6 +19,16 @@ const LOGIN = `
   }
 `;
 
+const CHANGE_PASSWORD = `
+  mutation ChangePassword($input: ChangePasswordInput!) {
+    changePassword(input: $input) {
+      __typename
+      ... on PasswordChanged { email }
+      ... on InvalidCurrentPassword { message }
+    }
+  }
+`;
+
 const NOTIFICATIONS = `
   query N($p: ID!) {
     notifications(programId: $p) {
@@ -188,6 +198,32 @@ const checks: Check[] = [
     assert.equal(me.data.me.id, '1');
     const anon: any = await run('query Me { me { id } }');
     assert.equal(anon.data.me, null);
+  }],
+
+  ['changePassword rejects a wrong current password', async () => {
+    const login: any = await run(LOGIN, {input: {username: 'batman', password: 'Temp@123', loginType: 1}});
+    const token = login.data.login.token;
+    const r: any = await run(CHANGE_PASSWORD, {input: {currentPassword: 'wrong', newPassword: 'NewPass1!'}}, token);
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.changePassword.__typename, 'InvalidCurrentPassword');
+  }],
+
+  ['changePassword updates the password, old password stops working, new one logs in — then restores it', async () => {
+    const login: any = await run(LOGIN, {input: {username: 'batman', password: 'Temp@123', loginType: 1}});
+    const token = login.data.login.token;
+
+    const changed: any = await run(CHANGE_PASSWORD, {input: {currentPassword: 'Temp@123', newPassword: 'NewPass1!'}}, token);
+    assert.equal(changed.data.changePassword.__typename, 'PasswordChanged');
+
+    const oldLogin: any = await run(LOGIN, {input: {username: 'batman', password: 'Temp@123', loginType: 1}});
+    assert.equal(oldLogin.data.login.__typename, 'InvalidCredentials');
+
+    const newLogin: any = await run(LOGIN, {input: {username: 'batman', password: 'NewPass1!', loginType: 1}});
+    assert.equal(newLogin.data.login.__typename, 'AuthSession');
+
+    // Restore, so later checks in this file that log in as batman/Temp@123 still work.
+    const reverted: any = await run(CHANGE_PASSWORD, {input: {currentPassword: 'NewPass1!', newPassword: 'Temp@123'}}, token);
+    assert.equal(reverted.data.changePassword.__typename, 'PasswordChanged');
   }],
 
   ['menu items come back camelCase with enum positions', async () => {
