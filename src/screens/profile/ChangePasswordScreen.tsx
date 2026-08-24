@@ -40,9 +40,13 @@ const ChangePasswordScreen: React.FC = () => {
       dispatch(logout());
       return;
     }
-    const remaining = Math.max(0, attempts - 1);
-    setAttempts(remaining);
-    setError(`Current password is incorrect. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before your account locks.`);
+    if (outcome.message === 'Current password is incorrect.') {
+      const remaining = Math.max(0, attempts - 1);
+      setAttempts(remaining);
+      setError(`Current password is incorrect. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before your account locks.`);
+      return;
+    }
+    setError(outcome.message);
   };
 
   return (

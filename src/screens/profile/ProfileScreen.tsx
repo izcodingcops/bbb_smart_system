@@ -74,7 +74,7 @@ const ProfileScreen: React.FC = () => {
 
   return (
     <ScreenBackground style={styles.root}>
-      <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
+      <SafeAreaView style={styles.flex} edges={['top']}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.hero}>
             <View style={styles.avatarWrap}>
