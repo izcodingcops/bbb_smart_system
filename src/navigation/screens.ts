@@ -15,6 +15,7 @@ import {RvpSiteVisitStackParamList} from '../screens/rvpSiteVisit/routes';
 import {OffHoursVisitStackParamList} from '../screens/offHoursVisit/routes';
 import {ShiftNotesStackParamList} from '../screens/shiftNotes/routes';
 import {AmbassadorsStackParamList} from '../screens/ambassadors/routes';
+import {ProfileStackParamList} from '../screens/profile/routes';
 
 /** Screen names as the menu reports them — the keys MainTabNavigator maps. */
 export const SCREEN = {
@@ -33,6 +34,7 @@ export const SCREEN = {
   offHoursVisit: 'OffHoursVisit',
   shiftNotes: 'ShiftNotes',
   ambassadors: 'Ambassadors',
+  profile: 'Profile',
 } as const;
 
 /**
@@ -72,6 +74,7 @@ export type MainTabParamList = {
     | undefined;
   [SCREEN.shiftNotes]: NavigatorScreenParams<ShiftNotesStackParamList> | undefined;
   [SCREEN.ambassadors]: NavigatorScreenParams<AmbassadorsStackParamList> | undefined;
+  [SCREEN.profile]: NavigatorScreenParams<ProfileStackParamList> | undefined;
 };
 
 export type TabNavigation = BottomTabNavigationProp<MainTabParamList>;
@@ -100,6 +103,7 @@ export const TAB_ROOT_ROUTE: Record<string, string> = {
   [SCREEN.offHoursVisit]: 'OffHoursVisitList',
   [SCREEN.shiftNotes]: 'ShiftNotesList',
   [SCREEN.ambassadors]: 'AmbassadorsList',
+  [SCREEN.profile]: 'ProfileMain',
 };
 
 /**

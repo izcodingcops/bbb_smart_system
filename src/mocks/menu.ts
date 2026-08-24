@@ -106,6 +106,14 @@ export const MOCK_MENU_ITEMS = [
     menu_group: 'modules',
   },
   {
+    id: 'profile',
+    menu_name: 'Profile',
+    screen_name: 'Profile',
+    menu_icon: 'profile',
+    position: 'more',
+    menu_group: 'modules',
+  },
+  {
     id: 'change_program',
     menu_name: 'Change Program',
     screen_name: 'ChangeProgram',
