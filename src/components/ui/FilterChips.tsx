@@ -18,6 +18,11 @@ interface Props<F extends string> {
   formatValue: (field: F, value: string) => string;
   onOpen: (field: F) => void;
   onClear: (field: F) => void;
+  /** Fields that always hold exactly one value and can never be emptied out
+   *  (e.g. a mandatory single-select) — their chip keeps the chevron even
+   *  while a value is selected, instead of switching to a clear "✕", since
+   *  tapping it only ever reopens the picker rather than removing anything. */
+  nonClearable?: F[];
 }
 
 /**
@@ -46,6 +51,7 @@ function FilterChips<F extends string>({
   formatValue,
   onOpen,
   onClear,
+  nonClearable,
 }: Props<F>) {
   return (
     <View style={styles.wrap}>
@@ -57,6 +63,7 @@ function FilterChips<F extends string>({
         {fields.map(field => {
           const selected = filters[field];
           const active = selected.length > 0;
+          const clearable = active && !nonClearable?.includes(field);
           return (
             <TouchableOpacity
               key={field}
@@ -66,7 +73,7 @@ function FilterChips<F extends string>({
               <Text style={[styles.chipText, active && styles.chipTextActive]}>
                 {chipLabel(field, fieldLabel, formatValue, selected)}
               </Text>
-              {active ? (
+              {clearable ? (
                 <TouchableOpacity
                   style={styles.clear}
                   activeOpacity={0.8}

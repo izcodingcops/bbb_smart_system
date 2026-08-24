@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {RecordCardSkeleton, SectionTitle} from '../../../components/ui';
 import WorkCard from '../../work/components/WorkCard';
-import {applyBucket, applyMaintenanceOnly} from '../../work/filtering';
+import {applyHomeScope, applySort} from '../../work/filtering';
 import {GetUserRole} from '../../../redux/auth/selectors';
 import {WorkBucket, WorkItem, WorkStatus} from '../../../types/work';
 import {theme} from '../../../theme';
@@ -39,7 +39,7 @@ const RecentWork: React.FC<Props> = ({
   const assignedCount = items.filter(w => w.bucket === 'assigned').length;
   const unassignedCount = items.filter(w => w.bucket === 'unassigned').length;
   const completedCount = items.filter(w => w.bucket === 'completed').length;
-  const visible = applyMaintenanceOnly(applyBucket(items, tab), tab).slice(
+  const visible = applySort(applyHomeScope(items, tab), 'latest').slice(
     0,
     MAX_VISIBLE,
   );

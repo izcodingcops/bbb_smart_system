@@ -37,6 +37,8 @@ import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import {SCREEN} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {
+  ASSIGNED_CATEGORY_OPTIONS,
+  CATEGORY_OPTIONS,
   EMPTY_FILTERS,
   FIELD_LABEL,
   FILTER_FIELDS,
@@ -45,11 +47,11 @@ import {
   SORT_LABEL,
   SORT_OPTIONS,
   SortKey,
-  applyBucket,
+  applyBucketScope,
   applyFilters,
-  applyMaintenanceOnly,
   applySearch,
   applySort,
+  defaultCategoryFilter,
   formatFilterValue,
   hasAnyFilter,
   optionsForField,
@@ -86,6 +88,19 @@ const WorkScreen: React.FC = () => {
   const [sort, setSort] = useState<SortKey>('latest');
   const [sortOpen, setSortOpen] = useState(false);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  /**
+   * Module is tracked per-bucket, separately from the rest of `filters` —
+   * each bucket remembers its own last pick (seeded with that bucket's
+   * default) rather than resetting every time the tab is switched away from
+   * and back to.
+   */
+  const [categoryByBucket, setCategoryByBucket] = useState<
+    Record<WorkBucket, string[]>
+  >(() => ({
+    assigned: defaultCategoryFilter('assigned'),
+    unassigned: defaultCategoryFilter('unassigned'),
+    completed: defaultCategoryFilter('completed'),
+  }));
   const [openFilter, setOpenFilter] = useState<FilterField | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [completeTarget, setCompleteTarget] = useState<WorkItem | null>(null);
@@ -195,23 +210,38 @@ const WorkScreen: React.FC = () => {
   );
 
   const bucketItems = useMemo(
-    () => applyMaintenanceOnly(applyBucket(items, bucket), bucket),
+    () => applyBucketScope(items, bucket),
     [items, bucket],
+  );
+  /** Module's current value merged in from its own per-bucket state — see
+   *  `categoryByBucket` above for why it isn't just part of `filters`. */
+  const effectiveFilters = useMemo(
+    () => ({...filters, category: categoryByBucket[bucket]}),
+    [filters, categoryByBucket, bucket],
   );
   const visible = useMemo(
     () =>
-      applySort(applySearch(applyFilters(bucketItems, filters), search), sort),
-    [bucketItems, filters, search, sort],
+      applySort(
+        applySearch(applyFilters(bucketItems, effectiveFilters), search),
+        sort,
+      ),
+    [bucketItems, effectiveFilters, search, sort],
   );
-  /** The Module chip can only ever show one value on a Maintenance-only tab. */
+  /** Unassigned is Maintenance-only with nothing to choose between, so it's
+   *  the one bucket with no Module chip. Assigned and Completed each mix two
+   *  or more categories and need it to pick which one is showing. */
   const filterFields = useMemo(
     () =>
-      bucket === 'completed'
-        ? FILTER_FIELDS
-        : FILTER_FIELDS.filter(field => field !== 'category'),
+      bucket === 'unassigned'
+        ? FILTER_FIELDS.filter(field => field !== 'category')
+        : FILTER_FIELDS,
     [bucket],
   );
+  const categoryOptions =
+    bucket === 'assigned' ? ASSIGNED_CATEGORY_OPTIONS : CATEGORY_OPTIONS;
 
+  // Module is mandatory on Assigned/Completed and always has a value, so it
+  // never counts as "narrowing" the way an optional filter does.
   const isNarrowed = search.trim().length > 0 || hasAnyFilter(filters);
 
   const clearSearchAndFilters = () => {
@@ -234,6 +264,8 @@ const WorkScreen: React.FC = () => {
             onChange={next => {
               setBucket(next);
               setMenuItemId(null);
+              // Module's selection lives in categoryByBucket, keyed by
+              // bucket, so it's already remembered — nothing to reset here.
             }}
           />
         </View>
@@ -250,10 +282,14 @@ const WorkScreen: React.FC = () => {
       <FilterChips
         fields={filterFields}
         fieldLabel={FIELD_LABEL}
-        filters={filters}
+        filters={effectiveFilters}
         formatValue={formatFilterValue}
         onOpen={setOpenFilter}
         onClear={field => setFilters(current => ({...current, [field]: []}))}
+        // Module always holds exactly one value on Assigned/Completed —
+        // there's no "cleared" state, so its chip keeps the chevron instead
+        // of turning into a removable "✕".
+        nonClearable={['category']}
       />
 
       {/* Held back while loading, otherwise it flashes "0 assignments". */}
@@ -403,7 +439,11 @@ const WorkScreen: React.FC = () => {
       />
 
       <MultiSelectSheet
-        visible={openFilter !== null && openFilter !== 'dateRange'}
+        visible={
+          openFilter !== null &&
+          openFilter !== 'dateRange' &&
+          openFilter !== 'category'
+        }
         title={openFilter ? `Filter by ${FIELD_LABEL[openFilter]}` : ''}
         options={openFilter ? optionsForField(bucketItems, openFilter) : []}
         value={openFilter ? filters[openFilter] : []}
@@ -413,6 +453,20 @@ const WorkScreen: React.FC = () => {
             setFilters(current => ({...current, [openFilter]: next}));
           }
         }}
+        onClose={() => setOpenFilter(null)}
+      />
+
+      {/* Category is single-select on this screen — only one of Maintenance/
+          Activity (Assigned) or one of five categories (Completed) can show
+          at a time, so it gets a radio sheet instead of the checkbox one. */}
+      <SingleSelectSheet
+        visible={openFilter === 'category'}
+        title={`Filter by ${FIELD_LABEL.category}`}
+        options={categoryOptions}
+        value={categoryByBucket[bucket][0] ?? ''}
+        onChange={next =>
+          setCategoryByBucket(current => ({...current, [bucket]: [next]}))
+        }
         onClose={() => setOpenFilter(null)}
       />
 

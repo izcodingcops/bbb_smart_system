@@ -62,13 +62,32 @@ export const SORT_LABEL: Record<SortKey, string> = {
   'type-desc': 'Title Z → A',
 };
 
-const CATEGORY_OPTIONS = [
+export const CATEGORY_OPTIONS = [
   {value: 'Activity', label: 'Activity'},
   {value: 'Maintenance', label: 'Maintenance'},
   {value: 'Fixture', label: 'Fixture'},
   {value: 'Incident', label: 'Incident'},
   {value: 'POI', label: 'POI'},
 ];
+
+/** Assigned only ever mixes these two categories — see `applyBucketScope`. */
+export const ASSIGNED_CATEGORY_OPTIONS = [
+  {value: 'Maintenance', label: 'Maintenance'},
+  {value: 'Activity', label: 'Activity'},
+];
+
+/** Assigned defaults to Maintenance (matches the tab's old Maintenance-only
+ *  behavior); Completed defaults to Activity, per design. Unassigned never
+ *  shows the chip, so it has no default. */
+export function defaultCategoryFilter(bucket: WorkBucket): string[] {
+  if (bucket === 'assigned') {
+    return ['Maintenance'];
+  }
+  if (bucket === 'completed') {
+    return ['Activity'];
+  }
+  return [];
+}
 
 const STATUS_OPTIONS = [
   {value: 'Open', label: 'Open'},
@@ -149,17 +168,54 @@ export function applyBucket(items: WorkItem[], bucket: WorkBucket): WorkItem[] {
 }
 
 /**
- * Assigned and Unassigned are Maintenance-triage tabs — Completed is the only
- * tab that aggregates every category.
+ * Activity (Work Log) entries have no assigned/unassigned concept of their
+ * own — every one is written with `bucket: 'completed'` (see
+ * `mocks/workItems.ts`'s `toWorkLogWorkItem`). So "Maintenance assigned to
+ * me" and "Activity I've logged" are pulled from two different signals: the
+ * item's real `bucket` for Maintenance, unconditionally for Activity.
  */
-export function applyMaintenanceOnly(
+function maintenanceOrActivity(
   items: WorkItem[],
-  bucket: WorkBucket,
+  maintenanceBucket: WorkBucket,
 ): WorkItem[] {
-  if (bucket === 'completed') {
-    return items;
+  return items.filter(
+    item =>
+      (item.bucket === maintenanceBucket && item.category === 'Maintenance') ||
+      item.category === 'Activity',
+  );
+}
+
+/**
+ * Work tab's own scope per bucket: Unassigned is Maintenance-only (unchanged).
+ * Assigned mixes in Activity, narrowed to one category at a time by the
+ * Module filter. Completed keeps aggregating every category — the Module
+ * filter there is single-select but still offers all of them.
+ */
+export function applyBucketScope(items: WorkItem[], bucket: WorkBucket): WorkItem[] {
+  if (bucket === 'unassigned') {
+    return items.filter(
+      item => item.bucket === 'unassigned' && item.category === 'Maintenance',
+    );
   }
-  return items.filter(item => item.category === 'Maintenance');
+  if (bucket === 'assigned') {
+    return maintenanceOrActivity(items, 'assigned');
+  }
+  return applyBucket(items, 'completed');
+}
+
+/**
+ * Home's Recent Work preview is narrower than the Work tab: Completed there
+ * only ever surfaces Maintenance and Activity too (Fixture/Incident/POI stay
+ * Work-tab-only), and there's no Module filter to pick between them — both
+ * show mixed, sorted by recency, capped to two.
+ */
+export function applyHomeScope(items: WorkItem[], bucket: WorkBucket): WorkItem[] {
+  if (bucket === 'unassigned') {
+    return items.filter(
+      item => item.bucket === 'unassigned' && item.category === 'Maintenance',
+    );
+  }
+  return maintenanceOrActivity(items, bucket === 'assigned' ? 'assigned' : 'completed');
 }
 
 /** Matches reference and type only, same convention as the Maintenance list. */
