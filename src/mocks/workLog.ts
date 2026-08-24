@@ -1,15 +1,6 @@
 import {ENTRY_TYPES, WorkLogEntry} from '../types/workLog';
 import {MOCK_SHIFT_TYPES} from './shiftTypes';
-import {ZONES} from '../graphql/features/shared/options';
-
-/** This module's own business list, ported verbatim from the source mockup —
- *  distinct from Maintenance's BUSINESS_NAMES, which this field doesn't share. */
-export const BUSINESS_NAMES = [
-  '16th Street Mall',
-  'Union Station',
-  'Denver Pavilions',
-  'Larimer Square',
-];
+import {BUSINESS_NAMES, ZONES} from '../graphql/features/shared/options';
 
 const LOGGERS = ['You', 'Marcus Bell', 'Sara Diaz', 'Ava Nguyen'];
 

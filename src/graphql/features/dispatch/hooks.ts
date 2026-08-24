@@ -5,10 +5,11 @@ import {
   Dispatch,
   DispatchDetail,
   DispatchEscalation,
+  DispatchFilterOptions,
   DispatchPriority,
   DispatchStatus,
 } from '../../../types/dispatch';
-import {GET_DISPATCH, GET_DISPATCHES} from './documents';
+import {GET_DISPATCH, GET_DISPATCH_FILTER_OPTIONS, GET_DISPATCHES} from './documents';
 import {GqlIncidentDetail, toIncidentDetailFromWire} from '../incident/hooks';
 
 const DISPATCH_CONTEXT = {context: {feature: 'dispatch'}};
@@ -128,4 +129,27 @@ export function useGetDispatchQuery(id: string) {
   );
 
   return {data: detail, isLoading: loading, isError: !!error, refetch};
+}
+
+export function useDispatchFilterOptionsQuery() {
+  const programId = GetActiveProgramId();
+  const {data, loading, error, refetch} = useQuery<{
+    dispatchFilterOptions: DispatchFilterOptions;
+  }>(GET_DISPATCH_FILTER_OPTIONS, {
+    ...DISPATCH_CONTEXT,
+    variables: {programId: programId ?? ''},
+    skip: !programId,
+    // No create form reads this module, so there's no "must be fresh for a
+    // reserved reference" concern — cache-first is safe and is this hook's
+    // only caller anyway. Same convention as
+    // useReferenceDocumentFilterOptionsQuery.
+    fetchPolicy: 'cache-first',
+  });
+
+  return {
+    data: data?.dispatchFilterOptions ?? null,
+    isLoading: loading,
+    isError: !!error,
+    refetch,
+  };
 }

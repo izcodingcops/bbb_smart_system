@@ -71,3 +71,7 @@ export interface DispatchDetail extends Dispatch {
    */
   incidents: IncidentDetail[];
 }
+
+export interface DispatchFilterOptions {
+  referralSources: string[];
+}

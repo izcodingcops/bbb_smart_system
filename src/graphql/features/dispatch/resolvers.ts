@@ -47,5 +47,19 @@ export const dispatchResolvers = {
       }
       return {...toWire(record), incidents: incidentsFor(args.id)};
     },
+
+    // Derived from the store rather than a hardcoded list, so the option
+    // list can never drift from what the records actually carry — same
+    // reasoning as Reference Documents' filterOptions resolver. Dispatch has
+    // no create/edit mutation, so there's no path by which a record could
+    // ever carry a howReferred value outside this derived set.
+    dispatchFilterOptions: async () => {
+      await sleep();
+      return {
+        referralSources: Array.from(
+          new Set(dispatchStore.records.map(d => d.howReferred)),
+        ).sort(),
+      };
+    },
   },
 };

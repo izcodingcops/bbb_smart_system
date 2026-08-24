@@ -1,7 +1,6 @@
 import {ENTRY_TYPES, WorkLogEntry} from '../../../types/workLog';
 import {sleep} from '../../mockSession';
-import {ZONES} from '../shared/options';
-import {BUSINESS_NAMES} from '../../../mocks/workLog';
+import {BUSINESS_NAMES, ZONES} from '../shared/options';
 import {findRecord, nextReference, workLogStore} from './store';
 
 const YES_NO: Record<string, string> = {yes: 'YES', no: 'NO'};

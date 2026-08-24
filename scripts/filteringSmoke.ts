@@ -16,16 +16,18 @@ import {
   isSearchable as referenceDocumentIsSearchable,
   optionsForField as referenceDocumentOptionsForField,
 } from '../src/screens/referenceDocuments/filtering';
+import {optionsForField as dispatchOptionsForField} from '../src/screens/dispatch/filtering';
 
 // Real mock data + the real resolver-backing constants, for the
 // formOptions-coverage checks below — deliberately not the hand-built `as
 // any` fixtures the rest of this file uses, since only the real data can
 // catch a real mock record carrying a value its own picklist doesn't offer.
 import {MOCK_MAINTENANCE_REQUESTS} from '../src/mocks/maintenance';
-import {AMBASSADORS as MAINT_AMBASSADORS, BUSINESS_NAMES as MAINT_BUSINESS_NAMES, MAINT_TYPES} from '../src/graphql/features/maintenance/store';
+import {AMBASSADORS as MAINT_AMBASSADORS, MAINT_TYPES} from '../src/graphql/features/maintenance/store';
 import {MOCK_INCIDENTS, MOCK_INCIDENT_FORM_OPTIONS} from '../src/mocks/incident';
 import {MOCK_FIXTURES} from '../src/mocks/fixture';
-import {FIXTURE_TYPES, ZONES as SHARED_ZONES} from '../src/graphql/features/shared/options';
+import {BUSINESS_NAMES as SHARED_BUSINESS_NAMES, FIXTURE_TYPES, ZONES as SHARED_ZONES} from '../src/graphql/features/shared/options';
+import {MOCK_WORK_LOG_ENTRIES} from '../src/mocks/workLog';
 import {MOCK_POIS, PERSON_TYPES} from '../src/mocks/poi';
 import {MOCK_RVP_SITE_VISITS, RVP_PROGRAMS} from '../src/mocks/rvpSiteVisit';
 import {MOCK_OBSERVATION_REPORTS, ZONES as OBSERVATION_ZONES} from '../src/mocks/observationReport';
@@ -227,8 +229,16 @@ const checks: Check[] = [
   ['Maintenance: every record.businessName is covered by the real formOptions.businessNames', () => {
     assertValuesCovered(
       MOCK_MAINTENANCE_REQUESTS.map(r => r.businessName),
-      MAINT_BUSINESS_NAMES,
+      SHARED_BUSINESS_NAMES,
       'Maintenance businessName',
+    );
+  }],
+
+  ['WorkLog: every record.businessName is covered by the real formOptions.businessNames', () => {
+    assertValuesCovered(
+      MOCK_WORK_LOG_ENTRIES.map(r => r.businessName),
+      SHARED_BUSINESS_NAMES,
+      'WorkLog businessName',
     );
   }],
 
@@ -373,6 +383,25 @@ const checks: Check[] = [
     const few = {entryTypes: ['Only one'], businesses: [], zones: []};
     assert.equal(referenceDocumentIsSearchable('entryType', many), true);
     assert.equal(referenceDocumentIsSearchable('entryType', few), false);
+  }],
+
+  // Dispatch
+  ['Dispatch: howReferred reads from options.referralSources, not loaded records', () => {
+    const result = dispatchOptionsForField(
+      [{howReferred: 'Ignored'} as any],
+      'howReferred',
+      {referralSources: ['Only Source']},
+    );
+    assert.deepEqual(result, [{value: 'Only Source', label: 'Only Source'}]);
+  }],
+
+  ['Dispatch: howReferred is empty when options is null', () => {
+    assert.deepEqual(dispatchOptionsForField([], 'howReferred', null), []);
+  }],
+
+  ['Dispatch: status stays hardcoded regardless of options', () => {
+    const result = dispatchOptionsForField([], 'status', null);
+    assert.equal(result.some(o => o.value === 'Open'), true);
   }],
 ];
 

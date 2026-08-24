@@ -64,8 +64,18 @@ export const dispatchTypeDefs = /* GraphQL */ `
     search: String
   }
 
+  """
+  Serves the list filter sheet only — Dispatch has no create form, so unlike
+  every other module's '<Name>FormOptions', there's no form to name this
+  after. Same convention as Reference Documents' FilterOptions query.
+  """
+  type DispatchFilterOptions {
+    referralSources: [String!]!
+  }
+
   extend type Query {
     dispatches(programId: ID!, filter: DispatchFilter): [Dispatch!]!
     dispatch(id: ID!): Dispatch
+    dispatchFilterOptions(programId: ID!): DispatchFilterOptions!
   }
 `;

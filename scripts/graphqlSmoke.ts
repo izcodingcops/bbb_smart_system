@@ -1112,6 +1112,20 @@ const checks: Check[] = [
     assert.ok(dates.every(d => Date.parse(d) <= now));
   }],
 
+  ['dispatchFilterOptions derives referralSources from the store, not a hardcoded list', async () => {
+    const r: any = await run(
+      'query O($p: ID!) { dispatchFilterOptions(programId: $p) { referralSources } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.dispatchFilterOptions;
+    // The mock's explicit + generated records cycle through exactly these 7
+    // referral sources (src/mocks/dispatch.ts) — no more, no fewer.
+    assert.equal(o.referralSources.length, 7);
+    assert.ok(o.referralSources.includes('Citizen App'));
+    assert.ok(o.referralSources.includes('Webform'));
+  }],
+
   ['work log entries resolve with uppercase YesNo enums', async () => {
     const r: any = await run(
       'query W($p: ID!) { workLogEntries(programId: $p) { id reference shiftTypeName fvmAccessibilityChecked } }',
@@ -1142,7 +1156,8 @@ const checks: Check[] = [
     const o = r.data.workLogFormOptions;
     assert.equal(o.entryTypes.length, 16);
     assert.equal(o.zones.length, 6);
-    assert.equal(o.businessNames.length, 4);
+    // Now the shared 7-value list — see src/graphql/features/shared/options.ts.
+    assert.equal(o.businessNames.length, 7);
   }],
 
   ['work log create freezes the shift, then round-trips through update and delete', async () => {

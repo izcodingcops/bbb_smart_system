@@ -51,21 +51,6 @@ const CreateWorkLogScreen: React.FC<Props> = ({onClose, onCreated}) => {
   } = useWorkLogFormOptionsQuery(shiftTypeId ?? '');
   const {mutate: create, isLoading: isSubmitting} = useCreateWorkLogEntryMutation();
 
-  if (step === 'entryType') {
-    return (
-      <EntryTypeStep
-        shiftTypeName={shiftTypeName}
-        selected={entryType}
-        onSelect={setEntryType}
-        onNext={() => {
-          setValues(current => ({...current, entryType: entryType ?? ''}));
-          setStep('form');
-        }}
-        onCancel={onClose}
-      />
-    );
-  }
-
   if (isError || (!isLoading && !options)) {
     return (
       <View style={styles.loading}>
@@ -85,12 +70,29 @@ const CreateWorkLogScreen: React.FC<Props> = ({onClose, onCreated}) => {
 
   if (isLoading || !options) {
     // Matches WorkLogForm's own section layout: Basic Details (6 rows),
-    // Location Details (5).
+    // Location Details (5). Now also covers the entry-type step, which
+    // needs options.entryTypes before it can render anything.
     return (
       <FormScreenSkeleton
         title={workLogCopy(shiftTypeName).createTitle}
         onClose={onClose}
         sectionRowCounts={[6, 5]}
+      />
+    );
+  }
+
+  if (step === 'entryType') {
+    return (
+      <EntryTypeStep
+        shiftTypeName={shiftTypeName}
+        entryTypes={options.entryTypes}
+        selected={entryType}
+        onSelect={setEntryType}
+        onNext={() => {
+          setValues(current => ({...current, entryType: entryType ?? ''}));
+          setStep('form');
+        }}
+        onCancel={onClose}
       />
     );
   }

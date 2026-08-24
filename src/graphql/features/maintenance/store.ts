@@ -26,15 +26,6 @@ export const AMBASSADORS = [
   'Priya Shah',
   'Alex Nguyen',
 ];
-export const BUSINESS_NAMES = [
-  '16th St Mall',
-  'Union Station',
-  'Larimer Square',
-  'Civic Center',
-  'BlockByBlock',
-  'LoDo District',
-  'Denver Pavilions',
-];
 // Persons of interest and equipment are not listed here. Both option lists are
 // served live from their own modules' stores (`poiOptions` / `equipmentOptions`
 // in resolvers.ts), so a record created from Connected Elements — which opens
