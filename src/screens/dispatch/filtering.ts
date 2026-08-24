@@ -58,6 +58,11 @@ const PRIORITY_OPTIONS = [
   {value: 'High', label: 'High'},
 ];
 
+/**
+ * Status and Priority use fixed lists so an option never disappears just
+ * because nothing currently has that value; Referral Source reads from
+ * dispatchFilterOptions.
+ */
 export function optionsForField(
   _dispatches: Dispatch[],
   field: FilterField,
