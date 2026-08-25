@@ -1,10 +1,21 @@
-import {CLEANING_ENTRY_TYPES, WorkLogEntry} from '../types/workLog';
+import {
+  entryTypesForShift,
+  isDetailedFormShift,
+  WorkLogEntry,
+} from '../types/workLog';
 import {MOCK_SHIFT_TYPES} from './shiftTypes';
 import {BUSINESS_NAMES, ZONES} from '../graphql/features/shared/options';
 
 const LOGGERS = ['You', 'Marcus Bell', 'Sara Diaz', 'Ava Nguyen'];
 
 const YES_NO: readonly ('yes' | 'no')[] = ['yes', 'no'];
+
+/** Cycled for the generic-shape shifts' Description field. */
+const DESCRIPTIONS = [
+  'Logged during routine patrol — no follow-up needed.',
+  'Reported by a visitor on site; resolved before end of shift.',
+  'Routine check, nothing to flag.',
+];
 
 function pad(value: number): string {
   return String(value).padStart(2, '0');
@@ -33,32 +44,26 @@ const BASE_ID = 76231707;
  * there is nothing mockup-pinned to port verbatim the way Fixture/Maintenance's
  * explicit records are — this is a deterministic generated seed instead.
  *
- * TEMPORARY: still cycles through CLEANING_ENTRY_TYPES and the detailed
- * (machineNo/FVM) shape for every shift, unconditionally — this is the
- * minimal compile-fix for the ENTRY_TYPES -> CLEANING_ENTRY_TYPES rename, not
- * real per-shift behavior. A follow-up task replaces this with a generator
- * that cycles each shift's own entry-type list and shape.
+ * Each shift cycles through its own entryTypesForShift() list (index `i`,
+ * 0-2, not the global record index — Outreach's 2-item list would otherwise
+ * go out of range) and is shaped per isDetailedFormShift(): Cleaning and
+ * Management get the Machine No + 5 FVM Yes/No fields, every other shift
+ * gets a Description instead.
  */
 export const MOCK_WORK_LOG_ENTRIES: WorkLogEntry[] = MOCK_SHIFT_TYPES.flatMap(
-  (shiftType, shiftIndex) =>
-    Array.from({length: 3}, (_, i) => {
+  (shiftType, shiftIndex) => {
+    const entryTypes = entryTypesForShift(shiftType.id);
+    const detailed = isDetailedFormShift(shiftType.id);
+    return Array.from({length: 3}, (_, i) => {
       const index = shiftIndex * 3 + i;
       const idNum = BASE_ID - index * 7;
-      return {
+      const base: WorkLogEntry = {
         id: `wl_${idNum}`,
         reference: `#${idNum}`,
         shiftTypeId: shiftType.id,
         shiftTypeName: shiftType.name,
-        entryType: CLEANING_ENTRY_TYPES[index % CLEANING_ENTRY_TYPES.length],
-        machineNo: String(84726193 - index * 11),
-        requestDateTime: toLocalIso(
-          new Date(GEN_BASE - index * 13 * HOUR),
-        ),
-        fvmAccessibilityChecked: YES_NO[index % 2],
-        bridgePlateSecured: YES_NO[(index + 1) % 2],
-        accessibleFareGateWorking: YES_NO[index % 2],
-        automaticDoorWorking: YES_NO[(index + 1) % 2],
-        fvmNotWorking: YES_NO[index % 2],
+        entryType: entryTypes[i % entryTypes.length],
+        requestDateTime: toLocalIso(new Date(GEN_BASE - index * 13 * HOUR)),
         address: 'Rue Des Hauteurs, Val-David, Quebec J0T 2N0, Canada',
         // The third record of every shift type leaves Zone/Business unset, so
         // the detail screen's "N/A" fallback rendering is actually reachable
@@ -66,10 +71,27 @@ export const MOCK_WORK_LOG_ENTRIES: WorkLogEntry[] = MOCK_SHIFT_TYPES.flatMap(
         zone: i === 2 ? null : ZONES[index % ZONES.length],
         describeLocation:
           i === 0 ? 'North entrance, beside ticket vending machine' : '',
-        businessName: i === 2 ? null : BUSINESS_NAMES[index % BUSINESS_NAMES.length],
+        businessName:
+          i === 2 ? null : BUSINESS_NAMES[index % BUSINESS_NAMES.length],
         quantity: pad((index % 4) + 1),
         loggedBy: LOGGERS[index % LOGGERS.length],
         createdAt: toLocalIso(new Date(GEN_BASE - index * 13 * HOUR)),
       };
-    }),
+      if (detailed) {
+        return {
+          ...base,
+          machineNo: String(84726193 - index * 11),
+          fvmAccessibilityChecked: YES_NO[index % 2],
+          bridgePlateSecured: YES_NO[(index + 1) % 2],
+          accessibleFareGateWorking: YES_NO[index % 2],
+          automaticDoorWorking: YES_NO[(index + 1) % 2],
+          fvmNotWorking: YES_NO[index % 2],
+        };
+      }
+      return {
+        ...base,
+        description: DESCRIPTIONS[i % DESCRIPTIONS.length],
+      };
+    });
+  },
 );
