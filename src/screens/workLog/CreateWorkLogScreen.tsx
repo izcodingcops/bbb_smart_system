@@ -4,7 +4,7 @@ import {
   useCreateWorkLogEntryMutation,
   useWorkLogFormOptionsQuery,
 } from '../../graphql/features/workLog/hooks';
-import {WorkLogFormValues} from '../../types/workLog';
+import {isDetailedFormShift, WorkLogFormValues} from '../../types/workLog';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import WorkLogForm, {buildInitialValues} from './components/WorkLogForm';
@@ -44,6 +44,7 @@ const CreateWorkLogScreen: React.FC<Props> = ({
   const shiftType = shiftTypes.find(t => t.id === shiftTypeId);
   const shiftTypeName = shiftType?.name ?? 'Shift';
   const shiftTypeIcon = shiftType?.icon ?? 'general';
+  const detailed = isDetailedFormShift(shiftTypeId);
 
   const [step, setStep] = useState<'entryType' | 'form'>(
     initialEntryType ? 'form' : 'entryType',
@@ -85,14 +86,17 @@ const CreateWorkLogScreen: React.FC<Props> = ({
   }
 
   if (isLoading || !options) {
-    // Matches WorkLogForm's own section layout: Basic Details (6 rows),
-    // Location Details (5). Now also covers the entry-type step, which
-    // needs options.entryTypes before it can render anything.
+    // Matches WorkLogForm's own section layout for this shift's shape:
+    // detailed (Cleaning/Management) is Basic Details (6 rows: Machine No,
+    // Date, 5 Yes/No minus the date already counted = 6), Location (5,
+    // including Quantity); generic is Basic Details (3: Date, Quantity,
+    // Description), Location (4, no Quantity). Also covers the entry-type
+    // step, which needs options.entryTypes before it can render anything.
     return (
       <FormScreenSkeleton
         title={workLogCopy(shiftTypeName).createTitle}
         onClose={onClose}
-        sectionRowCounts={[6, 5]}
+        sectionRowCounts={detailed ? [6, 5] : [3, 4]}
       />
     );
   }
@@ -124,6 +128,7 @@ const CreateWorkLogScreen: React.FC<Props> = ({
         mode="create"
         shiftTypeName={shiftTypeName}
         shiftTypeIcon={shiftTypeIcon}
+        hasDetailedForm={detailed}
         reference={options.nextReference}
         options={options}
         values={values}
