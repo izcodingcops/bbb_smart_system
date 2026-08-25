@@ -23,13 +23,14 @@ interface GqlWorkLogEntry {
   shiftTypeId: string;
   shiftTypeName: string;
   entryType: string;
-  machineNo: string;
   requestDateTime: string;
-  fvmAccessibilityChecked: 'YES' | 'NO';
-  bridgePlateSecured: 'YES' | 'NO';
-  accessibleFareGateWorking: 'YES' | 'NO';
-  automaticDoorWorking: 'YES' | 'NO';
-  fvmNotWorking: 'YES' | 'NO';
+  machineNo: string | null;
+  fvmAccessibilityChecked: 'YES' | 'NO' | null;
+  bridgePlateSecured: 'YES' | 'NO' | null;
+  accessibleFareGateWorking: 'YES' | 'NO' | null;
+  automaticDoorWorking: 'YES' | 'NO' | null;
+  fvmNotWorking: 'YES' | 'NO' | null;
+  description: string | null;
   address: string;
   zone: string | null;
   describeLocation: string;
@@ -42,19 +43,23 @@ interface GqlWorkLogEntry {
 const YES_NO: Record<'YES' | 'NO', YesNo> = {YES: 'yes', NO: 'no'};
 const YES_NO_OUT: Record<YesNo, string> = {yes: 'YES', no: 'NO'};
 
+const yesNoOrUndefined = (v: 'YES' | 'NO' | null): YesNo | undefined =>
+  v ? YES_NO[v] : undefined;
+
 const toWorkLogEntry = (e: GqlWorkLogEntry): WorkLogEntry => ({
   id: e.id,
   reference: e.reference,
   shiftTypeId: e.shiftTypeId,
   shiftTypeName: e.shiftTypeName,
   entryType: e.entryType,
-  machineNo: e.machineNo,
   requestDateTime: e.requestDateTime,
-  fvmAccessibilityChecked: YES_NO[e.fvmAccessibilityChecked],
-  bridgePlateSecured: YES_NO[e.bridgePlateSecured],
-  accessibleFareGateWorking: YES_NO[e.accessibleFareGateWorking],
-  automaticDoorWorking: YES_NO[e.automaticDoorWorking],
-  fvmNotWorking: YES_NO[e.fvmNotWorking],
+  machineNo: e.machineNo ?? undefined,
+  fvmAccessibilityChecked: yesNoOrUndefined(e.fvmAccessibilityChecked),
+  bridgePlateSecured: yesNoOrUndefined(e.bridgePlateSecured),
+  accessibleFareGateWorking: yesNoOrUndefined(e.accessibleFareGateWorking),
+  automaticDoorWorking: yesNoOrUndefined(e.automaticDoorWorking),
+  fvmNotWorking: yesNoOrUndefined(e.fvmNotWorking),
+  description: e.description ?? undefined,
   address: e.address,
   zone: e.zone,
   describeLocation: e.describeLocation,
@@ -123,13 +128,22 @@ export function useWorkLogFormOptionsQuery(shiftTypeId: string) {
 
 const toWireInput = (values: WorkLogFormValues) => ({
   entryType: values.entryType,
-  machineNo: values.machineNo,
   requestDateTime: values.requestDateTime,
-  fvmAccessibilityChecked: YES_NO_OUT[values.fvmAccessibilityChecked ?? 'no'],
-  bridgePlateSecured: YES_NO_OUT[values.bridgePlateSecured ?? 'no'],
-  accessibleFareGateWorking: YES_NO_OUT[values.accessibleFareGateWorking ?? 'no'],
-  automaticDoorWorking: YES_NO_OUT[values.automaticDoorWorking ?? 'no'],
-  fvmNotWorking: YES_NO_OUT[values.fvmNotWorking ?? 'no'],
+  machineNo: values.machineNo || null,
+  fvmAccessibilityChecked: values.fvmAccessibilityChecked
+    ? YES_NO_OUT[values.fvmAccessibilityChecked]
+    : null,
+  bridgePlateSecured: values.bridgePlateSecured
+    ? YES_NO_OUT[values.bridgePlateSecured]
+    : null,
+  accessibleFareGateWorking: values.accessibleFareGateWorking
+    ? YES_NO_OUT[values.accessibleFareGateWorking]
+    : null,
+  automaticDoorWorking: values.automaticDoorWorking
+    ? YES_NO_OUT[values.automaticDoorWorking]
+    : null,
+  fvmNotWorking: values.fvmNotWorking ? YES_NO_OUT[values.fvmNotWorking] : null,
+  description: values.description || null,
   address: values.address,
   zone: values.zone,
   describeLocation: values.describeLocation || null,

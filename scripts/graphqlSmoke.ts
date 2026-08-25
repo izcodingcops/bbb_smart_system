@@ -3,7 +3,13 @@ import {graphql} from 'graphql';
 import {mockSchema} from '../src/graphql/mockSchema';
 import {DATE_RANGE_OPTIONS, matchesDateRange} from '../src/utils/dateRange';
 import {RVP_SECTIONS, RVP_TOTAL_QUESTIONS} from '../src/mocks/rvpSiteVisit';
-import {ENTRY_TYPES} from '../src/types/workLog';
+import {
+  CLEANING_ENTRY_TYPES,
+  GENERAL_ENTRY_TYPES,
+  HOSPITALITY_ENTRY_TYPES,
+  OUTREACH_ENTRY_TYPES,
+  SAFETY_ENTRY_TYPES,
+} from '../src/types/workLog';
 
 type Check = [name: string, run: () => Promise<void> | void];
 
@@ -244,8 +250,8 @@ const checks: Check[] = [
     assert.ok(r.data.quickActions.length > 0);
     for (const action of r.data.quickActions) {
       assert.ok(
-        (ENTRY_TYPES as readonly string[]).includes(action.entryType),
-        `quickAction ${action.id} entryType "${action.entryType}" is not a real ENTRY_TYPES value`,
+        (CLEANING_ENTRY_TYPES as readonly string[]).includes(action.entryType),
+        `quickAction ${action.id} entryType "${action.entryType}" is not a real CLEANING_ENTRY_TYPES value`,
       );
     }
   }],
@@ -1190,25 +1196,45 @@ const checks: Check[] = [
     assert.equal(r.data.workLogEntry, null);
   }],
 
-  ['work log form options serve every dropdown', async () => {
-    const r: any = await run(
-      'query O($p: ID!, $s: ID!) { workLogFormOptions(programId: $p, shiftTypeId: $s) { nextReference entryTypes zones businessNames } }',
-      {p: 'p1', s: 'st1'},
-    );
-    assert.equal(r.errors, undefined);
-    const o = r.data.workLogFormOptions;
-    assert.equal(o.entryTypes.length, 16);
-    assert.equal(o.zones.length, 6);
+  ['work log form options serve every dropdown, one entry-type list per shift', async () => {
+    const query =
+      'query O($p: ID!, $s: ID!) { workLogFormOptions(programId: $p, shiftTypeId: $s) { nextReference entryTypes zones businessNames } }';
+
+    const cleaning: any = await run(query, {p: 'p1', s: 'st1'});
+    assert.equal(cleaning.errors, undefined);
+    assert.equal(cleaning.data.workLogFormOptions.entryTypes.length, CLEANING_ENTRY_TYPES.length);
+    assert.equal(cleaning.data.workLogFormOptions.zones.length, 6);
     // Now the shared 7-value list — see src/graphql/features/shared/options.ts.
-    assert.equal(o.businessNames.length, 7);
+    assert.equal(cleaning.data.workLogFormOptions.businessNames.length, 7);
+
+    const general: any = await run(query, {p: 'p1', s: 'st2'});
+    assert.equal(general.errors, undefined);
+    assert.equal(general.data.workLogFormOptions.entryTypes.length, GENERAL_ENTRY_TYPES.length);
+    assert.ok(general.data.workLogFormOptions.entryTypes.includes('Report - Web Form Submission'));
+
+    const hospitality: any = await run(query, {p: 'p1', s: 'st3'});
+    assert.equal(hospitality.errors, undefined);
+    assert.equal(hospitality.data.workLogFormOptions.entryTypes.length, HOSPITALITY_ENTRY_TYPES.length);
+
+    const management: any = await run(query, {p: 'p1', s: 'st4'});
+    assert.equal(management.errors, undefined);
+    // No confirmed field list of its own yet — falls back to Cleaning's.
+    assert.equal(management.data.workLogFormOptions.entryTypes.length, CLEANING_ENTRY_TYPES.length);
+
+    const outreach: any = await run(query, {p: 'p1', s: 'st5'});
+    assert.equal(outreach.errors, undefined);
+    assert.deepEqual(outreach.data.workLogFormOptions.entryTypes, [...OUTREACH_ENTRY_TYPES]);
+
+    const safety: any = await run(query, {p: 'p1', s: 'st6'});
+    assert.equal(safety.errors, undefined);
+    assert.equal(safety.data.workLogFormOptions.entryTypes.length, SAFETY_ENTRY_TYPES.length);
   }],
 
-  ['work log create freezes the shift, then round-trips through update and delete', async () => {
+  ['work log create freezes the shift, and nullable Cleaning-only fields stay null for a generic-shape shift', async () => {
     const input = {
-      entryType: 'Litter Pickup', machineNo: '12345678',
+      entryType: 'Audit - Unhoused',
       requestDateTime: '2026-08-01T09:00:00',
-      fvmAccessibilityChecked: 'YES', bridgePlateSecured: 'YES',
-      accessibleFareGateWorking: 'NO', automaticDoorWorking: 'YES', fvmNotWorking: 'NO',
+      description: 'Routine unhoused audit, nothing to flag.',
       address: '123 Test St', shiftTypeId: 'st5', shiftTypeName: 'Outreach',
     };
     const created: any = await run(
@@ -1219,14 +1245,19 @@ const checks: Check[] = [
     const id = created.data.createWorkLogEntry.id;
 
     const detail: any = await run(
-      'query D($id: ID!) { workLogEntry(id: $id) { shiftTypeId shiftTypeName entryType quantity } }',
+      'query D($id: ID!) { workLogEntry(id: $id) { shiftTypeId shiftTypeName entryType quantity description machineNo fvmAccessibilityChecked } }',
       {id},
     );
     assert.equal(detail.data.workLogEntry.shiftTypeId, 'st5');
     assert.equal(detail.data.workLogEntry.shiftTypeName, 'Outreach');
-    assert.equal(detail.data.workLogEntry.entryType, 'Litter Pickup');
+    assert.equal(detail.data.workLogEntry.entryType, 'Audit - Unhoused');
     // Never sent — the resolver's own default.
     assert.equal(detail.data.workLogEntry.quantity, '01');
+    assert.equal(detail.data.workLogEntry.description, 'Routine unhoused audit, nothing to flag.');
+    // Outreach is a generic-shape shift — these were never sent and stay null,
+    // not defaulted to an empty string or 'NO'.
+    assert.equal(detail.data.workLogEntry.machineNo, null);
+    assert.equal(detail.data.workLogEntry.fvmAccessibilityChecked, null);
 
     // The update input deliberately carries a DIFFERENT shift than the one the
     // entry was created under, so this actually exercises the freeze — an

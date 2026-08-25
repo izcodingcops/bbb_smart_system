@@ -13,14 +13,19 @@ export const workLogTypeDefs = /* GraphQL */ `
     shiftTypeName: String!
     entryType: String!
 
-    machineNo: String!
     "ISO-8601."
     requestDateTime: String!
-    fvmAccessibilityChecked: YesNo!
-    bridgePlateSecured: YesNo!
-    accessibleFareGateWorking: YesNo!
-    automaticDoorWorking: YesNo!
-    fvmNotWorking: YesNo!
+
+    "Cleaning/Management-only — null for every other shift."
+    machineNo: String
+    fvmAccessibilityChecked: YesNo
+    bridgePlateSecured: YesNo
+    accessibleFareGateWorking: YesNo
+    automaticDoorWorking: YesNo
+    fvmNotWorking: YesNo
+
+    "General/Hospitality/Outreach/Safety-only — null for Cleaning/Management."
+    description: String
 
     address: String!
     zone: String
@@ -49,14 +54,15 @@ export const workLogTypeDefs = /* GraphQL */ `
 
   input WorkLogInput {
     entryType: String!
-    machineNo: String!
     "ISO-8601."
     requestDateTime: String!
-    fvmAccessibilityChecked: YesNo!
-    bridgePlateSecured: YesNo!
-    accessibleFareGateWorking: YesNo!
-    automaticDoorWorking: YesNo!
-    fvmNotWorking: YesNo!
+    machineNo: String
+    fvmAccessibilityChecked: YesNo
+    bridgePlateSecured: YesNo
+    accessibleFareGateWorking: YesNo
+    automaticDoorWorking: YesNo
+    fvmNotWorking: YesNo
+    description: String
     address: String!
     zone: String
     describeLocation: String

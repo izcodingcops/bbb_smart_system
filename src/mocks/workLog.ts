@@ -1,4 +1,13 @@
-import {ENTRY_TYPES, WorkLogEntry} from '../types/workLog';
+import {
+  CLEANING_ENTRY_TYPES,
+  GENERAL_ENTRY_TYPES,
+  HOSPITALITY_ENTRY_TYPES,
+  OUTREACH_ENTRY_TYPES,
+  SAFETY_ENTRY_TYPES,
+  isDetailedFormShift,
+  entryTypesForShift,
+  WorkLogEntry,
+} from '../types/workLog';
 import {MOCK_SHIFT_TYPES} from './shiftTypes';
 import {BUSINESS_NAMES, ZONES} from '../graphql/features/shared/options';
 
@@ -38,21 +47,18 @@ export const MOCK_WORK_LOG_ENTRIES: WorkLogEntry[] = MOCK_SHIFT_TYPES.flatMap(
     Array.from({length: 3}, (_, i) => {
       const index = shiftIndex * 3 + i;
       const idNum = BASE_ID - index * 7;
-      return {
+      const entryTypes = entryTypesForShift(shiftType.id);
+      const entryType = entryTypes[i % entryTypes.length];
+      const isDetailed = isDetailedFormShift(shiftType.id);
+      const base: WorkLogEntry = {
         id: `wl_${idNum}`,
         reference: `#${idNum}`,
         shiftTypeId: shiftType.id,
         shiftTypeName: shiftType.name,
-        entryType: ENTRY_TYPES[index % ENTRY_TYPES.length],
-        machineNo: String(84726193 - index * 11),
+        entryType,
         requestDateTime: toLocalIso(
           new Date(GEN_BASE - index * 13 * HOUR),
         ),
-        fvmAccessibilityChecked: YES_NO[index % 2],
-        bridgePlateSecured: YES_NO[(index + 1) % 2],
-        accessibleFareGateWorking: YES_NO[index % 2],
-        automaticDoorWorking: YES_NO[(index + 1) % 2],
-        fvmNotWorking: YES_NO[index % 2],
         address: 'Rue Des Hauteurs, Val-David, Quebec J0T 2N0, Canada',
         // The third record of every shift type leaves Zone/Business unset, so
         // the detail screen's "N/A" fallback rendering is actually reachable
@@ -65,5 +71,23 @@ export const MOCK_WORK_LOG_ENTRIES: WorkLogEntry[] = MOCK_SHIFT_TYPES.flatMap(
         loggedBy: LOGGERS[index % LOGGERS.length],
         createdAt: toLocalIso(new Date(GEN_BASE - index * 13 * HOUR)),
       };
+
+      // Add detailed form fields only for Cleaning/Management shifts
+      if (isDetailed) {
+        return {
+          ...base,
+          machineNo: String(84726193 - index * 11),
+          fvmAccessibilityChecked: YES_NO[index % 2],
+          bridgePlateSecured: YES_NO[(index + 1) % 2],
+          accessibleFareGateWorking: YES_NO[index % 2],
+          automaticDoorWorking: YES_NO[(index + 1) % 2],
+          fvmNotWorking: YES_NO[index % 2],
+        };
+      } else {
+        return {
+          ...base,
+          description: i === 0 ? 'Routine activity log' : '',
+        };
+      }
     }),
 );
