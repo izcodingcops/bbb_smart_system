@@ -26,22 +26,38 @@ interface Props {
     shiftTypeName: string;
     queued: boolean;
   }) => void;
+  /** Set by a Home Quick Action tile — when present, the wizard starts on
+   *  Step 2 (the form) with this entry type already filled in instead of on
+   *  Step 1 (the Entry Types picker). "Back" from the form still returns to
+   *  the full picker with this type highlighted, in case the wrong quick
+   *  action was tapped. */
+  initialEntryType?: string;
 }
 
-const CreateWorkLogScreen: React.FC<Props> = ({onClose, onCreated}) => {
+const CreateWorkLogScreen: React.FC<Props> = ({
+  onClose,
+  onCreated,
+  initialEntryType,
+}) => {
   const shiftTypes = GetShiftTypes();
   const shiftTypeId = GetActiveShiftTypeId();
   const shiftType = shiftTypes.find(t => t.id === shiftTypeId);
   const shiftTypeName = shiftType?.name ?? 'Shift';
   const shiftTypeIcon = shiftType?.icon ?? 'general';
 
-  const [step, setStep] = useState<'entryType' | 'form'>('entryType');
-  const [entryType, setEntryType] = useState<string | null>(null);
+  const [step, setStep] = useState<'entryType' | 'form'>(
+    initialEntryType ? 'form' : 'entryType',
+  );
+  const [entryType, setEntryType] = useState<string | null>(
+    initialEntryType ?? null,
+  );
   // Owned here rather than inside WorkLogForm: Step 2 unmounts when the user
   // taps Back to Step 1, so form state living inside it wouldn't survive a
   // Back → pick a different type → Next round trip. This component itself
   // stays mounted across that whole trip, so state here does.
-  const [values, setValues] = useState<WorkLogFormValues>(() => buildInitialValues(''));
+  const [values, setValues] = useState<WorkLogFormValues>(() =>
+    buildInitialValues(initialEntryType ?? ''),
+  );
 
   const {
     data: options,
