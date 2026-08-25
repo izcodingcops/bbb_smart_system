@@ -3,6 +3,7 @@ import {graphql} from 'graphql';
 import {mockSchema} from '../src/graphql/mockSchema';
 import {DATE_RANGE_OPTIONS, matchesDateRange} from '../src/utils/dateRange';
 import {RVP_SECTIONS, RVP_TOTAL_QUESTIONS} from '../src/mocks/rvpSiteVisit';
+import {ENTRY_TYPES} from '../src/types/workLog';
 
 type Check = [name: string, run: () => Promise<void> | void];
 
@@ -235,12 +236,18 @@ const checks: Check[] = [
 
   ['work items and quick actions require a programId', async () => {
     const r: any = await run(
-      'query W($p: ID!) { workItems(programId: $p) { id status priority bucket } quickActions(programId: $p) { id label } }',
+      'query W($p: ID!) { workItems(programId: $p) { id status priority bucket } quickActions(programId: $p) { id label entryType } }',
       {p: 'p1'},
     );
     assert.equal(r.errors, undefined);
     assert.ok(r.data.workItems.length > 0);
     assert.ok(r.data.quickActions.length > 0);
+    for (const action of r.data.quickActions) {
+      assert.ok(
+        (ENTRY_TYPES as readonly string[]).includes(action.entryType),
+        `quickAction ${action.id} entryType "${action.entryType}" is not a real ENTRY_TYPES value`,
+      );
+    }
   }],
 
   ['myEquipment returns only the signed-in user\'s custody', async () => {

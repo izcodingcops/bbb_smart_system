@@ -50,4 +50,7 @@ export interface QuickAction {
   iconColor: string;
   /** Key into QuickActions' icon map; unknown keys fall back to a generic one. */
   icon: string;
+  /** Work Log entry type this shortcut creates, e.g. 'Graffiti Removal' — must
+   *  be a value from ENTRY_TYPES (src/types/workLog.ts). */
+  entryType: string;
 }
