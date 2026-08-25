@@ -19,7 +19,12 @@ import {locationTracker} from '../../utils/locationTracker';
 import {connectivity} from '../../graphql/offlineQueue/connectivity';
 import {useAuth} from '../../hooks/useAuth';
 import {useAppDispatch} from '../../redux/store';
-import {SCREEN, TabNavigation, navigateToTarget} from '../../navigation/screens';
+import {
+  CREATE_TARGET_BY_TILE,
+  SCREEN,
+  TabNavigation,
+  navigateToTarget,
+} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {endShift} from '../../redux/shift/slice';
 import {GetActiveProgram, GetShiftTypes} from '../../redux/auth/selectors';
@@ -37,7 +42,7 @@ import {useGetMyEquipmentQuery} from '../../graphql/features/equipment/hooks';
 import {useQueuedEquipmentIds} from '../equipment/pendingEquipmentItems';
 import {useUnreadNotificationCountQuery} from '../../graphql/features/notification/hooks';
 import {Equipment} from '../../types/equipment';
-import {WorkItem, WorkStatus} from '../../types/work';
+import {QuickAction, WorkItem, WorkStatus} from '../../types/work';
 import {HomeStackParamList} from './routes';
 import {theme} from '../../theme';
 
@@ -148,6 +153,16 @@ const HomeScreen: React.FC = () => {
     [queueTile],
   );
 
+  const handleQuickAction = useCallback(
+    (action: QuickAction) => {
+      navigateToTarget(tabNavigation, CREATE_TARGET_BY_TILE.work_log, {
+        entryType: action.entryType,
+        origin: SCREEN.home,
+      });
+    },
+    [tabNavigation],
+  );
+
   const handleCheckIn = useCallback(
     (item: Equipment) => {
       navigateToTarget(tabNavigation, {
@@ -247,7 +262,11 @@ const HomeScreen: React.FC = () => {
             />
           ) : null}
 
-          <QuickActions actions={quickActions} isLoading={isQuickActionsLoading} />
+          <QuickActions
+            actions={quickActions}
+            isLoading={isQuickActionsLoading}
+            onSelect={handleQuickAction}
+          />
 
           <RecentWork
             items={workItems}
