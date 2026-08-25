@@ -41,7 +41,7 @@ import {
   CATEGORY_OPTIONS,
   EMPTY_FILTERS,
   FIELD_LABEL,
-  FILTER_FIELDS,
+  FILTER_FIELDS_BY_BUCKET,
   FilterField,
   Filters,
   SORT_LABEL,
@@ -227,16 +227,7 @@ const WorkScreen: React.FC = () => {
       ),
     [bucketItems, effectiveFilters, search, sort],
   );
-  /** Unassigned is Maintenance-only with nothing to choose between, so it's
-   *  the one bucket with no Module chip. Assigned and Completed each mix two
-   *  or more categories and need it to pick which one is showing. */
-  const filterFields = useMemo(
-    () =>
-      bucket === 'unassigned'
-        ? FILTER_FIELDS.filter(field => field !== 'category')
-        : FILTER_FIELDS,
-    [bucket],
-  );
+  const filterFields = FILTER_FIELDS_BY_BUCKET[bucket];
   const categoryOptions =
     bucket === 'assigned' ? ASSIGNED_CATEGORY_OPTIONS : CATEGORY_OPTIONS;
 
@@ -447,7 +438,7 @@ const WorkScreen: React.FC = () => {
         title={openFilter ? `Filter by ${FIELD_LABEL[openFilter]}` : ''}
         options={openFilter ? optionsForField(bucketItems, openFilter) : []}
         value={openFilter ? filters[openFilter] : []}
-        searchable={openFilter === 'type' || openFilter === 'assignee'}
+        searchable={openFilter === 'type' || openFilter === 'assignee' || openFilter === 'sentBy'}
         onApply={next => {
           if (openFilter) {
             setFilters(current => ({...current, [openFilter]: next}));

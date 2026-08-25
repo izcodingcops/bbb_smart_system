@@ -12,6 +12,9 @@ export type FilterField =
   | 'status'
   | 'priority'
   | 'assignee'
+  | 'sentBy'
+  | 'businessName'
+  | 'location'
   | 'zone'
   | 'dateRange';
 export type Filters = Record<FilterField, string[]>;
@@ -22,20 +25,12 @@ export const EMPTY_FILTERS: Filters = {
   status: [],
   priority: [],
   assignee: [],
+  sentBy: [],
+  businessName: [],
+  location: [],
   zone: [],
   dateRange: [],
 };
-
-/** The design's chip order. */
-export const FILTER_FIELDS: FilterField[] = [
-  'category',
-  'type',
-  'status',
-  'priority',
-  'assignee',
-  'zone',
-  'dateRange',
-];
 
 export const FIELD_LABEL: Record<FilterField, string> = {
   category: 'Module',
@@ -43,8 +38,26 @@ export const FIELD_LABEL: Record<FilterField, string> = {
   status: 'Status',
   priority: 'Priority',
   assignee: 'Assigned By',
+  sentBy: 'Sent By',
+  businessName: 'Business Name',
+  location: 'Location',
   zone: 'Zone',
   dateRange: 'Date Range',
+};
+
+/**
+ * Which chips each bucket shows, in the design's own order — no longer one
+ * static list with 'category' conditionally dropped. Completed has no
+ * Status chip (every record there is terminally Completed) and no Assigned
+ * By; Assigned has Assigned By but no Business Name; Unassigned has neither
+ * Module (Maintenance-only, nothing to choose between) nor Assigned By —
+ * its person-shaped chip is Sent By instead, matching createdBy rather than
+ * an assignee that doesn't exist yet on an unassigned record.
+ */
+export const FILTER_FIELDS_BY_BUCKET: Record<WorkBucket, FilterField[]> = {
+  assigned: ['category', 'type', 'status', 'priority', 'assignee', 'dateRange', 'zone', 'location'],
+  unassigned: ['type', 'priority', 'sentBy', 'zone', 'dateRange', 'location'],
+  completed: ['category', 'type', 'priority', 'businessName', 'location', 'zone', 'dateRange'],
 };
 
 export const SORT_OPTIONS: {value: SortKey; label: string}[] = [
@@ -101,10 +114,22 @@ const PRIORITY_OPTIONS = [
   {value: 'Low', label: 'Low'},
 ];
 
+/** Fixed, illustrative options — no per-record "neighborhood" concept exists
+ *  anywhere in this app yet. Same cosmetic-chip convention this app already
+ *  uses for Date Range elsewhere (see .claude/rules/data-module-conventions.md). */
+const LOCATION_OPTIONS = [
+  {value: 'Downtown Denver', label: 'Downtown Denver'},
+  {value: 'LoDo', label: 'LoDo'},
+  {value: 'RiNo', label: 'RiNo'},
+  {value: 'Capitol Hill', label: 'Capitol Hill'},
+  {value: 'Five Points', label: 'Five Points'},
+];
+
 /**
- * Type, Assigned By and Zone come from the loaded records so they stay correct
- * as data changes; Module, Status, Priority and Date Range use fixed lists so
- * an option never disappears just because nothing currently has that value.
+ * Type, Assigned By, Sent By, Business Name and Zone come from the loaded
+ * records so they stay correct as data changes; Module, Status, Priority,
+ * Location and Date Range use fixed lists so an option never disappears
+ * just because nothing currently has that value.
  */
 export function optionsForField(
   items: WorkItem[],
@@ -119,11 +144,26 @@ export function optionsForField(
   if (field === 'priority') {
     return PRIORITY_OPTIONS;
   }
+  if (field === 'location') {
+    return LOCATION_OPTIONS;
+  }
   if (field === 'dateRange') {
     return DATE_RANGE_OPTIONS;
   }
   if (field === 'assignee') {
     const names = Array.from(new Set(items.map(i => i.assignee))).sort();
+    return names.map(value => ({value, label: value}));
+  }
+  if (field === 'sentBy') {
+    const names = Array.from(
+      new Set(items.map(i => i.createdBy).filter((v): v is string => !!v)),
+    ).sort();
+    return names.map(value => ({value, label: value}));
+  }
+  if (field === 'businessName') {
+    const names = Array.from(
+      new Set(items.map(i => i.businessName).filter((v): v is string => !!v)),
+    ).sort();
     return names.map(value => ({value, label: value}));
   }
   if (field === 'zone') {
@@ -150,6 +190,18 @@ function matchesField(
   }
   if (field === 'assignee') {
     return selected.includes(item.assignee);
+  }
+  if (field === 'sentBy') {
+    return !!item.createdBy && selected.includes(item.createdBy);
+  }
+  if (field === 'businessName') {
+    return !!item.businessName && selected.includes(item.businessName);
+  }
+  if (field === 'location') {
+    // Cosmetic — no per-record location data exists in this app yet, same
+    // convention as this module's own Date Range chip used to be before it
+    // gained real filtering.
+    return true;
   }
   return selected.includes(item[field]);
 }
