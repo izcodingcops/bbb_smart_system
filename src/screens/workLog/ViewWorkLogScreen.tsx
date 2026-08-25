@@ -33,13 +33,14 @@ function ynLabel(value: YesNo): string {
 function toFormValues(detail: WorkLogEntry): WorkLogFormValues {
   return {
     entryType: detail.entryType,
-    machineNo: detail.machineNo,
+    machineNo: detail.machineNo ?? '',
     requestDateTime: detail.requestDateTime,
-    fvmAccessibilityChecked: detail.fvmAccessibilityChecked,
-    bridgePlateSecured: detail.bridgePlateSecured,
-    accessibleFareGateWorking: detail.accessibleFareGateWorking,
-    automaticDoorWorking: detail.automaticDoorWorking,
-    fvmNotWorking: detail.fvmNotWorking,
+    fvmAccessibilityChecked: detail.fvmAccessibilityChecked ?? null,
+    bridgePlateSecured: detail.bridgePlateSecured ?? null,
+    accessibleFareGateWorking: detail.accessibleFareGateWorking ?? null,
+    automaticDoorWorking: detail.automaticDoorWorking ?? null,
+    fvmNotWorking: detail.fvmNotWorking ?? null,
+    description: detail.description ?? '',
     address: detail.address,
     zone: detail.zone,
     describeLocation: detail.describeLocation,
@@ -171,21 +172,21 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
           />
           <DetailField
             label="FVM Accessibility Features Checked?"
-            value={ynLabel(detail.fvmAccessibilityChecked)}
+            value={detail.fvmAccessibilityChecked ? ynLabel(detail.fvmAccessibilityChecked) : null}
           />
           <DetailField
             label="Bridge Plate Secured When You Arrived?"
-            value={ynLabel(detail.bridgePlateSecured)}
+            value={detail.bridgePlateSecured ? ynLabel(detail.bridgePlateSecured) : null}
           />
           <DetailField
             label="Accessible Fare Gate Working?"
-            value={ynLabel(detail.accessibleFareGateWorking)}
+            value={detail.accessibleFareGateWorking ? ynLabel(detail.accessibleFareGateWorking) : null}
           />
           <DetailField
             label="Automatic Door Working?"
-            value={ynLabel(detail.automaticDoorWorking)}
+            value={detail.automaticDoorWorking ? ynLabel(detail.automaticDoorWorking) : null}
           />
-          <DetailField label="FVM Not Working?" value={ynLabel(detail.fvmNotWorking)} />
+          <DetailField label="FVM Not Working?" value={detail.fvmNotWorking ? ynLabel(detail.fvmNotWorking) : null} />
           <DetailField label="Status" full>
             <StatusPill label="Completed" bg="#DCFCE7" fg="#16A34A" size="md" />
           </DetailField>

@@ -51,6 +51,7 @@ export function buildInitialValues(entryType: string): WorkLogFormValues {
     accessibleFareGateWorking: null,
     automaticDoorWorking: null,
     fvmNotWorking: null,
+    description: '',
     address: DEFAULT_ADDRESS,
     zone: null,
     describeLocation: '',
