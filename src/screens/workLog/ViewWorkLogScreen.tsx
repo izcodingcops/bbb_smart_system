@@ -81,9 +81,13 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   const {mutate: remove} = useDeleteWorkLogEntryMutation();
 
   if (isLoading) {
-    // Matches the loaded screen's own sections: Basic Details (Type + Machine
-    // No half, Request Date & Time full, 5 yes/no half, Status full),
-    // Location Details (Address full, Zone + Business half, Describe
+    // Always renders the Cleaning/Management ("detailed") layout — unlike
+    // CreateWorkLogScreen's skeleton, this can't know the real shape
+    // (detailed vs. generic) up front, since that comes from
+    // detail.shiftTypeId, which isn't known until the record loads. Matches
+    // the loaded screen's own detailed-shape sections: Basic Details (Type +
+    // Machine No half, Request Date & Time full, 5 yes/no half, Status
+    // full), Location Details (Address full, Zone + Business half, Describe
     // Location full, Quantity half), Submission (3 half).
     return (
       <DetailScreenSkeleton

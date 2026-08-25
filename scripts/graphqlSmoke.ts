@@ -1175,9 +1175,9 @@ const checks: Check[] = [
     assert.ok(o.referralSources.includes('Webform'));
   }],
 
-  ['work log entries resolve with uppercase YesNo enums', async () => {
+  ['work log entries resolve with uppercase YesNo enums, shaped correctly per shift', async () => {
     const r: any = await run(
-      'query W($p: ID!) { workLogEntries(programId: $p) { id reference shiftTypeName fvmAccessibilityChecked } }',
+      'query W($p: ID!) { workLogEntries(programId: $p) { id reference shiftTypeId shiftTypeName fvmAccessibilityChecked machineNo description } }',
       {p: 'p1'},
     );
     assert.equal(r.errors, undefined);
@@ -1185,6 +1185,19 @@ const checks: Check[] = [
     assert.ok(['YES', 'NO'].includes(r.data.workLogEntries[0].fvmAccessibilityChecked));
     // One entry per shift type, 3 each — Cleaning is seeded first.
     assert.equal(r.data.workLogEntries[0].shiftTypeName, 'Cleaning');
+    // Cleaning (detailed shape): machineNo set, description null.
+    assert.ok(r.data.workLogEntries[0].machineNo !== null);
+    assert.equal(r.data.workLogEntries[0].description, null);
+    // General (generic shape) is the 4th seeded record — MOCK_SHIFT_TYPES
+    // order is Cleaning/General/Hospitality/Management/Outreach/Safety, 3
+    // records each. machineNo null, description set — catches a regression
+    // to the unconditional-Cleaning-shape generator this branch replaced.
+    assert.equal(r.data.workLogEntries[3].shiftTypeId, 'st2');
+    assert.equal(r.data.workLogEntries[3].machineNo, null);
+    assert.ok(
+      typeof r.data.workLogEntries[3].description === 'string' &&
+        r.data.workLogEntries[3].description.length > 0,
+    );
   }],
 
   ['an unknown work log id resolves to null rather than throwing', async () => {
@@ -1302,6 +1315,38 @@ const checks: Check[] = [
       'query D($id: ID!) { workLogEntry(id: $id) { reference } }', {id},
     );
     assert.equal(gone.data.workLogEntry, null);
+  }],
+
+  ["work log create round-trips Cleaning's detailed-shape fields", async () => {
+    const input = {
+      entryType: 'Litter Pickup',
+      requestDateTime: '2026-08-01T09:00:00',
+      machineNo: '87654321',
+      fvmAccessibilityChecked: 'YES', bridgePlateSecured: 'NO',
+      accessibleFareGateWorking: 'YES', automaticDoorWorking: 'NO', fvmNotWorking: 'YES',
+      address: '456 Test Ave', shiftTypeId: 'st1', shiftTypeName: 'Cleaning',
+    };
+    const created: any = await run(
+      'mutation C($p: ID!, $i: WorkLogInput!) { createWorkLogEntry(programId: $p, input: $i) { id reference } }',
+      {p: 'p1', i: input},
+    );
+    assert.equal(created.errors, undefined);
+    const id = created.data.createWorkLogEntry.id;
+
+    const detail: any = await run(
+      'query D($id: ID!) { workLogEntry(id: $id) { machineNo fvmAccessibilityChecked bridgePlateSecured accessibleFareGateWorking automaticDoorWorking fvmNotWorking description } }',
+      {id},
+    );
+    assert.equal(detail.data.workLogEntry.machineNo, '87654321');
+    assert.equal(detail.data.workLogEntry.fvmAccessibilityChecked, 'YES');
+    assert.equal(detail.data.workLogEntry.bridgePlateSecured, 'NO');
+    assert.equal(detail.data.workLogEntry.accessibleFareGateWorking, 'YES');
+    assert.equal(detail.data.workLogEntry.automaticDoorWorking, 'NO');
+    assert.equal(detail.data.workLogEntry.fvmNotWorking, 'YES');
+    // Cleaning is a detailed-shape shift — description was never sent and stays null.
+    assert.equal(detail.data.workLogEntry.description, null);
+
+    await run('mutation Del($id: ID!) { deleteWorkLogEntry(id: $id) }', {id});
   }],
 
   ['a typo fails loudly', async () => {

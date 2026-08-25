@@ -206,12 +206,22 @@ function matchesField(
   return selected.includes(item[field]);
 }
 
-/** AND across fields, OR within a field. */
-export function applyFilters(items: WorkItem[], filters: Filters): WorkItem[] {
+/**
+ * AND across fields, OR within a field. `fields` scopes which filter keys
+ * actually apply — `WorkScreen`'s `filters` state carries a value for every
+ * possible `FilterField` even when the current bucket doesn't show a chip
+ * for it (e.g. a Status pick made on Assigned stays in state after
+ * switching to Completed, which has no Status chip). Without this scoping,
+ * that stale value would silently keep filtering a bucket it was never
+ * shown on — pass `FILTER_FIELDS_BY_BUCKET[bucket]` from the call site.
+ */
+export function applyFilters(
+  items: WorkItem[],
+  filters: Filters,
+  fields: FilterField[],
+): WorkItem[] {
   return items.filter(item =>
-    (Object.keys(filters) as FilterField[]).every(field =>
-      matchesField(item, field, filters[field]),
-    ),
+    fields.every(field => matchesField(item, field, filters[field])),
   );
 }
 
@@ -297,10 +307,8 @@ export function applySort(items: WorkItem[], sort: SortKey): WorkItem[] {
   }
 }
 
-export function hasAnyFilter(filters: Filters): boolean {
-  return (Object.keys(filters) as FilterField[]).some(
-    field => filters[field].length > 0,
-  );
+export function hasAnyFilter(filters: Filters, fields: FilterField[]): boolean {
+  return fields.some(field => filters[field].length > 0);
 }
 
 /** Turns a stored filter value into what the chip and sheet should show. */

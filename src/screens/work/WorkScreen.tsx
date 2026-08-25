@@ -219,21 +219,24 @@ const WorkScreen: React.FC = () => {
     () => ({...filters, category: categoryByBucket[bucket]}),
     [filters, categoryByBucket, bucket],
   );
+  /** Which chips the current bucket shows — also scopes applyFilters/
+   *  hasAnyFilter below so a stale selection from a chip another bucket
+   *  showed never silently keeps filtering here. */
+  const filterFields = FILTER_FIELDS_BY_BUCKET[bucket];
   const visible = useMemo(
     () =>
       applySort(
-        applySearch(applyFilters(bucketItems, effectiveFilters), search),
+        applySearch(applyFilters(bucketItems, effectiveFilters, filterFields), search),
         sort,
       ),
-    [bucketItems, effectiveFilters, search, sort],
+    [bucketItems, effectiveFilters, filterFields, search, sort],
   );
-  const filterFields = FILTER_FIELDS_BY_BUCKET[bucket];
   const categoryOptions =
     bucket === 'assigned' ? ASSIGNED_CATEGORY_OPTIONS : CATEGORY_OPTIONS;
 
   // Module is mandatory on Assigned/Completed and always has a value, so it
   // never counts as "narrowing" the way an optional filter does.
-  const isNarrowed = search.trim().length > 0 || hasAnyFilter(filters);
+  const isNarrowed = search.trim().length > 0 || hasAnyFilter(filters, filterFields);
 
   const clearSearchAndFilters = () => {
     setSearch('');

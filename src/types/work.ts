@@ -51,6 +51,9 @@ export interface QuickAction {
   /** Key into QuickActions' icon map; unknown keys fall back to a generic one. */
   icon: string;
   /** Work Log entry type this shortcut creates, e.g. 'Graffiti Removal' — must
-   *  be a value from ENTRY_TYPES (src/types/workLog.ts). */
+   *  be a value from CLEANING_ENTRY_TYPES (src/types/workLog.ts). Every Quick
+   *  Action tile is Cleaning-shaped, but submits under whichever shift is
+   *  currently active — a mismatch is possible if that isn't Cleaning or
+   *  Management. Known, not yet fixed. */
   entryType: string;
 }
