@@ -18,6 +18,27 @@ export const FIXTURE_TYPES = [
 export const ZONES = ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'Zone 5', 'Zone 6'];
 
 /**
+ * Maintenance's own list, now shared with WorkLog too — the old app served
+ * both from the one `outReach/businessDropdown` endpoint, and the two
+ * modules' hardcoded lists had drifted into a near-duplicate (WorkLog's
+ * 'Denver Pavilions'/'Union Station'/'Larimer Square' matched exactly;
+ * '16th Street Mall' didn't match Maintenance's '16th St Mall'). This is the
+ * merged, canonical version. POI's own business list (`BUSINESS_LOCATIONS` in
+ * `src/mocks/poi.ts`) stays separate on purpose — it names specific venues
+ * ('Union Station Retail'), a different and more granular concept than this
+ * list's general locations.
+ */
+export const BUSINESS_NAMES = [
+  '16th St Mall',
+  'Union Station',
+  'Larimer Square',
+  'Civic Center',
+  'BlockByBlock',
+  'LoDo District',
+  'Denver Pavilions',
+];
+
+/**
  * The named zones the Supervisor handoff uses, verbatim and in its own order —
  * served by both offHoursVisitFormOptions and shiftNoteFormOptions, whose
  * mockups carry an identical list.

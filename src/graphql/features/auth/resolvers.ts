@@ -103,6 +103,23 @@ export const authResolvers = {
       match.password = input.newPassword;
       return {__typename: 'PasswordChanged', email: match.email};
     },
+
+    changePassword: async (
+      _p: unknown,
+      {input}: {input: {currentPassword: string; newPassword: string}},
+      ctx: MockContext,
+    ) => {
+      await sleep(600);
+      const user = MOCK_USERS.find(u => u.id === userIdForToken(ctx.token));
+      if (!user || user.password !== input.currentPassword) {
+        return {
+          __typename: 'InvalidCurrentPassword',
+          message: 'Current password is incorrect.',
+        };
+      }
+      user.password = input.newPassword;
+      return {__typename: 'PasswordChanged', email: user.email};
+    },
   },
 
   // graphql-js needs to know which union member a plain object is. Every mock
@@ -111,4 +128,5 @@ export const authResolvers = {
   RequestPasswordResetResult: {__resolveType: (o: {__typename: string}) => o.__typename},
   VerifyResetCodeResult: {__resolveType: (o: {__typename: string}) => o.__typename},
   ResetPasswordResult: {__resolveType: (o: {__typename: string}) => o.__typename},
+  ChangePasswordResult: {__resolveType: (o: {__typename: string}) => o.__typename},
 };

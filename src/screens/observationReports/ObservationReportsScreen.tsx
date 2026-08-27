@@ -21,7 +21,10 @@ import {
   Toast,
 } from '../../components/ui';
 import {ClipboardCheckIcon} from '../../components/icons';
-import {useGetObservationReportsQuery} from '../../graphql/features/observationReport/hooks';
+import {
+  useGetObservationReportsQuery,
+  useObservationReportFormOptionsQuery,
+} from '../../graphql/features/observationReport/hooks';
 import {ObservationReport, ObservationReportType} from '../../types/observationReport';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
@@ -56,6 +59,8 @@ type ListNavigation = NativeStackNavigationProp<
 
 const ObservationReportsScreen: React.FC = () => {
   const {data: items = [], isLoading, isError, refetch} = useGetObservationReportsQuery();
+  const {data: formOptions} = useObservationReportFormOptionsQuery('cache-first');
+  const zones = formOptions?.zones ?? [];
 
   const [tab, setTab] = useState<ObservationReportType>('Ambassador');
   const [search, setSearch] = useState('');
@@ -260,7 +265,7 @@ const ObservationReportsScreen: React.FC = () => {
       <SingleSelectSheet
         visible={openFilter === 'score'}
         title="Filter by Score"
-        options={optionsForField('score')}
+        options={optionsForField('score', zones)}
         value={filters.score[0] ?? ''}
         onChange={next =>
           setFilters(current => ({...current, score: [next]}))
@@ -271,9 +276,9 @@ const ObservationReportsScreen: React.FC = () => {
       <MultiSelectSheet
         visible={openFilter !== null && !SINGLE_FIELDS.includes(openFilter)}
         title={openFilter ? `Filter by ${FIELD_LABEL[openFilter]}` : ''}
-        options={openFilter ? optionsForField(openFilter) : []}
+        options={openFilter ? optionsForField(openFilter, zones) : []}
         value={openFilter ? filters[openFilter] : []}
-        searchable={openFilter ? isSearchable(openFilter) : false}
+        searchable={openFilter ? isSearchable(openFilter, zones) : false}
         onApply={next => {
           if (openFilter) {
             setFilters(current => ({...current, [openFilter]: next}));

@@ -146,6 +146,8 @@ export interface EquipmentFormOptions {
   upkeepTypes: string[];
   abnormalities: string[];
   zones: string[];
+  regions: string[];
+  divisions: string[];
   /** Reference the create form shows before the record exists, e.g. '#4366'. */
   nextReference: string;
   /** Dependent Category → Type → Make → Model tree. */

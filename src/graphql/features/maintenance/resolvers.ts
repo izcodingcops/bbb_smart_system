@@ -4,10 +4,9 @@ import {fixtureStore} from '../fixture/store';
 import {equipmentStore} from '../equipment/store';
 import {incidentStore} from '../incident/store';
 import {poiStore} from '../poi/store';
-import {ZONES} from '../shared/options';
+import {BUSINESS_NAMES, ZONES} from '../shared/options';
 import {incidentConnectedLabel} from '../shared/connectedLabels';
 import {
-  BUSINESS_NAMES,
   DEPARTMENTS,
   AMBASSADORS,
   MAINT_TYPES,

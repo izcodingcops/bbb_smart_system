@@ -18,3 +18,9 @@ export interface ReferenceDocument {
   createdBy: string;
   address: string;
 }
+
+export interface ReferenceDocumentFilterOptions {
+  entryTypes: string[];
+  businesses: string[];
+  zones: string[];
+}

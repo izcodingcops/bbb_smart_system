@@ -1,4 +1,4 @@
-import {ReferenceDocument} from '../../types/referenceDocument';
+import {ReferenceDocument, ReferenceDocumentFilterOptions} from '../../types/referenceDocument';
 import {DATE_RANGE_OPTIONS, formatDateRangeValue} from '../../utils/dateRange';
 
 export type SortKey = 'latest' | 'oldest' | 'az' | 'za';
@@ -48,40 +48,29 @@ export const SORT_LABEL: Record<SortKey, string> = {
   za: 'Z → A',
 };
 
-const ENTRY_TYPE_OPTIONS = [
-  'Elevator Check', 'Litter Pickup', 'Graffiti Removal', 'Sidewalk Sweep',
-  'Pressure Washing', 'Trash Bin Empty', 'Weed Removal', 'Gum Removal',
-  'Restroom Check', 'Planter Watering', 'Leaf Removal', 'Spill Cleanup',
-];
-
-const BUSINESS_OPTIONS = [
-  '16th Street Mall', 'Union Station', 'Denver Pavilions', 'Larimer Square',
-  'Civic Center Park', 'Riverfront Plaza', 'Beachmont Boardwalk', 'Boutique',
-];
-
-const ZONE_OPTIONS = [
-  'Downtown Core', 'Riverfront', 'Transit Hub', 'Market District', 'Civic Center', 'Beachmont',
-];
-
-/** Static per-field lists, same convention as Fixture's FIXTURE_TYPES/ZONES —
- * none of these are derived from loaded records in the mockup either. */
-export function optionsForField(field: FilterField): {value: string; label: string}[] {
+export function optionsForField(
+  field: FilterField,
+  options: ReferenceDocumentFilterOptions | null,
+): {value: string; label: string}[] {
   if (field === 'dateRange') {
     return DATE_RANGE_OPTIONS;
   }
   const values: string[] = (() => {
     switch (field) {
-      case 'entryType': return ENTRY_TYPE_OPTIONS;
-      case 'business': return BUSINESS_OPTIONS;
-      case 'zone': return ZONE_OPTIONS;
+      case 'entryType': return options?.entryTypes ?? [];
+      case 'business': return options?.businesses ?? [];
+      case 'zone': return options?.zones ?? [];
     }
   })();
   return values.map(value => ({value, label: value}));
 }
 
 /** > 8 options and not a single-select sheet — same rule as Observation Reports. */
-export function isSearchable(field: FilterField): boolean {
-  return optionsForField(field).length > 8 && !SINGLE_FIELDS.includes(field);
+export function isSearchable(
+  field: FilterField,
+  options: ReferenceDocumentFilterOptions | null,
+): boolean {
+  return optionsForField(field, options).length > 8 && !SINGLE_FIELDS.includes(field);
 }
 
 function matchesField(doc: ReferenceDocument, field: FilterField, selected: string[]): boolean {

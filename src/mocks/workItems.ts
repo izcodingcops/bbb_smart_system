@@ -12,6 +12,7 @@ export const MOCK_QUICK_ACTIONS = [
     tint: '#DCEBFF',
     iconColor: '#0066B2',
     icon: 'graffiti',
+    entryType: 'Graffiti Removal',
   },
   {
     id: 'qa2',
@@ -19,6 +20,7 @@ export const MOCK_QUICK_ACTIONS = [
     tint: '#FBE3D6',
     iconColor: '#C4501F',
     icon: 'elevator',
+    entryType: 'Elevator Check',
   },
   {
     id: 'qa3',
@@ -26,13 +28,31 @@ export const MOCK_QUICK_ACTIONS = [
     tint: '#FBEFD1',
     iconColor: '#B07D12',
     icon: 'litter',
+    entryType: 'Litter Pickup',
   },
   {
     id: 'qa4',
-    label: 'Add Inspection',
+    label: 'Add Trash Pickup',
+    tint: '#E2F5E5',
+    iconColor: '#1F8A4C',
+    icon: 'trash_bin',
+    entryType: 'Trash Bin Empty',
+  },
+  {
+    id: 'qa5',
+    label: 'Add Gum Removal',
+    tint: '#F5E2F0',
+    iconColor: '#A32E86',
+    icon: 'gum',
+    entryType: 'Gum Removal',
+  },
+  {
+    id: 'qa6',
+    label: 'Add Sweep',
     tint: '#E2E7F5',
     iconColor: '#4A5A8A',
-    icon: 'inspection',
+    icon: 'sweep',
+    entryType: 'Sidewalk Sweep',
   },
 ] satisfies QuickAction[];
 

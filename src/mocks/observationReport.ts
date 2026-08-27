@@ -197,12 +197,17 @@ const REVIEWERS = [
   'Dev 2, Tester', 'Bridget Brownlee', 'Chris Coulter', 'Will Campbell',
   'Tina Durbin', 'Michael Chou', 'Stan Der-by', 'Kendrick Dale',
 ];
-/** Also the create form's Zone picklist. */
+/**
+ * Also the create form's Zone picklist. `Zone 1 - Blue` / `Zone 2 - Orange` /
+ * `Zone 4 - Green` cover the three `obr_1840`/`obr_1810`/`obr_1780` records
+ * absorbed from the Ambassador module handoff (see ambassador.md) — without
+ * them here, those records were unreachable via their own Zone filter chip.
+ */
 export const ZONES = [
   'Beachmont', 'Downtown Louisville', 'LOOPER - update222', 'map box',
   'New July Zone 1', 'RiverFront', 'South IN 2', 'Southern Indiana',
   'Tes June Zone', 'test', 'test July 7', 'Test June 25', 'TEST ZONE',
-  'testzone2222',
+  'testzone2222', 'Zone 1 - Blue', 'Zone 2 - Orange', 'Zone 4 - Green',
 ];
 const GEN_SUMMARIES = [
   'Consistent coverage across the shift, no issues noted.',

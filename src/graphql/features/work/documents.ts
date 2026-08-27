@@ -33,6 +33,7 @@ export const GET_QUICK_ACTIONS = gql`
       tint
       iconColor
       icon
+      entryType
     }
   }
 `;

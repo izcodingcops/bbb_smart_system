@@ -10,12 +10,12 @@ import {
 import ScreenBackground from '../../../components/ScreenBackground';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {ArrowRightIcon, CheckIcon, SearchIcon, XIcon} from '../../../components/icons';
-import {ENTRY_TYPES} from '../../../types/workLog';
 import {theme} from '../../../theme';
 import {workLogCopy} from '../shiftText';
 
 interface Props {
   shiftTypeName: string;
+  entryTypes: string[];
   selected: string | null;
   onSelect: (name: string) => void;
   onNext: () => void;
@@ -25,6 +25,7 @@ interface Props {
 /** Step 1 of 2 — pick one Entry Type from a search-filterable chip grid. */
 const EntryTypeStep: React.FC<Props> = ({
   shiftTypeName,
+  entryTypes,
   selected,
   onSelect,
   onNext,
@@ -33,7 +34,7 @@ const EntryTypeStep: React.FC<Props> = ({
   const [query, setQuery] = useState('');
   const title = workLogCopy(shiftTypeName).createTitle;
 
-  const visible = ENTRY_TYPES.filter(name =>
+  const visible = entryTypes.filter(name =>
     name.toLowerCase().includes(query.trim().toLowerCase()),
   );
 

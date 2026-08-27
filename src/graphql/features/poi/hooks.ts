@@ -241,7 +241,9 @@ export function useGetPoiQuery(id: string) {
   return {data: detail, isLoading: loading, isError: !!error, refetch};
 }
 
-export function usePoiFormOptionsQuery() {
+export function usePoiFormOptionsQuery(
+  fetchPolicy: 'network-only' | 'cache-first' = 'network-only',
+) {
   const programId = GetActiveProgramId();
   const {data, loading, error, refetch} = useQuery<{
     poiFormOptions: PoiFormOptions;
@@ -249,8 +251,10 @@ export function usePoiFormOptionsQuery() {
     ...POI_CONTEXT,
     variables: {programId: programId ?? ''},
     skip: !programId,
-    // nextReference has to be fresh on every open.
-    fetchPolicy: 'network-only',
+    // nextReference has to be fresh on every open — the default. The list
+    // filter sheet passes 'cache-first' since Type doesn't need per-open
+    // freshness.
+    fetchPolicy,
   });
 
   return {
@@ -261,7 +265,9 @@ export function usePoiFormOptionsQuery() {
   };
 }
 
-export function usePoiInteractionFormOptionsQuery() {
+export function usePoiInteractionFormOptionsQuery(
+  fetchPolicy: 'network-only' | 'cache-first' = 'network-only',
+) {
   const programId = GetActiveProgramId();
   const {data, loading, error, refetch} = useQuery<{
     poiInteractionFormOptions: PoiInteractionFormOptions;
@@ -269,7 +275,10 @@ export function usePoiInteractionFormOptionsQuery() {
     ...POI_CONTEXT,
     variables: {programId: programId ?? ''},
     skip: !programId,
-    fetchPolicy: 'network-only',
+    // The list filter sheet passes 'cache-first' for Person/Zone, which don't
+    // need per-open freshness the way a live Add Interaction form's picklists
+    // do.
+    fetchPolicy,
   });
 
   return {

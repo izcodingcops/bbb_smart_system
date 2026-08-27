@@ -1,9 +1,5 @@
 import {RvpSiteVisit} from '../../types/rvpSiteVisit';
-import {
-  RVP_LEADER_POSITIONS,
-  RVP_PROGRAMS,
-  RVP_REVIEWERS,
-} from '../../mocks/rvpSiteVisit';
+import {RVP_LEADER_POSITIONS, RVP_REVIEWERS} from '../../mocks/rvpSiteVisit';
 import {DATE_RANGE_OPTIONS, formatDateRangeValue} from '../../utils/dateRange';
 
 /**
@@ -93,6 +89,7 @@ export function flipName(value: string): string {
 
 export function optionsForField(
   field: FilterField,
+  programs: string[],
 ): {value: string; label: string}[] {
   if (field === 'dateRange') {
     return DATE_RANGE_OPTIONS;
@@ -100,7 +97,7 @@ export function optionsForField(
   const values: string[] = (() => {
     switch (field) {
       case 'program':
-        return RVP_PROGRAMS;
+        return programs;
       case 'reviewer':
         return RVP_REVIEWERS;
       case 'leaderPosition':
@@ -113,8 +110,8 @@ export function optionsForField(
 }
 
 /** > 8 options and not a single-select sheet — same rule as the handoff. */
-export function isSearchable(field: FilterField): boolean {
-  return optionsForField(field).length > 8 && !SINGLE_FIELDS.includes(field);
+export function isSearchable(field: FilterField, programs: string[]): boolean {
+  return optionsForField(field, programs).length > 8 && !SINGLE_FIELDS.includes(field);
 }
 
 /**

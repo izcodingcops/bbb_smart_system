@@ -322,6 +322,8 @@ interface GqlEquipmentFormOptions {
   upkeepTypes: string[];
   abnormalities: string[];
   zones: string[];
+  regions: string[];
+  divisions: string[];
   nextReference: string;
   categories: EquipmentCategoryOption[];
   ownerships: WireOwnership[];
@@ -332,18 +334,18 @@ interface GqlEquipmentFormOptions {
   maintenance: string[];
 }
 
-export function useEquipmentFormOptionsQuery() {
+export function useEquipmentFormOptionsQuery(
+  fetchPolicy: 'network-only' | 'cache-first' = 'network-only',
+) {
   const {data, loading, error, refetch} = useQuery<{
     equipmentFormOptions: GqlEquipmentFormOptions;
   }>(GET_EQUIPMENT_FORM_OPTIONS, {
     ...EQUIPMENT_CONTEXT,
-    // `nextReference` has to be fresh on every open, same as POI's own form
-    // options query. Served from cache, the create form's header and its
-    // confirm dialog would keep naming the reference the *previous* create
-    // already consumed, while the record is saved — and the toast reported —
-    // under the next one. `zones` and `categories` go stale the same way once
-    // a create introduces a new value.
-    fetchPolicy: 'network-only',
+    // `nextReference` has to be fresh on every open — the default. The list
+    // filter sheet passes 'cache-first': it only reads Region/Division, which
+    // don't need per-open freshness. See POI's own `usePoiFormOptionsQuery`
+    // for the same convention.
+    fetchPolicy,
   });
 
   // Memoised: the payload now carries a nested taxonomy tree, and a fresh
@@ -358,6 +360,8 @@ export function useEquipmentFormOptionsQuery() {
       upkeepTypes: o.upkeepTypes,
       abnormalities: o.abnormalities,
       zones: o.zones,
+      regions: o.regions,
+      divisions: o.divisions,
       nextReference: o.nextReference,
       categories: o.categories,
       ownerships: o.ownerships.map(v => OWNERSHIP[v]),

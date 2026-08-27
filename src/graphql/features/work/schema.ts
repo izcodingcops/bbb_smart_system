@@ -48,6 +48,7 @@ export const workTypeDefs = /* GraphQL */ `
     tint: String!
     iconColor: String!
     icon: String!
+    entryType: String!
   }
 
   extend type Query {

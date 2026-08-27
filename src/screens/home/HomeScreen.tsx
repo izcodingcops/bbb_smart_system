@@ -19,7 +19,12 @@ import {locationTracker} from '../../utils/locationTracker';
 import {connectivity} from '../../graphql/offlineQueue/connectivity';
 import {useAuth} from '../../hooks/useAuth';
 import {useAppDispatch} from '../../redux/store';
-import {SCREEN, TabNavigation, navigateToTarget} from '../../navigation/screens';
+import {
+  CREATE_TARGET_BY_TILE,
+  SCREEN,
+  TabNavigation,
+  navigateToTarget,
+} from '../../navigation/screens';
 import {useAddRequestTiles} from '../../hooks/useAddRequestTiles';
 import {endShift} from '../../redux/shift/slice';
 import {GetActiveProgram, GetShiftTypes} from '../../redux/auth/selectors';
@@ -37,7 +42,7 @@ import {useGetMyEquipmentQuery} from '../../graphql/features/equipment/hooks';
 import {useQueuedEquipmentIds} from '../equipment/pendingEquipmentItems';
 import {useUnreadNotificationCountQuery} from '../../graphql/features/notification/hooks';
 import {Equipment} from '../../types/equipment';
-import {WorkItem, WorkStatus} from '../../types/work';
+import {QuickAction, WorkItem, WorkStatus} from '../../types/work';
 import {HomeStackParamList} from './routes';
 import {theme} from '../../theme';
 
@@ -54,7 +59,7 @@ const RECORD_KIND: Partial<Record<WorkItem['category'], 'Maintenance' | 'Fixture
 };
 
 const HomeScreen: React.FC = () => {
-  const {user, logout} = useAuth();
+  const {user} = useAuth();
   const dispatch = useAppDispatch();
   const program = GetActiveProgram();
   const shiftTypes = GetShiftTypes();
@@ -137,11 +142,8 @@ const HomeScreen: React.FC = () => {
   }, [navigation]);
 
   const handleAvatar = useCallback(() => {
-    Alert.alert('Log out', 'Are you sure you want to log out?', [
-      {text: 'Cancel', style: 'cancel'},
-      {text: 'Log out', style: 'destructive', onPress: () => logout()},
-    ]);
-  }, [logout]);
+    tabNavigation?.navigate(SCREEN.profile);
+  }, [tabNavigation]);
 
   const handleAddRequest = useCallback(
     (tileId: string) => {
@@ -149,6 +151,16 @@ const HomeScreen: React.FC = () => {
       queueTile(tileId);
     },
     [queueTile],
+  );
+
+  const handleQuickAction = useCallback(
+    (action: QuickAction) => {
+      navigateToTarget(tabNavigation, CREATE_TARGET_BY_TILE.work_log, {
+        entryType: action.entryType,
+        origin: SCREEN.home,
+      });
+    },
+    [tabNavigation],
   );
 
   const handleCheckIn = useCallback(
@@ -250,7 +262,11 @@ const HomeScreen: React.FC = () => {
             />
           ) : null}
 
-          <QuickActions actions={quickActions} isLoading={isQuickActionsLoading} />
+          <QuickActions
+            actions={quickActions}
+            isLoading={isQuickActionsLoading}
+            onSelect={handleQuickAction}
+          />
 
           <RecentWork
             items={workItems}

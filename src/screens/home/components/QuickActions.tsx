@@ -2,9 +2,12 @@ import React from 'react';
 import {View, Text, TouchableOpacity, ScrollView, StyleSheet} from 'react-native';
 import {SectionTitle, Skeleton} from '../../../components/ui';
 import {
+  BoxIcon,
+  CleaningIcon,
   ClipboardCheckIcon,
   ElevatorIcon,
   SprayCanIcon,
+  TargetIcon,
   TrashIcon,
 } from '../../../components/icons';
 import {QuickAction} from '../../../types/work';
@@ -16,7 +19,9 @@ const ICON_MAP: Record<string, IconComponent> = {
   graffiti: SprayCanIcon,
   elevator: ElevatorIcon,
   litter: TrashIcon,
-  inspection: ClipboardCheckIcon,
+  trash_bin: BoxIcon,
+  gum: TargetIcon,
+  sweep: CleaningIcon,
 };
 
 const SKELETON_TILES = [0, 1, 2, 3];

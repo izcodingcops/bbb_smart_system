@@ -15,6 +15,7 @@ export const GET_WORK_LOG_ENTRIES = gql`
       accessibleFareGateWorking
       automaticDoorWorking
       fvmNotWorking
+      description
       address
       zone
       describeLocation
@@ -41,6 +42,7 @@ export const GET_WORK_LOG_ENTRY = gql`
       accessibleFareGateWorking
       automaticDoorWorking
       fvmNotWorking
+      description
       address
       zone
       describeLocation

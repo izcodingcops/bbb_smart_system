@@ -20,7 +20,11 @@ import {
   Toast,
 } from '../../components/ui';
 import {AlertTriangleIcon} from '../../components/icons';
-import {useGetIncidentsQuery, useSetIncidentStatusMutation} from '../../graphql/features/incident/hooks';
+import {
+  useGetIncidentsQuery,
+  useIncidentFormOptionsQuery,
+  useSetIncidentStatusMutation,
+} from '../../graphql/features/incident/hooks';
 import {Incident, IncidentStatus} from '../../types/incident';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
@@ -55,6 +59,7 @@ type ListNavigation = NativeStackNavigationProp<
 
 const IncidentScreen: React.FC = () => {
   const {data: queryIncidents = [], isLoading, isError, refetch} = useGetIncidentsQuery();
+  const {data: formOptions} = useIncidentFormOptionsQuery('cache-first');
   const pendingIncidents = usePendingIncidentItems();
   const incidents = useMemo(() => [...pendingIncidents, ...queryIncidents], [pendingIncidents, queryIncidents]);
 
@@ -309,7 +314,7 @@ const IncidentScreen: React.FC = () => {
       <MultiSelectSheet
         visible={openFilter !== null && openFilter !== 'dateRange'}
         title={openFilter ? `Filter by ${FIELD_LABEL[openFilter]}` : ''}
-        options={openFilter ? optionsForField(incidents, openFilter) : []}
+        options={openFilter ? optionsForField(incidents, openFilter, formOptions) : []}
         value={openFilter ? filters[openFilter] : []}
         searchable={openFilter === 'type' || openFilter === 'outcome' || openFilter === 'businessName' || openFilter === 'person'}
         onApply={next => {

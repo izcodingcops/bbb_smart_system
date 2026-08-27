@@ -340,6 +340,15 @@ export const equipmentResolvers = {
         zones: Array.from(
           new Set(equipmentStore.records.map(r => r.zone).filter(Boolean)),
         ).sort(),
+        // Region and Division have no create-form field to leave blank — every
+        // record is seeded with one — so unlike zones there's no Boolean
+        // filter needed here.
+        regions: Array.from(
+          new Set(equipmentStore.records.map(r => r.region)),
+        ).sort(),
+        divisions: Array.from(
+          new Set(equipmentStore.records.map(r => r.division)),
+        ).sort(),
         nextReference: nextReference(),
         categories: buildCategoryTree(),
         // Wire values, not display ones: uppercasing lives in the resolver,

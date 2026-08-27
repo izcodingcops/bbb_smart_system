@@ -84,6 +84,8 @@ export const GET_EQUIPMENT_FORM_OPTIONS = gql`
       upkeepTypes
       abnormalities
       zones
+      regions
+      divisions
       nextReference
       categories {
         name

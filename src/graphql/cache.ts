@@ -40,6 +40,7 @@ export const cache = new InMemoryCache({
     IncidentFormOptions: {keyFields: false},
     Dispatch: {keyFields: ['id']},
     DispatchEscalation: {keyFields: ['id']},
+    DispatchFilterOptions: {keyFields: false},
     Poi: {keyFields: ['id']},
     PoiInteraction: {keyFields: ['id']},
     PoiUpdate: {keyFields: ['id']},
@@ -62,6 +63,7 @@ export const cache = new InMemoryCache({
     // No id of its own — options belong to the query that asked for them.
     ObservationReportFormOptions: {keyFields: false},
     ReferenceDocument: {keyFields: ['id']},
+    ReferenceDocumentFilterOptions: {keyFields: false},
     RvpSiteVisit: {keyFields: ['id']},
     RvpSiteVisitDetail: {keyFields: ['id']},
     // No id of their own; keep them embedded in the report they belong to.

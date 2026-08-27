@@ -20,7 +20,12 @@ import {
   useWorkLogFormOptionsQuery,
 } from '../../graphql/features/workLog/hooks';
 import {GetActiveProgram, GetShiftTypes} from '../../redux/auth/selectors';
-import {WorkLogEntry, WorkLogFormValues, YesNo} from '../../types/workLog';
+import {
+  isDetailedFormShift,
+  WorkLogEntry,
+  WorkLogFormValues,
+  YesNo,
+} from '../../types/workLog';
 import WorkLogForm from './components/WorkLogForm';
 import {theme} from '../../theme';
 import {workLogCopy} from './shiftText';
@@ -33,13 +38,14 @@ function ynLabel(value: YesNo): string {
 function toFormValues(detail: WorkLogEntry): WorkLogFormValues {
   return {
     entryType: detail.entryType,
-    machineNo: detail.machineNo,
     requestDateTime: detail.requestDateTime,
-    fvmAccessibilityChecked: detail.fvmAccessibilityChecked,
-    bridgePlateSecured: detail.bridgePlateSecured,
-    accessibleFareGateWorking: detail.accessibleFareGateWorking,
-    automaticDoorWorking: detail.automaticDoorWorking,
-    fvmNotWorking: detail.fvmNotWorking,
+    machineNo: detail.machineNo ?? '',
+    fvmAccessibilityChecked: detail.fvmAccessibilityChecked ?? null,
+    bridgePlateSecured: detail.bridgePlateSecured ?? null,
+    accessibleFareGateWorking: detail.accessibleFareGateWorking ?? null,
+    automaticDoorWorking: detail.automaticDoorWorking ?? null,
+    fvmNotWorking: detail.fvmNotWorking ?? null,
+    description: detail.description ?? '',
     address: detail.address,
     zone: detail.zone,
     describeLocation: detail.describeLocation,
@@ -75,9 +81,13 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   const {mutate: remove} = useDeleteWorkLogEntryMutation();
 
   if (isLoading) {
-    // Matches the loaded screen's own sections: Basic Details (Type + Machine
-    // No half, Request Date & Time full, 5 yes/no half, Status full),
-    // Location Details (Address full, Zone + Business half, Describe
+    // Always renders the Cleaning/Management ("detailed") layout — unlike
+    // CreateWorkLogScreen's skeleton, this can't know the real shape
+    // (detailed vs. generic) up front, since that comes from
+    // detail.shiftTypeId, which isn't known until the record loads. Matches
+    // the loaded screen's own detailed-shape sections: Basic Details (Type +
+    // Machine No half, Request Date & Time full, 5 yes/no half, Status
+    // full), Location Details (Address full, Zone + Business half, Describe
     // Location full, Quantity half), Submission (3 half).
     return (
       <DetailScreenSkeleton
@@ -114,6 +124,7 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
   const copy = workLogCopy(detail.shiftTypeName);
   const shiftTypeIcon =
     shiftTypes.find(t => t.id === detail.shiftTypeId)?.icon ?? 'general';
+  const detailed = isDetailedFormShift(detail.shiftTypeId);
 
   // Edit replaces the detail in place, matching the design's slide-over.
   if (editing && options && editValues) {
@@ -123,6 +134,7 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
           mode="edit"
           shiftTypeName={detail.shiftTypeName}
           shiftTypeIcon={shiftTypeIcon}
+          hasDetailedForm={detailed}
           reference={detail.reference}
           options={options}
           values={editValues}
@@ -163,29 +175,46 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
 
         <DetailSection title="Basic Details">
           <DetailField label="Type" value={detail.entryType} />
-          <DetailField label="Machine No" value={detail.machineNo} />
-          <DetailField
-            label="Request Date & Time"
-            value={formatDateTime(detail.requestDateTime)}
-            full
-          />
-          <DetailField
-            label="FVM Accessibility Features Checked?"
-            value={ynLabel(detail.fvmAccessibilityChecked)}
-          />
-          <DetailField
-            label="Bridge Plate Secured When You Arrived?"
-            value={ynLabel(detail.bridgePlateSecured)}
-          />
-          <DetailField
-            label="Accessible Fare Gate Working?"
-            value={ynLabel(detail.accessibleFareGateWorking)}
-          />
-          <DetailField
-            label="Automatic Door Working?"
-            value={ynLabel(detail.automaticDoorWorking)}
-          />
-          <DetailField label="FVM Not Working?" value={ynLabel(detail.fvmNotWorking)} />
+          {detailed ? (
+            <>
+              <DetailField label="Machine No" value={detail.machineNo} />
+              <DetailField
+                label="Request Date & Time"
+                value={formatDateTime(detail.requestDateTime)}
+                full
+              />
+              <DetailField
+                label="FVM Accessibility Features Checked?"
+                value={detail.fvmAccessibilityChecked ? ynLabel(detail.fvmAccessibilityChecked) : null}
+              />
+              <DetailField
+                label="Bridge Plate Secured When You Arrived?"
+                value={detail.bridgePlateSecured ? ynLabel(detail.bridgePlateSecured) : null}
+              />
+              <DetailField
+                label="Accessible Fare Gate Working?"
+                value={detail.accessibleFareGateWorking ? ynLabel(detail.accessibleFareGateWorking) : null}
+              />
+              <DetailField
+                label="Automatic Door Working?"
+                value={detail.automaticDoorWorking ? ynLabel(detail.automaticDoorWorking) : null}
+              />
+              <DetailField
+                label="FVM Not Working?"
+                value={detail.fvmNotWorking ? ynLabel(detail.fvmNotWorking) : null}
+              />
+            </>
+          ) : (
+            <>
+              <DetailField
+                label="Request Date & Time"
+                value={formatDateTime(detail.requestDateTime)}
+                full
+              />
+              <DetailField label="Quantity" value={detail.quantity} />
+              <DetailField label="Description" value={detail.description} full />
+            </>
+          )}
           <DetailField label="Status" full>
             <StatusPill label="Completed" bg="#DCFCE7" fg="#16A34A" size="md" />
           </DetailField>
@@ -200,7 +229,7 @@ const ViewWorkLogScreen: React.FC<Props> = ({id, onClose, onDeleted}) => {
             value={detail.describeLocation}
             full
           />
-          <DetailField label="Quantity" value={detail.quantity} />
+          {detailed ? <DetailField label="Quantity" value={detail.quantity} /> : null}
         </DetailSection>
 
         <DetailSection title="Submission">

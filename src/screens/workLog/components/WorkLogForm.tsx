@@ -51,6 +51,7 @@ export function buildInitialValues(entryType: string): WorkLogFormValues {
     accessibleFareGateWorking: null,
     automaticDoorWorking: null,
     fvmNotWorking: null,
+    description: '',
     address: DEFAULT_ADDRESS,
     zone: null,
     describeLocation: '',
@@ -63,6 +64,11 @@ interface Props {
   mode: 'create' | 'edit';
   shiftTypeName: string;
   shiftTypeIcon: string;
+  /** True for Cleaning/Management (isDetailedFormShift) — renders Machine No
+   *  + the 5 FVM Yes/No questions. False renders the generic Quantity +
+   *  Description placeholder instead, until that shift's own field list is
+   *  confirmed. */
+  hasDetailedForm: boolean;
   /** Display reference shown under the title, e.g. '#76231707'. */
   reference: string;
   options: WorkLogFormOptions;
@@ -88,6 +94,7 @@ const WorkLogForm: React.FC<Props> = ({
   mode,
   shiftTypeName,
   shiftTypeIcon,
+  hasDetailedForm,
   reference,
   options,
   values,
@@ -123,13 +130,14 @@ const WorkLogForm: React.FC<Props> = ({
   ) => onChangeValues({...values, [key]: value});
 
   const canSubmit =
-    values.machineNo.trim().length > 0 &&
-    isAnswered(values.fvmAccessibilityChecked) &&
-    isAnswered(values.bridgePlateSecured) &&
-    isAnswered(values.accessibleFareGateWorking) &&
-    isAnswered(values.automaticDoorWorking) &&
-    isAnswered(values.fvmNotWorking) &&
-    !isSubmitting;
+    (hasDetailedForm
+      ? values.machineNo.trim().length > 0 &&
+        isAnswered(values.fvmAccessibilityChecked) &&
+        isAnswered(values.bridgePlateSecured) &&
+        isAnswered(values.accessibleFareGateWorking) &&
+        isAnswered(values.automaticDoorWorking) &&
+        isAnswered(values.fvmNotWorking)
+      : true) && !isSubmitting;
 
   const title = mode === 'create' ? copy.createTitle : `Edit ${shiftTypeName} Work`;
 
@@ -200,67 +208,98 @@ const WorkLogForm: React.FC<Props> = ({
           <View style={styles.section} onLayout={recordSectionY('basic')}>
             <Text style={styles.sectionTitle}>Basic Details</Text>
 
-            <View style={styles.field}>
-              <FieldLabel label="Machine No" required />
-              <TextField
-                placeholder="Enter machine no"
-                value={values.machineNo}
-                onChangeText={next => set('machineNo', next)}
-              />
-              <Text style={styles.fieldHelp}>Add an eight-digit number.</Text>
-            </View>
+            {hasDetailedForm ? (
+              <>
+                <View style={styles.field}>
+                  <FieldLabel label="Machine No" required />
+                  <TextField
+                    placeholder="Enter machine no"
+                    value={values.machineNo}
+                    onChangeText={next => set('machineNo', next)}
+                  />
+                  <Text style={styles.fieldHelp}>Add an eight-digit number.</Text>
+                </View>
 
-            <DateTimeField
-              label="Request Date & Time"
-              required
-              value={values.requestDateTime}
-              onChange={next => set('requestDateTime', next)}
-            />
+                <DateTimeField
+                  label="Request Date & Time"
+                  required
+                  value={values.requestDateTime}
+                  onChange={next => set('requestDateTime', next)}
+                />
 
-            <View style={styles.field}>
-              <FieldLabel label="FVM Accessibility Features Checked?" required />
-              <SegmentedButtons
-                options={YES_NO_OPTIONS}
-                value={values.fvmAccessibilityChecked ?? ''}
-                onChange={next => set('fvmAccessibilityChecked', next as YesNo)}
-              />
-            </View>
+                <View style={styles.field}>
+                  <FieldLabel label="FVM Accessibility Features Checked?" required />
+                  <SegmentedButtons
+                    options={YES_NO_OPTIONS}
+                    value={values.fvmAccessibilityChecked ?? ''}
+                    onChange={next => set('fvmAccessibilityChecked', next as YesNo)}
+                  />
+                </View>
 
-            <View style={styles.field}>
-              <FieldLabel label="Bridge Plate Secured When You Arrived?" required />
-              <SegmentedButtons
-                options={YES_NO_OPTIONS}
-                value={values.bridgePlateSecured ?? ''}
-                onChange={next => set('bridgePlateSecured', next as YesNo)}
-              />
-            </View>
+                <View style={styles.field}>
+                  <FieldLabel label="Bridge Plate Secured When You Arrived?" required />
+                  <SegmentedButtons
+                    options={YES_NO_OPTIONS}
+                    value={values.bridgePlateSecured ?? ''}
+                    onChange={next => set('bridgePlateSecured', next as YesNo)}
+                  />
+                </View>
 
-            <View style={styles.field}>
-              <FieldLabel label="Accessible Fare Gate Working?" required />
-              <SegmentedButtons
-                options={YES_NO_OPTIONS}
-                value={values.accessibleFareGateWorking ?? ''}
-                onChange={next => set('accessibleFareGateWorking', next as YesNo)}
-              />
-            </View>
+                <View style={styles.field}>
+                  <FieldLabel label="Accessible Fare Gate Working?" required />
+                  <SegmentedButtons
+                    options={YES_NO_OPTIONS}
+                    value={values.accessibleFareGateWorking ?? ''}
+                    onChange={next => set('accessibleFareGateWorking', next as YesNo)}
+                  />
+                </View>
 
-            <View style={styles.field}>
-              <FieldLabel label="Automatic Door Working?" required />
-              <SegmentedButtons
-                options={YES_NO_OPTIONS}
-                value={values.automaticDoorWorking ?? ''}
-                onChange={next => set('automaticDoorWorking', next as YesNo)}
-              />
-            </View>
+                <View style={styles.field}>
+                  <FieldLabel label="Automatic Door Working?" required />
+                  <SegmentedButtons
+                    options={YES_NO_OPTIONS}
+                    value={values.automaticDoorWorking ?? ''}
+                    onChange={next => set('automaticDoorWorking', next as YesNo)}
+                  />
+                </View>
 
-            <View style={styles.lastField}>
-              <FieldLabel label="FVM Not Working?" required />
-              <SegmentedButtons
-                options={YES_NO_OPTIONS}
-                value={values.fvmNotWorking ?? ''}
-                onChange={next => set('fvmNotWorking', next as YesNo)}
-              />
-            </View>
+                <View style={styles.lastField}>
+                  <FieldLabel label="FVM Not Working?" required />
+                  <SegmentedButtons
+                    options={YES_NO_OPTIONS}
+                    value={values.fvmNotWorking ?? ''}
+                    onChange={next => set('fvmNotWorking', next as YesNo)}
+                  />
+                </View>
+              </>
+            ) : (
+              <>
+                <DateTimeField
+                  label="Request Date & Time"
+                  required
+                  value={values.requestDateTime}
+                  onChange={next => set('requestDateTime', next)}
+                />
+
+                <QuantityStepper
+                  label="Quantity"
+                  value={values.quantity}
+                  onChange={next => set('quantity', next)}
+                />
+
+                <View style={styles.lastField}>
+                  <FieldLabel label="Description" />
+                  <TextField
+                    placeholder="Add what happened, who was involved and what you did…"
+                    value={values.description}
+                    onChangeText={next => set('description', next)}
+                    multiline
+                    numberOfLines={4}
+                    style={styles.textarea}
+                  />
+                </View>
+              </>
+            )}
           </View>
 
           {/* ---- Location Details ---- */}
@@ -314,13 +353,15 @@ const WorkLogForm: React.FC<Props> = ({
               searchable={false}
             />
 
-            <View style={styles.lastField}>
-              <QuantityStepper
-                label="Quantity"
-                value={values.quantity}
-                onChange={next => set('quantity', next)}
-              />
-            </View>
+            {hasDetailedForm ? (
+              <View style={styles.lastField}>
+                <QuantityStepper
+                  label="Quantity"
+                  value={values.quantity}
+                  onChange={next => set('quantity', next)}
+                />
+              </View>
+            ) : null}
           </View>
         </ScrollView>
 
@@ -488,6 +529,11 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     color: theme.colors.textMuted,
     marginTop: 7,
+  },
+  textarea: {
+    minHeight: 96,
+    textAlignVertical: 'top',
+    paddingTop: theme.spacing.md,
   },
   changeLocation: {flexDirection: 'row', alignItems: 'center', gap: 5, marginLeft: 'auto'},
   changeLocationText: {fontFamily: theme.fonts.black, fontSize: 13, color: theme.colors.primary},

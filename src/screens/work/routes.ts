@@ -21,8 +21,10 @@ export type WorkStackParamList = {
   /**
    * `origin` is the tab the create was asked for from, so closing it unsaved
    * can go back there — the trip into this module never really happened.
+   * `entryType` pre-fills Step 2 and skips Step 1 (the Entry Types picker) —
+   * set by a Home Quick Action tile; absent for every other entry point.
    */
-  WorkLogCreate: {origin?: string} | undefined;
+  WorkLogCreate: {origin?: string; entryType?: string} | undefined;
   WorkLogView: {id: string};
   /**
    * Work lists other modules' records too, so it opens their detail screens

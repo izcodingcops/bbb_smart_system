@@ -34,6 +34,7 @@ const CreateRoute: React.FC<CreateProps> = ({navigation, route}) => {
   const origin = route.params?.origin;
   return (
     <CreateWorkLogScreen
+      initialEntryType={route.params?.entryType}
       onClose={() => {
         navigation.popTo('WorkList');
         // Closed unsaved and the create was asked for from another tab, so the

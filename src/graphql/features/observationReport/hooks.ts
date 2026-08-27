@@ -95,12 +95,15 @@ export function useGetObservationReportQuery(id: string) {
  * ------------------------------------------------------------------ */
 
 /**
- * `network-only` because the payload carries `nextReference` — cache-first, a
- * second report filed in the same session would reuse the reference the
- * previous create already consumed. Same convention as RVP's own form-options
- * query.
+ * `network-only` is the default because the payload carries `nextReference` —
+ * cache-first, a second report filed in the same session would reuse the
+ * reference the previous create already consumed. Same convention as RVP's
+ * own form-options query. The list filter sheet passes 'cache-first'
+ * explicitly: it only reads Zone, which doesn't need per-open freshness.
  */
-export function useObservationReportFormOptionsQuery() {
+export function useObservationReportFormOptionsQuery(
+  fetchPolicy: 'network-only' | 'cache-first' = 'network-only',
+) {
   const programId = GetActiveProgramId();
   const {data, loading, error, refetch} = useQuery<{
     observationReportFormOptions: ObservationReportFormOptions;
@@ -108,7 +111,7 @@ export function useObservationReportFormOptionsQuery() {
     ...OBSERVATION_REPORT_CONTEXT,
     variables: {programId: programId ?? ''},
     skip: !programId,
-    fetchPolicy: 'network-only',
+    fetchPolicy,
   });
 
   return {

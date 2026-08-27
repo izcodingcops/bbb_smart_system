@@ -128,3 +128,11 @@ export const GET_DISPATCH = gql`
     }
   }
 `;
+
+export const GET_DISPATCH_FILTER_OPTIONS = gql`
+  query GetDispatchFilterOptions($programId: ID!) {
+    dispatchFilterOptions(programId: $programId) {
+      referralSources
+    }
+  }
+`;

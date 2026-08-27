@@ -57,5 +57,15 @@ export const usePasswordReset = () => {
     [run],
   );
 
-  return {isLoading, requestCode, verifyCode, resetPassword};
+  const changePassword = useCallback(
+    (currentPassword: string, newPassword: string) =>
+      run(
+        () => authApi.changePassword(currentPassword, newPassword),
+        'PasswordChanged',
+        'Password changed.',
+      ),
+    [run],
+  );
+
+  return {isLoading, requestCode, verifyCode, resetPassword, changePassword};
 };

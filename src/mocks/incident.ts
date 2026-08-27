@@ -251,14 +251,14 @@ export const MOCK_INCIDENT_FORM_OPTIONS: Omit<
   incidentTypes: [
     'Vandalism', 'Medical Emergency', 'Theft', 'Suspicious Activity', 'Trespassing',
     'Property Damage', 'Drug Activity', 'Disturbance', 'Graffiti', 'Assault',
-    'Lost Property', 'Fire Hazard', 'Panhandling',
+    'Lost Property', 'Fire Hazard', 'Panhandling', 'Narcan', 'Welfare Check',
   ],
   outcomes: [
     'Police Notified', 'Police Called', 'EMS Called', 'EMS & Police', 'Report Filed',
     'Warning Issued', 'Reported', 'Monitored', 'Resolved', 'Documented',
-    'Returned to Owner', 'Fire Dept Notified', 'Referred to Outreach',
+    'Returned to Owner', 'Fire Dept Notified', 'Referred to Outreach', '911 CALLED',
   ],
   zones: ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'Zone 5', 'Zone 6'],
-  businessNames: ['16th St Mall', 'Union Station', 'Larimer Square', 'Civic Center', 'LoDo District', 'BlockByBlock'],
+  businessNames: ['16th St Mall', 'Union Station', 'Larimer Square', 'Civic Center', 'LoDo District', 'BlockByBlock', 'StarX'],
   partyTypes: ['Witness', 'Victim', 'Suspect', 'Bystander', 'Reporting Party', 'Other'],
 };

@@ -3,6 +3,13 @@ import {graphql} from 'graphql';
 import {mockSchema} from '../src/graphql/mockSchema';
 import {DATE_RANGE_OPTIONS, matchesDateRange} from '../src/utils/dateRange';
 import {RVP_SECTIONS, RVP_TOTAL_QUESTIONS} from '../src/mocks/rvpSiteVisit';
+import {
+  CLEANING_ENTRY_TYPES,
+  GENERAL_ENTRY_TYPES,
+  HOSPITALITY_ENTRY_TYPES,
+  OUTREACH_ENTRY_TYPES,
+  SAFETY_ENTRY_TYPES,
+} from '../src/types/workLog';
 
 type Check = [name: string, run: () => Promise<void> | void];
 
@@ -15,6 +22,16 @@ const LOGIN = `
       __typename
       ... on AuthSession { token user { id enableShiftEntry role programs { id } } shiftTypes { id } }
       ... on InvalidCredentials { message }
+    }
+  }
+`;
+
+const CHANGE_PASSWORD = `
+  mutation ChangePassword($input: ChangePasswordInput!) {
+    changePassword(input: $input) {
+      __typename
+      ... on PasswordChanged { email }
+      ... on InvalidCurrentPassword { message }
     }
   }
 `;
@@ -190,6 +207,32 @@ const checks: Check[] = [
     assert.equal(anon.data.me, null);
   }],
 
+  ['changePassword rejects a wrong current password', async () => {
+    const login: any = await run(LOGIN, {input: {username: 'batman', password: 'Temp@123', loginType: 1}});
+    const token = login.data.login.token;
+    const r: any = await run(CHANGE_PASSWORD, {input: {currentPassword: 'wrong', newPassword: 'NewPass1!'}}, token);
+    assert.equal(r.errors, undefined);
+    assert.equal(r.data.changePassword.__typename, 'InvalidCurrentPassword');
+  }],
+
+  ['changePassword updates the password, old password stops working, new one logs in — then restores it', async () => {
+    const login: any = await run(LOGIN, {input: {username: 'batman', password: 'Temp@123', loginType: 1}});
+    const token = login.data.login.token;
+
+    const changed: any = await run(CHANGE_PASSWORD, {input: {currentPassword: 'Temp@123', newPassword: 'NewPass1!'}}, token);
+    assert.equal(changed.data.changePassword.__typename, 'PasswordChanged');
+
+    const oldLogin: any = await run(LOGIN, {input: {username: 'batman', password: 'Temp@123', loginType: 1}});
+    assert.equal(oldLogin.data.login.__typename, 'InvalidCredentials');
+
+    const newLogin: any = await run(LOGIN, {input: {username: 'batman', password: 'NewPass1!', loginType: 1}});
+    assert.equal(newLogin.data.login.__typename, 'AuthSession');
+
+    // Restore, so later checks in this file that log in as batman/Temp@123 still work.
+    const reverted: any = await run(CHANGE_PASSWORD, {input: {currentPassword: 'NewPass1!', newPassword: 'Temp@123'}}, token);
+    assert.equal(reverted.data.changePassword.__typename, 'PasswordChanged');
+  }],
+
   ['menu items come back camelCase with enum positions', async () => {
     const r: any = await run('query M { menuItems { id menuName screenName menuIcon position } }');
     assert.equal(r.errors, undefined);
@@ -199,12 +242,18 @@ const checks: Check[] = [
 
   ['work items and quick actions require a programId', async () => {
     const r: any = await run(
-      'query W($p: ID!) { workItems(programId: $p) { id status priority bucket } quickActions(programId: $p) { id label } }',
+      'query W($p: ID!) { workItems(programId: $p) { id status priority bucket } quickActions(programId: $p) { id label entryType } }',
       {p: 'p1'},
     );
     assert.equal(r.errors, undefined);
     assert.ok(r.data.workItems.length > 0);
     assert.ok(r.data.quickActions.length > 0);
+    for (const action of r.data.quickActions) {
+      assert.ok(
+        (CLEANING_ENTRY_TYPES as readonly string[]).includes(action.entryType),
+        `quickAction ${action.id} entryType "${action.entryType}" is not a real CLEANING_ENTRY_TYPES value`,
+      );
+    }
   }],
 
   ['myEquipment returns only the signed-in user\'s custody', async () => {
@@ -328,6 +377,19 @@ const checks: Check[] = [
     assert.ok(!o.upkeepTypes.some((t: string) => t === '12 Dec'));
     assert.equal(o.abnormalities.length, 7);
     assert.ok(o.zones.length > 0);
+  }],
+
+  ['equipment form options serve regions and divisions derived from the store', async () => {
+    const r: any = await run(
+      'query O { equipmentFormOptions { regions divisions } }',
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.equipmentFormOptions;
+    // The mock seeds exactly two program/region/division triples (TRAINING and
+    // BLOCK_CITY in src/mocks/equipment.ts) — every record uses one or the
+    // other, so these are the only two values that can appear.
+    assert.deepEqual([...o.regions].sort(), ['914', 'North']);
+    assert.deepEqual([...o.divisions].sort(), ['Central', 'Punjab']);
   }],
 
   ['checkOutEquipment takes custody and checkInEquipment releases it', async () => {
@@ -1099,9 +1161,23 @@ const checks: Check[] = [
     assert.ok(dates.every(d => Date.parse(d) <= now));
   }],
 
-  ['work log entries resolve with uppercase YesNo enums', async () => {
+  ['dispatchFilterOptions derives referralSources from the store, not a hardcoded list', async () => {
     const r: any = await run(
-      'query W($p: ID!) { workLogEntries(programId: $p) { id reference shiftTypeName fvmAccessibilityChecked } }',
+      'query O($p: ID!) { dispatchFilterOptions(programId: $p) { referralSources } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.dispatchFilterOptions;
+    // The mock's explicit + generated records cycle through exactly these 7
+    // referral sources (src/mocks/dispatch.ts) — no more, no fewer.
+    assert.equal(o.referralSources.length, 7);
+    assert.ok(o.referralSources.includes('Citizen App'));
+    assert.ok(o.referralSources.includes('Webform'));
+  }],
+
+  ['work log entries resolve with uppercase YesNo enums, shaped correctly per shift', async () => {
+    const r: any = await run(
+      'query W($p: ID!) { workLogEntries(programId: $p) { id reference shiftTypeId shiftTypeName fvmAccessibilityChecked machineNo description } }',
       {p: 'p1'},
     );
     assert.equal(r.errors, undefined);
@@ -1109,6 +1185,19 @@ const checks: Check[] = [
     assert.ok(['YES', 'NO'].includes(r.data.workLogEntries[0].fvmAccessibilityChecked));
     // One entry per shift type, 3 each — Cleaning is seeded first.
     assert.equal(r.data.workLogEntries[0].shiftTypeName, 'Cleaning');
+    // Cleaning (detailed shape): machineNo set, description null.
+    assert.ok(r.data.workLogEntries[0].machineNo !== null);
+    assert.equal(r.data.workLogEntries[0].description, null);
+    // General (generic shape) is the 4th seeded record — MOCK_SHIFT_TYPES
+    // order is Cleaning/General/Hospitality/Management/Outreach/Safety, 3
+    // records each. machineNo null, description set — catches a regression
+    // to the unconditional-Cleaning-shape generator this branch replaced.
+    assert.equal(r.data.workLogEntries[3].shiftTypeId, 'st2');
+    assert.equal(r.data.workLogEntries[3].machineNo, null);
+    assert.ok(
+      typeof r.data.workLogEntries[3].description === 'string' &&
+        r.data.workLogEntries[3].description.length > 0,
+    );
   }],
 
   ['an unknown work log id resolves to null rather than throwing', async () => {
@@ -1120,24 +1209,45 @@ const checks: Check[] = [
     assert.equal(r.data.workLogEntry, null);
   }],
 
-  ['work log form options serve every dropdown', async () => {
-    const r: any = await run(
-      'query O($p: ID!, $s: ID!) { workLogFormOptions(programId: $p, shiftTypeId: $s) { nextReference entryTypes zones businessNames } }',
-      {p: 'p1', s: 'st1'},
-    );
-    assert.equal(r.errors, undefined);
-    const o = r.data.workLogFormOptions;
-    assert.equal(o.entryTypes.length, 16);
-    assert.equal(o.zones.length, 6);
-    assert.equal(o.businessNames.length, 4);
+  ['work log form options serve every dropdown, one entry-type list per shift', async () => {
+    const query =
+      'query O($p: ID!, $s: ID!) { workLogFormOptions(programId: $p, shiftTypeId: $s) { nextReference entryTypes zones businessNames } }';
+
+    const cleaning: any = await run(query, {p: 'p1', s: 'st1'});
+    assert.equal(cleaning.errors, undefined);
+    assert.equal(cleaning.data.workLogFormOptions.entryTypes.length, CLEANING_ENTRY_TYPES.length);
+    assert.equal(cleaning.data.workLogFormOptions.zones.length, 6);
+    // Now the shared 7-value list — see src/graphql/features/shared/options.ts.
+    assert.equal(cleaning.data.workLogFormOptions.businessNames.length, 7);
+
+    const general: any = await run(query, {p: 'p1', s: 'st2'});
+    assert.equal(general.errors, undefined);
+    assert.equal(general.data.workLogFormOptions.entryTypes.length, GENERAL_ENTRY_TYPES.length);
+    assert.ok(general.data.workLogFormOptions.entryTypes.includes('Report - Web Form Submission'));
+
+    const hospitality: any = await run(query, {p: 'p1', s: 'st3'});
+    assert.equal(hospitality.errors, undefined);
+    assert.equal(hospitality.data.workLogFormOptions.entryTypes.length, HOSPITALITY_ENTRY_TYPES.length);
+
+    const management: any = await run(query, {p: 'p1', s: 'st4'});
+    assert.equal(management.errors, undefined);
+    // No confirmed field list of its own yet — falls back to Cleaning's.
+    assert.equal(management.data.workLogFormOptions.entryTypes.length, CLEANING_ENTRY_TYPES.length);
+
+    const outreach: any = await run(query, {p: 'p1', s: 'st5'});
+    assert.equal(outreach.errors, undefined);
+    assert.deepEqual(outreach.data.workLogFormOptions.entryTypes, [...OUTREACH_ENTRY_TYPES]);
+
+    const safety: any = await run(query, {p: 'p1', s: 'st6'});
+    assert.equal(safety.errors, undefined);
+    assert.equal(safety.data.workLogFormOptions.entryTypes.length, SAFETY_ENTRY_TYPES.length);
   }],
 
-  ['work log create freezes the shift, then round-trips through update and delete', async () => {
+  ['work log create freezes the shift, and nullable Cleaning-only fields stay null for a generic-shape shift', async () => {
     const input = {
-      entryType: 'Litter Pickup', machineNo: '12345678',
+      entryType: 'Audit - Unhoused',
       requestDateTime: '2026-08-01T09:00:00',
-      fvmAccessibilityChecked: 'YES', bridgePlateSecured: 'YES',
-      accessibleFareGateWorking: 'NO', automaticDoorWorking: 'YES', fvmNotWorking: 'NO',
+      description: 'Routine unhoused audit, nothing to flag.',
       address: '123 Test St', shiftTypeId: 'st5', shiftTypeName: 'Outreach',
     };
     const created: any = await run(
@@ -1148,14 +1258,19 @@ const checks: Check[] = [
     const id = created.data.createWorkLogEntry.id;
 
     const detail: any = await run(
-      'query D($id: ID!) { workLogEntry(id: $id) { shiftTypeId shiftTypeName entryType quantity } }',
+      'query D($id: ID!) { workLogEntry(id: $id) { shiftTypeId shiftTypeName entryType quantity description machineNo fvmAccessibilityChecked } }',
       {id},
     );
     assert.equal(detail.data.workLogEntry.shiftTypeId, 'st5');
     assert.equal(detail.data.workLogEntry.shiftTypeName, 'Outreach');
-    assert.equal(detail.data.workLogEntry.entryType, 'Litter Pickup');
+    assert.equal(detail.data.workLogEntry.entryType, 'Audit - Unhoused');
     // Never sent — the resolver's own default.
     assert.equal(detail.data.workLogEntry.quantity, '01');
+    assert.equal(detail.data.workLogEntry.description, 'Routine unhoused audit, nothing to flag.');
+    // Outreach is a generic-shape shift — these were never sent and stay null,
+    // not defaulted to an empty string or 'NO'.
+    assert.equal(detail.data.workLogEntry.machineNo, null);
+    assert.equal(detail.data.workLogEntry.fvmAccessibilityChecked, null);
 
     // The update input deliberately carries a DIFFERENT shift than the one the
     // entry was created under, so this actually exercises the freeze — an
@@ -1200,6 +1315,38 @@ const checks: Check[] = [
       'query D($id: ID!) { workLogEntry(id: $id) { reference } }', {id},
     );
     assert.equal(gone.data.workLogEntry, null);
+  }],
+
+  ["work log create round-trips Cleaning's detailed-shape fields", async () => {
+    const input = {
+      entryType: 'Litter Pickup',
+      requestDateTime: '2026-08-01T09:00:00',
+      machineNo: '87654321',
+      fvmAccessibilityChecked: 'YES', bridgePlateSecured: 'NO',
+      accessibleFareGateWorking: 'YES', automaticDoorWorking: 'NO', fvmNotWorking: 'YES',
+      address: '456 Test Ave', shiftTypeId: 'st1', shiftTypeName: 'Cleaning',
+    };
+    const created: any = await run(
+      'mutation C($p: ID!, $i: WorkLogInput!) { createWorkLogEntry(programId: $p, input: $i) { id reference } }',
+      {p: 'p1', i: input},
+    );
+    assert.equal(created.errors, undefined);
+    const id = created.data.createWorkLogEntry.id;
+
+    const detail: any = await run(
+      'query D($id: ID!) { workLogEntry(id: $id) { machineNo fvmAccessibilityChecked bridgePlateSecured accessibleFareGateWorking automaticDoorWorking fvmNotWorking description } }',
+      {id},
+    );
+    assert.equal(detail.data.workLogEntry.machineNo, '87654321');
+    assert.equal(detail.data.workLogEntry.fvmAccessibilityChecked, 'YES');
+    assert.equal(detail.data.workLogEntry.bridgePlateSecured, 'NO');
+    assert.equal(detail.data.workLogEntry.accessibleFareGateWorking, 'YES');
+    assert.equal(detail.data.workLogEntry.automaticDoorWorking, 'NO');
+    assert.equal(detail.data.workLogEntry.fvmNotWorking, 'YES');
+    // Cleaning is a detailed-shape shift — description was never sent and stays null.
+    assert.equal(detail.data.workLogEntry.description, null);
+
+    await run('mutation Del($id: ID!) { deleteWorkLogEntry(id: $id) }', {id});
   }],
 
   ['a typo fails loudly', async () => {
@@ -1283,8 +1430,11 @@ const checks: Check[] = [
     assert.equal(r.errors, undefined);
     const o = r.data.incidentFormOptions;
     assert.equal(o.nextReference, '#IN-42988');
-    assert.equal(o.incidentTypes.length, 13);
-    assert.equal(o.outcomes.length, 13);
+    // 13 + Narcan/Welfare Check (dropdown-sourcing Fix 1: the two ex-dispatch
+    // records inc_42986/inc_42987 use types the picklist was missing).
+    assert.equal(o.incidentTypes.length, 15);
+    // 13 + 911 CALLED (same fix — inc_42986's outcome).
+    assert.equal(o.outcomes.length, 14);
     assert.equal(o.zones.length, 6);
     assert.equal(o.partyTypes.length, 6);
     for (const list of [o.businessNames, o.fixtures, o.maintenanceOptions, o.poiOptions, o.equipmentOptions]) {
@@ -1576,7 +1726,9 @@ const checks: Check[] = [
     const o = r.data.observationReportFormOptions;
     // The seed's highest reference is #OBR-3097.
     assert.equal(o.nextReference, '#OBR-3098');
-    assert.equal(o.zones.length, 14);
+    // 14 + Zone 1 - Blue/Zone 2 - Orange/Zone 4 - Green (dropdown-sourcing
+    // Fix 2: obr_1840/obr_1810/obr_1780's zones were missing from the picklist).
+    assert.equal(o.zones.length, 17);
     assert.equal(o.ambassadors.length, 12);
     assert.equal(o.supervisors.length, 12);
     assert.equal(o.questions.length, 5);
@@ -1780,6 +1932,23 @@ const checks: Check[] = [
       {id: 'refdoc_does_not_exist'},
     );
     assert.equal(missing.data.referenceDocument, null);
+  }],
+
+  ['referenceDocumentFilterOptions derives entryTypes/businesses/zones from the store, not a hardcoded list', async () => {
+    const r: any = await run(
+      'query O($p: ID!) { referenceDocumentFilterOptions(programId: $p) { entryTypes businesses zones } }',
+      {p: 'p1'},
+    );
+    assert.equal(r.errors, undefined);
+    const o = r.data.referenceDocumentFilterOptions;
+    // 12 entry types, 8 businesses, 6 zones — the exact sets the mock's own
+    // ENTRY_TYPES/BUSINESSES generators cycle through (src/mocks/referenceDocument.ts).
+    assert.equal(o.entryTypes.length, 12);
+    assert.ok(o.entryTypes.includes('Elevator Check'));
+    assert.equal(o.businesses.length, 8);
+    assert.ok(o.businesses.includes('Union Station'));
+    assert.equal(o.zones.length, 6);
+    assert.ok(o.zones.includes('Transit Hub'));
   }],
 
   // ---- POI ----

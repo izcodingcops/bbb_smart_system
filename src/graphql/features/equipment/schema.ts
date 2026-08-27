@@ -120,6 +120,8 @@ export const equipmentTypeDefs = /* GraphQL */ `
     upkeepTypes: [String!]!
     abnormalities: [String!]!
     zones: [String!]!
+    regions: [String!]!
+    divisions: [String!]!
     "The reference the create form shows before the record exists, e.g. '#4366'."
     nextReference: String!
     "Dependent Category → Type → Make → Model tree."

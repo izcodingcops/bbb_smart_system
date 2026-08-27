@@ -4,7 +4,7 @@ import {
   useCreateWorkLogEntryMutation,
   useWorkLogFormOptionsQuery,
 } from '../../graphql/features/workLog/hooks';
-import {WorkLogFormValues} from '../../types/workLog';
+import {isDetailedFormShift, WorkLogFormValues} from '../../types/workLog';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
 import WorkLogForm, {buildInitialValues} from './components/WorkLogForm';
@@ -26,22 +26,39 @@ interface Props {
     shiftTypeName: string;
     queued: boolean;
   }) => void;
+  /** Set by a Home Quick Action tile — when present, the wizard starts on
+   *  Step 2 (the form) with this entry type already filled in instead of on
+   *  Step 1 (the Entry Types picker). "Back" from the form still returns to
+   *  the full picker with this type highlighted, in case the wrong quick
+   *  action was tapped. */
+  initialEntryType?: string;
 }
 
-const CreateWorkLogScreen: React.FC<Props> = ({onClose, onCreated}) => {
+const CreateWorkLogScreen: React.FC<Props> = ({
+  onClose,
+  onCreated,
+  initialEntryType,
+}) => {
   const shiftTypes = GetShiftTypes();
   const shiftTypeId = GetActiveShiftTypeId();
   const shiftType = shiftTypes.find(t => t.id === shiftTypeId);
   const shiftTypeName = shiftType?.name ?? 'Shift';
   const shiftTypeIcon = shiftType?.icon ?? 'general';
+  const detailed = isDetailedFormShift(shiftTypeId);
 
-  const [step, setStep] = useState<'entryType' | 'form'>('entryType');
-  const [entryType, setEntryType] = useState<string | null>(null);
+  const [step, setStep] = useState<'entryType' | 'form'>(
+    initialEntryType ? 'form' : 'entryType',
+  );
+  const [entryType, setEntryType] = useState<string | null>(
+    initialEntryType ?? null,
+  );
   // Owned here rather than inside WorkLogForm: Step 2 unmounts when the user
   // taps Back to Step 1, so form state living inside it wouldn't survive a
   // Back → pick a different type → Next round trip. This component itself
   // stays mounted across that whole trip, so state here does.
-  const [values, setValues] = useState<WorkLogFormValues>(() => buildInitialValues(''));
+  const [values, setValues] = useState<WorkLogFormValues>(() =>
+    buildInitialValues(initialEntryType ?? ''),
+  );
 
   const {
     data: options,
@@ -50,21 +67,6 @@ const CreateWorkLogScreen: React.FC<Props> = ({onClose, onCreated}) => {
     refetch,
   } = useWorkLogFormOptionsQuery(shiftTypeId ?? '');
   const {mutate: create, isLoading: isSubmitting} = useCreateWorkLogEntryMutation();
-
-  if (step === 'entryType') {
-    return (
-      <EntryTypeStep
-        shiftTypeName={shiftTypeName}
-        selected={entryType}
-        onSelect={setEntryType}
-        onNext={() => {
-          setValues(current => ({...current, entryType: entryType ?? ''}));
-          setStep('form');
-        }}
-        onCancel={onClose}
-      />
-    );
-  }
 
   if (isError || (!isLoading && !options)) {
     return (
@@ -84,13 +86,33 @@ const CreateWorkLogScreen: React.FC<Props> = ({onClose, onCreated}) => {
   }
 
   if (isLoading || !options) {
-    // Matches WorkLogForm's own section layout: Basic Details (6 rows),
-    // Location Details (5).
+    // Matches WorkLogForm's own section layout for this shift's shape:
+    // detailed (Cleaning/Management) is Basic Details (6 rows: Machine No,
+    // Date, 5 Yes/No minus the date already counted = 6), Location (5,
+    // including Quantity); generic is Basic Details (3: Date, Quantity,
+    // Description), Location (4, no Quantity). Also covers the entry-type
+    // step, which needs options.entryTypes before it can render anything.
     return (
       <FormScreenSkeleton
         title={workLogCopy(shiftTypeName).createTitle}
         onClose={onClose}
-        sectionRowCounts={[6, 5]}
+        sectionRowCounts={detailed ? [6, 5] : [3, 4]}
+      />
+    );
+  }
+
+  if (step === 'entryType') {
+    return (
+      <EntryTypeStep
+        shiftTypeName={shiftTypeName}
+        entryTypes={options.entryTypes}
+        selected={entryType}
+        onSelect={setEntryType}
+        onNext={() => {
+          setValues(current => ({...current, entryType: entryType ?? ''}));
+          setStep('form');
+        }}
+        onCancel={onClose}
       />
     );
   }
@@ -106,6 +128,7 @@ const CreateWorkLogScreen: React.FC<Props> = ({onClose, onCreated}) => {
         mode="create"
         shiftTypeName={shiftTypeName}
         shiftTypeIcon={shiftTypeIcon}
+        hasDetailedForm={detailed}
         reference={options.nextReference}
         options={options}
         values={values}

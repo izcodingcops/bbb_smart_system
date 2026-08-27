@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "android": "react-native run-android",
+    "filtering:smoke": "tsc --module commonjs --moduleResolution node10 --target es2020 --esModuleInterop --skipLibCheck --outDir .smoke scripts/filteringSmoke.ts && node .smoke/scripts/filteringSmoke.js",
     "graphql:smoke": "tsc --module commonjs --moduleResolution node10 --target es2020 --esModuleInterop --skipLibCheck --outDir .smoke scripts/graphqlSmoke.ts && node .smoke/scripts/graphqlSmoke.js",
     "ios": "react-native run-ios",
     "lint": "eslint .",

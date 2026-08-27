@@ -155,11 +155,15 @@ interface GqlRvpFormOptions {
 }
 
 /**
- * `network-only` because the payload carries `nextReference`. Cache-first, a
- * second report filed in the same session would open with the header and
- * confirm dialog naming the reference the previous create already consumed.
+ * `network-only` is the default because the payload carries `nextReference` —
+ * cache-first, a second report filed in the same session would open with the
+ * header and confirm dialog naming the reference the previous create already
+ * consumed. The list filter sheet passes 'cache-first' explicitly: it only
+ * reads Program, which doesn't need per-open freshness.
  */
-export function useRvpSiteVisitFormOptionsQuery() {
+export function useRvpSiteVisitFormOptionsQuery(
+  fetchPolicy: 'network-only' | 'cache-first' = 'network-only',
+) {
   const programId = GetActiveProgramId();
   const {data, loading, error, refetch} = useQuery<{
     rvpSiteVisitFormOptions: GqlRvpFormOptions;
@@ -167,7 +171,7 @@ export function useRvpSiteVisitFormOptionsQuery() {
     ...RVP_CONTEXT,
     variables: {programId: programId ?? ''},
     skip: !programId,
-    fetchPolicy: 'network-only',
+    fetchPolicy,
   });
 
   const options = useMemo<RvpSiteVisitFormOptions | null>(() => {

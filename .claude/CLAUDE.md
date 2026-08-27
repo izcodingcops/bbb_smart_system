@@ -13,12 +13,13 @@ npm run lint               # eslint .
 
 There is no Jest/test runner configured (no `test` script, no `jest.config.*`, no `*.test.ts(x)` files anywhere). `__mocks__/react-native-safe-area-context.js` is a vestigial leftover from the RN CLI template — don't treat its presence as evidence Jest is wired up.
 
-Instead, correctness is checked with three hand-rolled `node:assert` smoke scripts (each compiles via `tsc` to `.smoke/` then runs with `node`):
+Instead, correctness is checked with four hand-rolled `node:assert` smoke scripts (each compiles via `tsc` to `.smoke/` then runs with `node`):
 
 ```sh
 npm run graphql:smoke      # exercises mockSchema directly (login union, notifications shape, etc.)
 npm run migration:smoke    # unit-checks redux/migrations.ts transforms
 npm run outbox:smoke       # exercises the outbox reducer (enqueue/sync/dead-letter ordering)
+npm run filtering:smoke    # checks each module's filtering.ts, including that formOptions-backed option lists actually cover every value the mock records use
 ```
 
 iOS native deps use Bundler + CocoaPods (`bundle install`, then `bundle exec pod install`). `scripts/start-metro-if-needed.sh` is an Xcode Debug-only build phase that auto-launches Metro in a new Terminal window if port 8081 isn't already serving it — it's a no-op in Release.

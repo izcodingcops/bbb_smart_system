@@ -21,7 +21,10 @@ import {
   SingleSelectSheet,
 } from '../../components/ui';
 import {SendIcon} from '../../components/icons';
-import {useGetDispatchesQuery} from '../../graphql/features/dispatch/hooks';
+import {
+  useDispatchFilterOptionsQuery,
+  useGetDispatchesQuery,
+} from '../../graphql/features/dispatch/hooks';
 import {Dispatch} from '../../types/dispatch';
 import {GetShiftTypes} from '../../redux/auth/selectors';
 import {GetActiveShiftTypeId} from '../../redux/shift/selectors';
@@ -56,6 +59,7 @@ type ListNavigation = NativeStackNavigationProp<
 
 const DispatchScreen: React.FC = () => {
   const {data: dispatches = [], isLoading, isError, refetch} = useGetDispatchesQuery();
+  const {data: filterOptions} = useDispatchFilterOptionsQuery();
 
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('latest');
@@ -198,7 +202,7 @@ const DispatchScreen: React.FC = () => {
       <MultiSelectSheet
         visible={openFilter !== null && openFilter !== 'dateRange'}
         title={openFilter ? `Filter by ${FIELD_LABEL[openFilter]}` : ''}
-        options={openFilter ? optionsForField(dispatches, openFilter) : []}
+        options={openFilter ? optionsForField(dispatches, openFilter, filterOptions) : []}
         value={openFilter ? filters[openFilter] : []}
         searchable={openFilter === 'howReferred'}
         onApply={next => {

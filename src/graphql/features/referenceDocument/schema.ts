@@ -18,8 +18,20 @@ export const referenceDocumentTypeDefs = /* GraphQL */ `
     address: String!
   }
 
+  """
+  Serves the list filter sheet only — this module has no create form, so
+  unlike every other module's '<Name>FormOptions', there's no form to name
+  this after.
+  """
+  type ReferenceDocumentFilterOptions {
+    entryTypes: [String!]!
+    businesses: [String!]!
+    zones: [String!]!
+  }
+
   extend type Query {
     referenceDocuments(programId: ID!): [ReferenceDocument!]!
     referenceDocument(id: ID!): ReferenceDocument
+    referenceDocumentFilterOptions(programId: ID!): ReferenceDocumentFilterOptions!
   }
 `;
